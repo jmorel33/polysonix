@@ -1,109 +1,14 @@
-/**
- * @file polysonix.h
- * @brief A single-header polyphonic synthesizer engine.
- *
- * @version 1.1.5
- * @date 2025-07-14
- *
- * @section Overview
- *   polysonix.h is a flexible, stereo polyphonic synthesizer engine designed to be easily embedded into applications. It is built upon the 'polysonix_wave'
- *   expression engine, allowing for dynamically generated waveforms and complex modulation possibilities via a powerful virtual machine.
- *
- *   This library encapsulates all audio processing and state management, deliberately separating the synthesis core from application-specific logic
- *   like UI, input handling, and audio device management.
- *
- * @section Key Features
- *   - **Thread-Safe by Design:** The library is 100% lock-free. Control functions (like `PX_NoteOn`, `PX_SetFilterParam`) can be safely called from any
- *     UI or main thread, while the `PX_Process` function runs on the dedicated real-time audio thread.
- *   - **Dynamic Waveform Generation:** Leverages the `polysonix_wave` library to execute bytecode expressions for oscillators and LFOs, enabling complex,
- *     evolving timbres that go far beyond simple wavetables.
- *   - **Rich Synthesis Architecture:**
- *     - **Polyphony:** Configurable number of voices with intelligent voice stealing.
- *     - **Modulation Matrix:** Multiple ADSRs and LFOs per voice that can be routed to modulate a wide range of parameters.
- *     - **ADSRs:** Per-voice ADSRs and per-LFO ADSRs for deep control over amplitude and modulation contours.
- *     - **LFOs:** Multiple LFOs with assignable waveforms, frequency, phase reset options, and numerous modulation destinations, including pitch, filter,
- *       amplitude, and stereo pan.
- *     - **Advanced Multi-Mode Filter:** A highly flexible state-variable filter per voice. It features multiple modes including standard shapes (LP, BP, HP, Notch),
- *           unique combo-filters (e.g., LP+BP), and a key feature: selectable slopes. These provide distinct tonal characters: 12dB/oct (aggressive, Oberheim-style),
- *           18dB/oct (balanced, Roland-style), and 24dB/oct (smooth, Moog-style), available for all filter types. The filter also includes key tracking, drive,
- *           and extensive envelope/LFO modulation.
- *   - **Stereo Signal Path:** Full stereo output with per-voice panning and LFO pan modulation.
- *   - **Built-in Dynamics:** Includes a per-voice soft-clipper to prevent harsh transients and a master bus lookahead limiter to prevent final output clipping.
- *   - **Decoupled Design:** The engine is completely independent of any graphics or windowing library. The host application is responsible for the audio
- *     callback, making the engine portable to any backend (e.g., Raylib, PortAudio, SDL, MiniAudio).
- *
- * @section Design Principles
- *   - **Header-Only:** Designed for easy integration. Simply define `POLYSONIX_IMPLEMENTATION` in one C/C++ file.
- *   - **State Encapsulation:** All synthesizer state is managed within an opaque `PxSynth` handle, ensuring no global state and allowing for multiple
- *     synth instances if needed.
- *   - **Data-Driven UI:** The library provides a suite of `PX_Get...Info()` functions that return read-only snapshots of the internal state. This allows the host
- *     application to build a detailed UI without directly accessing internal memory, ensuring a stable and glitch-free API.
- *
- * @section Concurrency Model
- *   This library is **THREAD-SAFE**. It uses a lock-free producer/consumer model.
- *   - **Producer (Main/UI Thread):** Calls to control functions like `PX_NoteOn` or `PX_SetFilterParam` do not modify the synth state directly. Instead,
- *       they place a "command" into a lock-free queue. This is a very fast operation that will not block the UI.
- *   - **Consumer (Audio Thread):** At the beginning of each `PX_Process` call, the audio thread quickly drains the command queue,
- *       applying all pending state changes in a safe, sequential manner. This ensures the synth's state is perfectly consistent
- *       for the entire duration of the audio block processing.
- *   - **UI Data:** `Get` functions read from a snapshot of the synth's state, which is safely updated by the audio thread after it finishes processing a block.
- *       This prevents data races and ensures the UI displays a stable, coherent view of the synthesizer's actual sounding parameters.
- *
- * @section Usage
- *   To use this library, do this in **one** C or C++ file:
- *   @code
- *   #define POLYSONIX_IMPLEMENTATION
- *   #include "polysonix.h"
- *   @endcode
- *
- *   All other files can simply `#include "polysonix.h"`.
- *
- * @section Quick Start Example
- *   @code
- *   // main.c
- *   #include "raylib.h" // Your audio framework
- *   #define POLYSONIX_IMPLEMENTATION
- *   #include "polysonix.h"
- *
- *   int main() {
- *       // 1. Init audio device and dependencies
- *       InitAudioDevice();
- *       polysonix_wave_init();
- *       // ... compile waveforms ...
- *
- *       // 2. Configure and create the synth
- *       PxConfig config = { .num_voices=8, .sample_rate=48000, ... };
- *       PxSynth* synth = PX_Create(&config);
- *
- *       // 3. In your main loop, trigger notes and update parameters
- *       if (IsKeyPressed(KEY_C)) PX_NoteOn(synth, 60, 0, KEY_C);
- *       if (IsKeyReleased(KEY_C)) PX_NoteOff(synth, KEY_C);
- *
- *       // 4. In your audio callback/thread, process audio
- *       // void AudioCallback(void* buffer, unsigned int frames) {
- *       //     PX_Process(synth, (int16_t*)buffer, frames);
- *       // }
- *
- *       // 5. Clean up
- *       PX_Destroy(synth);
- *       polysonix_wave_deinit();
- *       CloseAudioDevice();
- *   }
- *   @endcode
- *
- * @section Dependencies
- *   - **Required:** `polysonix_wave.h` and its implementation must be available  and linked. The host application must call `polysonix_wave_init()`
- *     before creating a synth instance and is responsible for compiling the waveform expressions used by the synth.
- *
- * @section Changelog
- *   - **v1.1.5 (2025-07-14):** Fully implemented lock-free thread-safety via a command queue for control and a snapshot buffer for UI data.
- *   - **v1.1.4 (2025-07-12):** Enhanced filter engine with combo modes (e.g., LP+BP) and selectable 12dB, 18dB, and 24dB slopes, available for all filter types.
- *   - **v1.1.3 (2025-07-12):** Added MOD_C support to the parameter chain and modulation capabilities.
- *   - **v1.1.2 (2025-07-08):** Added Oscillator update modes allowing various quality and performance modes.
- *   - **v1.1.1 (2025-07-06):** Added Unilegato functioning both in polyphonic (more than 1 voice) and monophonic (single voice) instances.
- *   - **v1.1.0 (2025-07-05):** Stable audio generation with full parity to original monolithic version. ADSRs, LFOs, Filter, and Limiter are functional.
- *   - **v1.0.0:** Initial port from monolithic application.
- */
+// =================================================================================================
+//
+//   Polysonix
+//   A single-header polyphonic synthesizer engine.
+//
+//   Copyright (c) 2025, Jacques Morel
+//
+//   This software is licensed under the MIT License.
+//   See the LICENSE file for more information.
+//
+// =================================================================================================
 
 #ifndef POLYSONIX_H
 #define POLYSONIX_H
@@ -419,30 +324,30 @@ typedef struct {
     int source_wave_index;
 
     float pan_position;
-    
+
     ADSR* adsrs;
     float* adsr_mod_amounts; // Points into s->patch.template_voice_adsr_mod_amounts
-    
+
     Filter filter_instance;
     float filter_cutoff_hz;
     float filter_resonance_q;
     PxFilterMode filter_mode;
     float filter_env_amount_hz;
-    
+
     int key_id;
     uint64_t trigger_sequence_number;
-    
+
     LFOInstance* lfo_instances;
     float* lfo_mod_amounts_snapshot; // 2D array flattened
-    
+
     VmParams main_osc_vm_params;
-    
+
     // --- Unilegato State Members
     bool is_sliding;              // True if this voice is currently pitch sliding.
     float slide_target_freq;      // The frequency (in Hz) this voice is sliding towards.
     float slide_start_freq;       // The frequency where the slide began.
     float slide_progress;         // A value from 0.0 to 1.0 tracking the slide's completion.
-    
+
     // --- State for oscillator update throttling
     float update_countdown;         // Samples remaining until the next real calculation.
     float samples_per_update;       // How many samples to wait between calculations.
@@ -592,7 +497,7 @@ struct PxSynth {
     LFOInstance* template_lfo_instances;    // Internal state for the template LFOs (used for UI display).
 
     // --- Unilegato Tracking State
-    int last_held_note_midi;        // The MIDI note number of the last key that was pressed. This determines the slide target. 
+    int last_held_note_midi;        // The MIDI note number of the last key that was pressed. This determines the slide target.
     int num_keys_held;              // The total number of keys currently held down by the user.
     int held_notes[MAX_VOICES];     // An array acting as a "stack" to keep track of the MIDI notes of all currently held keys, in the order they were pressed.
 
@@ -708,7 +613,7 @@ static void ADSR_Update(ADSR* adsr, float time_delta, float sample_rate) {
                 adsr->state = ADSR_STATE_DECAY;
             }
             break;
-            
+
         case ADSR_STATE_DECAY:
             if (adsr->level > adsr->sustain_level) {
                 // Calculate how many samples have passed and apply the multiplier exponentially.
@@ -741,7 +646,7 @@ static void ADSR_Update(ADSR* adsr, float time_delta, float sample_rate) {
                 adsr->state = ADSR_STATE_IDLE;
             }
             break;
-            
+
         default: // ADSR_STATE_IDLE
             adsr->level = 0.0f;
             break;
@@ -750,7 +655,7 @@ static void ADSR_Update(ADSR* adsr, float time_delta, float sample_rate) {
 
 static void InitializeEnhancedLimiter(EnhancedLimiter* limiter, float sample_rate, float threshold, float release_ms) {
     if (sample_rate <= 0) { limiter->initialized = false; return; }
-    
+
     limiter->threshold = threshold;
     limiter->ratio = 20.0f;
     limiter->makeup_gain = 1.0f / limiter->threshold;
@@ -760,7 +665,7 @@ static void InitializeEnhancedLimiter(EnhancedLimiter* limiter, float sample_rat
     limiter->delay_samples = (int)(sample_rate * 0.001f);
     if (limiter->delay_samples > 63) limiter->delay_samples = 63;
     if (limiter->delay_samples < 1) limiter->delay_samples = 1;
-    
+
     memset(limiter->delay_line_l, 0, sizeof(limiter->delay_line_l));
     memset(limiter->delay_line_r, 0, sizeof(limiter->delay_line_r));
     limiter->delay_write_pos = 0;
@@ -775,7 +680,7 @@ static void InitializeEnhancedLimiter(EnhancedLimiter* limiter, float sample_rat
 
 static void ProcessEnhancedLimiter(EnhancedLimiter* limiter, float *input_l, float *input_r, float *output_l, float *output_r, float sample_rate) {
     if (!limiter->initialized) { *output_l = *input_l * 0.5f; *output_r = *input_r * 0.5f; return; }
-    
+
     // Store input in delay line
     limiter->delay_line_l[limiter->delay_write_pos] = *input_l;
     limiter->delay_line_r[limiter->delay_write_pos] = *input_r;
@@ -790,7 +695,7 @@ static void ProcessEnhancedLimiter(EnhancedLimiter* limiter, float *input_l, flo
 
     // Peak detection on current (non-delayed) input
     float input_peak = fmaxf(fabsf(*input_l), fabsf(*input_r));
-    
+
     // Peak hold with decay for smoother response
     if (input_peak > limiter->peak_hold) {
         limiter->peak_hold = input_peak;
@@ -810,7 +715,7 @@ static void ProcessEnhancedLimiter(EnhancedLimiter* limiter, float *input_l, flo
     } else {
         limiter->envelope = detection_level + (limiter->envelope - detection_level) * limiter->release_coeff;
     }
-    
+
     // Calculate gain reduction
     float gain_reduction = 1.0f;
     if (limiter->envelope > limiter->threshold) {
@@ -827,10 +732,10 @@ static void ProcessEnhancedLimiter(EnhancedLimiter* limiter, float *input_l, flo
     limiter->target_gain = gain_reduction;
     float gain_smooth_coeff = 0.99f;
     limiter->smooth_gain = limiter->target_gain + (limiter->smooth_gain - limiter->target_gain) * gain_smooth_coeff;
-    
+
     // Apply limiting with makeup gain
     float final_gain = limiter->smooth_gain * limiter->makeup_gain;
-    
+
     *output_l = fmaxf(-0.999f, fminf(0.999f, delayed_l * final_gain));
     *output_r = fmaxf(-0.999f, fminf(0.999f, delayed_r * final_gain));
 }
@@ -856,7 +761,7 @@ static void Filter_SetCoefficients(Filter* filter, float cutoff_hz, float resona
 
     float max_safe_cutoff = sample_rate * 0.45f;
     cutoff_hz = fmaxf(20.0f, fminf(cutoff_hz, max_safe_cutoff));
-    
+
     // Adjust resonance based on the number of poles to maintain a similar feel
     float q_for_poles = resonance_q;
     if (poles == 3) {
@@ -864,7 +769,7 @@ static void Filter_SetCoefficients(Filter* filter, float cutoff_hz, float resona
     } else if (poles == 4) {
         q_for_poles = sqrtf(resonance_q);
     }
-    
+
     float freq_factor = cutoff_hz / sample_rate;
     float max_q_at_freq = 20.0f * (1.0f - freq_factor * freq_factor);
     resonance_q = fmaxf(0.5f, fminf(q_for_poles, max_q_at_freq));
@@ -875,7 +780,7 @@ static void Filter_SetCoefficients(Filter* filter, float cutoff_hz, float resona
     float alpha = sin_omega / (2.0f * resonance_q);
     filter->f_coeff = 2.0f * sin_omega / (1.0f + alpha);
     filter->q_inv_coeff = 2.0f * alpha;
-    
+
     // Coefficient for the additional 1-pole stage
     float tan_val = tanf(PI * cutoff_hz / sample_rate);
     filter->pole3_coeff = tan_val / (1.0f + tan_val);
@@ -933,10 +838,10 @@ static float Filter_Process_Internal(Filter* filter, float input_sample) {
         float lp2 = filter->lp_state2 + filter->f_coeff * filter->bp_state2;
         float hp2 = notch2 - lp2;
         float bp2 = filter->bp_state2 + filter->f_coeff * hp2;
-        
+
         filter->lp_state2 = tanhf(lp2 + anti_denormal) - anti_denormal;
         filter->bp_state2 = tanhf(bp2 + anti_denormal) - anti_denormal;
-        
+
         final_lp = filter->lp_state2;
         final_bp = filter->bp_state2;
         final_hp = hp2;
@@ -975,12 +880,12 @@ static float GenerateLFOValue(LFOInstance* lfo_instance) {
 
 static void LFOInstance_Init(LFOInstance* lfo, float sample_rate) {
     memset(lfo, 0, sizeof(LFOInstance));
-    
+
     // Explicitly initialize the nested ADSR struct.
     // Use some safe, silent defaults. The real values will be set later.
     PxADSRParams default_adsr_params = {0.01f, 0.1f, 1.0f, 0.1f, false};
     ADSR_Init(&lfo->adsr, &default_adsr_params, sample_rate);
-    
+
     // Initialize VmParams
     lfo->lfo_vm_params.rand_offset = (float)rand() / RAND_MAX;
     lfo->lfo_vm_params.lfsr_type = LFSR_8BIT;
@@ -1016,7 +921,7 @@ static int find_inactive_voice(PxSynth* s) {
 
 static int find_voice_to_steal(PxSynth* s) {
     if (s->config.num_voices == 0) return -1;
-    
+
     int oldest_unheld_idx = -1;
     uint64_t oldest_unheld_seq = UINT64_MAX;
 
@@ -1033,7 +938,7 @@ static int find_voice_to_steal(PxSynth* s) {
                 break;
             }
         }
-        
+
         // If the note is not held (i.e., it's in release phase), it's a candidate for stealing.
         if (!is_held) {
             if (s->voices[i].trigger_sequence_number < oldest_unheld_seq) {
@@ -1058,7 +963,7 @@ static int find_voice_to_steal(PxSynth* s) {
             oldest_held_idx = i;
         }
     }
-    
+
     return oldest_held_idx;
 }
 
@@ -1169,7 +1074,7 @@ static void PX_UpdateUISnapshot(PxSynth* s) {
     memcpy(s->ui_snapshot.patch_copy.template_voice_adsrs, s->patch.template_voice_adsrs, s->config.num_voice_adsrs * sizeof(PxADSRParams));
     memcpy(s->ui_snapshot.patch_copy.template_voice_adsr_mod_amounts, s->patch.template_voice_adsr_mod_amounts, s->config.num_voice_adsrs * PX_ADSR_DEST_COUNT * sizeof(float));
     memcpy(s->ui_snapshot.patch_copy.template_lfos, s->patch.template_lfos, s->config.num_lfos * sizeof(PxLFOParams));
-    
+
     s->ui_snapshot.patch_copy.filter_cutoff_hz = s->patch.filter_cutoff_hz;
     s->ui_snapshot.patch_copy.filter_resonance_q = s->patch.filter_resonance_q;
     s->ui_snapshot.patch_copy.filter_env_amount_hz = s->patch.filter_env_amount_hz;
@@ -1184,7 +1089,7 @@ static void PX_UpdateUISnapshot(PxSynth* s) {
     s->ui_snapshot.patch_copy.unilegato_enabled = s->patch.unilegato_enabled;
     s->ui_snapshot.patch_copy.unilegato_slide_duration_s = s->patch.unilegato_slide_duration_s;
     s->ui_snapshot.lfo_update_interval_ms = s->config.lfo_update_interval_ms;
-    
+
     for (int i = 0; i < s->config.num_voices; ++i) { s->ui_snapshot.voices[i] = PX_GetVoiceInfo_internal(s, i); }
     for (int i = 0; i < s->config.num_lfos; ++i) { s->ui_snapshot.lfos[i] = PX_GetLFOInfo_internal(s, i); }
     s->ui_snapshot.limiter = PX_GetLimiterInfo_internal(s);
@@ -1197,7 +1102,7 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     if (!config || config->num_voices <= 0 || config->num_voices > MAX_VOICES || config->num_lfos < 0 || config->num_lfos > MAX_LFOS || config->num_voice_adsrs <= 0 || config->sample_rate <= 0) {
         return NULL;
     }
-    
+
     // 2. Allocate the main synth struct. If this fails, we can't proceed.
     PxSynth* s = (PxSynth*)calloc(1, sizeof(PxSynth));
     if (!s) return NULL;
@@ -1206,7 +1111,7 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     s->config = *config;
     s->time_per_sample = 1.0f / config->sample_rate;
     s->lfo_update_countdown = 1;
-    
+
     s->cmd_queue.capacity = CMD_QUEUE_SIZE;
     s->cmd_queue.buffer = (PxCommand*)calloc(CMD_QUEUE_SIZE, sizeof(PxCommand));
     if (!s->cmd_queue.buffer) { free(s); return NULL; }
@@ -1264,7 +1169,7 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     // 9. Set up the default patch parameters.
     s->patch.default_note_amp = 0.5f;
     s->patch.voice_pan_setting = 0.0f;
-    
+
     // Default Voice ADSR 0 (Amp Env)
     if (config->num_voice_adsrs > 0) {
         s->patch.template_voice_adsrs[0] = (PxADSRParams){
@@ -1356,12 +1261,12 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
         if (s->lfo_update_countdown <= 0) {
             s->lfo_update_countdown = s->config.samples_per_lfo_update;
             float lfo_update_delta_time = (float)s->config.samples_per_lfo_update * s->time_per_sample;
-            
+
             // Update the Template LFOs for UI display
             for (int lfo_idx = 0; lfo_idx < s->config.num_lfos; ++lfo_idx) {
                 LFOInstance* tlfo_inst = &s->template_lfo_instances[lfo_idx];
                 PxLFOParams* tplfo_params = &s->patch.template_lfos[lfo_idx];
-                
+
                 // Keep the internal instance in sync with the public patch
                 ADSR_SetParams(&tlfo_inst->adsr, &tplfo_params->adsr, s->config.sample_rate);
                 tlfo_inst->wave_idx = tplfo_params->wave_idx;
@@ -1382,7 +1287,7 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
                 if (tplfo_params->enabled) {
                     tlfo_inst->phase = fmodf(tlfo_inst->phase + (tplfo_params->frequency * lfo_update_delta_time), 1.0f);
                     if (tlfo_inst->phase < 0.0f) tlfo_inst->phase += 1.0f;
-                    
+
                     // Generate and store both raw and final values
                     tlfo_inst->current_raw_output_value = GenerateLFOValue(tlfo_inst);
                     tlfo_inst->current_output_value = tlfo_inst->current_raw_output_value * (tplfo_params->adsr.enabled ? tlfo_inst->adsr.level : 1.0f);
@@ -1391,7 +1296,7 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
                     tlfo_inst->current_output_value = 0.0f;
                 }
             }
-            
+
             // Update Per-Voice LFOs (existing code is fine)
             for (int v_idx = 0; v_idx < s->config.num_voices; ++v_idx) {
                 // ... (the rest of this block is unchanged) ...
@@ -1426,14 +1331,14 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
                 }
             }
         } // End LFO update block
-        
+
         float mixed_sample_l_f = 0.0f;
         float mixed_sample_r_f = 0.0f;
 
         // --- Per-Voice Audio-Rate Processing Loop ---
         for (int v_idx = 0; v_idx < s->config.num_voices; ++v_idx) {
             Voice *v = &s->voices[v_idx];
-            
+
             // Update unilegato slide
             if (v->is_sliding) {
                 v->slide_progress += s->time_per_sample / s->patch.unilegato_slide_duration_s;
@@ -1450,7 +1355,7 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
                     v->main_osc_vm_params.frequency = v->frequency;
                 }
             }
-            
+
             // --- Step 1: Update Live Parameters & State ---
             for (int j = 0; j < s->config.num_voice_adsrs; ++j) {
                 ADSR_SetParams(&v->adsrs[j], &s->patch.template_voice_adsrs[j], s->config.sample_rate);
@@ -1459,7 +1364,7 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
             for (int k = 0; k < s->config.num_lfos; ++k) {
                 ADSR_SetParams(&v->lfo_instances[k].adsr, &s->patch.template_lfos[k].adsr, s->config.sample_rate);
             }
-            
+
             // --- Step 2: Calculate All Modulations LIVE from the Patch ---
             float adsr_total_param1_mod=0, adsr_total_param2_mod=0, adsr_total_param3_mod=0, adsr_total_pitch_mod_st=0, adsr_total_filter_cutoff_hz=0, adsr_filter_env_input=0, adsr_total_filter_res=0;
             float adsr_lfo_level_scale[s->config.num_lfos];
@@ -1494,7 +1399,7 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
                 lfo_bytecode_mod_c += lfo_final_output * mods[PX_LFO_DEST_PARAM3];
                 lfo_pan_env_input += lfo_final_output * mods[PX_LFO_DEST_PAN];
             }
-            
+
             // --- Step 3: Amplitude Calculation ---
             float effective_amplitude = 0.0f; bool is_amp_targeted = false; float summed_amp_contributions = 0.0f;
             for (int j = 0; j < s->config.num_voice_adsrs; ++j) {
@@ -1520,7 +1425,7 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
                             break;
                         }
                     }
-                }    
+                }
                 bool is_held = false;
                 for (int j = 0; j < s->num_keys_held; j++) if (v->key_id == s->held_notes[j]) { is_held = true; break; }
                 if (all_relevant_adsrs_idle && !is_held) {
@@ -1530,7 +1435,7 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
                 }
             }
             if (!v->active) continue;
-            
+
             // --- Step 5: Apply Modulations and Generate Audio ---
             if (!v->is_sliding) {
                 v->frequency = v->original_frequency * powf(2.0f, (lfo_pitch_env_input + adsr_total_pitch_mod_st) / 12.0f);
@@ -1546,7 +1451,7 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
             v->main_osc_vm_params.frequency = v->frequency;
             v->main_osc_vm_params.x = v->phase * 2.f * PI;
             BytecodeChunk* chunk = default_waves[v->source_wave_index].compiled_bytecode;
-            
+
             float raw_sample = 0.0f;
             // --- Path 1: Highest Quality (Per-Sample) ---
             if (s->config.osc_update_mode == PX_OSC_UPDATE_MODE_PER_SAMPLE) {
@@ -1567,7 +1472,7 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
                     v->phase_at_interp_end = v->phase;
                     v->phase_at_interp_start = v->phase - (v->frequency * v->samples_per_update * s->time_per_sample);
                     if (v->phase_at_interp_start < 0.0f) v->phase_at_interp_start += 1.0f;
-                    
+
                     // Recalculate the duration for the next segment
                     if (s->config.osc_update_mode == PX_OSC_UPDATE_MODE_NYQUIST) {
                         float update_rate = v->frequency * s->config.nyquist_precision_multiplier;
@@ -1581,7 +1486,7 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
                     }
                     v->update_countdown += v->samples_per_update;
                 }
-                
+
                 // --- Perform Phase-Locked Cubic Interpolation (every sample) ---
                 // Calculate the total phase traveled during the last segment
                 float total_phase_in_segment = v->phase_at_interp_end - v->phase_at_interp_start;
@@ -1591,7 +1496,7 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
                 // Calculate how far the current phase has progressed into the segment
                 float phase_progress = v->phase - v->phase_at_interp_start;
                 if (phase_progress < 0.0f) phase_progress += 1.0f;
-                
+
                 // Interpolation factor t (0 to 1)
                 float t = phase_progress / total_phase_in_segment; t = fmaxf(0.0f, fminf(1.0f, t));
                 raw_sample = cubic_interpolate(
@@ -1615,11 +1520,11 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
             mixed_sample_r_f += final_sample * gain_r;
             v->phase = fmodf(v->phase + (v->frequency * s->time_per_sample), 1.f);
         } // End voice loop
-        
+
         // --- Limiter and Final Output ---
         float output_l_f, output_r_f;
         ProcessEnhancedLimiter(&s->limiter, &mixed_sample_l_f, &mixed_sample_r_f, &output_l_f, &output_r_f, s->config.sample_rate);
-        
+
         stereo_buffer[i * 2 + 0] = (int16_t)(output_l_f * 32767.f);
         stereo_buffer[i * 2 + 1] = (int16_t)(output_r_f * 32767.f);
     } // End sample loop
@@ -1925,7 +1830,7 @@ static void PX_NoteOff_internal(PxSynth* s, int key_id) {
 static PxVoiceInfo PX_GetVoiceInfo_internal(PxSynth* s, int idx) {
     PxVoiceInfo info = {0};
     if (!s || idx < 0 || idx >= s->config.num_voices) return info;
-    
+
     Voice* v = &s->voices[idx];
     info.active = v->active;
     info.midi_note = v->midi_note;
