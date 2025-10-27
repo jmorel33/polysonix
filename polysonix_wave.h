@@ -247,24 +247,31 @@ extern "C" {
 #define MAX_LFSR_PERIOD 131071 // For 17-bit LFSR
 #define LFSR_TABLE_BYTES(period) (((period) + 7) / 8) // Packed bits
 
-// LFSR Type Constants (matching language constants)
+/**
+ * @enum LfsrType
+ * @brief Defines the available Linear Feedback Shift Register (LFSR) types.
+ *
+ * Each LFSR type corresponds to a specific bit-length and feedback polynomial,
+ * resulting in a pseudo-random sequence with a known period length. These constants
+ * are used as integer arguments in waveform script functions like `lfsr_noise()`.
+ */
 typedef enum {
-    LFSR_4BIT = 0,      // 15-bit period
-    LFSR_5BIT = 1,      // 31-bit period
-    LFSR_6BIT = 2,      // 63-bit period
-    LFSR_7BIT = 3,      // 127-bit period
-    LFSR_8BIT = 4,      // 255-bit period
-    LFSR_9BIT = 5,      // 511-bit period
-    LFSR_10BIT = 6,     // 1023-bit period
-    LFSR_11BIT = 7,     // 2047-bit period
-    LFSR_12BIT = 8,     // 4095-bit period
-    LFSR_13BIT = 9,     // 8191-bit period
-    LFSR_14BIT = 10,    // 16383-bit period
-    LFSR_15BIT = 11,    // 32767-bit period
-    LFSR_16BIT = 12,    // 65535-bit period
-    LFSR_17BIT = 13,    // 131071-bit period
-    LFSR_GALOIS = 14,   // Alternative feedback topology
-    LFSR_FIBONACCI = 15,// Standard feedback topology
+    LFSR_4BIT = 0,      /**< 4-bit LFSR with a period of 15. */
+    LFSR_5BIT = 1,      /**< 5-bit LFSR with a period of 31. */
+    LFSR_6BIT = 2,      /**< 6-bit LFSR with a period of 63. */
+    LFSR_7BIT = 3,      /**< 7-bit LFSR with a period of 127. */
+    LFSR_8BIT = 4,      /**< 8-bit LFSR with a period of 255. */
+    LFSR_9BIT = 5,      /**< 9-bit LFSR with a period of 511. */
+    LFSR_10BIT = 6,     /**< 10-bit LFSR with a period of 1023. */
+    LFSR_11BIT = 7,     /**< 11-bit LFSR with a period of 2047. */
+    LFSR_12BIT = 8,     /**< 12-bit LFSR with a period of 4095. */
+    LFSR_13BIT = 9,     /**< 13-bit LFSR with a period of 8191. */
+    LFSR_14BIT = 10,    /**< 14-bit LFSR with a period of 16383. */
+    LFSR_15BIT = 11,    /**< 15-bit LFSR with a period of 32767. */
+    LFSR_16BIT = 12,    /**< 16-bit LFSR with a period of 65535. */
+    LFSR_17BIT = 13,    /**< 17-bit LFSR with a period of 131071. */
+    LFSR_GALOIS = 14,   /**< 16-bit LFSR using a Galois feedback configuration. */
+    LFSR_FIBONACCI = 15 /**< 16-bit LFSR using a Fibonacci feedback configuration. */
 } LfsrType;
 
 /**
@@ -274,41 +281,71 @@ typedef enum {
  * the full sequence based on the defined polynomials. It should be called
  * once at application startup before any LFSR functions are used.
  */
+/**
+ * @brief Initializes and pre-computes the bit sequences for all LFSR types.
+ *
+ * This function must be called once at application startup before any waveform
+ * scripts utilizing LFSR functions are executed. It allocates memory for each
+ * LFSR's bit table and generates the full pseudo-random sequence based on the
+ * defined feedback polynomials. Failure to call this function will result in
+ * undefined behavior for LFSR-related script functions.
+ */
 void init_polysonix_lfsr_tables(void);
 
 /**
  * @brief Frees all memory allocated for the pre-computed LFSR bit tables.
  *
- * This should be called once at application shutdown to prevent memory leaks.
+ * This function should be called once at application shutdown to release the
+ * memory used by the LFSR system and prevent memory leaks.
  */
 void free_polysonix_lfsr_tables(void);
 
 /**
- * @brief Retrieves a single bit (0.0f or 1.0f) from a pre-computed LFSR table.
+ * @brief Retrieves a single bit from a pre-computed LFSR table.
  *
- * @param type The LFSR type (e.g., LFSR_8BIT) to use.
- * @param position The absolute position in the sequence. Wraps around if > period.
- * @return The bit value (1.0f or 0.0f), or 0.0f if the type is invalid.
+ * This C function provides direct access to the pre-computed LFSR bit sequences.
+ * It's used internally by the VM but can also be used for custom C-level logic.
+ *
+ * @param type The LFSR type (e.g., LFSR_8BIT) from which to retrieve a bit.
+ * @param position The absolute position in the sequence. The value will be wrapped
+ *                 automatically based on the period of the selected LFSR type.
+ * @return The bit value as a float (1.0f or 0.0f). Returns 0.0f if the
+ *         specified LFSR type is invalid or has not been initialized.
  */
 float lfsr_get_bit(LfsrType type, uint32_t position);
 
 /**
  * @brief Generates bipolar LFSR noise (-1.0f or 1.0f) based on phase.
  *
- * @param type The LFSR type to use.
- * @param phase The current main oscillator phase (0 to 2*PI).
- * @param rate A multiplier for how fast the LFSR sequence is scanned relative to the main phase.
- * @return Bipolar noise value (-1.0f or 1.0f).
+ * This C function provides direct access to the pre-computed LFSR tables,
+ * generating a bipolar noise signal. It is used internally by the VM for the
+ * `lfsr_noise` script function.
+ *
+ * @param type The LFSR type to use for noise generation.
+ * @param phase The current main oscillator phase (typically 0 to 2*PI).
+ * @param rate A multiplier that scales how fast the LFSR sequence is scanned
+ *             relative to the main phase. A rate of 1.0 scans the full sequence
+ *             over one cycle of the main phase.
+ * @return A bipolar noise value (-1.0f or 1.0f). Returns 0.0f if the LFSR type
+ *         is invalid or uninitialized.
  */
 float lfsr_get_noise(LfsrType type, float phase, float rate);
 
 /**
- * @brief Generates rhythmic LFSR clock pulses (0.0f or 1.0f) based on phase and density.
+ * @brief Generates rhythmic LFSR clock pulses (0.0f or 1.0f).
  *
- * @param type The LFSR type to use.
- * @param phase The current main oscillator phase (0 to 2*PI).
- * @param density A threshold (0.0 to 1.0). A pulse is generated if the LFSR bit is >= density.
- * @return A clock pulse (1.0f or 0.0f).
+ * This C function uses a pre-computed LFSR sequence to generate rhythmic clock
+ * pulses. A pulse (1.0f) is produced when the LFSR bit value meets or exceeds
+ * the density threshold. It is used internally by the VM for the `lfsr_clock` script function.
+ *
+ * @param type The LFSR type to use for the clock signal.
+ * @param phase The current main oscillator phase (typically 0 to 2*PI), used to
+ *              determine the position in the LFSR sequence.
+ * @param density A threshold (clamped between 0.0 and 1.0). A higher value results
+ *                in fewer pulses (lower density). A pulse is generated if the
+ *                LFSR bit is >= density.
+ * @return A clock pulse value (1.0f or 0.0f). Returns 0.0f if the LFSR type is
+ *         invalid or uninitialized.
  */
 float lfsr_get_clock(LfsrType type, float phase, float density);
 
