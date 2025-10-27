@@ -1,24 +1,32 @@
-// =================================================================================================
-//
-//   Polysonix
-//   A single-header polyphonic synthesizer engine.
-//
-//   Copyright (c) 2025, Jacques Morel
-//
-//   This software is licensed under the MIT License.
-//   See the LICENSE file for more information.
-//
-// =================================================================================================
+/**
+ * @file polysonix.h
+ * @brief A single-header polyphonic synthesizer engine.
+ *
+ * This file contains the entire implementation of the Polysonix synthesizer engine.
+ * To use it, you must `#define POLYSONIX_IMPLEMENTATION` in one C/C++ file
+ * before including this header.
+ *
+ * Polysonix provides a thread-safe API for real-time audio synthesis, featuring
+ * multiple voices, ADSR envelopes, LFOs, a multi-mode filter, and a master limiter.
+ * It uses a command queue to safely receive parameter changes from a UI/control thread
+ * while the audio processing runs on a dedicated audio thread.
+ *
+ * @copyright Copyright (c) 2025, Jacques Morel
+ * @license This software is licensed under the MIT License. See the LICENSE file for more information.
+ */
 
 #ifndef POLYSONIX_H
 #define POLYSONIX_H
 
-#include "polysonix_wave.h" // Assumes polysonix_wave.h is available
+#include "polysonix_wave.h"
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdatomic.h>      /* NEW: C11 atomics for lock-free queues */
+#include <stdatomic.h>
 
-// --- Public API Prefix ---
+/**
+ * @def PX_API
+ * @brief A macro to control the visibility and linkage of public API functions.
+ */
 #define PX_API
 
 // --- Forward Declarations ---
@@ -32,182 +40,569 @@ typedef struct PxLFOInfo PxLFOInfo;
 
 // --- Public Enums and Structs ---
 
+/**
+ * @enum PxOscillatorType
+ * @brief Defines the type of oscillator used for sound generation.
+ */
 typedef enum {
-    PX_OSC_TYPE_BYTECODE,
-    PX_OSC_TYPE_SAMPLE,
-    PX_OSC_TYPE_GENERATED,
-    PX_OSC_TYPE_FM4OP
+    PX_OSC_TYPE_BYTECODE,  /**< Oscillator waveform is generated from a `polysonix_wave` bytecode script. */
+    PX_OSC_TYPE_SAMPLE,    /**< Oscillator uses a pre-recorded sample (future implementation). */
+    PX_OSC_TYPE_GENERATED, /**< Oscillator uses a classic generated waveform (e.g., sine, square) (future implementation). */
+    PX_OSC_TYPE_FM4OP      /**< A 4-operator FM synthesis oscillator (future implementation). */
 } PxOscillatorType;
 
-// Enum to control how often the main oscillator is updated
+/**
+ * @enum PxOscillatorUpdateMode
+ * @brief Controls the quality and performance of the main oscillator by defining how often its waveform is recalculated.
+ */
 typedef enum {
-    PX_OSC_UPDATE_MODE_PER_SAMPLE,  // Highest quality: recalculate the oscillator waveform on every single audio sample.
-    PX_OSC_UPDATE_MODE_FIXED_RATE,  // Performance: recalculate at a fixed rate (e.g., 35kHz). Interpolates between points.
-    PX_OSC_UPDATE_MODE_NYQUIST      // Dynamic Performance: recalculate at 2x the note's frequency (Nyquist rate). Interpolates.
+    PX_OSC_UPDATE_MODE_PER_SAMPLE,  /**< Highest quality: recalculates the oscillator waveform on every single audio sample. Most CPU intensive. */
+    PX_OSC_UPDATE_MODE_FIXED_RATE,  /**< Performance: recalculates at a fixed rate (e.g., 35kHz) and interpolates between points. Good balance of quality and performance. */
+    PX_OSC_UPDATE_MODE_NYQUIST      /**< Dynamic Performance: recalculates at a multiple of the note's frequency (related to the Nyquist rate) and interpolates. Efficient for lower notes. */
 } PxOscillatorUpdateMode;
 
-// ADSR States (for UI display)
+/**
+ * @enum PxADSRState
+ * @brief Represents the current state of an ADSR (Attack, Decay, Sustain, Release) envelope. Useful for UI display.
+ */
 typedef enum {
-    PX_ADSR_STATE_IDLE,
-    PX_ADSR_STATE_ATTACK,
-    PX_ADSR_STATE_DECAY,
-    PX_ADSR_STATE_SUSTAIN,
-    PX_ADSR_STATE_RELEASE
+    PX_ADSR_STATE_IDLE,    /**< The envelope is inactive and its output is 0. */
+    PX_ADSR_STATE_ATTACK,  /**< The envelope is in the Attack phase, rising towards its peak level. */
+    PX_ADSR_STATE_DECAY,   /**< The envelope is in the Decay phase, falling from the peak to the sustain level. */
+    PX_ADSR_STATE_SUSTAIN, /**< The envelope is in the Sustain phase, holding at the sustain level. */
+    PX_ADSR_STATE_RELEASE  /**< The envelope is in the Release phase, falling from its current level back to 0. */
 } PxADSRState;
 
-// Filter Modes
+/**
+ * @enum PxFilterMode
+ * @brief Defines the different modes for the synthesizer's global filter.
+ */
 typedef enum {
-    PX_FILTER_MODE_OFF,
-    PX_FILTER_MODE_LP,
-    PX_FILTER_MODE_BP,
-    PX_FILTER_MODE_HP,
-    PX_FILTER_MODE_LP_BP,     // Combo: Mix of LP and BP
-    PX_FILTER_MODE_LP_HP,     // Combo: Mix of LP and HP
-    PX_FILTER_MODE_BP_HP,     // Combo: Mix of BP and HP
-    PX_FILTER_MODE_NOTCH,
-    PX_FILTER_MODE_ALLPASS,
-    PX_FILTER_MODE_COUNT
+    PX_FILTER_MODE_OFF,     /**< Filter is disabled. */
+    PX_FILTER_MODE_LP,      /**< Low-Pass Filter. */
+    PX_FILTER_MODE_BP,      /**< Band-Pass Filter. */
+    PX_FILTER_MODE_HP,      /**< High-Pass Filter. */
+    PX_FILTER_MODE_LP_BP,   /**< A mix of Low-Pass and Band-Pass outputs. */
+    PX_FILTER_MODE_LP_HP,   /**< A mix of Low-Pass and High-Pass outputs (creates a notch-like effect). */
+    PX_FILTER_MODE_BP_HP,   /**< A mix of Band-Pass and High-Pass outputs. */
+    PX_FILTER_MODE_NOTCH,   /**< Notch Filter (Band-Reject). */
+    PX_FILTER_MODE_ALLPASS, /**< All-Pass Filter (for phase shifting effects). */
+    PX_FILTER_MODE_COUNT    /**< The total number of filter modes. */
 } PxFilterMode;
 
-// ADSR Destinations
+/**
+ * @enum PxADSRDestination
+ * @brief Defines the possible modulation destinations for a voice ADSR envelope.
+ */
 typedef enum {
-    PX_ADSR_DEST_NONE,
-    PX_ADSR_DEST_PARAM1,
-    PX_ADSR_DEST_PARAM2,
-    PX_ADSR_DEST_PARAM3,
-    PX_ADSR_DEST_AMP,
-    PX_ADSR_DEST_FREQUENCY,
-    PX_ADSR_DEST_LFO0_OUTPUT_LEVEL,
-    PX_ADSR_DEST_LFO1_OUTPUT_LEVEL,
-    PX_ADSR_DEST_LFO2_OUTPUT_LEVEL,
-    PX_ADSR_DEST_FILTER_CUTOFF,
-    PX_ADSR_DEST_FILTER_ENV_INPUT,
-    PX_ADSR_DEST_FILTER_RESONANCE,
-    PX_ADSR_DEST_COUNT
+    PX_ADSR_DEST_NONE,                /**< No modulation target. */
+    PX_ADSR_DEST_PARAM1,              /**< Modulates the `modA` parameter in the waveform bytecode. */
+    PX_ADSR_DEST_PARAM2,              /**< Modulates the `modB` parameter in the waveform bytecode. */
+    PX_ADSR_DEST_PARAM3,              /**< Modulates the `modC` parameter in the waveform bytecode. */
+    PX_ADSR_DEST_AMP,                 /**< Modulates the voice's amplitude (the primary use for an ADSR). */
+    PX_ADSR_DEST_FREQUENCY,           /**< Modulates the voice's pitch (in semitones). */
+    PX_ADSR_DEST_LFO0_OUTPUT_LEVEL,   /**< Modulates the output level of LFO 0. */
+    PX_ADSR_DEST_LFO1_OUTPUT_LEVEL,   /**< Modulates the output level of LFO 1. */
+    PX_ADSR_DEST_LFO2_OUTPUT_LEVEL,   /**< Modulates the output level of LFO 2. */
+    PX_ADSR_DEST_FILTER_CUTOFF,       /**< Modulates the filter's cutoff frequency (in Hz). */
+    PX_ADSR_DEST_FILTER_ENV_INPUT,    /**< Modulates the dedicated filter envelope input amount. */
+    PX_ADSR_DEST_FILTER_RESONANCE,    /**< Modulates the filter's resonance (Q factor). */
+    PX_ADSR_DEST_COUNT                /**< The total number of ADSR destinations. */
 } PxADSRDestination;
 
-// LFO Destinations
+/**
+ * @enum PxLFODestination
+ * @brief Defines the possible modulation destinations for an LFO.
+ */
 typedef enum {
-    PX_LFO_DEST_NONE,
-    PX_LFO_DEST_PARAM1,
-    PX_LFO_DEST_PARAM2,
-    PX_LFO_DEST_PARAM3,
-    PX_LFO_DEST_FILTER_CUTOFF,
-    PX_LFO_DEST_AMP,
-    PX_LFO_DEST_PITCH,
-    PX_LFO_DEST_PAN,
-    PX_LFO_DEST_COUNT
+    PX_LFO_DEST_NONE,           /**< No modulation target. */
+    PX_LFO_DEST_PARAM1,         /**< Modulates the `modA` parameter in the waveform bytecode. */
+    PX_LFO_DEST_PARAM2,         /**< Modulates the `modB` parameter in the waveform bytecode. */
+    PX_LFO_DEST_PARAM3,         /**< Modulates the `modC` parameter in the waveform bytecode. */
+    PX_LFO_DEST_FILTER_CUTOFF,  /**< Modulates the filter's cutoff frequency (in Hz). */
+    PX_LFO_DEST_AMP,            /**< Modulates the voice's amplitude (for tremolo effects). */
+    PX_LFO_DEST_PITCH,          /**< Modulates the voice's pitch (in semitones, for vibrato effects). */
+    PX_LFO_DEST_PAN,            /**< Modulates the voice's stereo pan position (for auto-pan effects). */
+    PX_LFO_DEST_COUNT           /**< The total number of LFO destinations. */
 } PxLFODestination;
 
+/**
+ * @enum PxADSRParamType
+ * @brief Identifies a specific parameter within an ADSR envelope.
+ */
 typedef enum {
-    PX_ADSR_PARAM_ATTACK,
-    PX_ADSR_PARAM_DECAY,
-    PX_ADSR_PARAM_SUSTAIN,
-    PX_ADSR_PARAM_RELEASE
+    PX_ADSR_PARAM_ATTACK,   /**< The attack time parameter. */
+    PX_ADSR_PARAM_DECAY,    /**< The decay time parameter. */
+    PX_ADSR_PARAM_SUSTAIN,  /**< The sustain level parameter. */
+    PX_ADSR_PARAM_RELEASE   /**< The release time parameter. */
 } PxADSRParamType;
 
+/**
+ * @enum PxFilterParamType
+ * @brief Identifies a specific parameter of the global filter.
+ */
 typedef enum {
-    PX_FILTER_PARAM_CUTOFF,
-    PX_FILTER_PARAM_RESONANCE,
-    PX_FILTER_PARAM_ENV_AMOUNT,
-    PX_FILTER_PARAM_DRIVE,
-    PX_FILTER_PARAM_KEYTRACK,
-    PX_FILTER_PARAM_POLES       // New: Controls slope (2 for 12dB, 4 for 24dB)
+    PX_FILTER_PARAM_CUTOFF,     /**< The filter's cutoff frequency (in Hz). */
+    PX_FILTER_PARAM_RESONANCE,  /**< The filter's resonance (Q factor). */
+    PX_FILTER_PARAM_ENV_AMOUNT, /**< The amount of modulation applied from ADSRs to the cutoff frequency. */
+    PX_FILTER_PARAM_DRIVE,      /**< The amount of saturation/drive applied at the filter's input. */
+    PX_FILTER_PARAM_KEYTRACK,   /**< The amount the note's pitch affects the cutoff frequency (0.0 to 1.0). */
+    PX_FILTER_PARAM_POLES       /**< The number of poles, controlling the filter's slope (2 for 12dB/oct, 3 for 18dB/oct, 4 for 24dB/oct). */
 } PxFilterParamType;
 
+/**
+ * @enum PxLFOParamType
+ * @brief Identifies a specific parameter of an LFO.
+ */
 typedef enum {
-    PX_LFO_PARAM_FREQUENCY
+    PX_LFO_PARAM_FREQUENCY /**< The LFO's frequency (rate) in Hz. */
 } PxLFOParamType;
 
-// ADSR Envelope Parameters
+/**
+ * @struct PxADSRParams
+ * @brief Holds the configuration for an ADSR envelope.
+ */
 typedef struct {
-    float attack_time;
-    float decay_time;
-    float sustain_level;
-    float release_time;
-    bool enabled;
+    float attack_time;    /**< Attack time in seconds. */
+    float decay_time;     /**< Decay time in seconds. */
+    float sustain_level;  /**< Sustain level (0.0 to 1.0). */
+    float release_time;   /**< Release time in seconds. */
+    bool enabled;         /**< Whether the ADSR is active. */
 } PxADSRParams;
 
-// LFO Parameters
+/**
+ * @struct PxLFOParams
+ * @brief Holds the configuration for a Low-Frequency Oscillator (LFO).
+ */
 typedef struct {
-    int wave_idx;
-    float frequency;
-    bool enabled;
-    bool reset_on_key_on;
-    PxADSRParams adsr;
-    float mod_amounts[PX_LFO_DEST_COUNT];
+    int wave_idx;                           /**< The index of the waveform used by the LFO. */
+    float frequency;                        /**< The LFO's rate in Hz. */
+    bool enabled;                           /**< Whether the LFO is active. */
+    bool reset_on_key_on;                   /**< If true, the LFO's phase resets to 0 when a new note is triggered. */
+    PxADSRParams adsr;                      /**< An internal ADSR envelope that can shape the LFO's output level over time. */
+    float mod_amounts[PX_LFO_DEST_COUNT];   /**< An array specifying the modulation amount for each possible destination. */
 } PxLFOParams;
 
 
 // --- Configuration and Patch Structures ---
 
 // --- Core API Functions ---
-PX_API PxSynth*    PX_Create(const PxConfig* config);                                     // Creates and initializes a synthesizer instance. Returns NULL on failure.
-PX_API void        PX_Destroy(PxSynth* s);                                                // Destroys a synthesizer instance and frees all associated memory.
-PX_API void        PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames);        // Processes a block of audio. Fills the stereo_buffer with signed 16-bit samples.
-PX_API void        PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id);        // Triggers a new note. `key_id` is a unique int used to track the note for release.
-PX_API void        PX_NoteOff(PxSynth* s, int key_id);                                    // Releases a note previously triggered with the same `key_id`.
+
+/**
+ * @brief Creates and initializes a new synthesizer instance.
+ * @details This function allocates all necessary memory for the synthesizer, including voices, LFOs, and internal buffers,
+ * based on the provided configuration. It sets up a default patch and prepares the synth for processing.
+ * @param config A pointer to a `PxConfig` struct containing the desired configuration (e.g., sample rate, number of voices).
+ * @return A pointer to the newly created `PxSynth` instance, or `NULL` on failure (e.g., invalid config, memory allocation error).
+ */
+PX_API PxSynth*    PX_Create(const PxConfig* config);
+
+/**
+ * @brief Destroys a synthesizer instance and frees all associated memory.
+ * @param s A pointer to the `PxSynth` instance to be destroyed.
+ */
+PX_API void        PX_Destroy(PxSynth* s);
+
+/**
+ * @brief Processes a block of audio.
+ * @details This is the main audio processing function. It should be called from an audio callback. It generates audio samples
+ * for all active voices, applies effects (filter, limiter), and fills the provided buffer. This function is real-time safe.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param stereo_buffer A pointer to a stereo buffer to be filled with signed 16-bit audio samples (interleaved L/R).
+ * @param num_frames The number of stereo frames to process (e.g., for a buffer size of 512, this would be 256).
+ */
+PX_API void        PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames);
+
+/**
+ * @brief Triggers a new note to be played.
+ * @details This function is thread-safe and sends a command to the audio thread to start a new note.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param midi_note The MIDI note number (0-127) of the note to play.
+ * @param wave_idx The index of the waveform to be used for the note's oscillator.
+ * @param key_id A unique integer identifier for this note event. This ID is used to track the note so it can be released later with `PX_NoteOff`.
+ */
+PX_API void        PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id);
+
+/**
+ * @brief Releases a note that was previously triggered.
+ * @details This function is thread-safe and sends a command to the audio thread to begin the release phase of the note's envelopes.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param key_id The unique integer identifier that was used to trigger the note in `PX_NoteOn`.
+ */
+PX_API void        PX_NoteOff(PxSynth* s, int key_id);
+
 
 // --- Voice ADSR Parameters ---
-PX_API void        PX_SetVoiceADSRParam(PxSynth* s, int idx, PxADSRParamType p, float v); // Sets a core parameter (Attack, Decay, etc.) for a voice ADSR.
-PX_API float       PX_GetVoiceADSRParam(PxSynth* s, int idx, PxADSRParamType p);          // Gets a core parameter for a voice ADSR.
-PX_API void        PX_SetVoiceADSREnabled(PxSynth* s, int idx, bool enabled);             // Enables or disables a voice ADSR.
-PX_API bool        PX_GetVoiceADSREnabled(PxSynth* s, int idx);                           // Checks if a voice ADSR is enabled.
-PX_API void        PX_SetVoiceADSRModAmount(PxSynth* s, int idx, PxADSRDestination d, float v); // Sets the modulation v from a voice ADSR to a destination.
-PX_API float       PX_GetVoiceADSRModAmount(PxSynth* s, int idx, PxADSRDestination d);    // Gets the modulation v from a voice ADSR to a destination.
+
+/**
+ * @brief Sets a core parameter for a specific voice ADSR template.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the voice ADSR template to modify.
+ * @param p The type of parameter to set (e.g., `PX_ADSR_PARAM_ATTACK`).
+ * @param v The new value for the parameter.
+ */
+PX_API void        PX_SetVoiceADSRParam(PxSynth* s, int idx, PxADSRParamType p, float v);
+
+/**
+ * @brief Gets a core parameter for a specific voice ADSR template.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the voice ADSR template.
+ * @param p The type of parameter to get.
+ * @return The current value of the parameter.
+ */
+PX_API float       PX_GetVoiceADSRParam(PxSynth* s, int idx, PxADSRParamType p);
+
+/**
+ * @brief Enables or disables a specific voice ADSR template.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the voice ADSR template.
+ * @param enabled `true` to enable, `false` to disable.
+ */
+PX_API void        PX_SetVoiceADSREnabled(PxSynth* s, int idx, bool enabled);
+
+/**
+ * @brief Checks if a specific voice ADSR template is enabled.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the voice ADSR template.
+ * @return `true` if enabled, `false` otherwise.
+ */
+PX_API bool        PX_GetVoiceADSREnabled(PxSynth* s, int idx);
+
+/**
+ * @brief Sets the modulation amount from a voice ADSR to a specific destination.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the source voice ADSR template.
+ * @param d The modulation destination.
+ * @param v The modulation amount (typically -1.0 to 1.0, but can vary by destination).
+ */
+PX_API void        PX_SetVoiceADSRModAmount(PxSynth* s, int idx, PxADSRDestination d, float v);
+
+/**
+ * @brief Gets the modulation amount from a voice ADSR to a specific destination.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the source voice ADSR template.
+ * @param d The modulation destination.
+ * @return The current modulation amount.
+ */
+PX_API float       PX_GetVoiceADSRModAmount(PxSynth* s, int idx, PxADSRDestination d);
+
 
 // --- LFO Core Parameters ---
-PX_API void        PX_SetLFOParam(PxSynth* s, int idx, PxLFOParamType p, float v);         // Sets a core parameter (e.g., Frequency) for an LFO.
-PX_API float       PX_GetLFOParam(PxSynth* s, int idx, PxLFOParamType p);                  // Gets a core parameter for an LFO.
-PX_API void        PX_SetLFOWaveform(PxSynth* s, int idx, int wave_idx);                  // Sets the waveform for an LFO by its index.
-PX_API int         PX_GetLFOWaveform(PxSynth* s, int idx);                                // Gets the current waveform index for an LFO.
-PX_API void        PX_SetLFOEnabled(PxSynth* s, int idx, bool enabled);                   // Enables or disables an LFO.
-PX_API bool        PX_GetLFOEnabled(PxSynth* s, int idx);                                 // Checks if an LFO is enabled.
-PX_API void        PX_SetLFOResetOnKeyOn(PxSynth* s, int idx, bool reset);                // Sets whether an LFO's phase resets on Note On.
-PX_API bool        PX_GetLFOResetOnKeyOn(PxSynth* s, int idx);                            // Checks if an LFO's phase resets on Note On.
+
+/**
+ * @brief Sets a core parameter for a specific LFO.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the LFO to modify.
+ * @param p The type of parameter to set (e.g., `PX_LFO_PARAM_FREQUENCY`).
+ * @param v The new value for the parameter.
+ */
+PX_API void        PX_SetLFOParam(PxSynth* s, int idx, PxLFOParamType p, float v);
+
+/**
+ * @brief Gets a core parameter for a specific LFO.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the LFO.
+ * @param p The type of parameter to get.
+ * @return The current value of the parameter.
+ */
+PX_API float       PX_GetLFOParam(PxSynth* s, int idx, PxLFOParamType p);
+
+/**
+ * @brief Sets the waveform for an LFO.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the LFO.
+ * @param wave_idx The index of the waveform to use.
+ */
+PX_API void        PX_SetLFOWaveform(PxSynth* s, int idx, int wave_idx);
+
+/**
+ * @brief Gets the current waveform index for an LFO.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the LFO.
+ * @return The waveform index.
+ */
+PX_API int         PX_GetLFOWaveform(PxSynth* s, int idx);
+
+/**
+ * @brief Enables or disables an LFO.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the LFO.
+ * @param enabled `true` to enable, `false` to disable.
+ */
+PX_API void        PX_SetLFOEnabled(PxSynth* s, int idx, bool enabled);
+
+/**
+ * @brief Checks if an LFO is enabled.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the LFO.
+ * @return `true` if enabled, `false` otherwise.
+ */
+PX_API bool        PX_GetLFOEnabled(PxSynth* s, int idx);
+
+/**
+ * @brief Sets whether an LFO's phase should reset when a new note is triggered.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the LFO.
+ * @param reset `true` to enable phase reset, `false` otherwise.
+ */
+PX_API void        PX_SetLFOResetOnKeyOn(PxSynth* s, int idx, bool reset);
+
+/**
+ * @brief Checks if an LFO's phase is set to reset on note on.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the LFO.
+ * @return `true` if phase reset is enabled, `false` otherwise.
+ */
+PX_API bool        PX_GetLFOResetOnKeyOn(PxSynth* s, int idx);
+
 
 // --- LFO ADSR Parameters ---
-PX_API void        PX_SetLFOADSRParam(PxSynth* s, int idx, PxADSRParamType p, float v);    // Sets a core parameter for an LFO's internal ADSR.
-PX_API float       PX_GetLFOADSRParam(PxSynth* s, int idx, PxADSRParamType p);             // Gets a core parameter for an LFO's internal ADSR.
-PX_API void        PX_SetLFOADSREnabled(PxSynth* s, int idx, bool enabled);                // Enables or disables an LFO's internal ADSR.
-PX_API bool        PX_GetLFOADSREnabled(PxSynth* s, int idx);                             // Checks if an LFO's internal ADSR is enabled.
+
+/**
+ * @brief Sets a core parameter for an LFO's internal ADSR envelope.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the LFO whose ADSR will be modified.
+ * @param p The type of ADSR parameter to set.
+ * @param v The new value for the parameter.
+ */
+PX_API void        PX_SetLFOADSRParam(PxSynth* s, int idx, PxADSRParamType p, float v);
+
+/**
+ * @brief Gets a core parameter from an LFO's internal ADSR envelope.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the LFO.
+ * @param p The type of ADSR parameter to get.
+ * @return The current value of the parameter.
+ */
+PX_API float       PX_GetLFOADSRParam(PxSynth* s, int idx, PxADSRParamType p);
+
+/**
+ * @brief Enables or disables an LFO's internal ADSR envelope.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the LFO.
+ * @param enabled `true` to enable, `false` to disable.
+ */
+PX_API void        PX_SetLFOADSREnabled(PxSynth* s, int idx, bool enabled);
+
+/**
+ * @brief Checks if an LFO's internal ADSR envelope is enabled.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the LFO.
+ * @return `true` if the ADSR is enabled, `false` otherwise.
+ */
+PX_API bool        PX_GetLFOADSREnabled(PxSynth* s, int idx);
+
+/**
+ * @brief Gets a snapshot of an LFO's real-time state for UI display.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param lfo_idx The index of the LFO.
+ * @return A `PxLFOInfo` struct containing the LFO's current state.
+ */
 PX_API PxLFOInfo   PX_GetLFOInfo(PxSynth* s, int lfo_idx);
 
+
 // --- LFO Routing ---
-PX_API void        PX_SetLFOModAmount(PxSynth* s, int idx, PxLFODestination d, float v);  // Sets the modulation v from an LFO to a destination.
-PX_API float       PX_GetLFOModAmount(PxSynth* s, int idx, PxLFODestination d);           // Gets the modulation v from an LFO to a destination.
+
+/**
+ * @brief Sets the modulation amount from an LFO to a specific destination.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the source LFO.
+ * @param d The modulation destination.
+ * @param v The modulation amount.
+ */
+PX_API void        PX_SetLFOModAmount(PxSynth* s, int idx, PxLFODestination d, float v);
+
+/**
+ * @brief Gets the modulation amount from an LFO to a specific destination.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the source LFO.
+ * @param d The modulation destination.
+ * @return The current modulation amount.
+ */
+PX_API float       PX_GetLFOModAmount(PxSynth* s, int idx, PxLFODestination d);
+
+/**
+ * @brief Sets the update interval for all LFOs.
+ * @details LFOs are updated at a lower rate than the audio sample rate for performance. This sets that rate.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param interval_ms The update interval in milliseconds.
+ */
 PX_API void        PX_SetLFOUpdateInterval(PxSynth* s, float interval_ms);
+
+/**
+ * @brief Gets the update interval for all LFOs.
+ * @param s A pointer to the `PxSynth` instance.
+ * @return The update interval in milliseconds.
+ */
 PX_API float       PX_GetLFOUpdateInterval(PxSynth* s);
 
+
 // --- Unilegato ---
+
+/**
+ * @brief Enables or disables the unilegato/portamento mode.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param enabled `true` to enable unilegato, `false` to disable.
+ */
 PX_API void        PX_SetUnilegatoEnabled(PxSynth* s, bool enabled);
+
+/**
+ * @brief Checks if unilegato mode is enabled.
+ * @param s A pointer to the `PxSynth` instance.
+ * @return `true` if unilegato is enabled, `false` otherwise.
+ */
 PX_API bool        PX_GetUnilegatoEnabled(PxSynth* s);
+
+/**
+ * @brief Sets the slide time for unilegato/portamento.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param duration_s The slide duration in seconds.
+ */
 PX_API void        PX_SetUnilegatoSlideTime(PxSynth* s, float duration_s);
+
+/**
+ * @brief Gets the slide time for unilegato/portamento.
+ * @param s A pointer to the `PxSynth` instance.
+ * @return The slide duration in seconds.
+ */
 PX_API float       PX_GetUnilegatoSlideTime(PxSynth* s);
 
+
 // --- Filter Parameters ---
-PX_API void        PX_SetFilterParam(PxSynth* s, PxFilterParamType p, float v);           // Sets a core parameter (Cutoff, Resonance, etc.) for the global filter.
-PX_API float       PX_GetFilterParam(PxSynth* s, PxFilterParamType p);                    // Gets a core parameter for the global filter.
-PX_API void        PX_SetFilterMode(PxSynth* s, PxFilterMode mode);                       // Sets the filter type (e.g., Low-pass, Band-pass).
-PX_API PxFilterMode PX_GetFilterMode(PxSynth* s);                                        // Gets the current filter type.
+
+/**
+ * @brief Sets a core parameter for the global filter.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param p The type of filter parameter to set.
+ * @param v The new value for the parameter.
+ */
+PX_API void        PX_SetFilterParam(PxSynth* s, PxFilterParamType p, float v);
+
+/**
+ * @brief Gets a core parameter for the global filter.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param p The type of filter parameter to get.
+ * @return The current value of the parameter.
+ */
+PX_API float       PX_GetFilterParam(PxSynth* s, PxFilterParamType p);
+
+/**
+ * @brief Sets the filter mode (e.g., Low-pass, Band-pass).
+ * @param s A pointer to the `PxSynth` instance.
+ * @param mode The desired filter mode.
+ */
+PX_API void        PX_SetFilterMode(PxSynth* s, PxFilterMode mode);
+
+/**
+ * @brief Gets the current filter mode.
+ * @param s A pointer to the `PxSynth` instance.
+ * @return The current `PxFilterMode`.
+ */
+PX_API PxFilterMode PX_GetFilterMode(PxSynth* s);
+
 
 // --- Global & Limiter Parameters ---
-PX_API void        PX_SetGlobalVoicePan(PxSynth* s, float pan);                           // Sets the base stereo pan position (-1.0 to 1.0) for new voices.
-PX_API float       PX_GetGlobalVoicePan(PxSynth* s);                                      // Gets the base stereo pan position.
-PX_API void        PX_SetLimiterThreshold(PxSynth* s, float threshold);                   // Sets the limiter threshold (linear, 0.0 to 1.0).
-PX_API float       PX_GetLimiterThreshold(PxSynth* s);                                    // Gets the limiter threshold.
-PX_API void        PX_SetLimiterRelease(PxSynth* s, float release_ms);                    // Sets the limiter release time in milliseconds.
-PX_API float       PX_GetLimiterRelease(PxSynth* s);                                      // Gets the limiter release time.
+
+/**
+ * @brief Sets the base stereo pan position for all new voices.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param pan The pan position, from -1.0 (full left) to 1.0 (full right).
+ */
+PX_API void        PX_SetGlobalVoicePan(PxSynth* s, float pan);
+
+/**
+ * @brief Gets the base stereo pan position.
+ * @param s A pointer to the `PxSynth` instance.
+ * @return The current pan position.
+ */
+PX_API float       PX_GetGlobalVoicePan(PxSynth* s);
+
+/**
+ * @brief Sets the threshold for the master bus limiter.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param threshold The threshold in linear amplitude (0.0 to 1.0).
+ */
+PX_API void        PX_SetLimiterThreshold(PxSynth* s, float threshold);
+
+/**
+ * @brief Gets the threshold for the master bus limiter.
+ * @param s A pointer to the `PxSynth` instance.
+ * @return The current limiter threshold.
+ */
+PX_API float       PX_GetLimiterThreshold(PxSynth* s);
+
+/**
+ * @brief Sets the release time for the master bus limiter.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param release_ms The release time in milliseconds.
+ */
+PX_API void        PX_SetLimiterRelease(PxSynth* s, float release_ms);
+
+/**
+ * @brief Gets the release time for the master bus limiter.
+ * @param s A pointer to the `PxSynth` instance.
+ * @return The current limiter release time in milliseconds.
+ */
+PX_API float       PX_GetLimiterRelease(PxSynth* s);
+
 
 // --- UI Helper / Info Functions ---
-PX_API PxVoiceInfo PX_GetVoiceInfo(PxSynth* s, int idx);                                  // Gets a snapshot of a voice's real-time state for UI display.
-PX_API PxLimiterInfo PX_GetLimiterInfo(PxSynth* s);                                       // Gets a snapshot of the limiter's real-time state (e.g., gain reduction).
-PX_API int         PX_GetNumWaveforms();                                                  // Gets the total number of available waveforms.
-PX_API PxWaveInfo  PX_GetWaveInfo(int idx);                                               // Gets information (name, compiled status) about a specific waveform.
-PX_API const char* PX_GetFilterModeName(PxFilterMode mode);                               // Gets the string representation of a filter mode for display.
-PX_API const char* PX_GetADSRDestinationName(PxADSRDestination d);                     // Gets the string representation of an ADSR destination for display.
-PX_API const char* PX_GetLFODestinationName(PxLFODestination d);                       // Gets the string representation of an LFO destination for display.
-PX_API const char* PX_GetADSRStateName(PxADSRState state);                                // Gets the string representation of an ADSR state for display.
+
+/**
+ * @brief Gets a snapshot of a voice's real-time state for UI display.
+ * @param s A pointer to the `PxSynth` instance.
+ * @param idx The index of the voice to inspect.
+ * @return A `PxVoiceInfo` struct containing the voice's current state.
+ */
+PX_API PxVoiceInfo PX_GetVoiceInfo(PxSynth* s, int idx);
+
+/**
+ * @brief Gets a snapshot of the limiter's real-time state.
+ * @param s A pointer to the `PxSynth` instance.
+ * @return A `PxLimiterInfo` struct containing the limiter's current state (e.g., gain reduction).
+ */
+PX_API PxLimiterInfo PX_GetLimiterInfo(PxSynth* s);
+
+/**
+ * @brief Gets the total number of available waveforms.
+ * @return The number of waveforms.
+ */
+PX_API int         PX_GetNumWaveforms();
+
+/**
+ * @brief Gets information about a specific waveform.
+ * @param idx The index of the waveform.
+ * @return A `PxWaveInfo` struct containing the waveform's name and compiled status.
+ */
+PX_API PxWaveInfo  PX_GetWaveInfo(int idx);
+
+/**
+ * @brief Gets the string representation of a filter mode.
+ * @param mode The filter mode enum.
+ * @return A constant string with the name of the filter mode (e.g., "LP", "HP").
+ */
+PX_API const char* PX_GetFilterModeName(PxFilterMode mode);
+
+/**
+ * @brief Gets the string representation of an ADSR destination.
+ * @param d The ADSR destination enum.
+ * @return A constant string with the name of the destination.
+ */
+PX_API const char* PX_GetADSRDestinationName(PxADSRDestination d);
+
+/**
+ * @brief Gets the string representation of an LFO destination.
+ * @param d The LFO destination enum.
+ * @return A constant string with the name of the destination.
+ */
+PX_API const char* PX_GetLFODestinationName(PxLFODestination d);
+
+/**
+ * @brief Gets the string representation of an ADSR state.
+ * @param state The ADSR state enum.
+ * @return A constant string with the name of the state (e.g., "ATTACK", "IDLE").
+ */
+PX_API const char* PX_GetADSRStateName(PxADSRState state);
 
 #endif // POLYSONIX_H
 
