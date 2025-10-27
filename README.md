@@ -33,17 +33,17 @@ like UI, input handling, and audio device management.
 - **Dynamic Waveform Generation:** Leverages the `polysonix_wave` library to execute bytecode expressions for oscillators and LFOs, enabling complex,
   evolving timbres that go far beyond simple wavetables.
 - **Rich Synthesis Architecture:**
-  - **Polyphony:** Configurable number of voices with intelligent voice stealing.
-  - **Modulation Matrix:** Multiple ADSRs and LFOs per voice that can be routed to modulate a wide range of parameters.
-  - **ADSRs:** Per-voice ADSRs and per-LFO ADSRs for deep control over amplitude and modulation contours.
-  - **LFOs:** Multiple LFOs with assignable waveforms, frequency, phase reset options, and numerous modulation destinations, including pitch, filter,
-    amplitude, and stereo pan.
+  - **Polyphony:** Configurable number of voices (up to 16) with intelligent voice stealing.
+  - **ADSR Envelopes**: Up to 3 independent ADSR envelopes per voice for modulating various parameters.
+  - **LFOs**: Up to 3 independent Low-Frequency Oscillators (LFOs) with their own ADSRs and flexible routing.
   - **Advanced Multi-Mode Filter:** A highly flexible state-variable filter per voice. It features multiple modes including standard shapes (LP, BP, HP, Notch),
         unique combo-filters (e.g., LP+BP), and a key feature: selectable slopes. These provide distinct tonal characters: 12dB/oct (aggressive, Oberheim-style),
         18dB/oct (balanced, Roland-style), and 24dB/oct (smooth, Moog-style), available for all filter types. The filter also includes key tracking, drive,
         and extensive envelope/LFO modulation.
+  - **Unilegato Mode**: Smooth, monophonic legato with pitch sliding between notes.
 - **Stereo Signal Path:** Full stereo output with per-voice panning and LFO pan modulation.
 - **Built-in Dynamics:** Includes a per-voice soft-clipper to prevent harsh transients and a master bus lookahead limiter to prevent final output clipping.
+- **Oscillator Quality Modes**: Choose between per-sample calculation for quality or interpolated modes for performance.
 - **Decoupled Design:** The engine is completely independent of any graphics or windowing library. The host application is responsible for the audio
   callback, making the engine portable to any backend (e.g., Raylib, PortAudio, SDL, MiniAudio).
 
@@ -70,8 +70,15 @@ To use this library, do this in **one** C or C++ file:
 #define POLYSONIX_IMPLEMENTATION
 #include "polysonix.h"
 ```
-
 All other files can simply `#include "polysonix.h"`.
+
+1.  Define `POLYSONIX_IMPLEMENTATION` in one C/C++ file before including this header.
+2.  Include `polysonix.h` in any other files that need to interact with the synthesizer.
+3.  Create a `PxConfig` struct and populate it with your desired settings (sample rate, voices, etc.).
+4.  Call `PX_Create()` with your config to get a `PxSynth` instance.
+5.  In your audio callback, call `PX_Process()` to generate audio samples.
+6.  Use `PX_NoteOn()` and `PX_NoteOff()` from your main thread to control notes.
+7.  When finished, call `PX_Destroy()` to free all resources.
 
 ## Quick Start Example
 ```c
