@@ -197,7 +197,7 @@ typedef struct PxConfig {
     int num_lfos;                       /**< The number of global Low-Frequency Oscillators (LFOs) (e.g., 3). */
     int num_voice_adsrs;                /**< The number of ADSR envelopes available per voice (e.g., 3). */
     float sample_rate;                  /**< The audio sample rate in Hz (e.g., 44100.0f). */
-    int samples_per_lfo_update;
+    int samples_per_lfo_update;         /**< The number of audio samples to process between each LFO update. */
     float lfo_update_interval_ms;       /**< The time in milliseconds between LFO value updates for performance (e.g., 1.0f). */
     PxOscillatorUpdateMode osc_update_mode; /**< The quality/performance mode for the main voice oscillators. */
     float osc_fixed_update_rate_hz;     /**< The update rate for oscillators in `PX_OSC_UPDATE_MODE_FIXED_RATE`. */
