@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <cglm/cglm.h>
 
 
 // --- Temporary Type Definitions (to replace raylib types) ---
@@ -63,6 +64,14 @@ static PxSynth* synth = NULL;
 static SituationSound audio_stream; // Will be a streaming sound managed by Situation
 static int16_t mix_buffer[SAMPLES_PER_UPDATE * CHANNELS];
 static int16_t static_display_buffer[SINGLE_CYCLE_LENGTH];
+
+// --- NEW: CPU-side rendering resources ---
+static SituationImage canvas_image;
+static SituationTexture canvas_texture;
+static SituationShader canvas_shader;
+static SituationFont main_font;
+static mat4 projection;
+
 
 // --- UI & Control State ---
 static int current_wave_index = 0;
@@ -162,34 +171,128 @@ static uint64_t on_audio_stream_seek(void* user_data, int64_t offset, int whence
 }
 
 // --- UI Drawing Functions (Situation Replacements) ---
-void DrawText(const char* text, int x, int y, int fontSize, Color color) {
-    // Placeholder - In a real implementation, this would render text using a font atlas
-    // and SituationCmdDrawQuad calls. For now, it does nothing.
-}
 
-void DrawRectangleLines(int x, int y, int width, int height, Color color) {
-    // Placeholder for Situation
-}
-
-void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color) {
-    // Placeholder for Situation
-}
-
-void DrawLineStrip(Vector2 *points, int pointCount, Color color) {
-    // Placeholder for Situation
-}
-
-void DrawCircle(int centerX, int centerY, float radius, Color color) {
-    // Placeholder for Situation
-}
-
-int MeasureText(const char *text, int fontSize) {
-    // Placeholder for Situation
-    return 0;
+static inline ColorRGBA rl_to_sit_color(Color color) {
+    return (ColorRGBA){ color.r, color.g, color.b, color.a };
 }
 
 void DrawPixelV(Vector2 position, Color color) {
-    // Placeholder for Situation
+    SituationSetPixelColor(&canvas_image, (int)position.x, (int)position.y, rl_to_sit_color(color));
+}
+
+void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color) {
+    int dx = abs(endPosX - startPosX);
+    int sx = startPosX < endPosX ? 1 : -1;
+    int dy = -abs(endPosY - startPosY);
+    int sy = startPosY < endPosY ? 1 : -1;
+    int err = dx + dy;
+    int e2;
+
+    for (;;) {
+        SituationSetPixelColor(&canvas_image, startPosX, startPosY, rl_to_sit_color(color));
+        if (startPosX == endPosX && startPosY == endPosY) break;
+        e2 = 2 * err;
+        if (e2 >= dy) {
+            err += dy;
+            startPosX += sx;
+        }
+        if (e2 <= dx) {
+            err += dx;
+            startPosY += sy;
+        }
+    }
+}
+
+void DrawLineStrip(Vector2 *points, int pointCount, Color color) {
+    if (pointCount < 2) return;
+    for (int i = 0; i < pointCount - 1; i++) {
+        DrawLine((int)points[i].x, (int)points[i].y, (int)points[i+1].x, (int)points[i+1].y, color);
+    }
+}
+
+void DrawCircle(int centerX, int centerY, float radius, Color color) {
+    int x = (int)radius;
+    int y = 0;
+    int err = 0;
+    ColorRGBA sit_color = rl_to_sit_color(color);
+
+    while (x >= y) {
+        SituationSetPixelColor(&canvas_image, centerX + x, centerY + y, sit_color);
+        SituationSetPixelColor(&canvas_image, centerX + y, centerY + x, sit_color);
+        SituationSetPixelColor(&canvas_image, centerX - y, centerY + x, sit_color);
+        SituationSetPixelColor(&canvas_image, centerX - x, centerY + y, sit_color);
+        SituationSetPixelColor(&canvas_image, centerX - x, centerY - y, sit_color);
+        SituationSetPixelColor(&canvas_image, centerX - y, centerY - x, sit_color);
+        SituationSetPixelColor(&canvas_image, centerX + y, centerY - x, sit_color);
+        SituationSetPixelColor(&canvas_image, centerX + x, centerY - y, sit_color);
+
+        y++;
+        err += 1 + 2*y;
+        if (2*(err-x) + 1 > 0) {
+            x--;
+            err += 1 - 2*x;
+        }
+    }
+}
+
+void DrawCircleFilled(int centerX, int centerY, float radius, Color color) {
+    int x = (int)radius;
+    int y = 0;
+    int err = 0;
+    ColorRGBA sit_color = rl_to_sit_color(color);
+
+    while (x >= y) {
+        // Draw horizontal lines for each scanline of the circle
+        for (int i = centerX - x; i <= centerX + x; i++) {
+            SituationSetPixelColor(&canvas_image, i, centerY + y, sit_color);
+            SituationSetPixelColor(&canvas_image, i, centerY - y, sit_color);
+        }
+        for (int i = centerX - y; i <= centerX + y; i++) {
+            SituationSetPixelColor(&canvas_image, i, centerY + x, sit_color);
+            SituationSetPixelColor(&canvas_image, i, centerY - x, sit_color);
+        }
+
+        y++;
+        err += 1 + 2*y;
+        if (2*(err-x) + 1 > 0) {
+            x--;
+            err += 1 - 2*x;
+        }
+    }
+}
+
+void DrawRectangle(int x, int y, int width, int height, Color color) {
+    ColorRGBA sit_color = rl_to_sit_color(color);
+    for (int j = y; j < y + height; j++) {
+        for (int i = x; i < x + width; i++) {
+            SituationSetPixelColor(&canvas_image, i, j, sit_color);
+        }
+    }
+}
+
+void DrawRectangleRec(Rectangle rec, Color color) {
+    DrawRectangle((int)rec.x, (int)rec.y, (int)rec.width, (int)rec.height, color);
+}
+
+
+void DrawRectangleLines(int x, int y, int width, int height, Color color) {
+    DrawLine(x, y, x + width, y, color);
+    DrawLine(x + width, y, x + width, y + height, color);
+    DrawLine(x + width, y + height, x, y + height, color);
+    DrawLine(x, y + height, x, y, color);
+}
+
+
+void DrawText(const char* text, int x, int y, int fontSize, Color color) {
+    if (!main_font.id) return;
+    SituationImageDrawTextEx(&canvas_image, main_font, text, (Vector2){(float)x, (float)y}, (float)fontSize, 1.0f, 0.0f, 0.0f, rl_to_sit_color(color), (ColorRGBA){0,0,0,0}, 0.0f);
+}
+
+int MeasureText(const char *text, int fontSize) {
+    if (!main_font.id) return 0;
+    vec2 size;
+    glm_vec2_copy(SituationMeasureText(main_font, text, (float)fontSize, 1.0f), size);
+    return (int)size[0];
 }
 
 static void DrawLFOIndicator(float lfo_value_normalized, int x, int y, int radius) {
@@ -269,11 +372,51 @@ static bool InitializeApplication() {
         printf("Warning: Audio device not ready. Sound will not play.\n");
     }
 
+    main_font = SituationLoadFont("./font.ttf");
+    if (!SituationIsFontValid(main_font)) {
+        printf("Warning: Failed to load font. Text will not be rendered.\n");
+    }
+
+    canvas_image = SituationGenImageColor(SCREEN_WIDTH, SCREEN_HEIGHT, (ColorRGBA){0,0,0,255});
+    canvas_texture = SituationLoadTextureFromImage(canvas_image);
+
+    const char* vs_canvas =
+        "#version 330 core\n"
+        "layout (location = 0) in vec3 aPos;\n"
+        "out vec2 v_tex_coord;\n"
+        "uniform mat4 u_mvp;\n"
+        "void main() {\n"
+        "    gl_Position = u_mvp * vec4(aPos.xy, 0.0, 1.0);\n"
+        "    v_tex_coord = aPos.xy * 0.5 + 0.5;\n"
+        "    v_tex_coord.y = 1.0 - v_tex_coord.y;\n"
+        "}\n";
+
+    const char* fs_canvas =
+        "#version 330 core\n"
+        "out vec4 FragColor;\n"
+        "in vec2 v_tex_coord;\n"
+        "uniform sampler2D u_texture0;\n"
+        "void main() {\n"
+        "    FragColor = texture(u_texture0, v_tex_coord);\n"
+        "}\n";
+
+    canvas_shader = SituationLoadShaderFromMemory(vs_canvas, fs_canvas);
+    if (!canvas_shader.id) {
+        printf("Failed to load canvas shader.\n");
+        return false;
+    }
+
+    glm_ortho(0.0f, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT, 0.0f, -1.0f, 1.0f, projection);
+
     return true;
 }
 
 static void CleanupApplication() {
     printf("Exiting program.\n");
+
+    if (SituationIsFontValid(main_font)) {
+        SituationUnloadFont(main_font);
+    }
 
     if (SituationIsAudioDeviceReady()) {
         SituationStopLoadedSound(&audio_stream);
@@ -453,15 +596,10 @@ static void DrawLiveOscillator(int16_t* stereo_buffer, int sampleFrames, int x, 
 }
 
 static void DrawFrame() {
-    if (SituationAcquireFrameCommandBuffer()) {
-        SituationRenderPassInfo pass_info = {
-            .color_load_action = SIT_LOAD_ACTION_CLEAR,
-            .clear_color = { 245, 245, 245, 255 }, // RAYWHITE
-            .color_store_action = SIT_STORE_ACTION_STORE,
-        };
-        SituationCmdBeginRenderPass(SituationGetMainCommandBuffer(), &pass_info);
+    // --- 1. Draw everything to the CPU-side canvas ---
+    SituationImageClearBackground(&canvas_image, (ColorRGBA){ 245, 245, 245, 255 }); // RAYWHITE
 
-        // --- Local constants for layout ---
+    // --- Local constants for layout ---
     int y_offset = 5;
     int line_height = 16;
     int small_line_height = 14;
@@ -657,6 +795,30 @@ static void DrawFrame() {
 
     // --- Live Output Display (Identical to v8) ---
     DrawLiveOscillator(mix_buffer, SAMPLES_PER_UPDATE, 10, waveform_draw_y + DRAW_WAVEFORM_HEIGHT + 10, SCREEN_WIDTH - 20, 80);
+
+    // --- 2. Upload the canvas to the GPU and render it ---
+    SituationUpdateTexture(canvas_texture, canvas_image.data);
+
+    if (SituationAcquireFrameCommandBuffer()) {
+        SituationRenderPassInfo pass_info = {
+            .color_load_action = SIT_LOAD_ACTION_DONT_CARE,
+            .color_store_action = SIT_STORE_ACTION_STORE,
+        };
+        SituationCmdBeginRenderPass(SituationGetMainCommandBuffer(), &pass_info);
+
+        SituationCmdBindPipeline(SituationGetMainCommandBuffer(), canvas_shader);
+        SituationCmdBindTexture(SituationGetMainCommandBuffer(), canvas_texture, 0);
+
+        mat4 model;
+        glm_mat4_identity(model);
+        glm_translate(model, (vec3){ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f });
+        glm_scale(model, (vec3){ SCREEN_WIDTH, SCREEN_HEIGHT, 1.0f });
+
+        mat4 mvp;
+        glm_mat4_mul(projection, model, mvp);
+        SituationCmdSetShaderMat4(SituationGetMainCommandBuffer(), "u_mvp", mvp);
+
+        SituationCmdDrawQuad(SituationGetMainCommandBuffer());
 
         SituationCmdEndRenderPass(SituationGetMainCommandBuffer());
         SituationEndFrame();
