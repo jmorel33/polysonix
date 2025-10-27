@@ -186,6 +186,81 @@ typedef struct {
 
 // --- Configuration and Patch Structures ---
 
+/**
+ * @struct PxConfig
+ * @brief Configuration settings for creating a new synthesizer instance.
+ * @details This structure is passed to `PX_Create` to define the synthesizer's
+ * fundamental properties, such as the number of voices, LFOs, and the audio sample rate.
+ */
+typedef struct PxConfig {
+    int num_voices;                     /**< The maximum number of simultaneous voices (e.g., 16). */
+    int num_lfos;                       /**< The number of global Low-Frequency Oscillators (LFOs) (e.g., 3). */
+    int num_voice_adsrs;                /**< The number of ADSR envelopes available per voice (e.g., 3). */
+    float sample_rate;                  /**< The audio sample rate in Hz (e.g., 44100.0f). */
+    int samples_per_lfo_update;
+    float lfo_update_interval_ms;       /**< The time in milliseconds between LFO value updates for performance (e.g., 1.0f). */
+    PxOscillatorUpdateMode osc_update_mode; /**< The quality/performance mode for the main voice oscillators. */
+    float osc_fixed_update_rate_hz;     /**< The update rate for oscillators in `PX_OSC_UPDATE_MODE_FIXED_RATE`. */
+    float nyquist_precision_multiplier; /**< The multiplier for the dynamic update rate in `PX_OSC_UPDATE_MODE_NYQUIST`. */
+} PxConfig;
+
+/**
+ * @struct PxLimiterInfo
+ * @brief A snapshot of the master limiter's real-time state.
+ * @details This struct provides read-only information about the limiter's current
+ * performance, primarily for UI display purposes.
+ */
+typedef struct PxLimiterInfo {
+    bool initialized;           /**< `true` if the limiter has been successfully initialized. */
+    float gain_reduction_db;    /**< The current amount of gain reduction being applied, in decibels (a non-negative value). */
+} PxLimiterInfo;
+
+/**
+ * @struct PxWaveInfo
+ * @brief Information about a specific waveform definition.
+ * @details Provides metadata about a waveform, such as its name and compilation status.
+ */
+typedef struct PxWaveInfo {
+    const char* name;   /**< The descriptive name of the waveform. */
+    bool is_compiled;   /**< `true` if the waveform's script has been successfully compiled into bytecode. */
+} PxWaveInfo;
+
+/**
+ * @struct PxLFOInfo
+ * @brief A snapshot of a global LFO's real-time state.
+ * @details This struct provides a read-only view of an LFO's current internal state,
+ * intended for UI visualization (e.g., drawing an oscilloscope or monitoring values).
+ */
+typedef struct PxLFOInfo {
+    bool enabled;           /**< `true` if this LFO is currently active. */
+    int wave_idx;           /**< The index of the waveform this LFO is using. */
+    float frequency;        /**< The current frequency (rate) of the LFO in Hz. */
+    bool reset_on_key_on;   /**< `true` if the LFO's phase resets on a new note event. */
+    bool adsr_enabled;      /**< `true` if the LFO's internal ADSR is active. */
+    float adsr_level;       /**< The current output level of the LFO's internal ADSR (0.0 to 1.0). */
+    float phase;            /**< The LFO's current phase, from 0.0 to 1.0. */
+    float raw_output;       /**< The direct, unmodified output of the LFO's waveform (-1.0 to 1.0). */
+    float final_output;     /**< The final output after being shaped by its internal ADSR. */
+} PxLFOInfo;
+
+/**
+ * @struct PxVoiceInfo
+ * @brief A snapshot of a single voice's real-time state.
+ * @details This struct provides a read-only view of a voice's most important
+ * parameters, primarily for UI display and debugging. All values represent the state
+ * at the moment the info was requested.
+ */
+typedef struct PxVoiceInfo {
+    bool active;                /**< `true` if the voice is currently playing or in its release phase. */
+    int midi_note;              /**< The MIDI note number this voice is playing. */
+    float frequency;            /**< The current, modulated frequency of the voice's oscillator in Hz. */
+    float pan_position;         /**< The current stereo pan position (-1.0 for left, 1.0 for right). */
+    float effective_amplitude;  /**< The final amplitude of the voice after all modulations. */
+    PxADSRState adsr_states[3]; /**< The current state (e.g., ATTACK, SUSTAIN) of the first 3 voice ADSRs. */
+    float adsr_levels[3];       /**< The current output level (0.0 to 1.0) of the first 3 voice ADSRs. */
+    float lfo_outputs[3];       /**< The current final output value of the global LFOs. */
+} PxVoiceInfo;
+
 // --- Core API Functions ---
 
 /**
@@ -773,53 +848,6 @@ typedef struct PxPatch {
     bool unilegato_enabled;
     float unilegato_slide_duration_s;
 } PxPatch;
-
-// PxConfig: Parameters for creating a new synthesizer instance.
-typedef struct PxConfig {
-    int num_voices;
-    int num_lfos;
-    int num_voice_adsrs;
-    float sample_rate;
-    int samples_per_lfo_update;
-    float lfo_update_interval_ms;
-    PxOscillatorUpdateMode osc_update_mode;
-    float osc_fixed_update_rate_hz;
-    float nyquist_precision_multiplier;
-} PxConfig;
-
-typedef struct PxLimiterInfo {
-    bool initialized;
-    float gain_reduction_db;
-} PxLimiterInfo;
-
-typedef struct PxWaveInfo {
-    const char* name;
-    bool is_compiled;
-} PxWaveInfo;
-
-typedef struct PxLFOInfo {
-    bool enabled;
-    int wave_idx;
-    float frequency;
-    bool reset_on_key_on;
-    bool adsr_enabled;
-    float adsr_level;
-    float phase;
-    float raw_output;
-    float final_output;
-} PxLFOInfo;
-
-// PxVoiceInfo: Read-only information about a voice's state, for UI/display purposes.
-typedef struct PxVoiceInfo {
-    bool active;
-    int midi_note;
-    float frequency;
-    float pan_position;
-    float effective_amplitude;
-    PxADSRState adsr_states[3]; // Max 3, adjust if needed
-    float adsr_levels[3];
-    float lfo_outputs[3];
-} PxVoiceInfo;
 
 // --- THREAD-SAFE COMMUNICATION STRUCTURES ---
 typedef enum {
