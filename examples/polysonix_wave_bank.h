@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <stdint.h>
+#include "../polysonix_wave.h"
+
 /***************************************************************************************************
 *
 * -- Polysonix Waveform Scripting Language --  PATCHES
