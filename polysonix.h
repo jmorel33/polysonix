@@ -133,7 +133,7 @@ typedef enum {
 typedef enum {
     PX_ADSR_PARAM_ATTACK,   /**< The attack time parameter. */
     PX_ADSR_PARAM_DECAY,    /**< The decay time parameter. */
-    PX_ADSR_PARAM_SUSTAIN,  /**< The sustain level parameter. */
+    PX_ADSR_PARAM_SUSTAIN,  /**< The sustain level parameter (0.0 to 1.0). */
     PX_ADSR_PARAM_RELEASE   /**< The release time parameter. */
 } PxADSRParamType;
 
@@ -147,7 +147,7 @@ typedef enum {
     PX_FILTER_PARAM_ENV_AMOUNT, /**< The amount of modulation applied from ADSRs to the cutoff frequency. */
     PX_FILTER_PARAM_DRIVE,      /**< The amount of saturation/drive applied at the filter's input. */
     PX_FILTER_PARAM_KEYTRACK,   /**< The amount the note's pitch affects the cutoff frequency (0.0 to 1.0). */
-    PX_FILTER_PARAM_POLES       /**< The number of poles, controlling the filter's slope (2 for 12dB/oct, 3 for 18dB/oct, 4 for 24dB/oct). */
+    PX_FILTER_PARAM_POLES       /**< The number of poles (filter slope). The float value is rounded and clamped to an integer of 2 (12dB/oct), 3 (18dB/oct), or 4 (24dB/oct). */
 } PxFilterParamType;
 
 /**
@@ -165,7 +165,7 @@ typedef enum {
 typedef struct {
     float attack_time;    /**< Attack time in seconds. */
     float decay_time;     /**< Decay time in seconds. */
-    float sustain_level;  /**< Sustain level (0.0 to 1.0). */
+    float sustain_level;  /**< Sustain level, clamped between 0.0 and 1.0. */
     float release_time;   /**< Release time in seconds. */
     bool enabled;         /**< Whether the ADSR is active. */
 } PxADSRParams;
@@ -284,7 +284,7 @@ PX_API void        PX_Destroy(PxSynth* s);
  * for all active voices, applies effects (filter, limiter), and fills the provided buffer. This function is real-time safe.
  * @param s A pointer to the `PxSynth` instance.
  * @param stereo_buffer A pointer to a stereo buffer to be filled with signed 16-bit audio samples (interleaved L/R).
- * @param num_frames The number of stereo frames to process (e.g., for a buffer size of 512, this would be 256).
+ * @param num_frames The number of stereo frames (i.e., sample pairs) to process. For a buffer containing 512 total samples, this value would be 256.
  */
 PX_API void        PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames);
 
