@@ -130,8 +130,8 @@ lfsr_val(type, position_norm, seed_norm)
   Returns the current LFSR bit value (0.0 or 1.0).
   - type: LFSR type ID (e.g., LFSR_8BIT).
   - Precomputed Mode:
-    - position_norm: Normalized position in the sequence (0.0 to <1.0, wraps).
-    - seed_norm: Normalized offset added to position_norm (0.0 to <1.0, wraps).
+  - `position_norm`: Normalized position in the sequence (0.0 to <1.0), which wraps around.
+  - `seed_norm`: A normalized offset (0.0 to <1.0) added to `position_norm`, which also wraps.
   - Free-Running Mode:
     - Advances the free-running LFSR state for 'type' by one step.
     - Returns the new LSB.
@@ -300,8 +300,8 @@ void free_polysonix_lfsr_tables(void);
  * It's used internally by the VM but can also be used for custom C-level logic.
  *
  * @param type The LFSR type (e.g., LFSR_8BIT) from which to retrieve a bit.
- * @param position The absolute position in the sequence. The value will be wrapped
- *                 automatically based on the period of the selected LFSR type.
+ * @param position The absolute position in the sequence. The value is wrapped automatically
+ *                 using a modulo operation based on the period of the selected LFSR type.
  * @return The bit value as a float (1.0f or 0.0f). Returns 0.0f if the
  *         specified LFSR type is invalid or has not been initialized.
  */
@@ -335,8 +335,8 @@ float lfsr_get_noise(LfsrType type, float phase, float rate);
  * @param phase The current main oscillator phase (typically 0 to 2*PI), used to
  *              determine the position in the LFSR sequence.
  * @param density A threshold (clamped between 0.0 and 1.0). A higher value results
- *                in fewer pulses (lower density). A pulse is generated if the
- *                LFSR bit is >= density.
+ *                in fewer pulses (lower density), as a pulse is only generated
+ *                when the LFSR bit value (0.0 or 1.0) is >= density.
  * @return A clock pulse value (1.0f or 0.0f). Returns 0.0f if the LFSR type is
  *         invalid or uninitialized.
  */
@@ -655,8 +655,6 @@ Node *parsePrimary(Token *tokens, int *pos);
 
 // Helper for freeing memory allocated with aligned_calloc
 static void aligned_free(void* ptr) {
-    // THE CHANGE IS HERE: Prioritize the Windows-specific free function.
-    // This covers both MSVC and MinGW compilers targeting Windows.
 #if defined(_WIN32)
     _aligned_free(ptr);
 #else
