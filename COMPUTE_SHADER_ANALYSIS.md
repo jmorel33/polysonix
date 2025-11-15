@@ -16,18 +16,21 @@ The VM's state is managed using global variables within the shader:
 
 - `float vm_stack[MAX_VM_STACK]`: A fixed-size array for the operand stack.
 - `int stack_top`: The stack pointer, an index into `vm_stack`.
-- `int ip`: The instruction pointer, an index into the bytecode buffer.
-- `float loop_var_value`: Stores the current value of the loop variable during `OP_SIGMA_EXEC`.
-- `bool is_in_sigma_body`: A flag to indicate when execution is inside a sigma loop body.
+- `int ip`: The instruction pointer, a byte-based index into the bytecode buffer.
+- `int call_stack[MAX_CALL_STACK]`: An explicit stack for storing return instruction pointers. This is primarily used by the `OP_SIGMA_EXEC` state machine to return to the correct location after the operation is complete.
+- `int call_stack_top`: The stack pointer for `call_stack`.
+- **Sigma State Machine Globals**: A set of variables (`sigma_is_active`, `sigma_phase`, `sigma_sum`, etc.) that manage the state of a running `OP_SIGMA_EXEC` operation, as it requires executing multiple sub-chunks sequentially.
+- `float loop_var_value`: Stores the current value of the loop variable (`k`) during the execution of a `sigma` body chunk.
 
 ### 2.2. Execution Flow
 
-The main execution logic is contained within the `execute_chunk(int start_ip)` function, which can be called recursively to handle `sigma` sub-expressions.
+The shader uses a single, non-recursive execution flow controlled by a main loop inside the `main()` function.
 
-1.  **Initialization**: The `main()` function initializes the VM state (`stack_top`, `ip`) and calls `execute_chunk` with the offset of the main bytecode.
-2.  **VM Loop**: `execute_chunk` enters a `for` loop that acts as the VM's fetch-decode-execute cycle. A generous loop limiter (1024 iterations) is used to prevent accidental infinite loops on the GPU.
-3.  **Instruction Processing**: A `switch` statement handles each `OpCode`.
-4.  **Result**: The loop terminates on `OP_HALT` or when the loop limit is reached. The final value on top of the stack is returned. The `main` function clamps this result to `[-1.0, 1.0]` and writes it to the output buffer.
+1.  **Initialization**: The `main()` function initializes the VM state (`stack_top`, `ip`, `call_stack_top`, etc.) and sets the `ip` to the start of the main bytecode chunk.
+2.  **Main VM Loop**: The shader enters a large `for` loop that acts as the VM's fetch-decode-execute cycle. A generous loop limiter (2048 iterations) is used to prevent accidental infinite loops on the GPU.
+3.  **Instruction Processing**: Inside the loop, a `switch` statement decodes and executes each `OpCode`.
+4.  **`OP_SIGMA_EXEC` Handling**: The `sigma` operation is handled not by recursion, but by a state machine. When `OP_SIGMA_EXEC` is encountered, it initializes the sigma state variables and changes the `ip` to point to the `start` sub-chunk. The `OP_HALT` at the end of each sub-chunk acts as a trigger to advance the state machine, evaluate the next sub-chunk, or perform the loop iteration, until the entire summation is complete.
+5.  **Result**: The main loop terminates when `OP_HALT` is encountered outside of the sigma state machine or when the loop limit is reached. The final value on top of the stack is clamped to `[-1.0, 1.0]` and written to the output buffer.
 
 ## 3. Data Marshalling (C Host to GLSL Shader)
 
@@ -85,23 +88,31 @@ The C host application is responsible for preparing and binding several data buf
 
 ### 4.3. `OP_SIGMA_EXEC` (Summation)
 
-This is the most complex operation, handled via recursion:
+This is the most complex operation in the VM and is handled by a non-recursive, finite state machine. This approach is used because robust support for recursion is not guaranteed across all GLSL drivers.
 
-1.  The opcode reads the indices for the `start`, `end`, `step`, and `body` sub-chunks.
-2.  It retrieves the bytecode offsets for these sub-chunks from the `VmMetadata` uniforms.
-3.  It calls `execute_chunk()` for the `start`, `end`, and `step` chunks to get the loop parameters. The VM state (stack, IP) is implicitly saved and restored by the nature of GLSL function calls.
-4.  It enters a `for` loop on the CPU side, iterating from `start_val` to `end_val`.
-5.  Inside the loop:
-    -   The current loop value (`k`) is stored in the `loop_var_value` global.
-    -   The `is_in_sigma_body` flag is set to `true`.
-    -   `execute_chunk()` is called for the `body` sub-chunk. The `OP_PUSH_LOOP_VAR` opcode within this execution will read from `loop_var_value`.
-    -   The result is added to a running `sum`.
-6.  After the loop, the `is_in_sigma_body` flag is cleared, and the final `sum` is pushed onto the stack.
+The state machine is managed by a set of global variables (`sigma_is_active`, `sigma_phase`, etc.) and unfolds over multiple iterations of the main VM loop. The `OP_HALT` instruction serves as the transition trigger between states.
+
+1.  **Initiation (`OP_SIGMA_EXEC`)**:
+    -   The opcode reads the indices for the `start`, `end`, `step`, and `body` sub-chunks.
+    -   It saves the current instruction pointer (`ip`) to the call stack so execution can resume after the sigma operation is complete.
+    -   It sets `sigma_is_active` to `true` and `sigma_phase` to `0` (evaluate start).
+    -   It sets the `ip` to the bytecode of the `start` sub-chunk.
+
+2.  **State Transitions (`OP_HALT`)**:
+    -   When the VM executes an `OP_HALT` while `sigma_is_active` is true, it doesn't stop execution. Instead, it inspects the current `sigma_phase`:
+    -   **Phase 0 (End of `start` chunk)**: Pops the result, stores it as `sigma_start_val`, advances phase to `1`, and jumps to the `end` chunk.
+    -   **Phase 1 (End of `end` chunk)**: Pops the result, stores it as `sigma_end_val`, advances phase to `2`, and jumps to the `step` chunk.
+    -   **Phase 2 (End of `step` chunk)**: Pops the result, stores it as `sigma_step_val`. The loop is now ready to begin. It initializes the loop counter (`sigma_current_k`) and advances to phase `3`.
+    -   **Phase 3 (End of `body` chunk)**: Pops the result and adds it to the running `sigma_sum`. It then increments the loop counter (`sigma_current_k`) and compares it to the `end` value.
+        -   If the loop continues, the `ip` is simply reset to the beginning of the `body` chunk for the next iteration.
+        -   If the loop is finished, `sigma_is_active` is set to `false`, the final `sigma_sum` is pushed to the main VM stack, and the `ip` is restored from the call stack.
+
+This state machine effectively "hijacks" the VM's control flow to manage the sequential evaluation of sub-chunks and the body loop, all without using GLSL recursion.
 
 ## 5. Feature Implementation Notes
 
 -   **Free-Running LFSRs**: The shader now fully supports a "free-running" LFSR mode, bringing it to feature parity with the C VM. This is accomplished using a read-write SSBO at `binding = 4` to maintain the LFSR's state across invocations. When an LFSR function is called with a `type_id` that matches the `lfsr_type` uniform, the shader advances and uses the state from the SSBO instead of performing a table lookup.
--   **Recursion for Sigma**: The use of GLSL function recursion for `OP_SIGMA_EXEC` is clean but relies on the driver supporting a sufficient recursion depth. For Polysonix's use case (no nested sigma), this is safe.
+-   **Non-Recursive Sigma**: The use of a state machine for `OP_SIGMA_EXEC` makes the shader highly portable and removes any dependency on driver-specific recursion limits. It guarantees that even complex, multi-stage operations can execute reliably.
 -   **Single Workgroup**: The shader is designed for a `1x1x1` workgroup. This simplifies the design as no synchronization is needed, but it means the C host must dispatch one compute call per sample. For generating entire waveforms at once, a different shader structure (e.g., one invocation per sample in a 1D workgroup) would be needed.
 
 ## 6. Feature Parity Analysis (C VM vs. GLSL Shader)
@@ -123,7 +134,7 @@ The following table provides a detailed breakdown of the language features and t
 | | Ternary (`? :`) | Fully Implemented | The C compiler generates `OP_JUMP_IF_FALSE` and `OP_JUMP` sequences, which the shader executes. |
 | **Functions** | Standard Math (`sin`...`pow`) | Fully Implemented | All functions from C VM are mapped to GLSL built-ins via `OP_CALL`. |
 | | `rand()` | Fully Implemented | Implemented via `OP_CALL` using a `pseudo_rand()` helper function. |
-| | `sigma()` | Fully Implemented | Implemented via `OP_SIGMA_EXEC` and recursive calls to `execute_chunk`. |
+| | `sigma()` | Fully Implemented | Implemented via `OP_SIGMA_EXEC` using a non-recursive, multi-phase state machine. |
 | **LFSR System**| Precomputed Table Mode | Fully Implemented | `lfsr_val`, `lfsr_noise`, `lfsr_clock` read from the LFSR table SSBO by default. |
 | | Free-Running Mode | Fully Implemented | Supported via a read-write SSBO at binding 4 and controlled by `VmParams` uniforms. |
 
