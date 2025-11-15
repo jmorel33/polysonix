@@ -151,6 +151,7 @@ uint sigma_body_chunk_ip = 0;
 float sigma_start_val = 0.0;
 float sigma_end_val = 0.0;
 float sigma_step_val = 0.0;
+float sigma_end_boundary = 0.0; // C VM uses a boundary for robust float comparison
 float sigma_current_k = 0.0;
 float sigma_sum = 0.0;
 float loop_var_value = 0.0; // Value of 'k' during sigma body execution
@@ -317,10 +318,15 @@ void main() {
                     } else {
                         sigma_phase = 3;
                         sigma_current_k = sigma_start_val;
+                        // C VM uses a boundary check for robust float loops
+                        sigma_end_boundary = sigma_step_val > 0 ?
+                            (sigma_end_val + abs(sigma_step_val) * 0.5) :
+                            (sigma_end_val - abs(sigma_step_val) * 0.5);
+
                         // Check if the loop should run at all
                         bool condition_met = sigma_step_val > 0 ?
-                            (sigma_current_k <= sigma_end_val) :
-                            (sigma_current_k >= sigma_end_val);
+                            (sigma_current_k <= sigma_end_boundary) :
+                            (sigma_current_k >= sigma_end_boundary);
 
                         if (condition_met) {
                             // Start the first iteration of the body
@@ -337,10 +343,10 @@ void main() {
                     sigma_sum += pop();
                     sigma_current_k += sigma_step_val;
 
-                    // Check if the loop should continue
+                    // Check if the loop should continue using the robust boundary
                     bool condition_met = sigma_step_val > 0 ?
-                        (sigma_current_k <= sigma_end_val) :
-                        (sigma_current_k >= sigma_end_val);
+                        (sigma_current_k <= sigma_end_boundary) :
+                        (sigma_current_k >= sigma_end_boundary);
 
                     if (condition_met) {
                         // Continue to next iteration
