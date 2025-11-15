@@ -87,6 +87,11 @@ layout(std430, binding = 3) writeonly buffer OutputBuffer {
     float result;
 } output_buffer;
 
+// Input/Output: Persistent state for the free-running LFSR
+layout(std430, binding = 4) buffer LfsrStateBuffer {
+    uint state;
+} lfsr_state;
+
 
 // --- Uniforms ---
 
@@ -98,8 +103,9 @@ layout(location = 0) uniform VmParams {
     float modA;
     float modB;
     float modC;
-    // Note: Free-running LFSR state is not supported in the compute shader
-    // as it would require read-write access to uniforms or another SSBO.
+    // Free-running LFSR configuration
+    int lfsr_type; // The type ID of the currently active free-running LFSR
+    uint lfsr_seed;    // The seed to use if the state becomes zero
 } vm_params;
 
 // Input: Metadata for buffer access
@@ -114,6 +120,8 @@ layout(location = 1) uniform VmMetadata {
     // Metadata for each of the 16 LFSR types
     uvec4 lfsr_periods[4];      // [0].x = type 0, [0].y = type 1, etc.
     uvec4 lfsr_offsets[4];      // Offsets into the lfsr_tables buffer
+    uvec4 lfsr_tap_masks[4];    // Tap masks for free-running mode
+    uvec4 lfsr_bit_lengths[4];  // Bit lengths for free-running mode
 } vm_metadata;
 
 
@@ -123,8 +131,15 @@ int stack_top = 0;
 int ip = 0; // Instruction Pointer
 float loop_var_value = 0.0;
 bool is_in_sigma_body = false;
+float rand_seed = 0.0;
 
 // --- Helper Functions ---
+
+// Simple hash-based pseudo-random number generator
+float pseudo_rand() {
+    rand_seed += 0.1; // Increment seed to ensure different results on subsequent calls
+    return fract(sin(rand_seed) * 43758.5453123);
+}
 
 void push(float value) {
     if (stack_top < MAX_VM_STACK) {
@@ -157,7 +172,38 @@ uint read_short() {
 
 // --- LFSR Helper ---
 
-// Retrieves a single bit from the packed LFSR SSBO
+// --- LFSR Helpers ---
+
+// Advances the persistent free-running LFSR state
+void advance_lfsr_state() {
+    int type_id = vm_params.lfsr_type;
+    if (type_id < 0 || type_id >= NUM_LFSR_TYPES) return;
+
+    uint bit_length = vm_metadata.lfsr_bit_lengths[type_id / 4][type_id % 4];
+    uint tap_mask   = vm_metadata.lfsr_tap_masks[type_id / 4][type_id % 4];
+    uint period     = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
+
+    if (period == 0) return;
+
+    uint current_state = lfsr_state.state;
+    uint feedback_bit = 0;
+
+    // Calculate feedback bit using popcount on tapped bits (Fibonacci LFSR)
+    // This is equivalent to XORing all the tapped bits together.
+    feedback_bit = uint(popcount(current_state & tap_mask) % 2);
+
+    // Shift and insert feedback bit
+    current_state = (current_state >> 1) | (feedback_bit << (bit_length - 1));
+
+    // Ensure state is not zero
+    if (current_state == 0) {
+        current_state = vm_params.lfsr_seed != 0 ? vm_params.lfsr_seed : 1;
+    }
+
+    lfsr_state.state = current_state;
+}
+
+// Retrieves a single bit from the packed LFSR SSBO (for table mode)
 float lfsr_get_bit(int type_id, uint position) {
     if (type_id < 0 || type_id >= NUM_LFSR_TYPES) return 0.0;
 
@@ -279,33 +325,59 @@ float execute_chunk(int start_ip) {
                     case FUNC_ID_MAX:  { float b = pop(); float a = pop(); res = max(a, b); break; }
                     case FUNC_ID_SQRT: { float v = pop(); res = v >= 0.0 ? sqrt(v) : 0.0; break; }
                     case FUNC_ID_POW:  { float b = pop(); float a = pop(); res = pow(a, b); break; }
+                    case FUNC_ID_RAND: res = pseudo_rand(); break;
 
                     case FUNC_ID_LFSR_VAL: {
                         float seed_norm = pop();
                         float pos_norm = pop();
                         int type_id = int(round(pop()));
-                        uint period = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
-                        float total_norm_pos = fract(pos_norm + seed_norm);
-                        uint table_pos = uint(total_norm_pos * period);
-                        res = lfsr_get_bit(type_id, table_pos);
+
+                        if (type_id == vm_params.lfsr_type) {
+                            // Free-running mode
+                            advance_lfsr_state();
+                            res = (lfsr_state.state & 1) == 1 ? 1.0 : 0.0;
+                        } else {
+                            // Table mode
+                            uint period = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
+                            float total_norm_pos = fract(pos_norm + seed_norm);
+                            uint table_pos = uint(total_norm_pos * period);
+                            res = lfsr_get_bit(type_id, table_pos);
+                        }
                         break;
                     }
                     case FUNC_ID_LFSR_NOISE: {
                         float rate = pop();
                         int type_id = int(round(pop()));
-                        uint period = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
-                        float lfsr_phase = fract((vm_params.x / (2.0 * 3.14159265)) * rate);
-                        uint table_pos = uint(lfsr_phase * period);
-                        res = lfsr_get_bit(type_id, table_pos) * 2.0 - 1.0;
+
+                        if (type_id == vm_params.lfsr_type) {
+                            // Free-running mode
+                            advance_lfsr_state();
+                            res = ((lfsr_state.state & 1) == 1 ? 1.0 : 0.0) * 2.0 - 1.0;
+                        } else {
+                            // Table mode
+                            uint period = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
+                            float lfsr_phase = fract((vm_params.x / (2.0 * 3.14159265)) * rate);
+                            uint table_pos = uint(lfsr_phase * period);
+                            res = lfsr_get_bit(type_id, table_pos) * 2.0 - 1.0;
+                        }
                         break;
                     }
                     case FUNC_ID_LFSR_CLOCK: {
                         float density = pop();
                         int type_id = int(round(pop()));
-                        uint period = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
-                        float lfsr_phase = fract(vm_params.x / (2.0 * 3.14159265));
-                        uint table_pos = uint(lfsr_phase * period);
-                        res = lfsr_get_bit(type_id, table_pos) >= density ? 1.0 : 0.0;
+
+                        if (type_id == vm_params.lfsr_type) {
+                            // Free-running mode
+                            advance_lfsr_state();
+                            float bit_val = (lfsr_state.state & 1) == 1 ? 1.0 : 0.0;
+                            res = bit_val >= density ? 1.0 : 0.0;
+                        } else {
+                            // Table mode
+                            uint period = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
+                            float lfsr_phase = fract(vm_params.x / (2.0 * 3.14159265));
+                            uint table_pos = uint(lfsr_phase * period);
+                            res = lfsr_get_bit(type_id, table_pos) >= density ? 1.0 : 0.0;
+                        }
                         break;
                     }
                 }
@@ -373,6 +445,9 @@ void main() {
     // Initialize VM state
     stack_top = 0;
     is_in_sigma_body = false;
+    // Initialize the random seed with per-wave and per-sample values
+    // to ensure deterministic but unique randomness.
+    rand_seed = vm_params.rand_offset + vm_params.x;
 
     // Start execution from the main chunk's offset
     float final_result = execute_chunk(int(vm_metadata.main_chunk_offset));

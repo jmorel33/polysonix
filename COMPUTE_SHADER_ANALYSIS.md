@@ -51,6 +51,10 @@ The C host application is responsible for preparing and binding several data buf
 -   **Binding 3: Output Buffer (`float`)**:
     -   A single-element buffer where the final computed sample will be written.
 
+-   **Binding 4: LFSR State Buffer (`uint`, read-write)**:
+    -   A single-element buffer that stores the state of the "free-running" LFSR.
+    -   This buffer must be persistent across compute shader dispatches to allow the LFSR state to evolve.
+
 ### 3.2. Uniforms
 
 -   **`VmParams` (Uniform Block)**:
@@ -74,6 +78,7 @@ The C host application is responsible for preparing and binding several data buf
 
 -   A `switch` statement maps the `FunctionID` to the corresponding GLSL built-in function (e.g., `sin`, `cos`, `pow`).
 -   Arguments are popped from the stack, the function is executed, and the result is pushed back.
+-   **`rand()` Function**: The `FUNC_ID_RAND` opcode is implemented using a simple, deterministic pseudo-random number generator (`pseudo_rand`). The PRNG is seeded at the start of shader execution using a combination of the per-wave `rand_offset` and the per-sample `x` phase value to ensure unique and repeatable random sequences.
 -   **LFSR Functions**:
     -   `lfsr_val`, `lfsr_noise`, and `lfsr_clock` are implemented using the `lfsr_get_bit` helper function.
     -   This helper calculates the correct index into the LFSR Tables Buffer using the provided `lfsr_periods` and `lfsr_offsets` metadata, extracts the packed bit, and returns it as a float.
@@ -93,13 +98,36 @@ This is the most complex operation, handled via recursion:
     -   The result is added to a running `sum`.
 6.  After the loop, the `is_in_sigma_body` flag is cleared, and the final `sum` is pushed onto the stack.
 
-## 5. Limitations and Design Choices
+## 5. Feature Implementation Notes
 
--   **No Free-Running LFSRs**: The C VM supports a "free-running" LFSR mode where the LFSR state is maintained in the `VmParams` struct and updated on each call. This is not implemented in the shader because uniforms are read-only, and managing this state would require an additional read-write SSBO, adding complexity. All LFSR functions in the shader operate in the pre-computed table lookup mode.
+-   **Free-Running LFSRs**: The shader now fully supports a "free-running" LFSR mode, bringing it to feature parity with the C VM. This is accomplished using a read-write SSBO at `binding = 4` to maintain the LFSR's state across invocations. When an LFSR function is called with a `type_id` that matches the `lfsr_type` uniform, the shader advances and uses the state from the SSBO instead of performing a table lookup.
 -   **Recursion for Sigma**: The use of GLSL function recursion for `OP_SIGMA_EXEC` is clean but relies on the driver supporting a sufficient recursion depth. For Polysonix's use case (no nested sigma), this is safe.
 -   **Single Workgroup**: The shader is designed for a `1x1x1` workgroup. This simplifies the design as no synchronization is needed, but it means the C host must dispatch one compute call per sample. For generating entire waveforms at once, a different shader structure (e.g., one invocation per sample in a 1D workgroup) would be needed.
 
-## 6. Integration Steps for C Host
+## 6. Feature Parity Analysis (C VM vs. GLSL Shader)
+
+As of the latest updates, the GLSL compute shader VM **fully implements all features and opcodes** present in the C-based VM defined in `polysonix_wave.h`. The shader is now considered feature-complete.
+
+The following table provides a detailed breakdown of the language features and their implementation status in the GLSL shader.
+
+| Feature Group | Feature / Operation | GLSL Shader Status | Notes |
+| :--- | :--- | :--- | :--- |
+| **Variables** | `x`, `FREQUENCY`, `MOD_A`, `MOD_B`, `MOD_C`, `RAND_OFFSET` | Fully Implemented | Provided via `VmParams` uniform and pushed with `OP_PUSH_VAR_*` opcodes. |
+| | Loop Variable (`k`, etc.) | Fully Implemented | Value stored in `loop_var_value` global and pushed with `OP_PUSH_LOOP_VAR`. |
+| **Constants** | `PI`, `E`, `TWO_PI`, etc. | Fully Implemented | Handled by compiler; baked into the constants buffer and pushed with `OP_PUSH_CONST`. |
+| | `LFSR_*` Type Constants | Fully Implemented | Handled by compiler; pushed as float constants via `OP_PUSH_CONST`. |
+| **Operators** | Arithmetic (`+`, `-`, `*`, `/`, `%`) | Fully Implemented | Direct mapping to `OP_ADD`, `OP_SUB`, `OP_MUL`, `OP_DIV`, `OP_MOD`. |
+| | Unary (`-`, `!`) | Fully Implemented | Direct mapping to `OP_NEGATE` and `OP_NOT`. Unary `+` is a no-op. |
+| | Comparison (`==`, `!=`, `<`, `>`, `<=`, `>=`) | Fully Implemented | Direct mapping to `OP_CMP_*` opcodes. |
+| | Logical (`&&`, `||`, `^`) | Fully Implemented | The C compiler generates `OP_JUMP_IF_FALSE` and `OP_JUMP` sequences, which the shader executes. No dedicated logical opcodes are needed. |
+| | Ternary (`? :`) | Fully Implemented | The C compiler generates `OP_JUMP_IF_FALSE` and `OP_JUMP` sequences, which the shader executes. |
+| **Functions** | Standard Math (`sin`...`pow`) | Fully Implemented | All functions from C VM are mapped to GLSL built-ins via `OP_CALL`. |
+| | `rand()` | Fully Implemented | Implemented via `OP_CALL` using a `pseudo_rand()` helper function. |
+| | `sigma()` | Fully Implemented | Implemented via `OP_SIGMA_EXEC` and recursive calls to `execute_chunk`. |
+| **LFSR System**| Precomputed Table Mode | Fully Implemented | `lfsr_val`, `lfsr_noise`, `lfsr_clock` read from the LFSR table SSBO by default. |
+| | Free-Running Mode | Fully Implemented | Supported via a read-write SSBO at binding 4 and controlled by `VmParams` uniforms. |
+
+## 7. Integration Steps for C Host
 
 1.  **Load and Compile Shader**: Load `polysonix_wave.comp` and compile it into a compute shader program.
 2.  **Prepare Buffers**:
