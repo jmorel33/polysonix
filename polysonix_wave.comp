@@ -1,3 +1,8 @@
+// Polysonix Wave Bytecode Compute Shader
+// Author: Jacques Morel
+// (c) 2025 Jacques Morel. All rights reserved.
+// Licensed under the MIT license. See LICENSE for details.
+
 #version 450 core
 
 // GLSL compute shader for executing Polysonix waveform bytecode.
