@@ -151,3 +151,42 @@ The following table provides a detailed breakdown of the language features and t
 4.  **Set Uniforms**: Before dispatching, update the `VmParams` and `VmMetadata` uniform blocks with the data corresponding to the specific bytecode and sample being generated.
 5.  **Dispatch**: Execute `glDispatchCompute(1, 1, 1)`.
 6.  **Retrieve Result**: Use a memory barrier (`glMemoryBarrier`) and then read back the data from the Output Buffer.
+
+## 8. Execution Environment Comparison: C VM vs. GLSL Shader
+
+While both the C-based VM (in `polysonix_wave.h`) and the GLSL compute shader VM (`polysonix_wave.comp`) are designed to achieve feature parity, their underlying architectures and execution models differ significantly due to the constraints and strengths of their respective environments (CPU vs. GPU).
+
+This section provides a head-to-head comparison of their core design aspects.
+
+### 8.1. Core Architecture and Execution Loop
+
+-   **C VM (CPU):**
+    -   **Architecture**: A classic stack-based interpreter implemented in C. The entire state of the VM (instruction pointer, stack, etc.) is encapsulated within a `VM` struct.
+    -   **Execution Loop**: It uses a standard `while` or `for` loop that fetches an opcode, decodes it, and dispatches to the correct logic. For performance, this is often implemented using a "computed goto" or a large `switch` statement, which is highly efficient on modern CPUs.
+
+-   **GLSL VM (GPU):**
+    -   **Architecture**: A single-invocation compute shader that acts as a self-contained VM. State is managed through `global` shader variables (e.g., `ip`, `stack_top`, `vm_stack`), as each shader invocation is an independent execution context.
+    -   **Execution Loop**: The main loop is a `for` loop with a fixed, high iteration limit (e.g., 2048) to prevent accidental infinite loops from hanging the GPU. A `switch` statement within the loop decodes and executes each opcode. This is less flexible than a CPU loop but is the standard, safe approach for GPU compute kernels.
+
+### 8.2. `sigma()` (Summation) Implementation
+
+This is the most significant architectural difference between the two VMs.
+
+-   **C VM (CPU):**
+    -   **Method**: Uses **recursion**. The `OP_SIGMA_EXEC` handler calls a helper function (`execute_sub_chunk`) which, in turn, calls the main `execute_bytecode` function for each of the `start`, `end`, `step`, and `body` expressions. This is a clean, natural, and efficient implementation that leverages the CPU's native call stack.
+
+-   **GLSL VM (GPU):**
+    -   **Method**: Uses a **non-recursive, explicit state machine**. GLSL recursion is not reliably supported across all drivers and hardware, making it unsuitable for a portable library. The shader instead uses a set of global variables (`sigma_is_active`, `sigma_phase`) to track the progress of the `sigma` operation. The `OP_HALT` instruction is repurposed as a state transition trigger. When an `OP_HALT` is encountered while `sigma_is_active` is true, the state machine advances to the next phase (e.g., from evaluating `start` to evaluating `end`), sets the `ip` to the next sub-chunk, and continues the main VM loop. This approach is more complex to implement but guarantees execution portability.
+
+### 8.3. State and Data Management
+
+-   **C VM (CPU):**
+    -   **State**: All state is contained within the `VM` struct instance, making it relocatable in memory and allowing for multiple, independent VM instances to coexist (though not a current requirement).
+    -   **Data Access**: Accesses bytecode, constants, and strings directly via pointers within the `BytecodeChunk` struct, which resides in standard system RAM. This provides low-latency, direct memory access.
+
+-   **GLSL VM (GPU):**
+    -   **State**: State is static and global to the shader's execution context. A manually managed `call_stack` array is used to store the return `ip` for the `sigma` state machine.
+    -   **Data Access**: All data is provided by the C host via specialized GPU memory buffers:
+        -   **SSBOs**: Used for bulk data like the flattened bytecode array, the constants pool, and LFSR tables. Accessing individual bytes from the `uint`-packed bytecode SSBO requires manual bit-shifting and masking within the shader.
+        -   **Uniforms**: Used for smaller, per-sample data like the `VmParams` and `VmMetadata` structs.
+    -   **LFSR State**: The state for the "free-running" LFSR is persisted across shader invocations using a read-write SSBO at `binding = 4`, which the shader reads from and writes back to in a single execution.
