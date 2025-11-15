@@ -9,6 +9,7 @@ layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 // --- Constants (must match polysonix_wave.h) ---
 #define MAX_VM_STACK 512
+#define MAX_CALL_STACK 8 // For OP_SIGMA_EXEC sub-calls
 #define MAX_CONSTANTS 256
 #define MAX_SIGMA_CHUNKS 16
 #define NUM_LFSR_TYPES 16
@@ -129,9 +130,25 @@ layout(location = 1) uniform VmMetadata {
 float vm_stack[MAX_VM_STACK];
 int stack_top = 0;
 int ip = 0; // Instruction Pointer
-float loop_var_value = 0.0;
-bool is_in_sigma_body = false;
 float rand_seed = 0.0;
+
+// Call stack for handling sub-chunk execution (for sigma)
+int call_stack[MAX_CALL_STACK];
+int call_stack_top = 0;
+
+// State machine for a single, non-nested OP_SIGMA_EXEC
+bool sigma_is_active = false;
+int sigma_phase = 0; // 0:eval start, 1:eval end, 2:eval step, 3:eval body
+uint sigma_start_chunk_idx = 0;
+uint sigma_end_chunk_idx = 0;
+uint sigma_step_chunk_idx = 0;
+uint sigma_body_chunk_ip = 0;
+float sigma_start_val = 0.0;
+float sigma_end_val = 0.0;
+float sigma_step_val = 0.0;
+float sigma_current_k = 0.0;
+float sigma_sum = 0.0;
+float loop_var_value = 0.0; // Value of 'k' during sigma body execution
 
 // --- Helper Functions ---
 
@@ -225,19 +242,114 @@ float lfsr_get_bit(int type_id, uint position) {
 }
 
 
-// --- Main Execution Function ---
-// This function emulates a VM call for a specific bytecode chunk.
-// It can be called recursively for OP_SIGMA_EXEC.
-float execute_chunk(int start_ip) {
-    ip = start_ip;
+// Helper to get the correct offset from the uvec4 arrays
+uint get_sigma_offset(uint index) {
+    uint vec_idx = index / 4;
+    uint comp_idx = index % 4;
+    if (vec_idx == 0) return vm_metadata.sigma_offsets_0_3[comp_idx];
+    if (vec_idx == 1) return vm_metadata.sigma_offsets_4_7[comp_idx];
+    if (vec_idx == 2) return vm_metadata.sigma_offsets_8_11[comp_idx];
+    return vm_metadata.sigma_offsets_12_15[comp_idx];
+}
 
-    // Main VM loop
-    for(int i = 0; i < 1024; ++i) { // Loop limiter to prevent infinite loops
+
+void main() {
+    // Check if this invocation should do any work
+    if (gl_GlobalInvocationID.x > 0) {
+        return;
+    }
+
+    // --- Initialize VM state ---
+    stack_top = 0;
+    call_stack_top = 0;
+    sigma_is_active = false;
+    ip = int(vm_metadata.main_chunk_offset);
+
+    // Initialize the random seed with per-wave and per-sample values
+    // to ensure deterministic but unique randomness.
+    rand_seed = vm_params.rand_offset + vm_params.x;
+
+
+    // --- Main VM Loop ---
+    for(int i = 0; i < 2048; ++i) { // Loop limiter to prevent infinite loops
         uint instruction = read_byte();
 
         switch (instruction) {
-            case OP_HALT:
-                return pop();
+            case OP_HALT: {
+                // Halt execution of the current chunk.
+                if (!sigma_is_active || call_stack_top == 0) {
+                    // This is a standard HALT, not part of a sigma operation.
+                    // Return from a sub-chunk or terminate the main chunk.
+                    if (call_stack_top > 0) {
+                        ip = call_stack[--call_stack_top];
+                    } else {
+                        i = 9999; // Main chunk is done, break VM loop.
+                    }
+                    break;
+                }
+
+                // --- SIGMA STATE MACHINE CONTINUATION ---
+                // We just finished a sub-chunk execution that was part of a sigma.
+                if (sigma_phase == 0) { // Finished 'start' chunk
+                    sigma_start_val = pop();
+                    sigma_phase = 1;
+                    // "Call" the 'end' chunk
+                    ip = int(get_sigma_offset(sigma_end_chunk_idx));
+                } else if (sigma_phase == 1) { // Finished 'end' chunk
+                    sigma_end_val = pop();
+                    sigma_phase = 2;
+                    // "Call" the 'step' chunk
+                    ip = int(get_sigma_offset(sigma_step_chunk_idx));
+                } else if (sigma_phase == 2) { // Finished 'step' chunk
+                    sigma_step_val = pop();
+
+                    // Now we have all loop parameters, start the iteration.
+                    if (abs(sigma_step_val) < 0.00001) {
+                        // Step is zero, loop does not run. Cleanup and return.
+                        sigma_is_active = false;
+                        push(0.0);
+                        ip = call_stack[--call_stack_top]; // Return from sigma
+                    } else {
+                        sigma_phase = 3;
+                        sigma_current_k = sigma_start_val;
+                        // Check if the loop should run at all
+                        bool condition_met = sigma_step_val > 0 ?
+                            (sigma_current_k <= sigma_end_val) :
+                            (sigma_current_k >= sigma_end_val);
+
+                        if (condition_met) {
+                            // Start the first iteration of the body
+                            loop_var_value = sigma_current_k;
+                            ip = int(sigma_body_chunk_ip);
+                        } else {
+                            // Loop condition is not met, finish sigma.
+                            sigma_is_active = false;
+                            push(sigma_sum);
+                            ip = call_stack[--call_stack_top]; // Return from sigma
+                        }
+                    }
+                } else if (sigma_phase == 3) { // Finished a 'body' chunk iteration
+                    sigma_sum += pop();
+                    sigma_current_k += sigma_step_val;
+
+                    // Check if the loop should continue
+                    bool condition_met = sigma_step_val > 0 ?
+                        (sigma_current_k <= sigma_end_val) :
+                        (sigma_current_k >= sigma_end_val);
+
+                    if (condition_met) {
+                        // Continue to next iteration
+                        loop_var_value = sigma_current_k;
+                        ip = int(sigma_body_chunk_ip);
+                    } else {
+                        // Loop finished.
+                        sigma_is_active = false;
+                        push(sigma_sum);
+                        ip = call_stack[--call_stack_top]; // Return from sigma
+                    }
+                }
+                break;
+            }
 
             // --- Stack Ops ---
             case OP_PUSH_CONST: {
@@ -392,66 +504,55 @@ float execute_chunk(int start_ip) {
                 break;
             }
             case OP_SIGMA_EXEC: {
+                // --- STATE MACHINE INITIALIZATION ---
+                // If a sigma is already running, we can't start another (no nesting).
+                if (sigma_is_active) {
+                    // Just consume the bytes and push a zero.
+                    read_byte(); read_short(); read_short(); read_short(); read_short();
+                    push(0.0);
+                    break;
+                }
+
                 read_byte(); // Consume var_name_id
-                uint start_chunk_idx = read_short();
-                uint end_chunk_idx = read_short();
-                uint step_chunk_idx = read_short();
+                sigma_start_chunk_idx = read_short();
+                sigma_end_chunk_idx = read_short();
+                sigma_step_chunk_idx = read_short();
                 uint body_chunk_idx = read_short();
 
-                // Helper to get the correct offset from the uvec4 arrays
-                uint get_sigma_offset(uint index) {
-                    uint vec_idx = index / 4;
-                    uint comp_idx = index % 4;
-                    if (vec_idx == 0) return vm_metadata.sigma_offsets_0_3[comp_idx];
-                    if (vec_idx == 1) return vm_metadata.sigma_offsets_4_7[comp_idx];
-                    if (vec_idx == 2) return vm_metadata.sigma_offsets_8_11[comp_idx];
-                    return vm_metadata.sigma_offsets_12_15[comp_idx];
-                }
+                // Store the chunk IPs for the state machine
+                // The order determines the execution flow: start -> end -> step -> body
+                sigma_body_chunk_ip = get_sigma_offset(body_chunk_idx);
 
-                // Execute sub-chunks to get loop params
-                float start_val = execute_chunk(int(get_sigma_offset(start_chunk_idx)));
-                float end_val   = execute_chunk(int(get_sigma_offset(end_chunk_idx)));
-                float step_val  = execute_chunk(int(get_sigma_offset(step_chunk_idx)));
+                // Save current IP to the call stack to return to after the sigma is done.
+                if (call_stack_top >= MAX_CALL_STACK) { i = 9999; break; } // Safety break
+                call_stack[call_stack_top++] = ip;
 
-                float sum = 0.0;
-                if (abs(step_val) > 0.00001) {
-                    is_in_sigma_body = true;
-                    for (float k = start_val; step_val > 0 ? k <= end_val : k >= end_val; k += step_val) {
-                        loop_var_value = k;
-                        sum += execute_chunk(int(get_sigma_offset(body_chunk_idx)));
-                    }
-                    is_in_sigma_body = false;
-                }
-                push(sum);
+                // Initialize the state machine
+                sigma_is_active = true;
+                sigma_phase = 0; // Start with phase 0: evaluating the 'start' chunk
+                sigma_sum = 0.0;
+
+                // "Call" the first sub-chunk (start) by setting the IP.
+                // The OP_HALT at the end of this chunk will trigger the next phase.
+                ip = int(get_sigma_offset(start_chunk_idx));
                 break;
             }
 
             default:
-                // Unknown opcode, halt execution
-                return pop();
+                // Unknown opcode, treat as halt
+                if (call_stack_top > 0) {
+                    ip = call_stack[--call_stack_top];
+                } else {
+                    i = 9999;
+                }
+                break;
         }
     }
 
-    return pop(); // Return top of stack if loop limit is reached
-}
-
-
-void main() {
-    // Check if this invocation should do any work
-    if (gl_GlobalInvocationID.x > 0) {
-        return;
-    }
-
-    // Initialize VM state
-    stack_top = 0;
-    is_in_sigma_body = false;
-    // Initialize the random seed with per-wave and per-sample values
-    // to ensure deterministic but unique randomness.
-    rand_seed = vm_params.rand_offset + vm_params.x;
-
-    // Start execution from the main chunk's offset
-    float final_result = execute_chunk(int(vm_metadata.main_chunk_offset));
-
     // Clamp and write the final result
+    float final_result = 0.0;
+    if (stack_top > 0) {
+        final_result = pop();
+    }
     output_buffer.result = clamp(final_result, -1.0, 1.0);
 }
