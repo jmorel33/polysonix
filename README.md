@@ -150,13 +150,7 @@ Additionally, there are several `PX_Get...Info()` functions that provide read-on
 - `PxLFOParams`: A struct for defining LFO parameters.
 
 ## Changelog
-- **v1.1.5 (2025-07-14):** Fully implemented lock-free thread-safety via a command queue for control and a snapshot buffer for UI data.
-- **v1.1.4 (2025-07-12):** Enhanced filter engine with combo modes (e.g., LP+BP) and selectable 12dB, 18dB, and 24dB slopes, available for all filter types.
-- **v1.1.3 (2025-07-12):** Added MOD_C support to the parameter chain and modulation capabilities.
-- **v1.1.2 (2025-07-08):** Added Oscillator update modes allowing various quality and performance modes.
-- **v1.1.1 (2025-07-06):** Added Unilegato functioning both in polyphonic (more than 1 voice) and monophonic (single voice) instances.
-- **v1.1.0 (2025-07-05):** Stable audio generation with full parity to original monolithic version. ADSRs, LFOs, Filter, and Limiter are functional.
-- **v1.0.0:** Initial port from monolithic application.
+For the full history of changes, please see [updatelog.txt](updatelog.txt).
 
 ## Polysonix Waveform Scripting Language
 The Polysonix Waveform Scripting Language is a domain-specific language for defining mathematical expressions that generate audio waveforms in the Polysonix synthesizer. Expressions are stored as strings, tokenized, parsed into an abstract syntax tree (AST), compiled into bytecode, and executed by a virtual machine (VM) for real-time audio synthesis.
