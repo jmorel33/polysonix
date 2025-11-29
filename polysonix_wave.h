@@ -231,6 +231,15 @@ extern "C" {
     #define POLYSONIX_ALIGN(n)
 #endif
 
+// --- Branch Prediction Macros ---
+#if defined(__GNUC__) || defined(__clang__)
+    #define PX_LIKELY(x)   __builtin_expect(!!(x), 1)
+    #define PX_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+    #define PX_LIKELY(x)   (x)
+    #define PX_UNLIKELY(x) (x)
+#endif
+
 // Include necessary headers from polysonix.h or define M_PI if needed
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -1891,29 +1900,29 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
              }
              break;
         }
-        case TOKEN_LOGICAL_AND: { 
-            ok &= compile_node(node->child1, chunk, active_loop_var_name_ptr); 
+        case TOKEN_LOGICAL_AND: {
+            ok &= compile_node(node->child1, chunk, active_loop_var_name_ptr);
             if (!ok) break;
-            int jump_if_false = emit_jump(chunk, OP_JUMP_IF_FALSE); 
-            ok &= compile_node(node->child2, chunk, active_loop_var_name_ptr); 
+            int jump_if_false = emit_jump(chunk, OP_JUMP_IF_FALSE);
+            ok &= compile_node(node->child2, chunk, active_loop_var_name_ptr);
             if (!ok) break;
             int jump_over_false_push = emit_jump(chunk, OP_JUMP);
             patch_jump(chunk, jump_if_false);
-            emit_byte(chunk, OP_PUSH_CONST); 
+            emit_byte(chunk, OP_PUSH_CONST);
             emit_short(chunk, add_constant(chunk, 0.0f));
             patch_jump(chunk, jump_over_false_push);
             break;
         }
 
-        case TOKEN_LOGICAL_OR: { 
-            ok &= compile_node(node->child1, chunk, active_loop_var_name_ptr); 
+        case TOKEN_LOGICAL_OR: {
+            ok &= compile_node(node->child1, chunk, active_loop_var_name_ptr);
             if (!ok) break;
-            int jump_if_false = emit_jump(chunk, OP_JUMP_IF_FALSE); 
+            int jump_if_false = emit_jump(chunk, OP_JUMP_IF_FALSE);
             emit_byte(chunk, OP_PUSH_CONST);
             emit_short(chunk, add_constant(chunk, 1.0f));
             int jump_over_right = emit_jump(chunk, OP_JUMP);
             patch_jump(chunk, jump_if_false);
-            ok &= compile_node(node->child2, chunk, active_loop_var_name_ptr); 
+            ok &= compile_node(node->child2, chunk, active_loop_var_name_ptr);
             if (!ok) break;
             patch_jump(chunk, jump_over_right);
             break;
@@ -1942,15 +1951,15 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
             break;
         }
 
-        case TOKEN_TERNARY_QM: { 
-            ok &= compile_node(node->child1, chunk, active_loop_var_name_ptr); 
+        case TOKEN_TERNARY_QM: {
+            ok &= compile_node(node->child1, chunk, active_loop_var_name_ptr);
             if (!ok) break;
-            int jump_if_false = emit_jump(chunk, OP_JUMP_IF_FALSE); 
-            ok &= compile_node(node->child2, chunk, active_loop_var_name_ptr); 
+            int jump_if_false = emit_jump(chunk, OP_JUMP_IF_FALSE);
+            ok &= compile_node(node->child2, chunk, active_loop_var_name_ptr);
             if (!ok) break;
             int jump_over_false = emit_jump(chunk, OP_JUMP);
             patch_jump(chunk, jump_if_false);
-            ok &= compile_node(node->child3, chunk, active_loop_var_name_ptr); 
+            ok &= compile_node(node->child3, chunk, active_loop_var_name_ptr);
             if (!ok) break;
             patch_jump(chunk, jump_over_false);
             break;
@@ -2541,7 +2550,7 @@ static void advance_lfsr_state(VmParams *params) { // REMOVED const
     int bit_length;
     uint32_t tap_mask;
     uint32_t period;
-    
+
     // Access the configuration data directly from the file-scope lfsr_configs array
     const LfsrConfigEntry* config = NULL;
     for (int i = 0; i < NUM_LFSR_TYPES; i++) {
@@ -2582,7 +2591,7 @@ static void advance_lfsr_state(VmParams *params) { // REMOVED const
         tap_mask = config->tap_mask;
         period = config->period;
     }
-    
+
     if (period == 0) return; // Cannot advance LFSR with zero period
 
     // Advance LFSR (Fibonacci configuration)
@@ -2663,23 +2672,27 @@ static uint8_t read_byte(VM *vm) {
 
 // --- Sigma Sub-Execution Helper ---
 static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
-    if (!sub_chunk || sub_chunk->code_count == 0) { 
-        vm_error(vm, "Attempted to execute empty or invalid sub-chunk."); 
-        return 0.0f; 
+    if (PX_UNLIKELY(!sub_chunk || sub_chunk->code_count == 0)) {
+        vm_error(vm, "Attempted to execute empty or invalid sub-chunk.");
+        return 0.0f;
     }
-    if (!vm->params) { 
-        vm_error(vm, "VM parameters pointer is NULL in execute_sub_chunk."); 
-        return 0.0f; 
+    if (PX_UNLIKELY(!vm->params)) {
+        vm_error(vm, "VM parameters pointer is NULL in execute_sub_chunk.");
+        return 0.0f;
     }
 
     // --- Store outer execution state ---
     BytecodeChunk *outer_chunk = vm->chunk;
     uint8_t       *outer_ip = vm->ip;
     float         *outer_stack_top = vm->stack_top; // CRITICAL: Save stack position
-    
+
     // --- Set VM context to sub-chunk ---
     vm->chunk = sub_chunk;
-    vm->ip = sub_chunk->code;
+
+    // --- Register Caching ---
+    register uint8_t *ip = sub_chunk->code;
+    register float *sp = vm->stack_top;
+
     // IMPORTANT: DON'T modify is_in_sigma_body or active_loop_var - inherit from main VM
     // vm->params remains the SAME pointer, allowing LFSR state modification
 
@@ -2721,342 +2734,326 @@ static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
     uint8_t instruction;
 
     // --- Sub-VM Loop Start ---
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS;
-    instruction = *vm->ip++;
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE;
+    if (PX_UNLIKELY(ip >= vm->chunk->code + vm->chunk->code_count)) {
+        vm->ip = ip; vm->stack_top = sp;
+        goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS;
+    }
+    instruction = *ip++;
+    if (PX_UNLIKELY(instruction > VM_MAX_OPCODE)) {
+        vm->ip = ip; vm->stack_top = sp;
+        goto SUB_LABEL_ERROR_UNKNOWN_OPCODE;
+    }
     goto *sub_dispatch_table[instruction];
 
     // --- Opcode Implementation Labels for Sub-Chunk ---
-SUB_LABEL_OP_PUSH_CONST: { 
-    uint16_t const_idx = read_short(vm); 
-    if (const_idx >= vm->chunk->constants_count) { 
-        vm_error(vm, "Invalid constant index %u (sub).", const_idx); 
-        push(vm, 0.0f); 
+SUB_LABEL_OP_PUSH_CONST: {
+    uint16_t const_idx = (uint16_t)((ip[0] << 8) | ip[1]);
+    ip += 2;
+    if (PX_UNLIKELY(const_idx >= vm->chunk->constants_count)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Invalid constant index %u (sub).", const_idx);
+        *sp++ = 0.0f;
         success = false;
-    } else { 
-        push(vm, vm->chunk->constants[const_idx]); 
-    } 
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
-}
-
-SUB_LABEL_OP_PUSH_VAR_X: { 
-    push(vm, vm->params->x); 
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction];
-}
-
-SUB_LABEL_OP_PUSH_VAR_FREQ: { 
-    push(vm, vm->params->frequency); 
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction];
-}
-
-SUB_LABEL_OP_PUSH_VAR_RAND: { 
-    push(vm, vm->params->rand_offset); 
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction];
-}
-
-SUB_LABEL_OP_PUSH_VAR_MOD_A: { 
-    push(vm, vm->params->modA); 
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction];
-}
-
-SUB_LABEL_OP_PUSH_VAR_MOD_B: { 
-    push(vm, vm->params->modB); 
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction];
-}
-
-SUB_LABEL_OP_PUSH_VAR_MOD_C: { 
-    push(vm, vm->params->modC); 
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction];
-}
-
-SUB_LABEL_OP_POP: { 
-    if (vm->stack_top > vm->stack) {
-        pop(vm); 
     } else {
+        *sp++ = vm->chunk->constants[const_idx];
+    }
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
+}
+
+SUB_LABEL_OP_PUSH_VAR_X: {
+    *sp++ = vm->params->x;
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
+}
+
+SUB_LABEL_OP_PUSH_VAR_FREQ: {
+    *sp++ = vm->params->frequency;
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
+}
+
+SUB_LABEL_OP_PUSH_VAR_RAND: {
+    *sp++ = vm->params->rand_offset;
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
+}
+
+SUB_LABEL_OP_PUSH_VAR_MOD_A: {
+    *sp++ = vm->params->modA;
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
+}
+
+SUB_LABEL_OP_PUSH_VAR_MOD_B: {
+    *sp++ = vm->params->modB;
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
+}
+
+SUB_LABEL_OP_PUSH_VAR_MOD_C: {
+    *sp++ = vm->params->modC;
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
+}
+
+SUB_LABEL_OP_POP: {
+    if (PX_LIKELY(sp > vm->stack)) {
+        sp--;
+    } else {
+        vm->ip = ip; vm->stack_top = sp;
         vm_error(vm, "Stack underflow on OP_POP in sub-chunk.");
         success = false;
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_ADD: { 
-    if ((vm->stack_top - vm->stack) < 2) {
-        vm_error(vm, "Stack underflow on OP_ADD in sub-chunk (need 2, have %td).", vm->stack_top - vm->stack);
-        push(vm, 0.0f); // Push dummy result
+SUB_LABEL_OP_ADD: {
+    if (PX_UNLIKELY((sp - vm->stack) < 2)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Stack underflow on OP_ADD in sub-chunk (need 2, have %td).", sp - vm->stack);
+        *sp++ = 0.0f; // Push dummy result
         success = false;
     } else {
-        float b = pop(vm); 
-        float a = pop(vm); 
-        push(vm, a + b); 
+        float b = *(--sp);
+        float a = *(--sp);
+        *sp++ = a + b;
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_SUB: { 
-    if ((vm->stack_top - vm->stack) < 2) {
-        vm_error(vm, "Stack underflow on OP_SUB in sub-chunk (need 2, have %td).", vm->stack_top - vm->stack);
-        push(vm, 0.0f);
+SUB_LABEL_OP_SUB: {
+    if (PX_UNLIKELY((sp - vm->stack) < 2)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Stack underflow on OP_SUB in sub-chunk (need 2, have %td).", sp - vm->stack);
+        *sp++ = 0.0f;
         success = false;
     } else {
-        float b = pop(vm); 
-        float a = pop(vm); 
-        push(vm, a - b); 
+        float b = *(--sp);
+        float a = *(--sp);
+        *sp++ = a - b;
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_MUL: { 
-    if ((vm->stack_top - vm->stack) < 2) {
-        vm_error(vm, "Stack underflow on OP_MUL in sub-chunk (need 2, have %td).", vm->stack_top - vm->stack);
-        push(vm, 0.0f);
+SUB_LABEL_OP_MUL: {
+    if (PX_UNLIKELY((sp - vm->stack) < 2)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Stack underflow on OP_MUL in sub-chunk (need 2, have %td).", sp - vm->stack);
+        *sp++ = 0.0f;
         success = false;
     } else {
-        float b = pop(vm); 
-        float a = pop(vm); 
-        push(vm, a * b); 
+        float b = *(--sp);
+        float a = *(--sp);
+        *sp++ = a * b;
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_DIV: { 
-    if ((vm->stack_top - vm->stack) < 2) {
-        vm_error(vm, "Stack underflow on OP_DIV in sub-chunk (need 2, have %td).", vm->stack_top - vm->stack);
-        push(vm, 0.0f);
+SUB_LABEL_OP_DIV: {
+    if (PX_UNLIKELY((sp - vm->stack) < 2)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Stack underflow on OP_DIV in sub-chunk (need 2, have %td).", sp - vm->stack);
+        *sp++ = 0.0f;
         success = false;
     } else {
-        float b = pop(vm); 
-        float a = pop(vm); 
-        if (!VM_IS_TRUE(b)) { 
-            vm_error(vm,"Division by zero (sub)."); 
-            push(vm, 0.0f); 
-            success = false; 
-        } else { 
-            push(vm, a / b); 
-        } 
+        float b = *(--sp);
+        float a = *(--sp);
+        if (PX_UNLIKELY(!VM_IS_TRUE(b))) {
+            vm->ip = ip; vm->stack_top = sp;
+            vm_error(vm,"Division by zero (sub).");
+            *sp++ = 0.0f;
+            success = false;
+        } else {
+            *sp++ = a / b;
+        }
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_MOD: { 
-    if ((vm->stack_top - vm->stack) < 2) {
-        vm_error(vm, "Stack underflow on OP_MOD in sub-chunk (need 2, have %td).", vm->stack_top - vm->stack);
-        push(vm, 0.0f);
+SUB_LABEL_OP_MOD: {
+    if (PX_UNLIKELY((sp - vm->stack) < 2)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Stack underflow on OP_MOD in sub-chunk (need 2, have %td).", sp - vm->stack);
+        *sp++ = 0.0f;
         success = false;
     } else {
-        float b = pop(vm); 
-        float a = pop(vm); 
-        if (!VM_IS_TRUE(b)) { 
-            vm_error(vm,"Modulo by zero (sub)."); 
-            push(vm, 0.0f); 
-            success = false; 
-        } else { 
-            push(vm, fmodf(a, b)); 
-        } 
+        float b = *(--sp);
+        float a = *(--sp);
+        if (PX_UNLIKELY(!VM_IS_TRUE(b))) {
+            vm->ip = ip; vm->stack_top = sp;
+            vm_error(vm,"Modulo by zero (sub).");
+            *sp++ = 0.0f;
+            success = false;
+        } else {
+            *sp++ = fmodf(a, b);
+        }
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_NEGATE: { 
-    if (vm->stack_top <= vm->stack) {
+SUB_LABEL_OP_NEGATE: {
+    if (PX_UNLIKELY(sp <= vm->stack)) {
+        vm->ip = ip; vm->stack_top = sp;
         vm_error(vm, "Stack underflow on OP_NEGATE in sub-chunk.");
-        push(vm, 0.0f);
+        *sp++ = 0.0f;
         success = false;
     } else {
-        push(vm, -pop(vm)); 
+        sp[-1] = -sp[-1];
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_NOT: { 
-    if (vm->stack_top <= vm->stack) {
+SUB_LABEL_OP_NOT: {
+    if (PX_UNLIKELY(sp <= vm->stack)) {
+        vm->ip = ip; vm->stack_top = sp;
         vm_error(vm, "Stack underflow on OP_NOT in sub-chunk.");
-        push(vm, 0.0f);
+        *sp++ = 0.0f;
         success = false;
     } else {
-        push(vm, VM_IS_TRUE(pop(vm)) ? 0.0f : 1.0f); 
+        sp[-1] = VM_IS_TRUE(sp[-1]) ? 0.0f : 1.0f;
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_CMP_EQ: { 
-    if ((vm->stack_top - vm->stack) < 2) {
-        vm_error(vm, "Stack underflow on OP_CMP_EQ in sub-chunk (need 2, have %td).", vm->stack_top - vm->stack);
-        push(vm, 0.0f);
+SUB_LABEL_OP_CMP_EQ: {
+    if (PX_UNLIKELY((sp - vm->stack) < 2)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Stack underflow on OP_CMP_EQ in sub-chunk (need 2, have %td).", sp - vm->stack);
+        *sp++ = 0.0f;
         success = false;
     } else {
-        float b = pop(vm); 
-        float a = pop(vm); 
-        push(vm, fabsf(a - b) < EPSILON ? 1.0f : 0.0f); 
+        float b = *(--sp);
+        float a = *(--sp);
+        *sp++ = fabsf(a - b) < EPSILON ? 1.0f : 0.0f;
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_CMP_NE: { 
-    if ((vm->stack_top - vm->stack) < 2) {
-        vm_error(vm, "Stack underflow on OP_CMP_NE in sub-chunk (need 2, have %td).", vm->stack_top - vm->stack);
-        push(vm, 0.0f);
+SUB_LABEL_OP_CMP_NE: {
+    if (PX_UNLIKELY((sp - vm->stack) < 2)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Stack underflow on OP_CMP_NE in sub-chunk (need 2, have %td).", sp - vm->stack);
+        *sp++ = 0.0f;
         success = false;
     } else {
-        float b = pop(vm); 
-        float a = pop(vm); 
-        push(vm, fabsf(a - b) >= EPSILON ? 1.0f : 0.0f); 
+        float b = *(--sp);
+        float a = *(--sp);
+        *sp++ = fabsf(a - b) >= EPSILON ? 1.0f : 0.0f;
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_CMP_GT: { 
-    if ((vm->stack_top - vm->stack) < 2) {
-        vm_error(vm, "Stack underflow on OP_CMP_GT in sub-chunk (need 2, have %td).", vm->stack_top - vm->stack);
-        push(vm, 0.0f);
+SUB_LABEL_OP_CMP_GT: {
+    if (PX_UNLIKELY((sp - vm->stack) < 2)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Stack underflow on OP_CMP_GT in sub-chunk (need 2, have %td).", sp - vm->stack);
+        *sp++ = 0.0f;
         success = false;
     } else {
-        float b = pop(vm); 
-        float a = pop(vm); 
-        push(vm, (a - b) > EPSILON ? 1.0f : 0.0f); 
+        float b = *(--sp);
+        float a = *(--sp);
+        *sp++ = (a - b) > EPSILON ? 1.0f : 0.0f;
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_CMP_GE: { 
-    if ((vm->stack_top - vm->stack) < 2) {
-        vm_error(vm, "Stack underflow on OP_CMP_GE in sub-chunk (need 2, have %td).", vm->stack_top - vm->stack);
-        push(vm, 0.0f);
+SUB_LABEL_OP_CMP_GE: {
+    if (PX_UNLIKELY((sp - vm->stack) < 2)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Stack underflow on OP_CMP_GE in sub-chunk (need 2, have %td).", sp - vm->stack);
+        *sp++ = 0.0f;
         success = false;
     } else {
-        float b = pop(vm); 
-        float a = pop(vm); 
-        push(vm, (a - b) > -EPSILON ? 1.0f : 0.0f); 
+        float b = *(--sp);
+        float a = *(--sp);
+        *sp++ = (a - b) > -EPSILON ? 1.0f : 0.0f;
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_CMP_LT: { 
-    if ((vm->stack_top - vm->stack) < 2) {
-        vm_error(vm, "Stack underflow on OP_CMP_LT in sub-chunk (need 2, have %td).", vm->stack_top - vm->stack);
-        push(vm, 0.0f);
+SUB_LABEL_OP_CMP_LT: {
+    if (PX_UNLIKELY((sp - vm->stack) < 2)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Stack underflow on OP_CMP_LT in sub-chunk (need 2, have %td).", sp - vm->stack);
+        *sp++ = 0.0f;
         success = false;
     } else {
-        float b = pop(vm); 
-        float a = pop(vm); 
-        push(vm, (a - b) < -EPSILON ? 1.0f : 0.0f); 
+        float b = *(--sp);
+        float a = *(--sp);
+        *sp++ = (a - b) < -EPSILON ? 1.0f : 0.0f;
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_CMP_LE: { 
-    if ((vm->stack_top - vm->stack) < 2) {
-        vm_error(vm, "Stack underflow on OP_CMP_LE in sub-chunk (need 2, have %td).", vm->stack_top - vm->stack);
-        push(vm, 0.0f);
+SUB_LABEL_OP_CMP_LE: {
+    if (PX_UNLIKELY((sp - vm->stack) < 2)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Stack underflow on OP_CMP_LE in sub-chunk (need 2, have %td).", sp - vm->stack);
+        *sp++ = 0.0f;
         success = false;
     } else {
-        float b = pop(vm); 
-        float a = pop(vm); 
-        push(vm, (a - b) < EPSILON ? 1.0f : 0.0f); 
+        float b = *(--sp);
+        float a = *(--sp);
+        *sp++ = (a - b) < EPSILON ? 1.0f : 0.0f;
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_JUMP: { 
-    int16_t offset = read_jump_offset(vm); 
-    vm->ip += offset; 
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+SUB_LABEL_OP_JUMP: {
+    int16_t offset = (int16_t)((ip[0] << 8) | ip[1]);
+    ip += 2;
+    ip += offset;
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_JUMP_IF_FALSE: { 
-    int16_t offset = read_jump_offset(vm); 
-    if (vm->stack_top <= vm->stack) {
+SUB_LABEL_OP_JUMP_IF_FALSE: {
+    int16_t offset = (int16_t)((ip[0] << 8) | ip[1]);
+    ip += 2;
+    if (PX_UNLIKELY(sp <= vm->stack)) {
+        vm->ip = ip; vm->stack_top = sp;
         vm_error(vm, "Stack underflow on OP_JUMP_IF_FALSE in sub-chunk.");
         success = false;
     } else {
-        float condition = pop(vm); 
-        if (!VM_IS_TRUE(condition)) { 
-            vm->ip += offset; 
-        } 
+        float condition = *(--sp);
+        if (!VM_IS_TRUE(condition)) {
+            ip += offset;
+        }
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS; 
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
-    goto *sub_dispatch_table[instruction]; 
+    instruction = *ip++;
+    goto *sub_dispatch_table[instruction];
 }
 
 SUB_LABEL_OP_CALL: {
-    uint8_t func_id = read_byte(vm);
-    uint8_t arg_count = read_byte(vm);
+    uint8_t func_id = *ip++;
+    uint8_t arg_count = *ip++;
     float call_result = 0.0f;
-    
+
     // Check stack size BEFORE popping
-    if ((vm->stack_top - vm->stack) < arg_count) {
-        vm_error(vm, "Stack underflow for OP_CALL in sub-chunk! Need %u args, have %td", arg_count, vm->stack_top - vm->stack);
+    if (PX_UNLIKELY((sp - vm->stack) < arg_count)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Stack underflow for OP_CALL in sub-chunk! Need %u args, have %td", arg_count, sp - vm->stack);
         success = false;
-        // Push dummy value to allow execution to potentially continue
-        push(vm, 0.0f);
+        *sp++ = 0.0f;
     } else {
+        vm->stack_top = sp; // Sync for helper calls
+        vm->ip = ip; // Sync ip just in case
+
         switch (func_id) {
             case FUNC_ID_SIN: if (arg_count == 1) call_result = sinf(pop(vm)); else { vm_error(vm,"sin expects 1 arg"); success = false; } break;
             case FUNC_ID_COS: if (arg_count == 1) call_result = cosf(pop(vm)); else { vm_error(vm,"cos expects 1 arg"); success = false; } break;
@@ -3076,8 +3073,7 @@ SUB_LABEL_OP_CALL: {
             case FUNC_ID_SQRT: if (arg_count == 1) { float v=pop(vm); call_result=(v >= 0) ? sqrtf(v): 0.0f; } else { vm_error(vm,"sqrt expects 1 arg"); success = false; } break;
             case FUNC_ID_POW: if (arg_count == 2) { float b=pop(vm); float a=pop(vm); call_result=powf(a,b); } else { vm_error(vm,"pow expects 2 args"); success = false; } break;
             case FUNC_ID_RAND: if (arg_count == 0) call_result = (float)rand() / RAND_MAX; else { vm_error(vm,"rand expects 0 args"); success = false; } break;
-            
-            // LFSR Functions with fixed const violation
+
             case FUNC_ID_LFSR_VAL:
                 if (arg_count == 3) {
                     float seed_arg = pop(vm);
@@ -3089,7 +3085,6 @@ SUB_LABEL_OP_CALL: {
                         LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
                         if (table->period > 0) {
                             if (vm->params->lfsr_type == (LfsrType)type_id && vm->params->lfsr_state != 0) {
-                                // FIXED: No more const cast needed
                                 advance_lfsr_state(vm->params);
                                 call_result = (vm->params->lfsr_state & 1) ? 1.0f : 0.0f;
                             } else {
@@ -3129,7 +3124,6 @@ SUB_LABEL_OP_CALL: {
                         LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
                         if (table->period > 0) {
                             if (vm->params->lfsr_type == (LfsrType)type_id && vm->params->lfsr_state != 0) {
-                                // FIXED: No more const cast needed
                                 advance_lfsr_state(vm->params);
                                 call_result = ((vm->params->lfsr_state & 1) ? 1.0f : 0.0f) * 2.0f - 1.0f;
                             } else {
@@ -3167,7 +3161,6 @@ SUB_LABEL_OP_CALL: {
                         if (table->period > 0) {
                             float clamped_density = fmaxf(0.0f, fminf(1.0f, density_arg));
                             if (vm->params->lfsr_type == (LfsrType)type_id && vm->params->lfsr_state != 0) {
-                                // FIXED: No more const cast needed
                                 advance_lfsr_state(vm->params);
                                 float bit_val = (vm->params->lfsr_state & 1) ? 1.0f : 0.0f;
                                 call_result = (bit_val >= clamped_density) ? 1.0f : 0.0f;
@@ -3192,59 +3185,53 @@ SUB_LABEL_OP_CALL: {
                 }
                 break;
 
-            default: 
-                vm_error(vm, "Unknown function ID %d in OP_CALL (sub).", func_id); 
+            default:
+                vm_error(vm, "Unknown function ID %d in OP_CALL (sub).", func_id);
                 success = false;
                 break;
         }
-        push(vm, call_result);
+        sp = vm->stack_top; // Sync back
+        *sp++ = call_result;
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS;
-    instruction = *vm->ip++; 
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE; 
+    instruction = *ip++;
     goto *sub_dispatch_table[instruction];
 }
 
 SUB_LABEL_OP_PUSH_LOOP_VAR: {
-    uint8_t name_index = read_byte(vm);
-    if (!vm->is_in_sigma_body) { 
-        vm_error(vm, "OP_PUSH_LOOP_VAR used outside sigma (sub)."); 
-        push(vm, 0.0f); 
-        success = false; 
-    } else if (name_index >= vm->chunk->strings_count || vm->chunk->strings[name_index] == NULL) { 
-        vm_error(vm, "OP_PUSH_LOOP_VAR invalid name index %u (sub).", name_index); 
-        push(vm, 0.0f); 
+    uint8_t name_index = *ip++;
+    if (PX_UNLIKELY(!vm->is_in_sigma_body)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "OP_PUSH_LOOP_VAR used outside sigma (sub).");
+        *sp++ = 0.0f;
         success = false;
-    } else if (vm->active_loop_var.name != NULL && strcmp(vm->chunk->strings[name_index], vm->active_loop_var.name) == 0) { 
-        push(vm, vm->active_loop_var.current_value); 
-    } else { 
-        vm_error(vm, "OP_PUSH_LOOP_VAR name mismatch (sub) ('%s' vs '%s')", vm->chunk->strings[name_index], vm->active_loop_var.name ? vm->active_loop_var.name : "<none>"); 
-        push(vm, 0.0f); 
+    } else if (PX_UNLIKELY(name_index >= vm->chunk->strings_count || vm->chunk->strings[name_index] == NULL)) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "OP_PUSH_LOOP_VAR invalid name index %u (sub).", name_index);
+        *sp++ = 0.0f;
+        success = false;
+    } else if (PX_LIKELY(vm->active_loop_var.name != NULL && strcmp(vm->chunk->strings[name_index], vm->active_loop_var.name) == 0)) {
+        *sp++ = vm->active_loop_var.current_value;
+    } else {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "OP_PUSH_LOOP_VAR name mismatch (sub) ('%s' vs '%s')", vm->chunk->strings[name_index], vm->active_loop_var.name ? vm->active_loop_var.name : "<none>");
+        *sp++ = 0.0f;
         success = false;
     }
-    if (vm->ip >= vm->chunk->code + vm->chunk->code_count) goto SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS;
-    instruction = *vm->ip++;
-    if (instruction > VM_MAX_OPCODE) goto SUB_LABEL_ERROR_UNKNOWN_OPCODE;
+    instruction = *ip++;
     goto *sub_dispatch_table[instruction];
 }
 
 SUB_LABEL_ERROR_SIGMA_SETUP_IN_SUB: {
-    uint8_t name_id_or_something __attribute__((unused)) = read_byte(vm);
-    uint16_t start_idx __attribute__((unused)) = read_short(vm);
-    uint16_t end_idx __attribute__((unused)) = read_short(vm);
-    uint16_t step_idx __attribute__((unused)) = read_short(vm);
-    uint16_t body_idx __attribute__((unused)) = read_short(vm);
+    ip += 9;
+    vm->ip = ip; vm->stack_top = sp;
     vm_error(vm, "Unexpected OP_SIGMA_SETUP encountered in sub-chunk.");
     success = false;
     goto sub_chunk_end;
 }
 
 SUB_LABEL_ERROR_SIGMA_EXEC_IN_SUB: {
-    uint8_t name_id_or_something __attribute__((unused)) = read_byte(vm);
-    uint16_t start_idx __attribute__((unused)) = read_short(vm);
-    uint16_t end_idx __attribute__((unused)) = read_short(vm);
-    uint16_t step_idx __attribute__((unused)) = read_short(vm);
-    uint16_t body_idx __attribute__((unused)) = read_short(vm);
+    ip += 9;
+    vm->ip = ip; vm->stack_top = sp;
     vm_error(vm, "Nested OP_SIGMA_EXEC detected (sub). Not allowed.");
     success = false;
     goto sub_chunk_end;
@@ -3252,30 +3239,33 @@ SUB_LABEL_ERROR_SIGMA_EXEC_IN_SUB: {
 
 SUB_LABEL_OP_HALT: {
     // CRITICAL FIX: Always leave exactly one result on stack for caller
-    if (success && vm->stack_top > vm->stack) {
-        result = *(vm->stack_top - 1); // Peek at top value
+    if (PX_LIKELY(success && sp > vm->stack)) {
+        result = *(sp - 1); // Peek at top value
         // Don't pop here - let caller handle it
     } else {
+        vm->ip = ip; vm->stack_top = sp;
         vm_error(vm, "Sub-chunk halted with error or empty stack.");
         success = false;
         result = 0.0f;
         // Ensure there's a value on stack for caller
-        if (vm->stack_top <= vm->stack) {
-            push(vm, 0.0f);
+        if (sp <= vm->stack) {
+            *sp++ = 0.0f;
         }
     }
     goto sub_chunk_end;
 }
 
 SUB_LABEL_ERROR_UNKNOWN_OPCODE: {
-    uint8_t bad_instruction = vm->ip[-1];
+    uint8_t bad_instruction = ip[-1];
+    vm->ip = ip; vm->stack_top = sp;
     vm_error(vm, "Unknown opcode 0x%02X in sub-chunk.", bad_instruction);
     success = false;
     goto sub_chunk_end;
 }
 
 SUB_LABEL_ERROR_IP_OUT_OF_BOUNDS: {
-    vm_error(vm, "Sub-chunk IP out of bounds at offset %td (code size %d).", (vm->ip - vm->chunk->code), vm->chunk->code_count);
+    vm->ip = ip; vm->stack_top = sp;
+    vm_error(vm, "Sub-chunk IP out of bounds at offset %td (code size %d).", (ip - vm->chunk->code), vm->chunk->code_count);
     success = false;
     goto sub_chunk_end;
 }
@@ -3284,9 +3274,9 @@ sub_chunk_end:
     // --- Consistent Stack Management ---
     // Always ensure there's exactly one result on the stack for the caller
     if (success) {
-        if (vm->stack_top > vm->stack) {
-            result = *(vm->stack_top - 1); // Get the result
-            vm->stack_top--; // Pop it from sub-chunk's perspective
+        if (sp > vm->stack) {
+            result = *(sp - 1); // Get the result
+            sp--; // Pop it from sub-chunk's perspective
         } else {
             // This shouldn't happen if success=true, but safety
             result = 0.0f;
@@ -3310,18 +3300,22 @@ sub_chunk_end:
 // --- Public VM Execution Function ---
 float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
     // --- Initial Checks ---
-    if (!chunk || chunk->code_count == 0) { return 0.0f; }
-    if (!params) { return 0.0f; }
+    if (PX_UNLIKELY(!chunk || chunk->code_count == 0)) { return 0.0f; }
+    if (PX_UNLIKELY(!params)) { return 0.0f; }
 
     // --- VM Setup ---
     VM vm;
     vm.chunk = chunk;
-    vm.ip = chunk->code;
+    // vm.ip = chunk->code;
     vm.stack_top = vm.stack;
     vm.params = params; // Store the pointer to the parameters
     vm.is_in_sigma_body = false; // Reset sigma state for main execution
     vm.active_loop_var.name = NULL;
     vm.active_loop_var.current_value = 0.0f;
+
+    // --- Register Caching ---
+    register uint8_t *ip = chunk->code;
+    register float *sp = vm.stack;
 
     // --- Success Flag for Robust Error Handling
     bool success = true;
@@ -3362,93 +3356,101 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
     // --- Central Dispatch Loop ---
 DISPATCH_LOOP:
     // Fetch, Decode, and Dispatch
-    instruction = *vm.ip++;
+    instruction = *ip++;
     goto *dispatch_table[instruction];
 
     // --- Opcode Implementation Labels ---
-LABEL_OP_PUSH_CONST: { 
-    uint16_t const_idx = read_short(&vm); 
-    if (const_idx >= vm.chunk->constants_count) { 
-        vm_error(&vm, "Invalid constant index %u.", const_idx); 
-        push(&vm, 0.0f); 
-        success = false; 
-    } else { 
-        push(&vm, vm.chunk->constants[const_idx]); 
-    } 
+LABEL_OP_PUSH_CONST: {
+    uint16_t const_idx = (uint16_t)((ip[0] << 8) | ip[1]);
+    ip += 2;
+    if (PX_UNLIKELY(const_idx >= vm.chunk->constants_count)) {
+        vm.ip = ip; vm.stack_top = sp;
+        vm_error(&vm, "Invalid constant index %u.", const_idx);
+        *sp++ = 0.0f;
+        success = false;
+    } else {
+        *sp++ = vm.chunk->constants[const_idx];
+    }
     goto DISPATCH_LOOP;
 }
-LABEL_OP_PUSH_VAR_X:     { push(&vm, vm.params->x);          goto DISPATCH_LOOP; }
-LABEL_OP_PUSH_VAR_FREQ:  { push(&vm, vm.params->frequency);  goto DISPATCH_LOOP; }
-LABEL_OP_PUSH_VAR_RAND:  { push(&vm, vm.params->rand_offset);goto DISPATCH_LOOP; }
-LABEL_OP_PUSH_VAR_MOD_A: { push(&vm, vm.params->modA);       goto DISPATCH_LOOP; }
-LABEL_OP_PUSH_VAR_MOD_B: { push(&vm, vm.params->modB);       goto DISPATCH_LOOP; }
-LABEL_OP_PUSH_VAR_MOD_C: { push(&vm, vm.params->modC);       goto DISPATCH_LOOP; }
-LABEL_OP_POP:            { pop(&vm);                         goto DISPATCH_LOOP; }
+LABEL_OP_PUSH_VAR_X:     { *sp++ = vm.params->x;          goto DISPATCH_LOOP; }
+LABEL_OP_PUSH_VAR_FREQ:  { *sp++ = vm.params->frequency;  goto DISPATCH_LOOP; }
+LABEL_OP_PUSH_VAR_RAND:  { *sp++ = vm.params->rand_offset;goto DISPATCH_LOOP; }
+LABEL_OP_PUSH_VAR_MOD_A: { *sp++ = vm.params->modA;       goto DISPATCH_LOOP; }
+LABEL_OP_PUSH_VAR_MOD_B: { *sp++ = vm.params->modB;       goto DISPATCH_LOOP; }
+LABEL_OP_PUSH_VAR_MOD_C: { *sp++ = vm.params->modC;       goto DISPATCH_LOOP; }
+LABEL_OP_POP:            { sp--;                          goto DISPATCH_LOOP; }
 
-LABEL_OP_ADD: { float b = pop(&vm); float a = pop(&vm); push(&vm, a + b); goto DISPATCH_LOOP; }
-LABEL_OP_SUB: { float b = pop(&vm); float a = pop(&vm); push(&vm, a - b); goto DISPATCH_LOOP; }
-LABEL_OP_MUL: { float b = pop(&vm); float a = pop(&vm); push(&vm, a * b); goto DISPATCH_LOOP; }
-LABEL_OP_DIV: { 
-    float b = pop(&vm); 
-    float a = pop(&vm); 
-    if (!VM_IS_TRUE(b)) { 
-        vm_error(&vm,"Division by zero."); 
-        push(&vm, 0.0f); 
-        success = false; 
-    } else { 
-        push(&vm, a / b); 
-    } 
+LABEL_OP_ADD: { float b = *(--sp); float a = *(--sp); *sp++ = a + b; goto DISPATCH_LOOP; }
+LABEL_OP_SUB: { float b = *(--sp); float a = *(--sp); *sp++ = a - b; goto DISPATCH_LOOP; }
+LABEL_OP_MUL: { float b = *(--sp); float a = *(--sp); *sp++ = a * b; goto DISPATCH_LOOP; }
+LABEL_OP_DIV: {
+    float b = *(--sp);
+    float a = *(--sp);
+    if (PX_UNLIKELY(!VM_IS_TRUE(b))) {
+        vm.ip = ip; vm.stack_top = sp;
+        vm_error(&vm,"Division by zero.");
+        *sp++ = 0.0f;
+        success = false;
+    } else {
+        *sp++ = a / b;
+    }
     goto DISPATCH_LOOP;
 }
-LABEL_OP_MOD: { 
-    float b = pop(&vm); 
-    float a = pop(&vm); 
-    if (!VM_IS_TRUE(b)) { 
-        vm_error(&vm,"Modulo by zero."); 
-        push(&vm, 0.0f); 
-        success = false; 
-    } else { 
-        push(&vm, fmodf(a, b)); 
-    } 
+LABEL_OP_MOD: {
+    float b = *(--sp);
+    float a = *(--sp);
+    if (PX_UNLIKELY(!VM_IS_TRUE(b))) {
+        vm.ip = ip; vm.stack_top = sp;
+        vm_error(&vm,"Modulo by zero.");
+        *sp++ = 0.0f;
+        success = false;
+    } else {
+        *sp++ = fmodf(a, b);
+    }
     goto DISPATCH_LOOP;
 }
-LABEL_OP_NEGATE: { push(&vm, -pop(&vm)); goto DISPATCH_LOOP; }
-LABEL_OP_NOT:    { push(&vm, VM_IS_TRUE(pop(&vm)) ? 0.0f : 1.0f); goto DISPATCH_LOOP; }
+LABEL_OP_NEGATE: { sp[-1] = -sp[-1]; goto DISPATCH_LOOP; }
+LABEL_OP_NOT:    { sp[-1] = VM_IS_TRUE(sp[-1]) ? 0.0f : 1.0f; goto DISPATCH_LOOP; }
 
-LABEL_OP_CMP_EQ: { float b = pop(&vm); float a = pop(&vm); push(&vm, fabsf(a - b) < EPSILON ? 1.0f : 0.0f); goto DISPATCH_LOOP; }
-LABEL_OP_CMP_NE: { float b = pop(&vm); float a = pop(&vm); push(&vm, fabsf(a - b) >= EPSILON ? 1.0f : 0.0f); goto DISPATCH_LOOP; }
-LABEL_OP_CMP_GT: { float b = pop(&vm); float a = pop(&vm); push(&vm, (a - b) > EPSILON ? 1.0f : 0.0f); goto DISPATCH_LOOP; }
-LABEL_OP_CMP_GE: { float b = pop(&vm); float a = pop(&vm); push(&vm, (a - b) > -EPSILON ? 1.0f : 0.0f); goto DISPATCH_LOOP; }
-LABEL_OP_CMP_LT: { float b = pop(&vm); float a = pop(&vm); push(&vm, (a - b) < -EPSILON ? 1.0f : 0.0f); goto DISPATCH_LOOP; }
-LABEL_OP_CMP_LE: { float b = pop(&vm); float a = pop(&vm); push(&vm, (a - b) < EPSILON ? 1.0f : 0.0f); goto DISPATCH_LOOP; }
+LABEL_OP_CMP_EQ: { float b = *(--sp); float a = *(--sp); *sp++ = fabsf(a - b) < EPSILON ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_CMP_NE: { float b = *(--sp); float a = *(--sp); *sp++ = fabsf(a - b) >= EPSILON ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_CMP_GT: { float b = *(--sp); float a = *(--sp); *sp++ = (a - b) > EPSILON ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_CMP_GE: { float b = *(--sp); float a = *(--sp); *sp++ = (a - b) > -EPSILON ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_CMP_LT: { float b = *(--sp); float a = *(--sp); *sp++ = (a - b) < -EPSILON ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_CMP_LE: { float b = *(--sp); float a = *(--sp); *sp++ = (a - b) < EPSILON ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
 
-LABEL_OP_JUMP: { 
-    int16_t offset = read_jump_offset(&vm); 
-    vm.ip += offset; 
+LABEL_OP_JUMP: {
+    int16_t offset = (int16_t)((ip[0] << 8) | ip[1]);
+    ip += 2;
+    ip += offset;
     goto DISPATCH_LOOP;
 }
-LABEL_OP_JUMP_IF_FALSE: { 
-    int16_t offset = read_jump_offset(&vm); 
-    if (!VM_IS_TRUE(pop(&vm))) { 
-        vm.ip += offset; 
-    } 
+LABEL_OP_JUMP_IF_FALSE: {
+    int16_t offset = (int16_t)((ip[0] << 8) | ip[1]);
+    ip += 2;
+    if (!VM_IS_TRUE(*(--sp))) {
+        ip += offset;
+    }
     goto DISPATCH_LOOP;
 }
 
 LABEL_OP_CALL: {
-    uint8_t func_id = read_byte(&vm);
-    uint8_t arg_count = read_byte(&vm);
+    uint8_t func_id = *ip++;
+    uint8_t arg_count = *ip++;
     float call_result = 0.0f;
-    if ((vm.stack_top - vm.stack) < arg_count) {
-        vm_error(&vm, "Stack underflow for OP_CALL! Need %u args, have %td", arg_count, vm.stack_top - vm.stack);
+    if (PX_UNLIKELY((sp - vm.stack) < arg_count)) {
+        vm.ip = ip; vm.stack_top = sp;
+        vm_error(&vm, "Stack underflow for OP_CALL! Need %u args, have %td", arg_count, sp - vm.stack);
         success = false;
-        push(&vm, 0.0f);
+        *sp++ = 0.0f;
     } else {
-        // --- Function Call Logic (this block is unchanged) ---
+        vm.stack_top = sp; // Sync
+        vm.ip = ip; // Sync
+
         switch (func_id) {
         case FUNC_ID_SIN: if (arg_count == 1) call_result = sinf(pop(&vm)); else vm_error(&vm,"sin expects 1 arg"); break;
         case FUNC_ID_COS: if (arg_count == 1) call_result = cosf(pop(&vm)); else vm_error(&vm,"cos expects 1 arg"); break;
-        // ... (rest of the case statements are identical to your original code) ...
         case FUNC_ID_TAN: if (arg_count == 1) call_result = tanf(pop(&vm)); else vm_error(&vm,"tan expects 1 arg"); break;
         case FUNC_ID_ASIN: if (arg_count == 1) { float v=pop(&vm); call_result = asinf(fmaxf(-1.0f, fminf(1.0f, v))); } else vm_error(&vm,"asin expects 1 arg"); break;
         case FUNC_ID_ACOS: if (arg_count == 1) { float v=pop(&vm); call_result = acosf(fmaxf(-1.0f, fminf(1.0f, v))); } else vm_error(&vm,"acos expects 1 arg"); break;
@@ -3519,38 +3521,42 @@ LABEL_OP_CALL: {
             break;
         default: vm_error(&vm, "Unknown function ID %d in OP_CALL.", func_id); break;
         }
-        push(&vm, call_result);
+        sp = vm.stack_top; // Sync back
+        *sp++ = call_result;
     }
     goto DISPATCH_LOOP;
 }
 
 LABEL_OP_SIGMA_SETUP: {
     // This opcode is deprecated by OP_SIGMA_EXEC, but we handle it gracefully.
-    vm.ip += 9; // Consume all 9 operand bytes
+    ip += 9; // Consume all 9 operand bytes
+    vm.ip = ip; vm.stack_top = sp; // Sync
     vm_error(&vm, "OP_SIGMA_SETUP encountered unexpectedly.");
     success = false;
     goto execution_end;
 }
 
 LABEL_OP_PUSH_LOOP_VAR: {
+    vm.ip = ip; vm.stack_top = sp; // Sync
     vm_error(&vm, "OP_PUSH_LOOP_VAR encountered outside sigma context.");
-    push(&vm, 0.0f);
+    *sp++ = 0.0f;
     success = false;
     goto DISPATCH_LOOP;
 }
 
 LABEL_OP_SIGMA_EXEC: {
-    if (vm.is_in_sigma_body) {
+    if (PX_UNLIKELY(vm.is_in_sigma_body)) {
+        vm.ip = ip; vm.stack_top = sp; // Sync
         vm_error(&vm, "Nested OP_SIGMA_EXEC call detected at runtime.");
-        push(&vm, 0.0f);
+        *sp++ = 0.0f;
         success = false;
-        vm.ip += 9; // Consume operands to advance IP correctly
+        ip += 9; // Consume operands to advance IP correctly
     } else {
-        uint8_t name_index = read_byte(&vm);
-        uint16_t start_idx = read_short(&vm);
-        uint16_t end_idx   = read_short(&vm);
-        uint16_t step_idx  = read_short(&vm);
-        uint16_t body_idx  = read_short(&vm);
+        uint8_t name_index = *ip++;
+        uint16_t start_idx = (uint16_t)((ip[0] << 8) | ip[1]); ip += 2;
+        uint16_t end_idx   = (uint16_t)((ip[0] << 8) | ip[1]); ip += 2;
+        uint16_t step_idx  = (uint16_t)((ip[0] << 8) | ip[1]); ip += 2;
+        uint16_t body_idx  = (uint16_t)((ip[0] << 8) | ip[1]); ip += 2;
 
         bool indices_valid = (start_idx < vm.chunk->sigma_sub_chunk_count &&
                               end_idx   < vm.chunk->sigma_sub_chunk_count &&
@@ -3559,14 +3565,18 @@ LABEL_OP_SIGMA_EXEC: {
                               name_index < vm.chunk->strings_count &&
                               vm.chunk->strings[name_index] != NULL);
 
-        if (!indices_valid) {
+        if (PX_UNLIKELY(!indices_valid)) {
+             vm.ip = ip; vm.stack_top = sp; // Sync
              vm_error(&vm, "Invalid index in OP_SIGMA_EXEC operands.");
-             push(&vm, 0.0f);
+             *sp++ = 0.0f;
              success = false;
         } else {
             const char* loop_var_name_str = vm.chunk->strings[name_index];
             float sum = 0.0f;
             bool sigma_success = true;
+
+            // Sync for sub-call
+            vm.ip = ip; vm.stack_top = sp;
 
             float start_val = execute_sub_chunk(&vm, vm.chunk->sigma_sub_chunks[start_idx]);
             float end_val   = execute_sub_chunk(&vm, vm.chunk->sigma_sub_chunks[end_idx]);
@@ -3578,8 +3588,8 @@ LABEL_OP_SIGMA_EXEC: {
             } else {
                 vm.active_loop_var.name = loop_var_name_str;
                 vm.is_in_sigma_body = true;
-                
-                int iterations = 0; 
+
+                int iterations = 0;
                 const int MAX_ITERATIONS = 1000;
                 BytecodeChunk* body_chunk = vm.chunk->sigma_sub_chunks[body_idx];
                 float end_boundary = (step_val > 0) ? (end_val + fabsf(step_val) * 0.5f) : (end_val - fabsf(step_val) * 0.5f);
@@ -3596,7 +3606,8 @@ LABEL_OP_SIGMA_EXEC: {
                 vm.is_in_sigma_body = false;
                 vm.active_loop_var.name = NULL;
             }
-            push(&vm, sigma_success ? sum : 0.0f);
+            sp = vm.stack_top; // Restore stack top after sub-calls
+            *sp++ = sigma_success ? sum : 0.0f;
             if (!sigma_success) { success = false; }
         }
     }
@@ -3608,13 +3619,13 @@ LABEL_OP_HALT: {
 }
 
 execution_end:
-    if (!success) {
+    if (PX_UNLIKELY(!success)) {
         return 0.0f;
     }
-    if (vm.stack_top == vm.stack) {
+    if (sp == vm.stack) {
         return 0.0f;
     } else {
-        return pop(&vm);
+        return *(--sp);
     }
 }
 
@@ -3942,7 +3953,7 @@ float generate_sample_from_bytecode(BytecodeChunk *chunk, uint16_t sample_index,
 #define WSSCYCLE2 (WSS_BASE_ADDR + 1 * WSS_TABLE_SIZE) // USER_WAVE_RAM_START + 0x0100
 //...
 #define WSSCYCLE8 (WSS_BASE_ADDR + 15 * WSS_TABLE_SIZE) // USER_WAVE_RAM_START + 0x0F00
-#define WSS_END_ADDR (WSS_BASE_ADDR + WSS_NUM_TABLES * WSS_TABLE_SIZE - 1) 
+#define WSS_END_ADDR (WSS_BASE_ADDR + WSS_NUM_TABLES * WSS_TABLE_SIZE - 1)
 
 
 // --- User Waveform RAM Addresses (Bank 3: 0x0000 - 0x77FF) ---
@@ -3992,7 +4003,7 @@ static void initialize_wave_tables_interpreted(polysonix_device *dev, uint16_t b
         const char* wave_name = default_waves[table_idx].name;
         const char* expression_to_compile = default_waves[table_idx].expression;
         int8_t *output_buffer = (int8_t *)(dev->user_wave_ram + table_start_offset);
-        
+
         if (default_waves[table_idx].compiled_bytecode != NULL) {
             // This case should ideally not happen in a single-init scenario,
             // but adding a warning and freeing is safer if the assumption is wrong.
@@ -4001,7 +4012,7 @@ static void initialize_wave_tables_interpreted(polysonix_device *dev, uint16_t b
             free(default_waves[table_idx].compiled_bytecode);
             default_waves[table_idx].compiled_bytecode = NULL;
         }
-        
+
         // Compile and store the result (will be NULL if compilation fails)
         default_waves[table_idx].compiled_bytecode = compile_expression_to_bytecode(expression_to_compile);
 
