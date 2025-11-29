@@ -149,11 +149,17 @@ static bool compile_all_waves() {
 }
 
 // --- Audio Callback for Situation ---
-static uint64_t on_audio_stream_read(void* user_data, void* buffer, uint64_t frames_to_read) {
+// SDK 238: Callback receives bytesToRead, not frames.
+static uint64_t on_audio_stream_read(void* user_data, void* buffer, uint64_t bytes_to_read) {
     if (!synth) return 0;
 
+    // Calculate frames requested based on bytes and format (float, stereo)
+    uint64_t frames_requested = bytes_to_read / (sizeof(float) * CHANNELS);
+
+    // Clamp to our buffer size
+    uint64_t frames_to_generate = (frames_requested < SAMPLES_PER_UPDATE) ? frames_requested : SAMPLES_PER_UPDATE;
+
     // 1. Generate int16_t samples from Polysonix
-    uint64_t frames_to_generate = (frames_to_read < SAMPLES_PER_UPDATE) ? frames_to_read : SAMPLES_PER_UPDATE;
     PX_Process(synth, mix_buffer, (int)frames_to_generate);
 
     // 2. Convert to float and copy to the output buffer
@@ -162,7 +168,8 @@ static uint64_t on_audio_stream_read(void* user_data, void* buffer, uint64_t fra
         out_buffer[i] = (float)mix_buffer[i] / 32767.0f;
     }
 
-    return frames_to_generate;
+    // Return the number of bytes written, not frames (per SDK 238 example return value matching input)
+    return frames_to_generate * sizeof(float) * CHANNELS;
 }
 
 static uint64_t on_audio_stream_seek(void* user_data, int64_t offset, int whence) {
@@ -285,12 +292,14 @@ void DrawRectangleLines(int x, int y, int width, int height, Color color) {
 
 void DrawText(const char* text, int x, int y, int fontSize, Color color) {
     if (!main_font.id) return;
+    // Using v2.3.1 API for text as it's missing in v2.3.8 docs but assumed present
     SituationImageDrawTextEx(&canvas_image, main_font, text, (Vector2){(float)x, (float)y}, (float)fontSize, 1.0f, 0.0f, 0.0f, rl_to_sit_color(color), (ColorRGBA){0,0,0,0}, 0.0f);
 }
 
 int MeasureText(const char *text, int fontSize) {
     if (!main_font.id) return 0;
     vec2 size;
+    // Using v2.3.1 API
     glm_vec2_copy(SituationMeasureText(main_font, text, (float)fontSize, 1.0f), size);
     return (int)size[0];
 }
@@ -306,20 +315,20 @@ static void DrawLFOIndicator(float lfo_value_normalized, int x, int y, int radiu
 static bool InitializeApplication() {
     srand((unsigned int)time(NULL));
 
-    SituationInitInfo init_info = {
-        .app_name = "Polysonix Situation Player",
-        .app_version = "1.0",
-        .initial_width = SCREEN_WIDTH,
-        .initial_height = SCREEN_HEIGHT,
-        .window_flags = SITUATION_FLAG_WINDOW_RESIZABLE | SITUATION_FLAG_VSYNC_HINT,
-        .target_fps = TARGET_FPS,
-        .headless = false
-    };
+    // SDK 238 Initialization Structure
+    SituationInitInfo init_info = {0};
+    init_info.window_width = SCREEN_WIDTH;
+    init_info.window_height = SCREEN_HEIGHT;
+    init_info.window_title = "Polysonix Situation Player";
+    init_info.initial_active_window_flags = SITUATION_FLAG_WINDOW_RESIZABLE | SITUATION_FLAG_VSYNC_HINT;
 
     if (SituationInit(0, NULL, &init_info) != SIT_SUCCESS) {
         printf("Failed to initialize Situation: %s\n", SituationGetLastErrorMsg());
         return false;
     }
+
+    // Set FPS separately as per SDK 238
+    SituationSetTargetFPS(TARGET_FPS);
 
     if (!polysonix_wave_init()) {
         fprintf(stderr, "Failed to initialize Polysonix wave system!\n");
@@ -359,34 +368,35 @@ static bool InitializeApplication() {
         return false;
     }
 
-    // --- NEW: Setup Situation Audio Stream ---
-    if (SituationIsAudioDeviceReady()) {
-        SituationAudioFormat format = {
-            .channels = CHANNELS,
-            .sample_rate = REQUESTED_SAMPLE_RATE,
-            .bit_depth = 32 // We will be providing float samples
-        };
-        SituationLoadSoundFromStream(on_audio_stream_read, on_audio_stream_seek, NULL, &format, true, &audio_stream);
-        SituationPlayLoadedSound(&audio_stream);
-    } else {
-        printf("Warning: Audio device not ready. Sound will not play.\n");
-    }
+    // --- Setup Situation Audio Stream ---
+    // Per SDK 238, SituationInit initializes audio device.
+    SituationAudioFormat format = {
+        .channels = CHANNELS,
+        .sample_rate = REQUESTED_SAMPLE_RATE,
+        .bit_depth = 32 // We will be providing float samples
+    };
+    SituationLoadSoundFromStream(on_audio_stream_read, on_audio_stream_seek, NULL, &format, true, &audio_stream);
+    SituationPlayLoadedSound(&audio_stream);
 
+    // Using v2.3.1 API for fonts
     main_font = SituationLoadFont("./font.ttf");
     if (!SituationIsFontValid(main_font)) {
         printf("Warning: Failed to load font. Text will not be rendered.\n");
     }
 
     canvas_image = SituationGenImageColor(SCREEN_WIDTH, SCREEN_HEIGHT, (ColorRGBA){0,0,0,255});
-    canvas_texture = SituationLoadTextureFromImage(canvas_image);
+    canvas_texture = SituationCreateTexture(canvas_image, false);
 
+    // Using Push Constants for matrix per SDK 238 "Fastest way" / Velocity style
     const char* vs_canvas =
         "#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
         "out vec2 v_tex_coord;\n"
-        "uniform mat4 u_mvp;\n"
+        "layout(push_constant) uniform Constants {\n"
+        "    mat4 u_mvp;\n"
+        "} pc;\n"
         "void main() {\n"
-        "    gl_Position = u_mvp * vec4(aPos.xy, 0.0, 1.0);\n"
+        "    gl_Position = pc.u_mvp * vec4(aPos.xy, 0.0, 1.0);\n"
         "    v_tex_coord = aPos.xy * 0.5 + 0.5;\n"
         "    v_tex_coord.y = 1.0 - v_tex_coord.y;\n"
         "}\n";
@@ -418,10 +428,9 @@ static void CleanupApplication() {
         SituationUnloadFont(main_font);
     }
 
-    if (SituationIsAudioDeviceReady()) {
-        SituationStopLoadedSound(&audio_stream);
-        SituationUnloadSound(&audio_stream);
-    }
+    // Audio clean up
+    SituationStopLoadedSound(&audio_stream);
+    SituationUnloadSound(&audio_stream);
 
     if (synth) PX_Destroy(synth);
 
@@ -797,17 +806,29 @@ static void DrawFrame() {
     DrawLiveOscillator(mix_buffer, SAMPLES_PER_UPDATE, 10, waveform_draw_y + DRAW_WAVEFORM_HEIGHT + 10, SCREEN_WIDTH - 20, 80);
 
     // --- 2. Upload the canvas to the GPU and render it ---
-    SituationUpdateTexture(canvas_texture, canvas_image.data);
+    // SDK 238: Use Destroy/Create instead of UpdateTexture (which isn't in docs)
+    if (canvas_texture.id != 0) SituationDestroyTexture(&canvas_texture);
+    canvas_texture = SituationCreateTexture(canvas_image, false);
 
     if (SituationAcquireFrameCommandBuffer()) {
+        // SDK 238 RenderPass Info
         SituationRenderPassInfo pass_info = {
-            .color_load_action = SIT_LOAD_ACTION_DONT_CARE,
-            .color_store_action = SIT_STORE_ACTION_STORE,
+            .display_id = -1, // Main Window
+            .color_attachment = {
+                .loadOp = SIT_LOAD_OP_DONT_CARE,
+                .storeOp = SIT_STORE_OP_STORE,
+                .clear = { .color = {0,0,0,255} }
+            },
+            .depth_attachment = {
+                .loadOp = SIT_LOAD_OP_DONT_CARE,
+                .storeOp = SIT_STORE_OP_DONT_CARE
+            }
         };
         SituationCmdBeginRenderPass(SituationGetMainCommandBuffer(), &pass_info);
 
         SituationCmdBindPipeline(SituationGetMainCommandBuffer(), canvas_shader);
-        SituationCmdBindTexture(SituationGetMainCommandBuffer(), canvas_texture, 0);
+        // SDK 238: CmdBindTextureSet with args (cmd, set_index, texture)
+        SituationCmdBindTextureSet(SituationGetMainCommandBuffer(), 0, canvas_texture);
 
         mat4 model;
         glm_mat4_identity(model);
@@ -816,9 +837,14 @@ static void DrawFrame() {
 
         mat4 mvp;
         glm_mat4_mul(projection, model, mvp);
-        SituationCmdSetShaderMat4(SituationGetMainCommandBuffer(), "u_mvp", mvp);
 
-        SituationCmdDrawQuad(SituationGetMainCommandBuffer());
+        // SDK 238: Use Push Constants for matrices (Fastest way)
+        SituationCmdSetPushConstant(SituationGetMainCommandBuffer(), 0, &mvp, sizeof(mat4));
+
+        // SDK 238: CmdDrawQuad with args (cmd, model, color)
+        // Note: vec4 is implied float[4] compatible with cglm vec4.
+        vec4 white = {1.0f, 1.0f, 1.0f, 1.0f};
+        SituationCmdDrawQuad(SituationGetMainCommandBuffer(), model, white);
 
         SituationCmdEndRenderPass(SituationGetMainCommandBuffer());
         SituationEndFrame();
@@ -841,9 +867,12 @@ int main(void) {
         } else {
             if (SituationAcquireFrameCommandBuffer()) {
                 SituationRenderPassInfo pass_info = {
-                    .color_load_action = SIT_LOAD_ACTION_CLEAR,
-                    .clear_color = { 0, 0, 0, 255 }, // BLACK
-                    .color_store_action = SIT_STORE_ACTION_STORE,
+                    .display_id = -1,
+                    .color_attachment = {
+                        .loadOp = SIT_LOAD_OP_CLEAR,
+                        .storeOp = SIT_STORE_OP_STORE,
+                        .clear = { .color = { 0, 0, 0, 255 } } // BLACK
+                    }
                 };
                 SituationCmdBeginRenderPass(SituationGetMainCommandBuffer(), &pass_info);
                 DrawText("DRAWING DISABLED (F11 to toggle)", 10, 10, 20, RAYWHITE);
