@@ -199,21 +199,10 @@ static uint64_t AudioCallback(void* user_data, void* buffer, uint64_t bytes_to_r
     // Calculate frames (assuming stereo float)
     uint64_t frames = bytes_to_read / (sizeof(float) * 2);
 
-    // Temporary buffer for 16-bit integer samples from Polysonix
-    // (In a real app, reuse a pre-allocated buffer)
-    int16_t* temp_buffer = (int16_t*)malloc(frames * 2 * sizeof(int16_t));
-    if (!temp_buffer) return 0;
+    // Generate float audio directly into the output buffer
+    // Polysonix outputs interleaved float samples (-1.0 to 1.0)
+    PX_Process(synth, (float*)buffer, (int)frames);
 
-    // Generate audio
-    PX_Process(synth, temp_buffer, (int)frames);
-
-    // Convert int16 to float for Situation
-    float* out = (float*)buffer;
-    for (uint64_t i = 0; i < frames * 2; ++i) {
-        out[i] = (float)temp_buffer[i] / 32767.0f;
-    }
-
-    free(temp_buffer);
     return bytes_to_read;
 }
 

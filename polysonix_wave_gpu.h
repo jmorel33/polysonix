@@ -3636,7 +3636,7 @@ execution_end:
 }
 
 // Generate function (no cache lookup/insert)
-static bool compile_and_generate_wave( const char *expression, BytecodeChunk** chunk_ptr_location, int8_t *output_buffer, uint16_t wave_length)
+static bool compile_and_generate_wave( const char *expression, BytecodeChunk** chunk_ptr_location, float *output_buffer, uint16_t wave_length)
 {
     if (!expression || !chunk_ptr_location || !output_buffer || wave_length == 0) {
         fprintf(stderr, "Error: Invalid arguments to compile_and_generate_wave.\n");
@@ -3708,12 +3708,12 @@ static bool compile_and_generate_wave( const char *expression, BytecodeChunk** c
         .lfsr_seed = 1
     };
 
-    int8_t first_sample = 0;
+    float first_sample = 0.0f;
     for (int i = 0; i < wave_length; i++) {
         params.x = ((float)i / (float)wave_length) * C_TWO_PI;
         float sample_f = execute_bytecode(*chunk_ptr_location, &params); // Pass non-const pointer
         sample_f = fmaxf(-1.0f, fminf(1.0f, sample_f));
-        output_buffer[i] = (int8_t)(sample_f * 127.0f);
+        output_buffer[i] = sample_f;
         if (i == 0) first_sample = output_buffer[i];
     }
     if (wave_length > 1) output_buffer[wave_length - 1] = first_sample;
@@ -4001,14 +4001,14 @@ static void initialize_wave_tables_interpreted(polysonix_device *dev, uint16_t b
     // Seed random ONCE elsewhere
     for (int table_idx = 0; table_idx < num_tables; ++table_idx) {
         // table_idx is already checked against NUM_DEFAULT_WAVES by the initial check
-        uint32_t table_start_offset = (uint32_t)(base_addr - USER_WAVE_RAM_START) + ((uint32_t)table_idx * wave_length);
-        if (table_start_offset + wave_length > USER_WAVE_RAM_SIZE) {
+        uint32_t table_start_offset = (uint32_t)(base_addr - USER_WAVE_RAM_START) + ((uint32_t)table_idx * wave_length * sizeof(float)); // Scaled by float
+        if (table_start_offset + wave_length * sizeof(float) > USER_WAVE_RAM_SIZE) {
             fprintf(stderr, "Error: Wave table %d (length %u) exceeds user_wave_ram bounds (Offset 0x%X).\n", table_idx, wave_length, table_start_offset);
             continue;
         }
         const char* wave_name = default_waves[table_idx].name;
         const char* expression_to_compile = default_waves[table_idx].expression;
-        int8_t *output_buffer = (int8_t *)(dev->user_wave_ram + table_start_offset);
+        float *output_buffer = (float *)(dev->user_wave_ram + table_start_offset);
 
         if (default_waves[table_idx].compiled_bytecode != NULL) {
             // This case should ideally not happen in a single-init scenario,
@@ -4029,7 +4029,7 @@ static void initialize_wave_tables_interpreted(polysonix_device *dev, uint16_t b
             //float generation_rand_offset = (float)rand() / RAND_MAX;
             for(uint16_t i = 0; i < wave_length; ++i) {
                 float sample_float = generate_sample_from_bytecode( current_chunk, i, wave_length, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f );
-                output_buffer[i] = (int8_t)(sample_float * 127.0f);
+                output_buffer[i] = sample_float;
             }
             // Optional boundary matching after the loop
             if (wave_length > 1) { output_buffer[wave_length - 1] = output_buffer[0]; }
@@ -4042,9 +4042,9 @@ static void initialize_wave_tables_interpreted(polysonix_device *dev, uint16_t b
                     int start_idx = j;
                     // Get the original sample value near the end (before blending)
                     // Note: output_buffer[wave_length-1] was already forced equal to output_buffer[0]
-                    float end_sample = (float)output_buffer[end_idx];
+                    float end_sample = output_buffer[end_idx];
                     // Get the sample value from the start that we are fading towards
-                    float start_sample = (float)output_buffer[start_idx];
+                    float start_sample = output_buffer[start_idx];
                     // Calculate linear fade factor (alpha goes 0 to 1)
                     // When j=0, alpha=0. When j=fade_len-1, alpha=1.
                     float alpha = (float)j / (float)(fade_len - 1);
@@ -4052,7 +4052,7 @@ static void initialize_wave_tables_interpreted(polysonix_device *dev, uint16_t b
                     float blended_sample = (1.0f - alpha) * end_sample + alpha * start_sample;
                     // Store the blended sample back, rounding correctly
                     // Requires <math.h> for roundf()
-                    output_buffer[end_idx] = (int8_t)roundf(blended_sample);
+                    output_buffer[end_idx] = blended_sample;
                 }
                 // Optional: Force the very last sample *again* after the fade? Usually not needed.
                 // output_buffer[wave_length - 1] = output_buffer[0];
@@ -4060,7 +4060,7 @@ static void initialize_wave_tables_interpreted(polysonix_device *dev, uint16_t b
         } else {
             // Compilation failed (error message already printed by compile function)
             fprintf(stderr, "-> Compilation failed for wave '%s' (idx %d), filling buffer with silence.\n", wave_name, table_idx);
-            memset(output_buffer, 0, wave_length);
+            memset(output_buffer, 0, wave_length * sizeof(float));
         }
     }
     printf("Finished initializing %u wave tables of length %u.\n", num_tables, wave_length);
