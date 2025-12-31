@@ -70,14 +70,14 @@ flowchart TD
     Bytecode --> Decision{Backend?}
 
     %% CPU Path
-    Decision -->|CPU (Default)| CPU_Mem[Host Memory]
+    Decision -->|"CPU (Default)"| CPU_Mem[Host Memory]
     CPU_Mem -->|Read| CPU_VM["CPU VM\n(Recursive, Computed Gotos)"]
     subgraph CPU_Execution [CPU Audio Thread]
         CPU_VM -->|Synthesize| CPU_Out[int16 Audio Buffer]
     end
 
     %% GPU Path
-    Decision -->|GPU (Optional)| Serializer[Serializer\n(Packs structs for std430)]
+    Decision -->|"GPU (Optional)"| Serializer["Serializer\n(Packs structs for std430)"]
     Serializer -->|Upload| SSBO[GPU SSBO Buffer]
     SSBO -->|Bindless Access| GPU_VM["GPU VM\n(Iterative, Explicit Stack)"]
     subgraph GPU_Execution [OpenGL Compute Shader]
