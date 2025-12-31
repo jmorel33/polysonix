@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdint.h>
-#include "../polysonix_wave_cpu.h"
+#ifdef POLYSONIX_USE_GPU_WAVE
+    #include "../polysonix_wave_gpu.h"
+#else
+    #include "../polysonix_wave_cpu.h"
+#endif
 
 /***************************************************************************************************
 *
