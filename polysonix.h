@@ -18,7 +18,7 @@
 #ifndef POLYSONIX_H
 #define POLYSONIX_H
 
-#include "polysonix_wave.h"
+#include "polysonix_wave_cpu.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdatomic.h>
