@@ -73,7 +73,7 @@ flowchart TD
     Decision -->|"CPU (Default)"| CPU_Mem[Host Memory]
     CPU_Mem -->|Read| CPU_VM["CPU VM\n(Recursive, Computed Gotos)"]
     subgraph CPU_Execution [CPU Audio Thread]
-        CPU_VM -->|Synthesize| CPU_Out[int16 Audio Buffer]
+        CPU_VM -->|Synthesize| CPU_Out[Float Audio Buffer]
     end
 
     %% GPU Path
@@ -267,7 +267,7 @@ The API is designed to be simple and thread-safe.
 
 - `PX_Create(const PxConfig* config)`: Creates and initializes a synthesizer instance.
 - `PX_Destroy(PxSynth* s)`: Destroys a synthesizer instance and frees all associated memory.
-- `PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames)`: Processes a block of audio.
+- `PX_Process(PxSynth* s, float* stereo_buffer, int num_frames)`: Processes a block of audio.
 - `PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id)`: Triggers a new note.
 - `PX_NoteOff(PxSynth* s, int key_id)`: Releases a note.
 
