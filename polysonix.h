@@ -290,7 +290,7 @@ PX_API void        PX_Destroy(PxSynth* s);
  * @param stereo_buffer A pointer to a stereo buffer to be filled with signed 16-bit audio samples (interleaved L/R).
  * @param num_frames The number of stereo frames (i.e., sample pairs) to process. For a buffer containing 512 total samples, this value would be 256.
  */
-PX_API void        PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames);
+PX_API void        PX_Process(PxSynth* s, float* stereo_buffer, int num_frames);
 
 /**
  * @brief Triggers a new note to be played.
@@ -1674,13 +1674,13 @@ PX_API void PX_Destroy(PxSynth* s) {
     free(s);
 }
 
-PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
-    if (!s) { memset(stereo_buffer, 0, num_frames * 2 * sizeof(int16_t)); return; }
+PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
+    if (!s) { memset(stereo_buffer, 0, num_frames * 2 * sizeof(float)); return; }
     PX_ProcessCommands(s);
     if (s->limiter.threshold != s->patch.limiter_threshold || s->limiter.release_ms_cache != s->patch.limiter_release_ms) {
         InitializeEnhancedLimiter(&s->limiter, s->config.sample_rate, s->patch.limiter_threshold, s->patch.limiter_release_ms);
     }
-    memset(stereo_buffer, 0, num_frames * 2 * sizeof(int16_t));
+    memset(stereo_buffer, 0, num_frames * 2 * sizeof(float));
     // --- Main Sample Loop ---
     for (int i = 0; i < num_frames; i++) {
         // --- LFO Update Block (runs at a slower rate) ---
@@ -1952,8 +1952,8 @@ PX_API void PX_Process(PxSynth* s, int16_t* stereo_buffer, int num_frames) {
         float output_l_f, output_r_f;
         ProcessEnhancedLimiter(&s->limiter, &mixed_sample_l_f, &mixed_sample_r_f, &output_l_f, &output_r_f, s->config.sample_rate);
 
-        stereo_buffer[i * 2 + 0] = (int16_t)(output_l_f * 32767.f);
-        stereo_buffer[i * 2 + 1] = (int16_t)(output_r_f * 32767.f);
+        stereo_buffer[i * 2 + 0] = output_l_f;
+        stereo_buffer[i * 2 + 1] = output_r_f;
     } // End sample loop
     PX_UpdateUISnapshot(s);
 }

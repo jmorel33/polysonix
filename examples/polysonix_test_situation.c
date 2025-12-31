@@ -61,7 +61,7 @@ static bool enable_drawing = true;
 // --- Global Pointers & Buffers ---
 static PxSynth* synth = NULL;
 static SituationSound audio_stream; // Will be a streaming sound managed by Situation
-static int16_t mix_buffer[SAMPLES_PER_UPDATE * CHANNELS];
+static float mix_buffer[SAMPLES_PER_UPDATE * CHANNELS];
 static int16_t static_display_buffer[SINGLE_CYCLE_LENGTH];
 
 // --- NEW: CPU-side rendering resources ---
@@ -162,14 +162,12 @@ static uint64_t on_audio_stream_read(void* user_data, void* buffer, uint64_t byt
     // Clamp to our buffer size
     uint64_t frames_to_generate = (frames_requested < SAMPLES_PER_UPDATE) ? frames_requested : SAMPLES_PER_UPDATE;
 
-    // 1. Generate int16_t samples from Polysonix
+    // 1. Generate float samples from Polysonix directly into mix_buffer
     PX_Process(synth, mix_buffer, (int)frames_to_generate);
 
-    // 2. Convert to float and copy to the output buffer
+    // 2. Copy to the output buffer
     float* out_buffer = (float*)buffer;
-    for (uint64_t i = 0; i < frames_to_generate * CHANNELS; ++i) {
-        out_buffer[i] = (float)mix_buffer[i] / 32767.0f;
-    }
+    memcpy(out_buffer, mix_buffer, frames_to_generate * CHANNELS * sizeof(float));
 
     // Return the number of bytes written, not frames
     return frames_to_generate * sizeof(float) * CHANNELS;
@@ -564,7 +562,7 @@ static void ProcessInput() {
     }
 }
 
-static void DrawLiveOscillator(RenderContext* ctx, int16_t* stereo_buffer, int sampleFrames, int x, int y, int width, int height) {
+static void DrawLiveOscillator(RenderContext* ctx, float* stereo_buffer, int sampleFrames, int x, int y, int width, int height) {
     if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
     if (sampleFrames <= 0) return;
     if (sampleFrames > SAMPLES_PER_UPDATE) sampleFrames = SAMPLES_PER_UPDATE;
@@ -573,8 +571,8 @@ static void DrawLiveOscillator(RenderContext* ctx, int16_t* stereo_buffer, int s
     if (!points) return;
 
     for (int i = 0; i < sampleFrames; ++i) {
-        float sample_l = stereo_buffer[i * 2 + 0] / 32768.0f;
-        float sample_r = stereo_buffer[i * 2 + 1] / 32768.0f;
+        float sample_l = stereo_buffer[i * 2 + 0];
+        float sample_r = stereo_buffer[i * 2 + 1];
         float mono_sample = (sample_l + sample_r) * 0.5f;
         points[i].x = x + (float)i / (sampleFrames > 1 ? (sampleFrames - 1) : 1) * width;
         points[i].y = y + height / 2.0f - mono_sample * (height / 2.0f);
