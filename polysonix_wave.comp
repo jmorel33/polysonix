@@ -4,10 +4,14 @@
 // Licensed under the MIT license. See LICENSE for details.
 
 #version 450 core
+#extension GL_EXT_buffer_reference2 : require
+#extension GL_EXT_scalar_block_layout : require
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
 
 // GLSL compute shader for executing Polysonix waveform bytecode.
 // This shader is designed to be dispatched with a single workgroup
 // to generate one audio sample.
+// Updated to use Bindless SSBOs via Buffer Device Address (BDA) for Situation SDK compatibility.
 
 // --- Workgroup Layout ---
 layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
@@ -71,38 +75,35 @@ layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 #define FUNC_ID_LFSR_NOISE  19
 #define FUNC_ID_LFSR_CLOCK  20
 
-// --- SSBO Bindings ---
+// --- Bindless Buffer Layouts ---
 
 // Input: Bytecode (main chunk and all sub-chunks concatenated)
-layout(std430, binding = 0) readonly buffer BytecodeBuffer {
+layout(buffer_reference, scalar) buffer BytecodeBuffer {
     uint bytes[];
-} bytecode;
+};
 
 // Input: Constant pool for all chunks
-layout(std430, binding = 1) readonly buffer ConstantsBuffer {
+layout(buffer_reference, scalar) buffer ConstantsBuffer {
     float data[];
-} constants;
+};
 
 // Input: Pre-computed LFSR tables
-layout(std430, binding = 2) readonly buffer LfsrTablesBuffer {
+layout(buffer_reference, scalar) buffer LfsrTablesBuffer {
     uint data[];
-} lfsr_tables;
+};
 
 // Output: Resulting audio sample
-layout(std430, binding = 3) writeonly buffer OutputBuffer {
+layout(buffer_reference, scalar) buffer OutputBuffer {
     float result;
-} output_buffer;
+};
 
 // Input/Output: Persistent state for the free-running LFSR
-layout(std430, binding = 4) buffer LfsrStateBuffer {
+layout(buffer_reference, scalar) buffer LfsrStateBuffer {
     uint state;
-} lfsr_state;
-
-
-// --- Uniforms ---
+};
 
 // Input: Runtime parameters for the VM
-layout(location = 0) uniform VmParams {
+layout(buffer_reference, scalar) buffer VmParamsBuffer {
     float x;
     float frequency;
     float rand_offset;
@@ -112,10 +113,10 @@ layout(location = 0) uniform VmParams {
     // Free-running LFSR configuration
     int lfsr_type; // The type ID of the currently active free-running LFSR
     uint lfsr_seed;    // The seed to use if the state becomes zero
-} vm_params;
+};
 
 // Input: Metadata for buffer access
-layout(location = 1) uniform VmMetadata {
+layout(buffer_reference, scalar) buffer VmMetadataBuffer {
     // Offset in the bytecode buffer where the main chunk starts
     uint main_chunk_offset;
     // Offsets for each of the 16 possible sigma sub-chunks
@@ -128,8 +129,19 @@ layout(location = 1) uniform VmMetadata {
     uvec4 lfsr_offsets[4];      // Offsets into the lfsr_tables buffer
     uvec4 lfsr_tap_masks[4];    // Tap masks for free-running mode
     uvec4 lfsr_bit_lengths[4];  // Bit lengths for free-running mode
-} vm_metadata;
+};
 
+// --- Push Constants ---
+// Contains 64-bit addresses (pointers) to the buffers.
+layout(push_constant) uniform Registers {
+    VmParamsBuffer vm_params;
+    VmMetadataBuffer vm_metadata;
+    BytecodeBuffer bytecode;
+    ConstantsBuffer constants;
+    LfsrTablesBuffer lfsr_tables;
+    OutputBuffer output_buffer;
+    LfsrStateBuffer lfsr_state;
+} regs;
 
 // --- VM State (Shader Globals) ---
 float vm_stack[MAX_VM_STACK];
@@ -180,25 +192,23 @@ float pop() {
 // --- Bytecode Reader Functions ---
 
 // Reads a byte from the bytecode buffer, correctly handling uint packing.
-uint read_byte() {
+uint read_byte(BytecodeBuffer bytecode) {
     uint uint_idx = ip / 4;
     uint byte_shift = (ip % 4) * 8;
     ip++; // Advance the byte-based instruction pointer
     return (bytecode.bytes[uint_idx] >> byte_shift) & 0xFF;
 }
 
-uint read_short() {
-    uint b1 = read_byte();
-    uint b2 = read_byte();
+uint read_short(BytecodeBuffer bytecode) {
+    uint b1 = read_byte(bytecode);
+    uint b2 = read_byte(bytecode);
     return (b1 << 8) | b2;
 }
-
-// --- LFSR Helper ---
 
 // --- LFSR Helpers ---
 
 // Advances the persistent free-running LFSR state
-void advance_lfsr_state() {
+void advance_lfsr_state(VmParamsBuffer vm_params, VmMetadataBuffer vm_metadata, LfsrStateBuffer lfsr_state) {
     int type_id = vm_params.lfsr_type;
     if (type_id < 0 || type_id >= NUM_LFSR_TYPES) return;
 
@@ -227,7 +237,7 @@ void advance_lfsr_state() {
 }
 
 // Retrieves a single bit from the packed LFSR SSBO (for table mode)
-float lfsr_get_bit(int type_id, uint position) {
+float lfsr_get_bit(VmMetadataBuffer vm_metadata, LfsrTablesBuffer lfsr_tables, int type_id, uint position) {
     if (type_id < 0 || type_id >= NUM_LFSR_TYPES) return 0.0;
 
     uint period = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
@@ -249,7 +259,7 @@ float lfsr_get_bit(int type_id, uint position) {
 
 
 // Helper to get the correct offset from the uvec4 arrays
-uint get_sigma_offset(uint index) {
+uint get_sigma_offset(VmMetadataBuffer vm_metadata, uint index) {
     uint vec_idx = index / 4;
     uint comp_idx = index % 4;
     if (vec_idx == 0) return vm_metadata.sigma_offsets_0_3[comp_idx];
@@ -265,6 +275,15 @@ void main() {
         return;
     }
 
+    // --- Resolve Buffer Pointers from Push Constants ---
+    VmParamsBuffer vm_params = regs.vm_params;
+    VmMetadataBuffer vm_metadata = regs.vm_metadata;
+    BytecodeBuffer bytecode = regs.bytecode;
+    ConstantsBuffer constants = regs.constants;
+    LfsrTablesBuffer lfsr_tables = regs.lfsr_tables;
+    OutputBuffer output_buffer = regs.output_buffer;
+    LfsrStateBuffer lfsr_state = regs.lfsr_state;
+
     // --- Initialize VM state ---
     stack_top = 0;
     call_stack_top = 0;
@@ -278,7 +297,7 @@ void main() {
 
     // --- Main VM Loop ---
     for(int i = 0; i < 2048; ++i) { // Loop limiter to prevent infinite loops
-        uint instruction = read_byte();
+        uint instruction = read_byte(bytecode);
 
         switch (instruction) {
             case OP_HALT: {
@@ -300,12 +319,12 @@ void main() {
                     sigma_start_val = pop();
                     sigma_phase = 1;
                     // "Call" the 'end' chunk
-                    ip = int(get_sigma_offset(sigma_end_chunk_idx));
+                    ip = int(get_sigma_offset(vm_metadata, sigma_end_chunk_idx));
                 } else if (sigma_phase == 1) { // Finished 'end' chunk
                     sigma_end_val = pop();
                     sigma_phase = 2;
                     // "Call" the 'step' chunk
-                    ip = int(get_sigma_offset(sigma_step_chunk_idx));
+                    ip = int(get_sigma_offset(vm_metadata, sigma_step_chunk_idx));
                 } else if (sigma_phase == 2) { // Finished 'step' chunk
                     sigma_step_val = pop();
 
@@ -364,7 +383,7 @@ void main() {
 
             // --- Stack Ops ---
             case OP_PUSH_CONST: {
-                uint const_idx = read_short();
+                uint const_idx = read_short(bytecode);
                 push(constants.data[const_idx]);
                 break;
             }
@@ -403,8 +422,8 @@ void main() {
 
             // --- Control Flow ---
             case OP_JUMP: {
-                uint hi = read_byte();
-                uint lo = read_byte();
+                uint hi = read_byte(bytecode);
+                uint lo = read_byte(bytecode);
                 uint combined = (hi << 8) | lo;
                 // Manual sign extension for 16-bit to 32-bit integer
                 int offset = ((combined & 0x8000) > 0) ? int(combined | 0xFFFF0000) : int(combined);
@@ -412,8 +431,8 @@ void main() {
                 break;
             }
             case OP_JUMP_IF_FALSE: {
-                uint hi = read_byte();
-                uint lo = read_byte();
+                uint hi = read_byte(bytecode);
+                uint lo = read_byte(bytecode);
                 uint combined = (hi << 8) | lo;
                 // Manual sign extension for 16-bit to 32-bit integer
                 int offset = ((combined & 0x8000) > 0) ? int(combined | 0xFFFF0000) : int(combined);
@@ -425,8 +444,8 @@ void main() {
 
             // --- Functions ---
             case OP_CALL: {
-                uint func_id = read_byte();
-                uint arg_count = read_byte();
+                uint func_id = read_byte(bytecode);
+                uint arg_count = read_byte(bytecode);
                 float res = 0.0;
 
                 // Note: Arguments are popped in reverse order
@@ -457,14 +476,14 @@ void main() {
 
                         if (type_id == vm_params.lfsr_type) {
                             // Free-running mode
-                            advance_lfsr_state();
+                            advance_lfsr_state(vm_params, vm_metadata, lfsr_state);
                             res = (lfsr_state.state & 1) == 1 ? 1.0 : 0.0;
                         } else {
                             // Table mode
                             uint period = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
                             float total_norm_pos = fract(pos_norm + seed_norm);
                             uint table_pos = uint(total_norm_pos * period);
-                            res = lfsr_get_bit(type_id, table_pos);
+                            res = lfsr_get_bit(vm_metadata, lfsr_tables, type_id, table_pos);
                         }
                         break;
                     }
@@ -474,14 +493,14 @@ void main() {
 
                         if (type_id == vm_params.lfsr_type) {
                             // Free-running mode
-                            advance_lfsr_state();
+                            advance_lfsr_state(vm_params, vm_metadata, lfsr_state);
                             res = ((lfsr_state.state & 1) == 1 ? 1.0 : 0.0) * 2.0 - 1.0;
                         } else {
                             // Table mode
                             uint period = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
                             float lfsr_phase = fract((vm_params.x / (2.0 * 3.14159265)) * rate);
                             uint table_pos = uint(lfsr_phase * period);
-                            res = lfsr_get_bit(type_id, table_pos) * 2.0 - 1.0;
+                            res = lfsr_get_bit(vm_metadata, lfsr_tables, type_id, table_pos) * 2.0 - 1.0;
                         }
                         break;
                     }
@@ -491,7 +510,7 @@ void main() {
 
                         if (type_id == vm_params.lfsr_type) {
                             // Free-running mode
-                            advance_lfsr_state();
+                            advance_lfsr_state(vm_params, vm_metadata, lfsr_state);
                             float bit_val = (lfsr_state.state & 1) == 1 ? 1.0 : 0.0;
                             res = bit_val >= density ? 1.0 : 0.0;
                         } else {
@@ -499,7 +518,7 @@ void main() {
                             uint period = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
                             float lfsr_phase = fract(vm_params.x / (2.0 * 3.14159265));
                             uint table_pos = uint(lfsr_phase * period);
-                            res = lfsr_get_bit(type_id, table_pos) >= density ? 1.0 : 0.0;
+                            res = lfsr_get_bit(vm_metadata, lfsr_tables, type_id, table_pos) >= density ? 1.0 : 0.0;
                         }
                         break;
                     }
@@ -510,7 +529,7 @@ void main() {
 
             // --- Sigma ---
             case OP_PUSH_LOOP_VAR: {
-                read_byte(); // Consume var_name_id, unused in shader
+                read_byte(bytecode); // Consume var_name_id, unused in shader
                 push(loop_var_value);
                 break;
             }
@@ -519,20 +538,20 @@ void main() {
                 // If a sigma is already running, we can't start another (no nesting).
                 if (sigma_is_active) {
                     // Just consume the bytes and push a zero.
-                    read_byte(); read_short(); read_short(); read_short(); read_short();
+                    read_byte(bytecode); read_short(bytecode); read_short(bytecode); read_short(bytecode); read_short(bytecode);
                     push(0.0);
                     break;
                 }
 
-                read_byte(); // Consume var_name_id
-                sigma_start_chunk_idx = read_short();
-                sigma_end_chunk_idx = read_short();
-                sigma_step_chunk_idx = read_short();
-                uint body_chunk_idx = read_short();
+                read_byte(bytecode); // Consume var_name_id
+                sigma_start_chunk_idx = read_short(bytecode);
+                sigma_end_chunk_idx = read_short(bytecode);
+                sigma_step_chunk_idx = read_short(bytecode);
+                uint body_chunk_idx = read_short(bytecode);
 
                 // Store the chunk IPs for the state machine
                 // The order determines the execution flow: start -> end -> step -> body
-                sigma_body_chunk_ip = get_sigma_offset(body_chunk_idx);
+                sigma_body_chunk_ip = get_sigma_offset(vm_metadata, body_chunk_idx);
 
                 // Save current IP to the call stack to return to after the sigma is done.
                 if (call_stack_top >= MAX_CALL_STACK) { i = 9999; break; } // Safety break
@@ -545,7 +564,7 @@ void main() {
 
                 // "Call" the first sub-chunk (start) by setting the IP.
                 // The OP_HALT at the end of this chunk will trigger the next phase.
-                ip = int(get_sigma_offset(start_chunk_idx));
+                ip = int(get_sigma_offset(vm_metadata, sigma_start_chunk_idx));
                 break;
             }
 
