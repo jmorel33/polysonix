@@ -4237,6 +4237,7 @@ typedef struct {
     // Free-running LFSR configuration
     int32_t lfsr_type;          // 4 bytes
     uint32_t lfsr_seed;         // 4 bytes
+    uint32_t wave_length;       // 4 bytes
 } VmParamsBuffer;
 
 // Structure for the persistent LFSR state buffer (read-write)
@@ -4377,14 +4378,15 @@ GpuWaveBuffers upload_wave_to_gpu(BytecodeChunk* chunk) {
 }
 
 // Dispatch compute for a wave (Records command to cmd buffer)
-void dispatch_wave_gpu(SituationCommandBuffer cmd, GpuWaveBuffers bufs, VmParams* params, SituationBuffer output_buf, SituationBuffer lfsr_state_buf, SituationBuffer* out_params_buf) {
+void dispatch_wave_gpu(SituationCommandBuffer cmd, GpuWaveBuffers bufs, VmParams* params, uint32_t wave_length, SituationBuffer output_buf, SituationBuffer lfsr_state_buf, SituationBuffer* out_params_buf) {
     if (!gpu_resources_initialized) init_polysonix_gpu_resources();
 
     VmParamsBuffer pb = {
         .x = params->x, .frequency = params->frequency, .rand_offset = params->rand_offset,
         .modA = params->modA, .modB = params->modB, .modC = params->modC,
         .lfsr_type = (int32_t)params->lfsr_type,
-        .lfsr_seed = params->lfsr_seed
+        .lfsr_seed = params->lfsr_seed,
+        .wave_length = wave_length
     };
 
     SituationCreateBuffer(sizeof(VmParamsBuffer), &pb, SITUATION_BUFFER_USAGE_STORAGE_BUFFER, out_params_buf);
@@ -4401,7 +4403,7 @@ void dispatch_wave_gpu(SituationCommandBuffer cmd, GpuWaveBuffers bufs, VmParams
 
     SituationCmdBindComputePipeline(cmd, wave_compute_pipeline);
     SituationCmdSetPushConstant(cmd, 0, &pc, sizeof(PushConstants));
-    SituationCmdDispatch(cmd, 1, 1, 1);
+    SituationCmdDispatch(cmd, (wave_length + 63) / 64, 1, 1);
 }
 
 #ifdef __cplusplus
