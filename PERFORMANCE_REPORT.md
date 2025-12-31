@@ -40,6 +40,20 @@ Benchmarks were run on the full suite of 212 patches.
 *   **Standard Waves Improvement:** **23.62%**
 *   **Complex/Sigma Waves Improvement:** **27.02%**
 
+## Theoretical Analysis: Int16 to Float32 Migration
+
+In addition to the VM execution optimizations, the core audio pipeline was migrated from `int16_t` buffers to native `float` (32-bit) buffers. While empirical benchmarks for this specific change were not run due to test environment inconsistencies, the theoretical performance and quality benefits are clear.
+
+### Performance Impact (Theoretical)
+The migration removes a mandatory conversion step for every single audio sample generated:
+1.  **Instruction Reduction:** Previously, the pipeline required clamping the native float result to [-1.0, 1.0], multiplying by 32767, and casting to `int16_t`. This sequence of instructions is now eliminated.
+2.  **SIMD Efficiency:** Modern CPUs (x64/ARM) are optimized for packed floating-point operations. Keeping the data in `float` format avoids mixed-type operations that can break vectorization chains.
+3.  **Memory Bandwidth:** While `float` (4 bytes) consumes twice the bandwidth of `int16` (2 bytes), the total data volume for audio buffers (e.g., 16KB for 2048 stereo samples) fits entirely within L1 cache, making the bandwidth difference negligible for real-time performance.
+
+### Quality Impact
+*   **Elimination of Quantization Noise:** The 16-bit integer format introduces a noise floor at roughly -96dB. Using 32-bit floats lowers this floor to ~-150dB, effectively eliminating quantization artifacts, particularly in quiet passages or complex reverb tails.
+*   **Headroom:** Floating-point buffers allow signals to temporarily exceed 0dB without hard clipping (as long as they are limited or normalized before the final DAC stage), preserving transient details that would be lost in integer formats.
+
 ### Detailed Results by Patch
 
 | Patch ID | Name | Before (ns) | After (ns) | Improvement |
