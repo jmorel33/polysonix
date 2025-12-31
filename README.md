@@ -85,8 +85,8 @@ flowchart TD
     end
 
     %% Comparison styling
-    classDef cpu fill:#3f0f3f,stroke:#01579b,stroke-width:2px;
-    classDef gpu fill:#0f3f3f,stroke:#4a148c,stroke-width:2px;
+    classDef cpu fill:#3f0f3f,stroke:#6f1f6f,stroke-width:2px;
+    classDef gpu fill:#0f3f3f,stroke:#1f6f6f,stroke-width:2px;
     class CPU_VM,CPU_Execution,CPU_Out cpu;
     class GPU_VM,GPU_Execution,GPU_Out,SSBO gpu;
 ```
