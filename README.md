@@ -46,7 +46,7 @@ like UI, input handling, and audio device management.
 - **Built-in Dynamics:** Includes a per-voice soft-clipper to prevent harsh transients and a master bus lookahead limiter to prevent final output clipping.
 - **Oscillator Quality Modes**: Choose between per-sample calculation for quality or interpolated modes for performance.
 - **Decoupled Design:** The engine is completely independent of any graphics or windowing library. The host application is responsible for the audio
-  callback, making the engine portable to any backend (e.g., Raylib, PortAudio, SDL, MiniAudio).
+  callback, making the engine portable to any backend (e.g., Situation, PortAudio, SDL, MiniAudio).
 
 ## Design Principles
 - **Header-Only:** Designed for easy integration. Simply define `POLYSONIX_IMPLEMENTATION` in one C/C++ file.
@@ -58,6 +58,38 @@ like UI, input handling, and audio device management.
 ## CPU vs GPU Backends
 
 Polysonix offers two distinct backends for waveform generation, allowing developers to choose the best fit for their application's performance profile and platform constraints. By default, the CPU backend is used. To enable the GPU backend, define `POLYSONIX_USE_GPU_WAVE` before including `polysonix.h`.
+
+```mermaid
+flowchart TD
+    %% Common Frontend
+    App[User Application] -->|Define Waveform| Expr["Expression String (e.g. 'sin(x)')"]
+    Expr -->|Compile| Compiler[Polysonix Compiler]
+    Compiler -->|Generate| Bytecode[Bytecode (Reverse Polish Notation)]
+
+    %% Split
+    Bytecode --> Decision{Backend?}
+
+    %% CPU Path
+    Decision -->|CPU (Default)| CPU_Mem[Host Memory]
+    CPU_Mem -->|Read| CPU_VM[CPU VM\n(Recursive, Computed Gotos)]
+    subgraph CPU_Execution [CPU Audio Thread]
+        CPU_VM -->|Synthesize| CPU_Out[int16 Audio Buffer]
+    end
+
+    %% GPU Path
+    Decision -->|GPU (Optional)| Serializer[Serializer\n(Packs structs for std430)]
+    Serializer -->|Upload| SSBO[GPU SSBO Buffer]
+    SSBO -->|Bindless Access| GPU_VM[GPU VM\n(Iterative, Explicit Stack)]
+    subgraph GPU_Execution [OpenGL Compute Shader]
+        GPU_VM -->|Synthesize| GPU_Out[Float Buffer / Texture]
+    end
+
+    %% Comparison styling
+    classDef cpu fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef gpu fill:#f3e5f5,stroke:#4a148c,stroke-width:2px;
+    class CPU_VM,CPU_Execution,CPU_Out cpu;
+    class GPU_VM,GPU_Execution,GPU_Out,SSBO gpu;
+```
 
 ### CPU Backend (`polysonix_wave_cpu.h`)
 The default engine. It is a highly optimized, single-header C library designed for real-time audio generation on the CPU.
@@ -153,38 +185,80 @@ All other files can simply `#include "polysonix.h"`.
 ## Quick Start Example
 ```c
 // main.c
-#include "raylib.h" // Your audio framework
+#include "situation.h" // Your audio framework
 #define POLYSONIX_IMPLEMENTATION
 #include "polysonix.h"
 
+// Global synth instance
+static PxSynth* synth = NULL;
+
+// Audio callback wrapper
+static uint64_t AudioCallback(void* user_data, void* buffer, uint64_t bytes_to_read) {
+    if (!synth) return 0;
+
+    // Calculate frames (assuming stereo float)
+    uint64_t frames = bytes_to_read / (sizeof(float) * 2);
+
+    // Temporary buffer for 16-bit integer samples from Polysonix
+    // (In a real app, reuse a pre-allocated buffer)
+    int16_t* temp_buffer = (int16_t*)malloc(frames * 2 * sizeof(int16_t));
+    if (!temp_buffer) return 0;
+
+    // Generate audio
+    PX_Process(synth, temp_buffer, (int)frames);
+
+    // Convert int16 to float for Situation
+    float* out = (float*)buffer;
+    for (uint64_t i = 0; i < frames * 2; ++i) {
+        out[i] = (float)temp_buffer[i] / 32767.0f;
+    }
+
+    free(temp_buffer);
+    return bytes_to_read;
+}
+
 int main() {
-    // 1. Init audio device and dependencies
-    InitAudioDevice();
-    polysonix_wave_init();
-    // ... compile waveforms ...
+    // 1. Init Situation and dependencies
+    SituationInitInfo info = { .window_width = 800, .window_height = 600, .window_title = "Synth" };
+    SituationInit(0, NULL, &info);
+
+    // Initialize Polysonix Waveform Engine
+    init_polysonix_lfsr_tables();
+    initialize_bytecode_cache();
 
     // 2. Configure and create the synth
-    PxConfig config = { .num_voices=8, .sample_rate=48000, ... };
-    PxSynth* synth = PX_Create(&config);
+    PxConfig config = { .num_voices=8, .sample_rate=48000 };
+    synth = PX_Create(&config);
 
-    // 3. In your main loop, trigger notes and update parameters
-    if (IsKeyPressed(KEY_C)) PX_NoteOn(synth, 60, 0, KEY_C);
-    if (IsKeyReleased(KEY_C)) PX_NoteOff(synth, KEY_C);
+    // 3. Start Audio Stream
+    SituationAudioFormat fmt = { .sample_rate = 48000, .channels = 2, .bit_depth = 32 };
+    SituationSound stream;
+    SituationLoadSoundFromStream(AudioCallback, NULL, NULL, &fmt, true, &stream);
+    SituationPlayLoadedSound(&stream);
 
-    // 4. In your audio callback/thread, process audio
-    // void AudioCallback(void* buffer, unsigned int frames) {
-    //     PX_Process(synth, (int16_t*)buffer, frames);
-    // }
+    // 4. Main loop
+    while (!SituationWindowShouldClose()) {
+        SituationPollInputEvents();
+
+        if (SituationIsKeyPressed(SIT_KEY_C)) PX_NoteOn(synth, 60, 0, SIT_KEY_C);
+        if (SituationIsKeyReleased(SIT_KEY_C)) PX_NoteOff(synth, SIT_KEY_C);
+
+        // ... render ...
+        SituationEndFrame();
+    }
 
     // 5. Clean up
+    SituationStopLoadedSound(&stream);
+    SituationUnloadSound(&stream);
     PX_Destroy(synth);
-    polysonix_wave_deinit();
-    CloseAudioDevice();
+    free_bytecode_cache();
+    free_polysonix_lfsr_tables();
+    SituationShutdown();
 }
 ```
 
 ## Dependencies
-- **Required:** `polysonix_wave.h` and its implementation must be available  and linked. The host application must call `polysonix_wave_init()`
+- **Required:** `polysonix_wave_cpu.h` (or `polysonix_wave_gpu.h`) and its implementation must be available and linked. The host application must call `init_polysonix_lfsr_tables()` and `initialize_bytecode_cache()`
   before creating a synth instance and is responsible for compiling the waveform expressions used by the synth.
 
 ## Core API Functions
