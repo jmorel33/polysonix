@@ -28,9 +28,18 @@ typedef struct {
     float modA;
     float modB;
     float modC;
-    int32_t lfsr_type;
-    uint32_t lfsr_seed;
+    // Free-running LFSR configuration
+    int32_t lfsr_type;          // 4 bytes
+    uint32_t lfsr_seed;         // 4 bytes
 } VmParamsBuffer;
+
+// Structure for the persistent LFSR state buffer (read-write)
+// Matches layout(buffer_reference, scalar) buffer LfsrStateBuffer in shader
+typedef struct {
+    uint32_t state;
+    uint32_t position;
+    float accum_phase;
+} LfsrState;
 
 typedef struct {
     uint32_t main_chunk_offset;
@@ -168,7 +177,8 @@ void dispatch_wave_gpu(SituationCommandBuffer cmd, GpuWaveBuffers bufs, VmParams
     VmParamsBuffer pb = {
         .x = params->x, .frequency = params->frequency, .rand_offset = params->rand_offset,
         .modA = params->modA, .modB = params->modB, .modC = params->modC,
-        .lfsr_type = (int32_t)params->lfsr_type, .lfsr_seed = params->lfsr_seed
+        .lfsr_type = (int32_t)params->lfsr_type,
+        .lfsr_seed = params->lfsr_seed
     };
 
     SituationCreateBuffer(sizeof(VmParamsBuffer), &pb, SITUATION_BUFFER_USAGE_STORAGE_BUFFER, out_params_buf);

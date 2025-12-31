@@ -22,6 +22,7 @@ layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 #define MAX_CONSTANTS 256
 #define MAX_SIGMA_CHUNKS 16
 #define NUM_LFSR_TYPES 16
+#define EPSILON 1e-6
 
 // --- Opcodes (must match polysonix_wave.h OpCode enum) ---
 #define OP_PUSH_CONST     0x00
@@ -100,6 +101,8 @@ layout(buffer_reference, scalar) buffer OutputBuffer {
 // Input/Output: Persistent state for the free-running LFSR
 layout(buffer_reference, scalar) buffer LfsrStateBuffer {
     uint state;
+    uint position;
+    float accum_phase;
 };
 
 // Input: Runtime parameters for the VM
@@ -111,8 +114,8 @@ layout(buffer_reference, scalar) buffer VmParamsBuffer {
     float modB;
     float modC;
     // Free-running LFSR configuration
-    int lfsr_type; // The type ID of the currently active free-running LFSR
-    uint lfsr_seed;    // The seed to use if the state becomes zero
+    int lfsr_type;         // The type ID of the currently active free-running LFSR
+    uint lfsr_seed;        // The seed to use if the state becomes zero
 };
 
 // Input: Metadata for buffer access
@@ -234,6 +237,8 @@ void advance_lfsr_state(VmParamsBuffer vm_params, VmMetadataBuffer vm_metadata, 
     }
 
     lfsr_state.state = current_state;
+    // Advance position (mirrors CPU)
+    lfsr_state.position = (lfsr_state.position + 1) % period;
 }
 
 // Retrieves a single bit from the packed LFSR SSBO (for table mode)
@@ -296,7 +301,7 @@ void main() {
 
 
     // --- Main VM Loop ---
-    for(int i = 0; i < 2048; ++i) { // Loop limiter to prevent infinite loops
+    for(int i = 0; i < 100000; ++i) { // Increased loop limiter
         uint instruction = read_byte(bytecode);
 
         switch (instruction) {
@@ -308,7 +313,7 @@ void main() {
                     if (call_stack_top > 0) {
                         ip = call_stack[--call_stack_top];
                     } else {
-                        i = 9999; // Main chunk is done, break VM loop.
+                        i = 999999; // Main chunk is done, break VM loop.
                     }
                     break;
                 }
@@ -329,7 +334,7 @@ void main() {
                     sigma_step_val = pop();
 
                     // Now we have all loop parameters, start the iteration.
-                    if (abs(sigma_step_val) < 0.00001) {
+                    if (abs(sigma_step_val) < EPSILON) {
                         // Step is zero, loop does not run. Cleanup and return.
                         sigma_is_active = false;
                         push(0.0);
@@ -401,24 +406,27 @@ void main() {
             case OP_MUL: { float b = pop(); float a = pop(); push(a * b); break; }
             case OP_DIV: {
                 float b = pop(); float a = pop();
-                push(b == 0.0 ? 0.0 : a / b);
+                push(abs(b) < EPSILON ? 0.0 : a / b);
                 break;
             }
             case OP_MOD: {
                 float b = pop(); float a = pop();
-                push(b == 0.0 ? 0.0 : mod(a, b));
+                // Match C fmodf: sign of result is same as dividend (a)
+                // GLSL mod(a, b) returns a - b * floor(a/b)
+                // We want a - b * trunc(a/b)
+                push(abs(b) < EPSILON ? 0.0 : (a - b * trunc(a / b)));
                 break;
             }
             case OP_NEGATE: push(-pop()); break;
 
             // --- Logical / Comparison ---
-            case OP_NOT:    push(abs(pop()) < 0.00001 ? 1.0 : 0.0); break;
-            case OP_CMP_EQ: { float b = pop(); float a = pop(); push(abs(a - b) < 0.00001 ? 1.0 : 0.0); break; }
-            case OP_CMP_NE: { float b = pop(); float a = pop(); push(abs(a - b) >= 0.00001 ? 1.0 : 0.0); break; }
-            case OP_CMP_GT: { float b = pop(); float a = pop(); push(a > b ? 1.0 : 0.0); break; }
-            case OP_CMP_GE: { float b = pop(); float a = pop(); push(a >= b ? 1.0 : 0.0); break; }
-            case OP_CMP_LT: { float b = pop(); float a = pop(); push(a < b ? 1.0 : 0.0); break; }
-            case OP_CMP_LE: { float b = pop(); float a = pop(); push(a <= b ? 1.0 : 0.0); break; }
+            case OP_NOT:    push(abs(pop()) < EPSILON ? 1.0 : 0.0); break;
+            case OP_CMP_EQ: { float b = pop(); float a = pop(); push(abs(a - b) < EPSILON ? 1.0 : 0.0); break; }
+            case OP_CMP_NE: { float b = pop(); float a = pop(); push(abs(a - b) >= EPSILON ? 1.0 : 0.0); break; }
+            case OP_CMP_GT: { float b = pop(); float a = pop(); push((a - b) > EPSILON ? 1.0 : 0.0); break; }
+            case OP_CMP_GE: { float b = pop(); float a = pop(); push((a - b) > -EPSILON ? 1.0 : 0.0); break; }
+            case OP_CMP_LT: { float b = pop(); float a = pop(); push((a - b) < -EPSILON ? 1.0 : 0.0); break; }
+            case OP_CMP_LE: { float b = pop(); float a = pop(); push((a - b) < EPSILON ? 1.0 : 0.0); break; }
 
             // --- Control Flow ---
             case OP_JUMP: {
@@ -436,7 +444,7 @@ void main() {
                 uint combined = (hi << 8) | lo;
                 // Manual sign extension for 16-bit to 32-bit integer
                 int offset = ((combined & 0x8000) > 0) ? int(combined | 0xFFFF0000) : int(combined);
-                if (abs(pop()) < 0.00001) {
+                if (abs(pop()) < EPSILON) {
                     ip += offset;
                 }
                 break;
@@ -554,7 +562,7 @@ void main() {
                 sigma_body_chunk_ip = get_sigma_offset(vm_metadata, body_chunk_idx);
 
                 // Save current IP to the call stack to return to after the sigma is done.
-                if (call_stack_top >= MAX_CALL_STACK) { i = 9999; break; } // Safety break
+                if (call_stack_top >= MAX_CALL_STACK) { i = 999999; break; } // Safety break
                 call_stack[call_stack_top++] = ip;
 
                 // Initialize the state machine
@@ -573,7 +581,7 @@ void main() {
                 if (call_stack_top > 0) {
                     ip = call_stack[--call_stack_top];
                 } else {
-                    i = 9999;
+                    i = 999999;
                 }
                 break;
         }
