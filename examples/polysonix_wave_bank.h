@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-#include "../polysonix_wave.h"
+#include "../polysonix_wave_cpu.h"
 
 /***************************************************************************************************
 *

@@ -203,8 +203,8 @@ Example WaveDefinition (C struct storing the script string):
 `{ "LFSR Rhythm", "sin(x) * lfsr_clock(LFSR_8BIT, 0.5 + 0.3 * MOD_A) + 0.2 * lfsr_noise(LFSR_4BIT, 2.0 + MOD_B)" }`
 
 */
-#ifndef POLYSONIX_WAVE_H
-#define POLYSONIX_WAVE_H
+#ifndef POLYSONIX_WAVE_CPU_H
+#define POLYSONIX_WAVE_CPU_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -4221,4 +4221,4 @@ int main() {
 }
 #endif
 
-#endif // POLYSONIX_WAVE_H
+#endif // POLYSONIX_WAVE_CPU_H
