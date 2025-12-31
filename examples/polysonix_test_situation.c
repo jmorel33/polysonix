@@ -16,10 +16,9 @@
 
 
 // --- Temporary Type Definitions (to replace raylib types) ---
-// These would normally be defined in situation.h and its dependencies
-typedef struct Vector2 { float x; float y; } Vector2;
+// Note: Situation SDK provides Vector2 and ColorRGBA.
+// We define Color to map legacy Raylib code to Situation.
 typedef struct Color { unsigned char r, g, b, a; } Color; // raylib Color
-typedef struct ColorRGBA { unsigned char r, g, b, a; } ColorRGBA; // Situation Color
 typedef struct Rectangle { float x, y, width, height; } Rectangle;
 // Pre-defined colors from raylib
 #define LIGHTGRAY  (Color){ 200, 200, 200, 255 }
@@ -128,6 +127,10 @@ const char* TextFormat(const char* format, ...) {
     return buffer;
 }
 
+static inline ColorRGBA rl_to_sit_color(Color color) {
+    return (ColorRGBA){ color.r, color.g, color.b, color.a };
+}
+
 static bool compile_all_waves() {
     printf("Compiling %d waveform expressions...\n", PX_GetNumWaveforms());
     int success_count = 0;
@@ -149,7 +152,7 @@ static bool compile_all_waves() {
 }
 
 // --- Audio Callback for Situation ---
-// SDK 238: Callback receives bytesToRead, not frames.
+// SDK 2.3.36: Callback receives bytesToRead, not frames.
 static uint64_t on_audio_stream_read(void* user_data, void* buffer, uint64_t bytes_to_read) {
     if (!synth) return 0;
 
@@ -168,7 +171,7 @@ static uint64_t on_audio_stream_read(void* user_data, void* buffer, uint64_t byt
         out_buffer[i] = (float)mix_buffer[i] / 32767.0f;
     }
 
-    // Return the number of bytes written, not frames (per SDK 238 example return value matching input)
+    // Return the number of bytes written, not frames
     return frames_to_generate * sizeof(float) * CHANNELS;
 }
 
@@ -179,15 +182,24 @@ static uint64_t on_audio_stream_seek(void* user_data, int64_t offset, int whence
 
 // --- UI Drawing Functions (Situation Replacements) ---
 
-static inline ColorRGBA rl_to_sit_color(Color color) {
-    return (ColorRGBA){ color.r, color.g, color.b, color.a };
+typedef enum {
+    RENDER_MODE_CPU_CANVAS,
+    RENDER_MODE_GPU_OVERLAY
+} RenderMode;
+
+typedef struct {
+    SituationCommandBuffer cmd;
+    RenderMode mode;
+} RenderContext;
+
+void DrawPixelV(RenderContext* ctx, Vector2 position, Color color) {
+    if (ctx->mode == RENDER_MODE_CPU_CANVAS) {
+        SituationSetPixelColor(&canvas_image, (int)position.x, (int)position.y, rl_to_sit_color(color));
+    }
 }
 
-void DrawPixelV(Vector2 position, Color color) {
-    SituationSetPixelColor(&canvas_image, (int)position.x, (int)position.y, rl_to_sit_color(color));
-}
-
-void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color color) {
+void DrawLine(RenderContext* ctx, int startPosX, int startPosY, int endPosX, int endPosY, Color color) {
+    if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
     int dx = abs(endPosX - startPosX);
     int sx = startPosX < endPosX ? 1 : -1;
     int dy = -abs(endPosY - startPosY);
@@ -210,14 +222,16 @@ void DrawLine(int startPosX, int startPosY, int endPosX, int endPosY, Color colo
     }
 }
 
-void DrawLineStrip(Vector2 *points, int pointCount, Color color) {
+void DrawLineStrip(RenderContext* ctx, Vector2 *points, int pointCount, Color color) {
+    if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
     if (pointCount < 2) return;
     for (int i = 0; i < pointCount - 1; i++) {
-        DrawLine((int)points[i].x, (int)points[i].y, (int)points[i+1].x, (int)points[i+1].y, color);
+        DrawLine(ctx, (int)points[i].x, (int)points[i].y, (int)points[i+1].x, (int)points[i+1].y, color);
     }
 }
 
-void DrawCircle(int centerX, int centerY, float radius, Color color) {
+void DrawCircle(RenderContext* ctx, int centerX, int centerY, float radius, Color color) {
+    if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
     int x = (int)radius;
     int y = 0;
     int err = 0;
@@ -242,33 +256,8 @@ void DrawCircle(int centerX, int centerY, float radius, Color color) {
     }
 }
 
-void DrawCircleFilled(int centerX, int centerY, float radius, Color color) {
-    int x = (int)radius;
-    int y = 0;
-    int err = 0;
-    ColorRGBA sit_color = rl_to_sit_color(color);
-
-    while (x >= y) {
-        // Draw horizontal lines for each scanline of the circle
-        for (int i = centerX - x; i <= centerX + x; i++) {
-            SituationSetPixelColor(&canvas_image, i, centerY + y, sit_color);
-            SituationSetPixelColor(&canvas_image, i, centerY - y, sit_color);
-        }
-        for (int i = centerX - y; i <= centerX + y; i++) {
-            SituationSetPixelColor(&canvas_image, i, centerY + x, sit_color);
-            SituationSetPixelColor(&canvas_image, i, centerY - x, sit_color);
-        }
-
-        y++;
-        err += 1 + 2*y;
-        if (2*(err-x) + 1 > 0) {
-            x--;
-            err += 1 - 2*x;
-        }
-    }
-}
-
-void DrawRectangle(int x, int y, int width, int height, Color color) {
+void DrawRectangle(RenderContext* ctx, int x, int y, int width, int height, Color color) {
+    if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
     ColorRGBA sit_color = rl_to_sit_color(color);
     for (int j = y; j < y + height; j++) {
         for (int i = x; i < x + width; i++) {
@@ -277,37 +266,35 @@ void DrawRectangle(int x, int y, int width, int height, Color color) {
     }
 }
 
-void DrawRectangleRec(Rectangle rec, Color color) {
-    DrawRectangle((int)rec.x, (int)rec.y, (int)rec.width, (int)rec.height, color);
+void DrawRectangleLines(RenderContext* ctx, int x, int y, int width, int height, Color color) {
+    if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
+    DrawLine(ctx, x, y, x + width, y, color);
+    DrawLine(ctx, x + width, y, x + width, y + height, color);
+    DrawLine(ctx, x + width, y + height, x, y + height, color);
+    DrawLine(ctx, x, y + height, x, y, color);
 }
 
-
-void DrawRectangleLines(int x, int y, int width, int height, Color color) {
-    DrawLine(x, y, x + width, y, color);
-    DrawLine(x + width, y, x + width, y + height, color);
-    DrawLine(x + width, y + height, x, y + height, color);
-    DrawLine(x, y + height, x, y, color);
-}
-
-
-void DrawText(const char* text, int x, int y, int fontSize, Color color) {
-    if (!main_font.id) return;
-    // Using v2.3.1 API for text as it's missing in v2.3.8 docs but assumed present
-    SituationImageDrawTextEx(&canvas_image, main_font, text, (Vector2){(float)x, (float)y}, (float)fontSize, 1.0f, 0.0f, 0.0f, rl_to_sit_color(color), (ColorRGBA){0,0,0,0}, 0.0f);
+void DrawText(RenderContext* ctx, const char* text, int x, int y, int fontSize, Color color) {
+    if (ctx->mode == RENDER_MODE_GPU_OVERLAY && main_font.id != 0) {
+        // SDK 2.3.36: Use GPU command for text.
+        // Spacing 0.0f is standard.
+        SituationCmdDrawTextEx(ctx->cmd, main_font, text, (Vector2){(float)x, (float)y}, (float)fontSize, 0.0f, rl_to_sit_color(color));
+    }
 }
 
 int MeasureText(const char *text, int fontSize) {
     if (!main_font.id) return 0;
+    // Assuming SituationMeasureText returns float* or vec2 (float[2]) compatible with glm_vec2_copy
     vec2 size;
-    // Using v2.3.1 API
     glm_vec2_copy(SituationMeasureText(main_font, text, (float)fontSize, 1.0f), size);
     return (int)size[0];
 }
 
-static void DrawLFOIndicator(float lfo_value_normalized, int x, int y, int radius) {
+static void DrawLFOIndicator(RenderContext* ctx, float lfo_value_normalized, int x, int y, int radius) {
+    if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
     float t = fmaxf(0.0f, fminf(1.0f, (lfo_value_normalized + 1.0f) * 0.5f));
     Color color = {(uint8_t)(255 * t), (uint8_t)(255 * (1.0f - t)), 0, 255};
-    DrawCircle(x, y, radius, color);
+    DrawCircle(ctx, x, y, radius, color);
 }
 
 // --- Application Lifecycle ---
@@ -315,25 +302,25 @@ static void DrawLFOIndicator(float lfo_value_normalized, int x, int y, int radiu
 static bool InitializeApplication() {
     srand((unsigned int)time(NULL));
 
-    // SDK 238 Initialization Structure
+    // SDK 2.3.36 Initialization
     SituationInitInfo init_info = {0};
     init_info.window_width = SCREEN_WIDTH;
     init_info.window_height = SCREEN_HEIGHT;
     init_info.window_title = "Polysonix Situation Player";
     init_info.initial_active_window_flags = SITUATION_FLAG_WINDOW_RESIZABLE | SITUATION_FLAG_VSYNC_HINT;
 
-    if (SituationInit(0, NULL, &init_info) != SIT_SUCCESS) {
-        printf("Failed to initialize Situation: %s\n", SituationGetLastErrorMsg());
+    if (SituationInit(0, NULL, &init_info) != SITUATION_SUCCESS) {
+        char* err = SituationGetLastErrorMsg();
+        printf("Failed to initialize Situation: %s\n", err);
+        free(err);
         return false;
     }
 
-    // Set FPS separately as per SDK 238
     SituationSetTargetFPS(TARGET_FPS);
 
-    if (!polysonix_wave_init()) {
-        fprintf(stderr, "Failed to initialize Polysonix wave system!\n");
-        return false;
-    }
+    // Initialize Polysonix tables explicitly
+    init_polysonix_lfsr_tables();
+    initialize_bytecode_cache();
 
     float actual_sample_rate = REQUESTED_SAMPLE_RATE;
     printf("Audio: SR: %.0f Hz, Channels: %d\n", actual_sample_rate, CHANNELS);
@@ -355,7 +342,8 @@ static bool InitializeApplication() {
     synth = PX_Create(&config);
     if (!synth) {
         printf("Critical: Failed to create PxSynth instance.\n");
-        polysonix_wave_deinit();
+        free_bytecode_cache();
+        free_polysonix_lfsr_tables();
         SituationShutdown();
         return false;
     }
@@ -363,13 +351,13 @@ static bool InitializeApplication() {
     if (!compile_all_waves()) {
         printf("Critical: Wave compilation resulted in zero successful waveforms. Exiting.\n");
         PX_Destroy(synth);
-        polysonix_wave_deinit();
+        free_bytecode_cache();
+        free_polysonix_lfsr_tables();
         SituationShutdown();
         return false;
     }
 
     // --- Setup Situation Audio Stream ---
-    // Per SDK 238, SituationInit initializes audio device.
     SituationAudioFormat format = {
         .channels = CHANNELS,
         .sample_rate = REQUESTED_SAMPLE_RATE,
@@ -378,16 +366,20 @@ static bool InitializeApplication() {
     SituationLoadSoundFromStream(on_audio_stream_read, on_audio_stream_seek, NULL, &format, true, &audio_stream);
     SituationPlayLoadedSound(&audio_stream);
 
-    // Using v2.3.1 API for fonts
-    main_font = SituationLoadFont("./font.ttf");
+    // Load and Bake Font (SDK 2.3.36)
+    SituationLoadFont("./font.ttf", &main_font);
     if (!SituationIsFontValid(main_font)) {
         printf("Warning: Failed to load font. Text will not be rendered.\n");
+    } else {
+        if (!SituationBakeFontAtlas(&main_font, 20.0f)) {
+            printf("Warning: Failed to bake font atlas.\n");
+        }
     }
 
     canvas_image = SituationGenImageColor(SCREEN_WIDTH, SCREEN_HEIGHT, (ColorRGBA){0,0,0,255});
-    canvas_texture = SituationCreateTexture(canvas_image, false);
+    SituationCreateTexture(canvas_image, false, &canvas_texture);
 
-    // Using Push Constants for matrix per SDK 238 "Fastest way" / Velocity style
+    // Using Push Constants for matrix per SDK 2.3.36 "Fastest way"
     const char* vs_canvas =
         "#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
@@ -410,7 +402,7 @@ static bool InitializeApplication() {
         "    FragColor = texture(u_texture0, v_tex_coord);\n"
         "}\n";
 
-    canvas_shader = SituationLoadShaderFromMemory(vs_canvas, fs_canvas);
+    SituationLoadShaderFromMemory(vs_canvas, fs_canvas, &canvas_shader);
     if (!canvas_shader.id) {
         printf("Failed to load canvas shader.\n");
         return false;
@@ -434,18 +426,9 @@ static void CleanupApplication() {
 
     if (synth) PX_Destroy(synth);
 
-    polysonix_wave_print_stats();
-    polysonix_wave_deinit();
-
-    // Free bytecode (this part is external to the synth library)
-    for (int i = 0; i < PX_GetNumWaveforms(); ++i) {
-        if (default_waves[i].compiled_bytecode != NULL) {
-            free_bytecode_chunk(default_waves[i].compiled_bytecode);
-            free(default_waves[i].compiled_bytecode);
-            default_waves[i].compiled_bytecode = NULL;
-        }
-    }
-    printf("Freed bytecode for %d waveforms.\n", PX_GetNumWaveforms());
+    // Free bytecode caches
+    free_bytecode_cache();
+    free_polysonix_lfsr_tables();
 
     SituationShutdown();
 }
@@ -581,7 +564,8 @@ static void ProcessInput() {
     }
 }
 
-static void DrawLiveOscillator(int16_t* stereo_buffer, int sampleFrames, int x, int y, int width, int height) {
+static void DrawLiveOscillator(RenderContext* ctx, int16_t* stereo_buffer, int sampleFrames, int x, int y, int width, int height) {
+    if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
     if (sampleFrames <= 0) return;
     if (sampleFrames > SAMPLES_PER_UPDATE) sampleFrames = SAMPLES_PER_UPDATE;
 
@@ -595,36 +579,33 @@ static void DrawLiveOscillator(int16_t* stereo_buffer, int sampleFrames, int x, 
         points[i].x = x + (float)i / (sampleFrames > 1 ? (sampleFrames - 1) : 1) * width;
         points[i].y = y + height / 2.0f - mono_sample * (height / 2.0f);
     }
-    DrawLine(x, y + height / 2, x + width, y + height / 2, LIGHTGRAY);
+    DrawLine(ctx, x, y + height / 2, x + width, y + height / 2, LIGHTGRAY);
     if (sampleFrames > 1) {
-        DrawLineStrip(points, sampleFrames, GREEN);
+        DrawLineStrip(ctx, points, sampleFrames, GREEN);
     } else if (sampleFrames == 1) {
-        DrawPixelV(points[0], GREEN);
+        DrawPixelV(ctx, points[0], GREEN);
     }
     free(points);
 }
 
-static void DrawFrame() {
-    // --- 1. Draw everything to the CPU-side canvas ---
-    SituationImageClearBackground(&canvas_image, (ColorRGBA){ 245, 245, 245, 255 }); // RAYWHITE
-
+static void DrawInterface(RenderContext* ctx) {
     // --- Local constants for layout ---
     int y_offset = 5;
     int line_height = 16;
     int small_line_height = 14;
 
     // --- Header / Help Text ---
-    DrawText("Polysonix Synthesizer Player (Situation)", 10, y_offset, line_height, DARKGRAY); y_offset += line_height + 2;
-    DrawText("UP/DN:Wave, L/R:Oct, F1/F2:LFO Rate, F3/F4:Pan, Keys:Play", 10, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
-    DrawText("KP_ENTER: Edit Target, KP0-9/etc: Edit Params/Routing", 10, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height + 3;
+    DrawText(ctx, "Polysonix Synthesizer Player (Situation)", 10, y_offset, line_height, DARKGRAY); y_offset += line_height + 2;
+    DrawText(ctx, "UP/DN:Wave, L/R:Oct, F1/F2:LFO Rate, F3/F4:Pan, Keys:Play", 10, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+    DrawText(ctx, "KP_ENTER: Edit Target, KP0-9/etc: Edit Params/Routing", 10, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height + 3;
 
     // --- Currently Editing Target Display ---
-    DrawText(TextFormat("EDITING: %s", edit_target_names[current_edit_target]), 10, y_offset, line_height, BLUE); y_offset += line_height;
+    DrawText(ctx, TextFormat("EDITING: %s", edit_target_names[current_edit_target]), 10, y_offset, line_height, BLUE); y_offset += line_height;
 
     // --- Parameter Editing Display Block ---
     if (current_edit_target >= EDIT_TARGET_ADSR_0_PARAMS && current_edit_target <= EDIT_TARGET_ADSR_2_PARAMS) {
         int adsr_idx = current_edit_target - EDIT_TARGET_ADSR_0_PARAMS;
-        DrawText(TextFormat("ADSR %d [%s]: A:%.2fs D:%.2fs S:%.2f R:%.2fs", adsr_idx,
+        DrawText(ctx, TextFormat("ADSR %d [%s]: A:%.2fs D:%.2fs S:%.2f R:%.2fs", adsr_idx,
             PX_GetVoiceADSREnabled(synth, adsr_idx) ? "ON" : "OFF",
             PX_GetVoiceADSRParam(synth, adsr_idx, PX_ADSR_PARAM_ATTACK),
             PX_GetVoiceADSRParam(synth, adsr_idx, PX_ADSR_PARAM_DECAY),
@@ -632,13 +613,13 @@ static void DrawFrame() {
             PX_GetVoiceADSRParam(synth, adsr_idx, PX_ADSR_PARAM_RELEASE)),
             20, y_offset, small_line_height, DARKGRAY);
         y_offset += small_line_height;
-        DrawText("KP0/1:Atk, KP2/3:Dcy, KP4/5:Sus, KP6/7:Rel, KP9:En/Dis", 20, y_offset, small_line_height - 2, GRAY);
+        DrawText(ctx, "KP0/1:Atk, KP2/3:Dcy, KP4/5:Sus, KP6/7:Rel, KP9:En/Dis", 20, y_offset, small_line_height - 2, GRAY);
         y_offset += small_line_height -2;
     } else if (current_edit_target >= EDIT_TARGET_ADSR_0_ROUTING && current_edit_target <= EDIT_TARGET_ADSR_2_ROUTING) {
         int adsr_idx = current_edit_target - EDIT_TARGET_ADSR_0_ROUTING;
-        DrawText(TextFormat("ADSR %d Routing -> Dest (KP0/1): %s", adsr_idx, PX_GetADSRDestinationName((PxADSRDestination)current_editing_adsr_destination_idx)), 20, y_offset, small_line_height, DARKGRAY);
+        DrawText(ctx, TextFormat("ADSR %d Routing -> Dest (KP0/1): %s", adsr_idx, PX_GetADSRDestinationName((PxADSRDestination)current_editing_adsr_destination_idx)), 20, y_offset, small_line_height, DARKGRAY);
         y_offset += small_line_height;
-        DrawText(TextFormat("Amount (KP2/3): %.2f", PX_GetVoiceADSRModAmount(synth, adsr_idx, (PxADSRDestination)current_editing_adsr_destination_idx)), 20, y_offset, small_line_height, DARKGRAY);
+        DrawText(ctx, TextFormat("Amount (KP2/3): %.2f", PX_GetVoiceADSRModAmount(synth, adsr_idx, (PxADSRDestination)current_editing_adsr_destination_idx)), 20, y_offset, small_line_height, DARKGRAY);
         y_offset += small_line_height;
     } else if (current_edit_target >= EDIT_TARGET_LFO_0_CORE_PARAMS && current_edit_target <= EDIT_TARGET_LFO_2_ROUTING) {
         int base_lfo_offset = current_edit_target - EDIT_TARGET_LFO_0_CORE_PARAMS;
@@ -647,14 +628,14 @@ static void DrawFrame() {
 
         if (lfo_function_type == 0) { // LFO Core Parameters
             PxWaveInfo lfo_wave_info = PX_GetWaveInfo(PX_GetLFOWaveform(synth, lfo_idx));
-            DrawText(TextFormat("LFO %d CORE PARAMETERS:", lfo_idx), 20, y_offset, small_line_height, DARKBLUE); y_offset += small_line_height;
-            DrawText(TextFormat("Wave (KP0/1): %s [%d]", lfo_wave_info.name, PX_GetLFOWaveform(synth, lfo_idx)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
-            DrawText(TextFormat("Freq (KP2/3): %.2f Hz", PX_GetLFOParam(synth, lfo_idx, PX_LFO_PARAM_FREQUENCY)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
-            DrawText(TextFormat("ResetOnKey (KP8): %s", PX_GetLFOResetOnKeyOn(synth, lfo_idx) ? "ON" : "OFF"), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
-            DrawText(TextFormat("LFO Enabled (KP9): %s", PX_GetLFOEnabled(synth, lfo_idx) ? "ON" : "OFF"), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+            DrawText(ctx, TextFormat("LFO %d CORE PARAMETERS:", lfo_idx), 20, y_offset, small_line_height, DARKBLUE); y_offset += small_line_height;
+            DrawText(ctx, TextFormat("Wave (KP0/1): %s [%d]", lfo_wave_info.name, PX_GetLFOWaveform(synth, lfo_idx)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+            DrawText(ctx, TextFormat("Freq (KP2/3): %.2f Hz", PX_GetLFOParam(synth, lfo_idx, PX_LFO_PARAM_FREQUENCY)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+            DrawText(ctx, TextFormat("ResetOnKey (KP8): %s", PX_GetLFOResetOnKeyOn(synth, lfo_idx) ? "ON" : "OFF"), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+            DrawText(ctx, TextFormat("LFO Enabled (KP9): %s", PX_GetLFOEnabled(synth, lfo_idx) ? "ON" : "OFF"), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
         } else if (lfo_function_type == 1) { // LFO ADSR Parameters
-            DrawText(TextFormat("LFO %d ADSR PARAMETERS:", lfo_idx), 20, y_offset, small_line_height, DARKBLUE); y_offset += small_line_height;
-            DrawText(TextFormat("ADSR [%s]: A:%.2fs D:%.2fs S:%.2f R:%.2fs",
+            DrawText(ctx, TextFormat("LFO %d ADSR PARAMETERS:", lfo_idx), 20, y_offset, small_line_height, DARKBLUE); y_offset += small_line_height;
+            DrawText(ctx, TextFormat("ADSR [%s]: A:%.2fs D:%.2fs S:%.2f R:%.2fs",
                 PX_GetLFOADSREnabled(synth, lfo_idx) ? "ON" : "OFF",
                 PX_GetLFOADSRParam(synth, lfo_idx, PX_ADSR_PARAM_ATTACK),
                 PX_GetLFOADSRParam(synth, lfo_idx, PX_ADSR_PARAM_DECAY),
@@ -662,23 +643,23 @@ static void DrawFrame() {
                 PX_GetLFOADSRParam(synth, lfo_idx, PX_ADSR_PARAM_RELEASE)),
                 20, y_offset, small_line_height, DARKGRAY);
             y_offset += small_line_height;
-            DrawText("KP0/1:Atk, KP2/3:Dcy, KP4/5:Sus, KP6/7:Rel, KP9:En/Dis ADSR", 20, y_offset, small_line_height - 2, GRAY);
+            DrawText(ctx, "KP0/1:Atk, KP2/3:Dcy, KP4/5:Sus, KP6/7:Rel, KP9:En/Dis ADSR", 20, y_offset, small_line_height - 2, GRAY);
             y_offset += small_line_height -2;
         } else if (lfo_function_type == 2) { // LFO Routing
-            DrawText(TextFormat("LFO %d ROUTING -> Dest (KP0/1): %s", lfo_idx, PX_GetLFODestinationName((PxLFODestination)current_editing_lfo_destination_idx)), 20, y_offset, small_line_height, DARKBLUE);
+            DrawText(ctx, TextFormat("LFO %d ROUTING -> Dest (KP0/1): %s", lfo_idx, PX_GetLFODestinationName((PxLFODestination)current_editing_lfo_destination_idx)), 20, y_offset, small_line_height, DARKBLUE);
             y_offset += small_line_height;
             float amount = PX_GetLFOModAmount(synth, lfo_idx, (PxLFODestination)current_editing_lfo_destination_idx);
-            DrawText(TextFormat("Amount (KP2/3): %.2f", amount), 20, y_offset, small_line_height, DARKGRAY);
+            DrawText(ctx, TextFormat("Amount (KP2/3): %.2f", amount), 20, y_offset, small_line_height, DARKGRAY);
             y_offset += small_line_height;
         }
     } else if (current_edit_target == EDIT_TARGET_FILTER_PARAMS) {
-        DrawText("FILTER PARAMETERS:", 20, y_offset, small_line_height, DARKBLUE); y_offset += small_line_height;
-        DrawText(TextFormat("Mode (KP1/2): %s", PX_GetFilterModeName(PX_GetFilterMode(synth))), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
-        DrawText(TextFormat("Slope (KP/): %ddB", (int)PX_GetFilterParam(synth, PX_FILTER_PARAM_POLES) * 6), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
-        DrawText(TextFormat("Cutoff (KP3/4): %.0f Hz", PX_GetFilterParam(synth, PX_FILTER_PARAM_CUTOFF)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
-        DrawText(TextFormat("Res (KP5/6): %.2f Q", PX_GetFilterParam(synth, PX_FILTER_PARAM_RESONANCE)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
-        DrawText(TextFormat("Env Amt (KP7/8): %.0f Hz", PX_GetFilterParam(synth, PX_FILTER_PARAM_ENV_AMOUNT)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
-        DrawText(TextFormat("Drive(KP9/*): %.2f  KeyTrk(KP-/+): %.2f",
+        DrawText(ctx, "FILTER PARAMETERS:", 20, y_offset, small_line_height, DARKBLUE); y_offset += small_line_height;
+        DrawText(ctx, TextFormat("Mode (KP1/2): %s", PX_GetFilterModeName(PX_GetFilterMode(synth))), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+        DrawText(ctx, TextFormat("Slope (KP/): %ddB", (int)PX_GetFilterParam(synth, PX_FILTER_PARAM_POLES) * 6), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+        DrawText(ctx, TextFormat("Cutoff (KP3/4): %.0f Hz", PX_GetFilterParam(synth, PX_FILTER_PARAM_CUTOFF)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+        DrawText(ctx, TextFormat("Res (KP5/6): %.2f Q", PX_GetFilterParam(synth, PX_FILTER_PARAM_RESONANCE)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+        DrawText(ctx, TextFormat("Env Amt (KP7/8): %.0f Hz", PX_GetFilterParam(synth, PX_FILTER_PARAM_ENV_AMOUNT)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+        DrawText(ctx, TextFormat("Drive(KP9/*): %.2f  KeyTrk(KP-/+): %.2f",
             PX_GetFilterParam(synth, PX_FILTER_PARAM_DRIVE),
             PX_GetFilterParam(synth, PX_FILTER_PARAM_KEYTRACK)),
             20, y_offset, small_line_height, DARKGRAY);
@@ -688,18 +669,18 @@ static void DrawFrame() {
 
     // --- Main Synth Status Display ---
     PxWaveInfo waveInfo = PX_GetWaveInfo(current_wave_index);
-    DrawText(TextFormat("Osc Wave[%d]:%s Oct:%d", current_wave_index, waveInfo.name, octave_shift), 10, y_offset, small_line_height, waveInfo.is_compiled ? DARKBLUE : RED);
+    DrawText(ctx, TextFormat("Osc Wave[%d]:%s Oct:%d", current_wave_index, waveInfo.name, octave_shift), 10, y_offset, small_line_height, waveInfo.is_compiled ? DARKBLUE : RED);
     y_offset += small_line_height;
-    DrawText(TextFormat("Global Voice Pan (F3/F4): %.2f", PX_GetGlobalVoicePan(synth)), 10, y_offset, small_line_height, DARKGRAY);
+    DrawText(ctx, TextFormat("Global Voice Pan (F3/F4): %.2f", PX_GetGlobalVoicePan(synth)), 10, y_offset, small_line_height, DARKGRAY);
     y_offset += small_line_height;
-    DrawText(TextFormat("Unilegato (F10): %s", PX_GetUnilegatoEnabled(synth) ? "ON" : "OFF"), 10, y_offset, small_line_height, DARKGRAY);
+    DrawText(ctx, TextFormat("Unilegato (F10): %s", PX_GetUnilegatoEnabled(synth) ? "ON" : "OFF"), 10, y_offset, small_line_height, DARKGRAY);
     y_offset += small_line_height;
 
     // --- Template LFO Display ---
     for (int lfo_idx = 0; lfo_idx < NUM_LFOS; ++lfo_idx) {
         PxLFOInfo lfo_info = PX_GetLFOInfo(synth, lfo_idx);
         PxWaveInfo lfo_wave_info = PX_GetWaveInfo(lfo_info.wave_idx);
-        DrawText(TextFormat("TPL LFO %d[%s]:%s %.1fHz Rst:%s ADSR[%s]Lvl:%.2f", lfo_idx,
+        DrawText(ctx, TextFormat("TPL LFO %d[%s]:%s %.1fHz Rst:%s ADSR[%s]Lvl:%.2f", lfo_idx,
             lfo_info.enabled ? "ON" : "OFF", lfo_wave_info.name, lfo_info.frequency,
             lfo_info.reset_on_key_on ? "KEY" : "FREE", lfo_info.adsr_enabled ? "ON" : "OFF", lfo_info.adsr_level),
             10, y_offset, small_line_height, DARKGRAY);
@@ -708,7 +689,7 @@ static void DrawFrame() {
     float lfo_interval = PX_GetLFOUpdateInterval(synth);
     float lfo_rate_hz = (lfo_interval > 0) ? 1000.0f / lfo_interval : 0.0f;
     float samples_per_update = (lfo_rate_hz > 0) ? (REQUESTED_SAMPLE_RATE / lfo_rate_hz) : 0;
-    DrawText(TextFormat("LFO Update Rate: %.1f Hz (%.0f samples/update)", lfo_rate_hz, samples_per_update), 10, y_offset, small_line_height, DARKGRAY);
+    DrawText(ctx, TextFormat("LFO Update Rate: %.1f Hz (%.0f samples/update)", lfo_rate_hz, samples_per_update), 10, y_offset, small_line_height, DARKGRAY);
     y_offset += small_line_height;
 
     // --- Top-Right Status Block ---
@@ -718,27 +699,27 @@ static void DrawFrame() {
     for (int i = 0; i < NUM_VOICES; ++i) {
         if (PX_GetVoiceInfo(synth, i).active) active_voice_count++;
     }
-    DrawText(TextFormat("Voices: %d/%d", active_voice_count, NUM_VOICES), SCREEN_WIDTH - 100, right_y_start, small_line_height, DARKGRAY);
+    DrawText(ctx, TextFormat("Voices: %d/%d", active_voice_count, NUM_VOICES), SCREEN_WIDTH - 100, right_y_start, small_line_height, DARKGRAY);
     right_y_start += small_line_height;
 
     for (int lfo_idx = 0; lfo_idx < NUM_LFOS; ++lfo_idx) {
         PxLFOInfo lfo_info = PX_GetLFOInfo(synth, lfo_idx);
         float display_output = lfo_info.enabled ? (lfo_info.adsr_enabled ? lfo_info.raw_output * lfo_info.adsr_level : lfo_info.raw_output) : 0.0f;
-        DrawText(TextFormat("TPL LFO %d Out: %+.2f", lfo_idx, display_output), right_x, right_y_start, small_line_height, DARKGRAY);
+        DrawText(ctx, TextFormat("TPL LFO %d Out: %+.2f", lfo_idx, display_output), right_x, right_y_start, small_line_height, DARKGRAY);
         if (lfo_info.enabled && (!lfo_info.adsr_enabled || lfo_info.adsr_level > 0.001f)) {
-            DrawLFOIndicator(lfo_info.raw_output, right_x + 160, right_y_start + 7, 7);
+            DrawLFOIndicator(ctx, lfo_info.raw_output, right_x + 160, right_y_start + 7, 7);
         }
         right_y_start += small_line_height;
     }
     PxLimiterInfo lim_info = PX_GetLimiterInfo(synth);
     if (lim_info.initialized) {
-        DrawText(TextFormat("Limiter: -%.1fdB", lim_info.gain_reduction_db), SCREEN_WIDTH - 120, right_y_start, small_line_height, lim_info.gain_reduction_db > 0.1f ? RED : DARKGRAY);
+        DrawText(ctx, TextFormat("Limiter: -%.1fdB", lim_info.gain_reduction_db), SCREEN_WIDTH - 120, right_y_start, small_line_height, lim_info.gain_reduction_db > 0.1f ? RED : DARKGRAY);
     }
 
     // --- Voice Status Table ---
     int voice_display_y_start = y_offset + 10;
     int voice_line_h = small_line_height - 2;
-    DrawText("VOICE STATUS:", 10, voice_display_y_start, line_height - 2, BLACK);
+    DrawText(ctx, "VOICE STATUS:", 10, voice_display_y_start, line_height - 2, BLACK);
     voice_display_y_start += line_height - 2;
 
     for (int i = 0; i < NUM_VOICES; ++i) {
@@ -759,7 +740,7 @@ static void DrawFrame() {
             strncat(lfo_outputs_str, temp_lfo_out, sizeof(lfo_outputs_str) - strlen(lfo_outputs_str) - 1);
         }
 
-        DrawText(TextFormat("V%d:%s N:%02d F:%.0f EAmp:%.1f P:%.1f %s%s",
+        DrawText(ctx, TextFormat("V%d:%s N:%02d F:%.0f EAmp:%.1f P:%.1f %s%s",
                  i, v_info.active ? "On" : "Off", v_info.midi_note, v_info.frequency,
                  v_info.effective_amplitude, v_info.pan_position, adsr_summary, lfo_outputs_str), 10, voice_display_y_start + i * voice_line_h, voice_line_h, v_info.active ? DARKGREEN : GRAY);
     }
@@ -789,29 +770,40 @@ static void DrawFrame() {
 
     int wf_x = 10;
     int wf_w = SCREEN_WIDTH - 20;
-    DrawRectangleLines(wf_x - 1, waveform_draw_y - 1, wf_w + 2, DRAW_WAVEFORM_HEIGHT + 2, LIGHTGRAY);
+    DrawRectangleLines(ctx, wf_x - 1, waveform_draw_y - 1, wf_w + 2, DRAW_WAVEFORM_HEIGHT + 2, LIGHTGRAY);
     if (waveInfo.is_compiled) {
         Vector2 pts[SINGLE_CYCLE_LENGTH];
-        DrawLine(wf_x, waveform_draw_y + DRAW_WAVEFORM_HEIGHT / 2, wf_x + wf_w, waveform_draw_y + DRAW_WAVEFORM_HEIGHT / 2, LIGHTGRAY);
+        DrawLine(ctx, wf_x, waveform_draw_y + DRAW_WAVEFORM_HEIGHT / 2, wf_x + wf_w, waveform_draw_y + DRAW_WAVEFORM_HEIGHT / 2, LIGHTGRAY);
         for (int k = 0; k < SINGLE_CYCLE_LENGTH; ++k) {
             pts[k].x = wf_x + (float)k / (SINGLE_CYCLE_LENGTH - 1) * wf_w;
             pts[k].y = waveform_draw_y + DRAW_WAVEFORM_HEIGHT / 2.0f - (static_display_buffer[k] / 32768.0f) * (DRAW_WAVEFORM_HEIGHT / 2.0f);
         }
-        DrawLineStrip(pts, SINGLE_CYCLE_LENGTH, MAROON);
+        DrawLineStrip(ctx, pts, SINGLE_CYCLE_LENGTH, MAROON);
     } else {
-        DrawText("Wave compilation failed!", wf_x + wf_w / 2 - MeasureText("Wave compilation failed!", 20) / 2, waveform_draw_y + DRAW_WAVEFORM_HEIGHT / 2 - 10, 20, RED);
+        DrawText(ctx, "Wave compilation failed!", wf_x + wf_w / 2 - MeasureText("Wave compilation failed!", 20) / 2, waveform_draw_y + DRAW_WAVEFORM_HEIGHT / 2 - 10, 20, RED);
     }
 
     // --- Live Output Display (Identical to v8) ---
-    DrawLiveOscillator(mix_buffer, SAMPLES_PER_UPDATE, 10, waveform_draw_y + DRAW_WAVEFORM_HEIGHT + 10, SCREEN_WIDTH - 20, 80);
+    DrawLiveOscillator(ctx, mix_buffer, SAMPLES_PER_UPDATE, 10, waveform_draw_y + DRAW_WAVEFORM_HEIGHT + 10, SCREEN_WIDTH - 20, 80);
+}
+
+static void DrawFrame() {
+    // --- 1. Draw everything to the CPU-side canvas ---
+    SituationImageClearBackground(&canvas_image, (ColorRGBA){ 245, 245, 245, 255 }); // RAYWHITE
+
+    // First Pass: Draw all shapes/pixels to CPU canvas
+    RenderContext ctx_cpu = { .cmd = {0}, .mode = RENDER_MODE_CPU_CANVAS };
+    DrawInterface(&ctx_cpu);
 
     // --- 2. Upload the canvas to the GPU and render it ---
-    // SDK 238: Use Destroy/Create instead of UpdateTexture (which isn't in docs)
+    // SDK 2.3.36: Use Destroy/Create as UpdateTexture is not available for CPU-generated images
     if (canvas_texture.id != 0) SituationDestroyTexture(&canvas_texture);
-    canvas_texture = SituationCreateTexture(canvas_image, false);
+    SituationCreateTexture(canvas_image, false, &canvas_texture);
 
     if (SituationAcquireFrameCommandBuffer()) {
-        // SDK 238 RenderPass Info
+        SituationCommandBuffer cmd = SituationGetMainCommandBuffer();
+
+        // SDK 2.3.36 RenderPass Info
         SituationRenderPassInfo pass_info = {
             .display_id = -1, // Main Window
             .color_attachment = {
@@ -824,29 +816,36 @@ static void DrawFrame() {
                 .storeOp = SIT_STORE_OP_DONT_CARE
             }
         };
-        SituationCmdBeginRenderPass(SituationGetMainCommandBuffer(), &pass_info);
+        SituationCmdBeginRenderPass(cmd, &pass_info);
 
-        SituationCmdBindPipeline(SituationGetMainCommandBuffer(), canvas_shader);
-        // SDK 238: CmdBindTextureSet with args (cmd, set_index, texture)
-        SituationCmdBindTextureSet(SituationGetMainCommandBuffer(), 0, canvas_texture);
+        // Draw Canvas (CPU Rendering result)
+        SituationCmdBindPipeline(cmd, canvas_shader);
+        // SDK 2.3.36: CmdBindTextureSet with args (cmd, set_index, texture)
+        SituationCmdBindTextureSet(cmd, 0, canvas_texture);
 
         mat4 model;
         glm_mat4_identity(model);
-        glm_translate(model, (vec3){ SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f });
-        glm_scale(model, (vec3){ SCREEN_WIDTH, SCREEN_HEIGHT, 1.0f });
+        vec3 t = { SCREEN_WIDTH / 2.0f, SCREEN_HEIGHT / 2.0f, 0.0f };
+        glm_translate(model, t);
+        vec3 s = { SCREEN_WIDTH, SCREEN_HEIGHT, 1.0f };
+        glm_scale(model, s);
 
         mat4 mvp;
         glm_mat4_mul(projection, model, mvp);
 
-        // SDK 238: Use Push Constants for matrices (Fastest way)
-        SituationCmdSetPushConstant(SituationGetMainCommandBuffer(), 0, &mvp, sizeof(mat4));
+        // SDK 2.3.36: Use Push Constants for matrices (Fastest way)
+        SituationCmdSetPushConstant(cmd, 0, &mvp, sizeof(mat4));
 
-        // SDK 238: CmdDrawQuad with args (cmd, model, color)
+        // SDK 2.3.36: CmdDrawQuad with args (cmd, model, color)
         // Note: vec4 is implied float[4] compatible with cglm vec4.
         vec4 white = {1.0f, 1.0f, 1.0f, 1.0f};
-        SituationCmdDrawQuad(SituationGetMainCommandBuffer(), model, white);
+        SituationCmdDrawQuad(cmd, model, white);
 
-        SituationCmdEndRenderPass(SituationGetMainCommandBuffer());
+        // Second Pass: Draw Text/UI overlay directly on GPU
+        RenderContext ctx_gpu = { .cmd = cmd, .mode = RENDER_MODE_GPU_OVERLAY };
+        DrawInterface(&ctx_gpu);
+
+        SituationCmdEndRenderPass(cmd);
         SituationEndFrame();
     }
 }
@@ -866,6 +865,7 @@ int main(void) {
             DrawFrame();
         } else {
             if (SituationAcquireFrameCommandBuffer()) {
+                SituationCommandBuffer cmd = SituationGetMainCommandBuffer();
                 SituationRenderPassInfo pass_info = {
                     .display_id = -1,
                     .color_attachment = {
@@ -874,9 +874,11 @@ int main(void) {
                         .clear = { .color = { 0, 0, 0, 255 } } // BLACK
                     }
                 };
-                SituationCmdBeginRenderPass(SituationGetMainCommandBuffer(), &pass_info);
-                DrawText("DRAWING DISABLED (F11 to toggle)", 10, 10, 20, RAYWHITE);
-                SituationCmdEndRenderPass(SituationGetMainCommandBuffer());
+                SituationCmdBeginRenderPass(cmd, &pass_info);
+                // Draw directly with GPU command
+                RenderContext ctx_gpu = { .cmd = cmd, .mode = RENDER_MODE_GPU_OVERLAY };
+                DrawText(&ctx_gpu, "DRAWING DISABLED (F11 to toggle)", 10, 10, 20, RAYWHITE);
+                SituationCmdEndRenderPass(cmd);
                 SituationEndFrame();
             }
         }
