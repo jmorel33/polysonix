@@ -64,14 +64,14 @@ flowchart TD
     %% Common Frontend
     App[User Application] -->|Define Waveform| Expr["Expression String (e.g. 'sin(x)')"]
     Expr -->|Compile| Compiler[Polysonix Compiler]
-    Compiler -->|Generate| Bytecode[Bytecode (Reverse Polish Notation)]
+    Compiler -->|Generate| Bytecode["Bytecode (Reverse Polish Notation)"]
 
     %% Split
     Bytecode --> Decision{Backend?}
 
     %% CPU Path
     Decision -->|CPU (Default)| CPU_Mem[Host Memory]
-    CPU_Mem -->|Read| CPU_VM[CPU VM\n(Recursive, Computed Gotos)]
+    CPU_Mem -->|Read| CPU_VM["CPU VM\n(Recursive, Computed Gotos)"]
     subgraph CPU_Execution [CPU Audio Thread]
         CPU_VM -->|Synthesize| CPU_Out[int16 Audio Buffer]
     end
@@ -79,7 +79,7 @@ flowchart TD
     %% GPU Path
     Decision -->|GPU (Optional)| Serializer[Serializer\n(Packs structs for std430)]
     Serializer -->|Upload| SSBO[GPU SSBO Buffer]
-    SSBO -->|Bindless Access| GPU_VM[GPU VM\n(Iterative, Explicit Stack)]
+    SSBO -->|Bindless Access| GPU_VM["GPU VM\n(Iterative, Explicit Stack)"]
     subgraph GPU_Execution [OpenGL Compute Shader]
         GPU_VM -->|Synthesize| GPU_Out[Float Buffer / Texture]
     end
