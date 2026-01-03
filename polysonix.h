@@ -18,11 +18,7 @@
 #ifndef POLYSONIX_H
 #define POLYSONIX_H
 
-#ifdef POLYSONIX_USE_GPU_WAVE
-    #include "polysonix_wave_gpu.h"
-#else
-    #include "polysonix_wave_cpu.h"
-#endif
+#include "polysonix_wave.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdatomic.h>
@@ -206,6 +202,7 @@ typedef struct PxConfig {
     PxOscillatorUpdateMode osc_update_mode; /**< The quality/performance mode for the main voice oscillators. */
     float osc_fixed_update_rate_hz;     /**< The update rate for oscillators in `PX_OSC_UPDATE_MODE_FIXED_RATE`. */
     float nyquist_precision_multiplier; /**< The multiplier for the dynamic update rate in `PX_OSC_UPDATE_MODE_NYQUIST`. */
+    bool use_gpu;                       /**< If true, attempts to use GPU acceleration for waveform generation. Requires POLYSONIX_USE_GPU define. */
 } PxConfig;
 
 /**
@@ -1570,6 +1567,16 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
         return NULL;
     }
 
+    // 6a. Initialize shared resources (CPU/General)
+    // Always initialize LFSR tables and cache, as CPU execution might be needed even in GPU mode (fallback/validation)
+    // or simply for the CPU mode itself.
+    // The functions are safe to call multiple times if they have internal guards (checked below).
+    // init_polysonix_lfsr_tables() usually re-initializes, so checking first is better if we want to avoid re-work.
+    // However, the current implementation in polysonix_wave.h re-calculates tables.
+    // Since this is PX_Create (one time setup), it is acceptable.
+    init_polysonix_lfsr_tables();
+    initialize_bytecode_cache();
+
     // 7. Allocate and initialize all per-voice internal arrays and structs.
     for (int i = 0; i < config->num_voices; ++i) {
         s->voices[i].adsrs = (ADSR*)calloc(config->num_voice_adsrs, sizeof(ADSR));
@@ -1593,7 +1600,17 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     // 8. Initialize the template LFO instances (for UI display).
     for (int i = 0; i < config->num_lfos; ++i) { LFOInstance_Init(&s->template_lfo_instances[i], config->sample_rate); }
 
-    // 9. Set up the default patch parameters.
+    // 9. Initialize GPU resources if requested and enabled
+    if (s->config.use_gpu) {
+#ifdef POLYSONIX_USE_GPU
+        init_polysonix_gpu_resources();
+#else
+        fprintf(stderr, "Warning: use_gpu set to true in PxConfig, but POLYSONIX_USE_GPU not defined. Falling back to CPU.\n");
+        s->config.use_gpu = false;
+#endif
+    }
+
+    // 10. Set up the default patch parameters.
     s->patch.default_note_amp = 0.5f;
     s->patch.voice_pan_setting = 0.0f;
 
@@ -1655,6 +1672,17 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
 
 PX_API void PX_Destroy(PxSynth* s) {
     if (!s) return;
+
+    if (s->config.use_gpu) {
+#ifdef POLYSONIX_USE_GPU
+        cleanup_polysonix_gpu_resources();
+#endif
+    }
+
+    // Always cleanup shared resources
+    free_bytecode_cache();
+    free_polysonix_lfsr_tables();
+
     free(s->cmd_queue.buffer);
     if (s->voices) {
         for (int i = 0; i < s->config.num_voices; ++i) {

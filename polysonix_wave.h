@@ -204,10 +204,13 @@ Example WaveDefinition (C struct storing the script string):
 
 */
 
-#ifndef POLYSONIX_WAVE_GPU_H
-#define POLYSONIX_WAVE_GPU_H
+#ifndef POLYSONIX_WAVE_H
+#define POLYSONIX_WAVE_H
 
+#ifdef POLYSONIX_USE_GPU
 #include "situation.h"
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -256,6 +259,10 @@ extern "C" {
 #define MAX_VM_STACK      512
 #define MAX_SIGMA_CHUNKS  16 // Max nested or parallel sigma chunks needed
 #define MAX_STRINGS 32 // Max unique string literals (variable names, etc.) per chunk
+
+#ifndef NUM_DEFAULT_WAVES
+#define NUM_DEFAULT_WAVES 212
+#endif
 
 // --- LFSR Definitions ---
 #define NUM_LFSR_TYPES 16
@@ -376,6 +383,14 @@ typedef struct {
     const char* name;        // Points to the name string (e.g., "k") from the chunk's string pool
     float       current_value; // The value of the loop variable in the current sigma iteration
 } LoopVarInfo;
+
+typedef struct {
+    const char *name;       // Human-readable name for the wave
+    const char *expression; // The mathematical expression string
+    BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+} WaveDefinition;
+
+extern WaveDefinition default_waves[NUM_DEFAULT_WAVES];
 
 // Structure to hold runtime parameters for the VM - Enhanced with LFSR state fields
 typedef struct {
@@ -4227,6 +4242,8 @@ int main() {
 
 // --- GPU Structures (Match GLSL Layout) ---
 
+#ifdef POLYSONIX_USE_GPU
+
 typedef struct {
     float x;
     float frequency;
@@ -4406,8 +4423,10 @@ void dispatch_wave_gpu(SituationCommandBuffer cmd, GpuWaveBuffers bufs, VmParams
     SituationCmdDispatch(cmd, (wave_length + 63) / 64, 1, 1);
 }
 
+#endif // POLYSONIX_USE_GPU
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif // POLYSONIX_WAVE_GPU_H
+#endif // POLYSONIX_WAVE_H

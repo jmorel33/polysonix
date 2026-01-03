@@ -1,10 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-#ifdef POLYSONIX_USE_GPU_WAVE
-    #include "../polysonix_wave_gpu.h"
-#else
-    #include "../polysonix_wave_cpu.h"
-#endif
+#include "../polysonix_wave.h"
 
 /***************************************************************************************************
 *
@@ -13,15 +9,12 @@
 *
 *
 ****************************************************************************************************/
+#ifndef NUM_DEFAULT_WAVES
 #define NUM_DEFAULT_WAVES 212
+#endif
 
 // --- Waveform Expressions ---
-typedef struct {
-    const char *name;       // Human-readable name for the wave
-    const char *expression; // The mathematical expression string
-    BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
-    //float generation_rand_offset; // Stored per wave definition
-} WaveDefinition;
+// WaveDefinition is defined in polysonix_wave.h
 
 WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
     // --- Basic Waves (0-7) ---
