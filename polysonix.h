@@ -14,6 +14,11 @@
  * @copyright Copyright (c) 2025, Jacques Morel
  * @license This software is licensed under the MIT License. See the LICENSE file for more information.
  */
+// --- Version Macros ---
+#define POLYSONIX_VERSION_MAJOR 1
+#define POLYSONIX_VERSION_MINOR 2
+#define POLYSONIX_VERSION_PATCH 0
+#define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
 #define POLYSONIX_H
