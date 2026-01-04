@@ -1,5 +1,27 @@
 # Polysonix Update Log
 
+## v1.1
+
+This release introduces expressive capabilities with full support for **MIDI Velocity** and **Channel Aftertouch**.
+
+### Features
+*   **MIDI Velocity Support:** The engine now responds to note velocity (0.0 - 1.0).
+    *   **Amplitude Scaling:** Velocity can scale the note's volume (`VelocityToAmp`).
+    *   **Filter Brightness:** Harder hits can open the filter cutoff (`VelocityToFilterCutoff`).
+    *   **Attack Time Scaling:** High velocity can shorten the ADSR attack time for punchier sounds (`VelocityAttackScaling`).
+    *   **Timbre Modulation:** Direct mapping of velocity to `modA` (Param1) of the waveform bytecode (`VelocityToParam1`).
+*   **Channel Aftertouch:** Added support for monophonic channel pressure (`PX_ChannelAftertouch`).
+    *   **Filter Sweep:** Pressure can modulate filter cutoff (`AftertouchToFilterCutoff`).
+    *   **Vibrato Depth:** Pressure can introduce pitch modulation (`AftertouchToVibrato`).
+
+### API Changes
+*   **Updated `PX_NoteOn`:** The signature has changed to accept a 5th argument: `float velocity`.
+*   **New `PX_NoteOnLegacy`:** A helper function provided for backward compatibility with the old 4-argument signature (defaults to full velocity).
+*   **New Control Functions:** Added setters and getters for all new velocity and aftertouch parameters (e.g., `PX_SetVelocityToAmp`, `PX_SetAftertouchToVibrato`).
+
+### Backward Compatibility
+*   All new modulation parameters default to `0.0`. Existing patches will sound exactly the same until these features are explicitly enabled.
+
 ## v1.0Alpha1
 
 This release seals the current codebase as **Version 1.0Alpha1**, marking a significant milestone in stability and mathematical precision.
