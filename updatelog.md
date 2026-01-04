@@ -1,5 +1,31 @@
 # Polysonix Update Log
 
+## v1.3 (2026/01/05)
+
+This major update introduces a full **Modulation Matrix** for Velocity and Channel Aftertouch, replacing the previous hard-wired routings with a flexible, 16-slot routing system.
+
+### Features
+*   **Modulation Matrix:** 16-slot matrix allowing Velocity and Channel Aftertouch to be routed to freely selectable destinations.
+    *   **Sources:** `PX_MOD_SRC_VELOCITY`, `PX_MOD_SRC_AFTERTOUCH`.
+    *   **Destinations:**
+        *   ADSR 1/2/3 parameters (Attack, Decay, Sustain, Release times/levels).
+        *   LFO 1/2/3 Frequency and Depth.
+        *   Oscillator Parameters (modA, modB, modC).
+    *   **Exponential Scaling:** ADSR time modulations use natural-sounding exponential scaling.
+    *   **Flexible Amounts:** Each slot has an independent amount (-1.0 to +1.0).
+
+### API Changes
+*   **New Matrix API:**
+    *   `PX_SetModMatrixSlot(s, slot, src, dest, amount)`
+    *   `PX_EnableModMatrixSlot(s, slot, enabled)`
+    *   `PX_ClearModMatrix(s)`
+*   **Removed Hard-wired Functions:** The previous Velocity/Aftertouch setters (e.g., `PX_SetVelocityToAmp`, `PX_SetAftertouchToFilterCutoff`) have been removed from the internal logic. The API functions remain for compilation compatibility but perform no action. Users should migrate to the Modulation Matrix.
+
+### Backward Compatibility
+*   **Default State:** The matrix defaults to all slots disabled (amount 0.0). Existing patches that did not use the specific v1.2 velocity features will sound identical.
+*   **Migration:** Code using v1.2 velocity functions must be updated to use `PX_SetModMatrixSlot` to achieve similar results.
+
+## v1.2 (2026/01/04)
 ## v1.2 (2026/01/04)
 
 This release introduces expressive capabilities with full support for **MIDI Velocity** and **Channel Aftertouch**.
