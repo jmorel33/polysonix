@@ -1,4 +1,4 @@
-2025-11-29
+v1.1.6 (2025-11-29)
 - Performance optimization: Implemented Direct Threaded Code (computed gotos) for VM dispatch.
 - Performance optimization: Added register caching for Instruction Pointer (IP) and Stack Pointer (SP).
 - Performance optimization: Added PX_LIKELY/PX_UNLIKELY branch prediction macros.
