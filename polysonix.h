@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 4
-#define POLYSONIX_VERSION_PATCH 0
+#define POLYSONIX_VERSION_PATCH 1
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -305,6 +305,8 @@ PX_API void        PX_Process(PxSynth* s, float* stereo_buffer, int num_frames);
  */
 PX_API void        PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id, float velocity); // v1.1: now with velocity
 PX_API void        PX_NoteOnLegacy(PxSynth* s, int midi_note, int wave_idx, int key_id); // Optional: explicit old version
+
+PX_API void        PX_PolyAftertouch(PxSynth* s, int key_id, float pressure); // 0.0 to 1.0
 
 PX_API void        PX_ChannelAftertouch(PxSynth* s, float pressure); // 0.0 to 1.0
 
@@ -845,6 +847,8 @@ typedef struct {
 
     float initial_velocity;                // Velocity stored at note-on (0.0 to 1.0)
 
+    float poly_aftertouch_pressure;  // v1.4.1: 0.0 to 1.0, default 0.0
+
     // --- State for oscillator update throttling
     float update_countdown;         // Samples remaining until the next real calculation.
     float samples_per_update;       // How many samples to wait between calculations.
@@ -875,6 +879,21 @@ typedef struct {
  * PX_SetModMatrixSlot(synth, 1, PX_MOD_SRC_VELOCITY, PX_MOD_DEST_OSC_MODA, 1.0f);
  * PX_EnableModMatrixSlot(synth, 1, true);
  * @endcode
+ *
+ * Example: Routing Polyphonic Aftertouch to Filter Cutoff
+ * @code
+ * // Set slot 2: Source = Poly Aftertouch, Dest = Filter Cutoff, Amount = 0.8f
+ * PX_SetModMatrixSlot(synth, 2, PX_MOD_SRC_POLY_AFTERTOUCH, PX_MOD_DEST_FILTER_CUTOFF, 0.8f);
+ * PX_EnableModMatrixSlot(synth, 2, true);
+ * @endcode
+ *
+ * Example: Routing Pitch Bend to Oscillator Frequency (Pitch)
+ * @code
+ * // Set slot 3: Source = Pitch Bend, Dest = Frequency, Amount = 1.0f (Full Range)
+ * // Note: Pitch bend range is set globally via PX_SetPitchBendRange()
+ * PX_SetModMatrixSlot(synth, 3, PX_MOD_SRC_PITCHBEND, PX_MOD_DEST_FREQUENCY, 1.0f);
+ * PX_EnableModMatrixSlot(synth, 3, true);
+ * @endcode
  */
 
 /* ==================== v1.3 MODULATION MATRIX TYPES ==================== */
@@ -883,6 +902,7 @@ typedef enum {
     PX_MOD_SRC_AFTERTOUCH,
     PX_MOD_SRC_MODWHEEL,      // CC #1, 0.0 to 1.0
     PX_MOD_SRC_PITCHBEND,     // -1.0 to +1.0 (bipolar, full range)
+    PX_MOD_SRC_POLY_AFTERTOUCH,   // v1.4.1: Per-note pressure
     PX_MOD_SRC_COUNT
 } PxModSource;
 
@@ -980,7 +1000,8 @@ typedef enum {
     PX_CMD_CLEAR_MOD_MATRIX,
     PX_CMD_CONTROL_CHANGE,
     PX_CMD_PITCH_BEND,
-    PX_CMD_SET_PITCHBEND_RANGE
+    PX_CMD_SET_PITCHBEND_RANGE,
+    PX_CMD_POLY_AFTERTOUCH
 } PxCommandType;
 
 typedef union {
@@ -999,6 +1020,7 @@ typedef union {
     struct { int slot; bool enabled; } mod_enable;
     struct { int cc_num; float value; } cc;
     struct { float value; } bend;  // 0.0 to 1.0
+    struct { int key_id; float pressure; } poly_at;
 } PxCommandData;
 
 typedef struct {
@@ -1045,6 +1067,8 @@ struct PxSynth {
     // === v1.4 Unified Controllers ===
     float modwheel_value;             // 0.0 to 1.0
     float pitchbend_value;            // -1.0 to +1.0 (live global value)
+
+    // No global poly aftertouch needed — stored per-voice
 
     // --- THREAD-SAFE MEMBERS ---
     CommandQueue cmd_queue;
@@ -1664,6 +1688,17 @@ static void PX_ProcessCommands(PxSynth* s) {
             case PX_CMD_SET_PITCHBEND_RANGE:
                 s->patch.pitchbend_range_semitones = fmaxf(0.1f, fminf(48.0f, cmd.data.param_float.float_val));
                 break;
+            case PX_CMD_POLY_AFTERTOUCH:
+                {
+                    int key_id = cmd.data.poly_at.key_id;
+                    float pressure = fmaxf(0.0f, fminf(1.0f, cmd.data.poly_at.pressure));
+                    for (int i = 0; i < s->config.num_voices; i++) {
+                        if (s->voices[i].active && s->voices[i].key_id == key_id) {
+                            s->voices[i].poly_aftertouch_pressure = pressure;
+                        }
+                    }
+                }
+                break;
         }
     }
 }
@@ -1756,6 +1791,7 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
 
     // 7. Allocate and initialize all per-voice internal arrays and structs.
     for (int i = 0; i < config->num_voices; ++i) {
+        s->voices[i].poly_aftertouch_pressure = 0.0f;
         s->voices[i].adsrs = (ADSR*)calloc(config->num_voice_adsrs, sizeof(ADSR));
         s->voices[i].lfo_instances = (LFOInstance*)calloc(config->num_lfos, sizeof(LFOInstance));
         s->voices[i].lfo_mod_amounts_snapshot = (float*)calloc(config->num_lfos * PX_LFO_DEST_COUNT, sizeof(float));
@@ -1954,6 +1990,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 mod_sources[PX_MOD_SRC_AFTERTOUCH] = s->channel_aftertouch_pressure;
                 mod_sources[PX_MOD_SRC_MODWHEEL] = s->modwheel_value;
                 mod_sources[PX_MOD_SRC_PITCHBEND] = s->pitchbend_value;  // bipolar!
+                mod_sources[PX_MOD_SRC_POLY_AFTERTOUCH] = v->poly_aftertouch_pressure;
 
                 float dest_mod[PX_MOD_DEST_COUNT] = {0.0f};
                 for (int m = 0; m < PX_MOD_MATRIX_SLOTS; m++) {
@@ -2025,6 +2062,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             mod_sources[PX_MOD_SRC_AFTERTOUCH] = s->channel_aftertouch_pressure;
             mod_sources[PX_MOD_SRC_MODWHEEL] = s->modwheel_value;
             mod_sources[PX_MOD_SRC_PITCHBEND] = s->pitchbend_value;  // bipolar!
+            mod_sources[PX_MOD_SRC_POLY_AFTERTOUCH] = v->poly_aftertouch_pressure;
 
             float dest_mod[PX_MOD_DEST_COUNT] = {0.0f};
             for (int m = 0; m < PX_MOD_MATRIX_SLOTS; m++) {
@@ -2246,6 +2284,12 @@ PX_API void PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id, float
 // Backward compatibility: old signature calls with full velocity
 PX_API void PX_NoteOnLegacy(PxSynth* s, int midi_note, int wave_idx, int key_id) {
     PX_NoteOn(s, midi_note, wave_idx, key_id, 1.0f);
+}
+
+PX_API void PX_PolyAftertouch(PxSynth* s, int key_id, float pressure) {
+    if (!s) return;
+    pressure = fmaxf(0.0f, fminf(1.0f, pressure));
+    PUSH_CMD_VOID(PX_CMD_POLY_AFTERTOUCH, .poly_at = {key_id, pressure});
 }
 
 PX_API void PX_ChannelAftertouch(PxSynth* s, float pressure) {
@@ -2493,6 +2537,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     if (voice_idx == -1) return;
     Voice* v = &s->voices[voice_idx];
     v->initial_velocity = fmaxf(0.0f, fminf(1.0f, velocity));
+    v->poly_aftertouch_pressure = 0.0f;
     v->active = true; v->midi_note = midi_note;
     v->original_frequency = get_midi_frequency(midi_note);
     v->frequency = v->original_frequency; v->phase = 0.0f;

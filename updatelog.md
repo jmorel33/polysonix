@@ -1,5 +1,25 @@
 # Polysonix Update Log
 
+## v1.4.1 (2026/01/06)
+
+This update adds comprehensive support for **Polyphonic Aftertouch** (per-note pressure) within the unified Modulation Matrix.
+
+### Features
+*   **Polyphonic Aftertouch:**
+    *   **New Source:** Added `PX_MOD_SRC_POLY_AFTERTOUCH` to the modulation matrix.
+    *   **Per-Note Control:** Allows modulating parameters (e.g., filter cutoff, timbre) independently for each held note based on its individual pressure.
+    *   **Voice Handling:** Implemented per-voice pressure storage (`poly_aftertouch_pressure` in `Voice` struct). Pressure state is automatically reset to 0.0 when a voice is triggered or stolen to prevent state pollution.
+*   **Documentation:**
+    *   Updated `@section mod_matrix` in `polysonix.h` with new usage examples for Polyphonic Aftertouch and Pitch Bend.
+    *   Clarified documentation for `PX_SetPitchBendRange`.
+
+### API Changes
+*   **New Function:** `PX_PolyAftertouch(PxSynth* s, int key_id, float pressure)`: Updates the pressure for the active voice corresponding to `key_id`.
+*   **New Command:** `PX_CMD_POLY_AFTERTOUCH`: Internal command to safely handle pressure updates from the API thread.
+
+### Backward Compatibility
+*   Fully backward compatible. The new modulation source defaults to 0.0, and existing code not calling `PX_PolyAftertouch` will function unchanged.
+
 ## v1.4 (2026/01/06)
 
 This release completes the unification of the modulation system by treating **Mod Wheel** and **Pitch Bend** as first-class citizens in the Modulation Matrix.
