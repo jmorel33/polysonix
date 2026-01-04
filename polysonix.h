@@ -856,10 +856,33 @@ typedef struct {
     float phase_at_interp_end;      // The oscillator's phase (0-1) when the last update occurred.
 } Voice;
 
+/**
+ * @section mod_matrix Modulation Matrix Usage
+ *
+ * Polysonix includes a unified 16-slot modulation matrix that allows routing various
+ * control sources (Velocity, Aftertouch, Mod Wheel, Pitch Bend) to synthesis parameters.
+ *
+ * Example: Routing Mod Wheel to Filter Cutoff
+ * @code
+ * // Set slot 0: Source = Mod Wheel, Dest = Filter Cutoff, Amount = 0.5 (50%)
+ * PX_SetModMatrixSlot(synth, 0, PX_MOD_SRC_MODWHEEL, PX_MOD_DEST_FILTER_CUTOFF, 0.5f);
+ * PX_EnableModMatrixSlot(synth, 0, true);
+ * @endcode
+ *
+ * Example: Routing Velocity to Oscillator ModA
+ * @code
+ * // Set slot 1: Source = Velocity, Dest = OSC ModA, Amount = 1.0 (100%)
+ * PX_SetModMatrixSlot(synth, 1, PX_MOD_SRC_VELOCITY, PX_MOD_DEST_OSC_MODA, 1.0f);
+ * PX_EnableModMatrixSlot(synth, 1, true);
+ * @endcode
+ */
+
 /* ==================== v1.3 MODULATION MATRIX TYPES ==================== */
 typedef enum {
     PX_MOD_SRC_VELOCITY,
     PX_MOD_SRC_AFTERTOUCH,
+    PX_MOD_SRC_MODWHEEL,      // CC #1, 0.0 to 1.0
+    PX_MOD_SRC_PITCHBEND,     // -1.0 to +1.0 (bipolar, full range)
     PX_MOD_SRC_COUNT
 } PxModSource;
 
@@ -916,6 +939,9 @@ typedef struct PxPatch {
     /* ==================== v1.3 MODULATION MATRIX ==================== */
     // Note: Previous hard-wired velocity/aftertouch params are removed.
     PxModSlot mod_matrix[PX_MOD_MATRIX_SLOTS];
+
+    // === v1.4: Pitch Bend Range (for classic feel when routed to pitch) ===
+    float pitchbend_range_semitones;  // Default 2.0 — used only if matrix routes to pitch
 } PxPatch;
 
 // --- THREAD-SAFE COMMUNICATION STRUCTURES ---
@@ -951,7 +977,10 @@ typedef enum {
     // === v1.3 Modulation Matrix Commands ===
     PX_CMD_SET_MOD_MATRIX_SLOT,
     PX_CMD_ENABLE_MOD_MATRIX_SLOT,
-    PX_CMD_CLEAR_MOD_MATRIX
+    PX_CMD_CLEAR_MOD_MATRIX,
+    PX_CMD_CONTROL_CHANGE,
+    PX_CMD_PITCH_BEND,
+    PX_CMD_SET_PITCHBEND_RANGE
 } PxCommandType;
 
 typedef union {
@@ -968,6 +997,8 @@ typedef union {
     struct { float pressure; } aftertouch;
     struct { int slot; int src; int dest; float amount; } mod_slot;
     struct { int slot; bool enabled; } mod_enable;
+    struct { int cc_num; float value; } cc;
+    struct { float value; } bend;  // 0.0 to 1.0
 } PxCommandData;
 
 typedef struct {
@@ -1010,6 +1041,10 @@ struct PxSynth {
     int held_notes[MAX_VOICES];     // An array acting as a "stack" to keep track of the MIDI notes of all currently held keys, in the order they were pressed.
 
     float channel_aftertouch_pressure;     // Current channel aftertouch value (0.0 to 1.0)
+
+    // === v1.4 Unified Controllers ===
+    float modwheel_value;             // 0.0 to 1.0
+    float pitchbend_value;            // -1.0 to +1.0 (live global value)
 
     // --- THREAD-SAFE MEMBERS ---
     CommandQueue cmd_queue;
@@ -1594,13 +1629,19 @@ static void PX_ProcessCommands(PxSynth* s) {
                         PxModSlot* slot = &s->patch.mod_matrix[cmd.data.mod_slot.slot];
                         slot->source = (PxModSource)src;
                         slot->dest = (PxModDestination)dest;
-                        slot->amount = cmd.data.mod_slot.amount;
+                        slot->amount = fmaxf(-1.0f, fminf(1.0f, cmd.data.mod_slot.amount));
+                    } else {
+                        fprintf(stderr, "PX_CMD_SET_MOD_MATRIX_SLOT: Invalid source (%d) or destination (%d)\n", src, dest);
                     }
+                } else {
+                    fprintf(stderr, "PX_CMD_SET_MOD_MATRIX_SLOT: Invalid slot index (%d)\n", cmd.data.mod_slot.slot);
                 }
                 break;
             case PX_CMD_ENABLE_MOD_MATRIX_SLOT:
                 if (cmd.data.mod_enable.slot >= 0 && cmd.data.mod_enable.slot < PX_MOD_MATRIX_SLOTS) {
                     s->patch.mod_matrix[cmd.data.mod_enable.slot].enabled = cmd.data.mod_enable.enabled;
+                } else {
+                    fprintf(stderr, "PX_CMD_ENABLE_MOD_MATRIX_SLOT: Invalid slot index (%d)\n", cmd.data.mod_enable.slot);
                 }
                 break;
             case PX_CMD_CLEAR_MOD_MATRIX:
@@ -1608,6 +1649,20 @@ static void PX_ProcessCommands(PxSynth* s) {
                     s->patch.mod_matrix[i].enabled = false;
                     s->patch.mod_matrix[i].amount = 0.0f;
                 }
+                break;
+            case PX_CMD_CONTROL_CHANGE:
+                if (cmd.data.cc.cc_num == 1) {  // Mod Wheel only
+                    s->modwheel_value = fmaxf(0.0f, fminf(1.0f, cmd.data.cc.value));
+                }
+                break;
+            case PX_CMD_PITCH_BEND:
+                {
+                    float normalized = cmd.data.bend.value - 0.5f;  // 0.0–1.0 → -0.5 to +0.5
+                    s->pitchbend_value = normalized * 2.0f;         // → -1.0 to +1.0
+                }
+                break;
+            case PX_CMD_SET_PITCHBEND_RANGE:
+                s->patch.pitchbend_range_semitones = fmaxf(0.1f, fminf(48.0f, cmd.data.param_float.float_val));
                 break;
         }
     }
@@ -1633,6 +1688,7 @@ static void PX_UpdateUISnapshot(PxSynth* s) {
     s->ui_snapshot.patch_copy.unilegato_enabled = s->patch.unilegato_enabled;
     s->ui_snapshot.patch_copy.unilegato_slide_duration_s = s->patch.unilegato_slide_duration_s;
     memcpy(s->ui_snapshot.patch_copy.mod_matrix, s->patch.mod_matrix, PX_MOD_MATRIX_SLOTS * sizeof(PxModSlot));
+    s->ui_snapshot.patch_copy.pitchbend_range_semitones = s->patch.pitchbend_range_semitones;
     s->ui_snapshot.lfo_update_interval_ms = s->config.lfo_update_interval_ms;
 
     for (int i = 0; i < s->config.num_voices; ++i) { s->ui_snapshot.voices[i] = PX_GetVoiceInfo_internal(s, i); }
@@ -1791,6 +1847,10 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
         s->patch.mod_matrix[i].enabled = false;
     }
 
+    s->patch.pitchbend_range_semitones = 2.0f;  // Classic ±2 semitones when used
+    s->modwheel_value = 0.0f;
+    s->pitchbend_value = 0.0f;  // Centered
+
     s->num_keys_held = 0;
     s->last_held_note_midi = -1;
     memset(s->held_notes, -1, sizeof(s->held_notes));
@@ -1892,6 +1952,9 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 float mod_sources[PX_MOD_SRC_COUNT] = {0.0f};
                 mod_sources[PX_MOD_SRC_VELOCITY] = v->initial_velocity;
                 mod_sources[PX_MOD_SRC_AFTERTOUCH] = s->channel_aftertouch_pressure;
+                mod_sources[PX_MOD_SRC_MODWHEEL] = s->modwheel_value;
+                mod_sources[PX_MOD_SRC_PITCHBEND] = s->pitchbend_value;  // bipolar!
+
                 float dest_mod[PX_MOD_DEST_COUNT] = {0.0f};
                 for (int m = 0; m < PX_MOD_MATRIX_SLOTS; m++) {
                     PxModSlot* slot = &s->patch.mod_matrix[m];
@@ -1960,6 +2023,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             float mod_sources[PX_MOD_SRC_COUNT] = {0.0f};
             mod_sources[PX_MOD_SRC_VELOCITY] = v->initial_velocity;
             mod_sources[PX_MOD_SRC_AFTERTOUCH] = s->channel_aftertouch_pressure;
+            mod_sources[PX_MOD_SRC_MODWHEEL] = s->modwheel_value;
+            mod_sources[PX_MOD_SRC_PITCHBEND] = s->pitchbend_value;  // bipolar!
 
             float dest_mod[PX_MOD_DEST_COUNT] = {0.0f};
             for (int m = 0; m < PX_MOD_MATRIX_SLOTS; m++) {
@@ -2226,6 +2291,23 @@ PX_API void PX_SetGlobalVoicePan(PxSynth* s, float pan) { PUSH_CMD_VOID(PX_CMD_S
 PX_API void PX_SetLimiterThreshold(PxSynth* s, float threshold) { PUSH_CMD_VOID(PX_CMD_SET_LIMITER_THRESHOLD, .param_float = {threshold}); }
 PX_API void PX_SetLimiterRelease(PxSynth* s, float release_ms) { PUSH_CMD_VOID(PX_CMD_SET_LIMITER_RELEASE, .param_float = {release_ms}); }
 
+PX_API void PX_ControlChange(PxSynth* s, int cc_num, float value_0_1) {
+    if (!s) return;
+    value_0_1 = fmaxf(0.0f, fminf(1.0f, value_0_1));
+    PUSH_CMD_VOID(PX_CMD_CONTROL_CHANGE, .cc = {cc_num, value_0_1});
+}
+
+PX_API void PX_PitchBend(PxSynth* s, float bend_0_1) {
+    if (!s) return;
+    bend_0_1 = fmaxf(0.0f, fminf(1.0f, bend_0_1));
+    PUSH_CMD_VOID(PX_CMD_PITCH_BEND, .bend = {bend_0_1});
+}
+
+PX_API void PX_SetPitchBendRange(PxSynth* s, float semitones) {
+    if (!s) return;
+    PUSH_CMD_VOID(PX_CMD_SET_PITCHBEND_RANGE, .param_float = {semitones});
+}
+
 // --- THREAD-SAFE GET API ---
 PX_API float PX_GetVoiceADSRParam(PxSynth* s, int idx, PxADSRParamType p) {
     if (!s || idx < 0 || idx >= s->config.num_voice_adsrs) return 0.0f;
@@ -2322,6 +2404,10 @@ PX_API float PX_GetLimiterThreshold(PxSynth* s) {
 
 PX_API float PX_GetLimiterRelease(PxSynth* s) {
     return s ? s->ui_snapshot.patch_copy.limiter_release_ms : 50.0f;
+}
+
+PX_API float PX_GetPitchBendRange(PxSynth* s) {
+    return s ? s->ui_snapshot.patch_copy.pitchbend_range_semitones : 2.0f;
 }
 
 PX_API PxVoiceInfo PX_GetVoiceInfo(PxSynth* s, int idx) {

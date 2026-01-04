@@ -1,5 +1,30 @@
 # Polysonix Update Log
 
+## v1.4 (2026/01/06)
+
+This release completes the unification of the modulation system by treating **Mod Wheel** and **Pitch Bend** as first-class citizens in the Modulation Matrix.
+
+### Features
+*   **Unified Modulation Matrix:**
+    *   **New Sources:** Added `PX_MOD_SRC_MODWHEEL` (CC #1) and `PX_MOD_SRC_PITCHBEND` to the matrix.
+    *   **Mod Wheel:** Maps MIDI CC #1 (0.0 to 1.0) to any destination (e.g., LFO Depth for vibrato, Filter Cutoff).
+    *   **Pitch Bend:** Maps Pitch Bend (normalized 0.0-1.0 to bipolar -1.0 to +1.0) to any destination.
+    *   **Pitch Bend Range:** Added `pitchbend_range_semitones` (default 2.0) to `PxPatch` for easier scaling when routing pitch bend to frequency.
+*   **Safety & Polish:**
+    *   **Input Validation:** `PX_SetModMatrixSlot` now clamps modulation amounts to [-1.0, 1.0] and logs errors to `stderr` for invalid slot/source/dest indices.
+    *   **Documentation:** Added detailed usage examples for the Modulation Matrix in `polysonix.h`.
+
+### API Changes
+*   **New Control Functions:**
+    *   `PX_ControlChange(s, cc_num, value)`: Handles MIDI CC messages (currently only CC #1 Mod Wheel is routed).
+    *   `PX_PitchBend(s, value)`: Handles Pitch Bend messages (accepts 0.0-1.0 normalized).
+    *   `PX_SetPitchBendRange(s, semitones)` / `PX_GetPitchBendRange(s)`: Helper for pitch bend scaling.
+*   **Struct Updates:** Added `modwheel_value` and `pitchbend_value` to `PxSynth`, and `pitchbend_range_semitones` to `PxPatch`.
+
+### Backward Compatibility
+*   New modulation sources are zero by default.
+*   The modulation matrix defaults to disabled slots, ensuring existing patches sound unchanged.
+
 ## v1.3 (2026/01/05)
 
 This major update introduces a full **Modulation Matrix** for Velocity and Channel Aftertouch, replacing the previous hard-wired routings with a flexible, 16-slot routing system.
