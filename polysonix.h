@@ -1043,8 +1043,7 @@ static void ADSR_Update(ADSR* adsr, float time_delta, float sample_rate) {
                 // Calculate how many samples have passed and apply the multiplier exponentially.
                 int num_steps = (int)(time_delta * sample_rate);
                 if (num_steps > 0) {
-                     //adsr->level = (adsr->level - adsr->sustain_level) * powf(adsr->decay_multiplier, (float)num_steps) + adsr->sustain_level;
-                     adsr->level = (adsr->level - adsr->sustain_level) * adsr->decay_multiplier + adsr->sustain_level;
+                     adsr->level = (adsr->level - adsr->sustain_level) * powf(adsr->decay_multiplier, (float)num_steps) + adsr->sustain_level;
                 }
             }
             if (adsr->level <= adsr->sustain_level) {
@@ -1062,8 +1061,7 @@ static void ADSR_Update(ADSR* adsr, float time_delta, float sample_rate) {
                 // Calculate how many samples have passed and apply the multiplier exponentially.
                 int num_steps = (int)(time_delta * sample_rate);
                 if (num_steps > 0) {
-                    //adsr->level *= powf(adsr->release_multiplier, (float)num_steps);
-                    adsr->level *= adsr->release_multiplier;
+                    adsr->level *= powf(adsr->release_multiplier, (float)num_steps);
                 }
             } else {
                 adsr->level = 0.0f;
@@ -1924,9 +1922,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     v->interp_samples[3] = execute_bytecode(chunk, &v->main_osc_vm_params);
 
                     // Store the exact phase at which this new sample was calculated
+                    v->phase_at_interp_start = v->phase_at_interp_end;
                     v->phase_at_interp_end = v->phase;
-                    v->phase_at_interp_start = v->phase - (v->frequency * v->samples_per_update * s->time_per_sample);
-                    if (v->phase_at_interp_start < 0.0f) v->phase_at_interp_start += 1.0f;
 
                     // Recalculate the duration for the next segment
                     if (s->config.osc_update_mode == PX_OSC_UPDATE_MODE_NYQUIST) {
@@ -2242,6 +2239,10 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
             vlfo->lfo_vm_params.lfsr_state = (uint32_t)rand() | 1;
             vlfo->lfo_vm_params.lfsr_position = 0;
             vlfo->lfo_vm_params.lfsr_seed = vlfo->lfo_vm_params.lfsr_state;
+        } else {
+            LFOInstance* tpl_inst = &s->template_lfo_instances[i];
+            vlfo->phase = tpl_inst->phase;
+            vlfo->lfo_vm_params = tpl_inst->lfo_vm_params;
         }
         ADSR_Init(&vlfo->adsr, &tlfo->adsr, s->config.sample_rate);
         if (vlfo->enabled && tlfo->adsr.enabled) ADSR_TriggerAttack(&vlfo->adsr); else { vlfo->adsr.level = 0.0f; vlfo->adsr.state = ADSR_STATE_IDLE; }
