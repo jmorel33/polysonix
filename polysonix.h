@@ -16,7 +16,7 @@
  */
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
-#define POLYSONIX_VERSION_MINOR 2
+#define POLYSONIX_VERSION_MINOR 3
 #define POLYSONIX_VERSION_PATCH 0
 #define POLYSONIX_VERSION_REVISION ""
 
@@ -856,6 +856,44 @@ typedef struct {
     float phase_at_interp_end;      // The oscillator's phase (0-1) when the last update occurred.
 } Voice;
 
+/* ==================== v1.3 MODULATION MATRIX TYPES ==================== */
+typedef enum {
+    PX_MOD_SRC_VELOCITY,
+    PX_MOD_SRC_AFTERTOUCH,
+    PX_MOD_SRC_COUNT
+} PxModSource;
+
+typedef enum {
+    // ADSR parameters (3 ADSRs × 4 params)
+    PX_MOD_DEST_ADSR1_ATTACK, PX_MOD_DEST_ADSR1_DECAY, PX_MOD_DEST_ADSR1_SUSTAIN, PX_MOD_DEST_ADSR1_RELEASE,
+    PX_MOD_DEST_ADSR2_ATTACK, PX_MOD_DEST_ADSR2_DECAY, PX_MOD_DEST_ADSR2_SUSTAIN, PX_MOD_DEST_ADSR2_RELEASE,
+    PX_MOD_DEST_ADSR3_ATTACK, PX_MOD_DEST_ADSR3_DECAY, PX_MOD_DEST_ADSR3_SUSTAIN, PX_MOD_DEST_ADSR3_RELEASE,
+
+    // LFO parameters (3 LFOs × frequency + depth)
+    PX_MOD_DEST_LFO1_FREQ, PX_MOD_DEST_LFO1_DEPTH,
+    PX_MOD_DEST_LFO2_FREQ, PX_MOD_DEST_LFO2_DEPTH,
+    PX_MOD_DEST_LFO3_FREQ, PX_MOD_DEST_LFO3_DEPTH,
+
+    // Oscillator bytecode params
+    PX_MOD_DEST_OSC_MODA,
+    PX_MOD_DEST_OSC_MODB,
+    PX_MOD_DEST_OSC_MODC,
+
+    // Filter (added per review)
+    PX_MOD_DEST_FILTER_CUTOFF,
+
+    PX_MOD_DEST_COUNT
+} PxModDestination;
+
+typedef struct {
+    PxModSource source;
+    PxModDestination dest;
+    float amount;      // -1.0 to +1.0
+    bool enabled;
+} PxModSlot;
+
+#define PX_MOD_MATRIX_SLOTS 16
+
 // PxPatch: The editable parameters of the synthesizer (the "sound").
 typedef struct PxPatch {
     PxADSRParams* template_voice_adsrs;
@@ -875,15 +913,9 @@ typedef struct PxPatch {
     bool unilegato_enabled;
     float unilegato_slide_duration_s;
 
-    /* ==================== VELOCITY RESPONSE ==================== */
-    float velocity_to_amp_amount;          // 0.0 = no effect (default), 1.0 = full velocity scaling
-    float velocity_to_filter_cutoff_hz;    // Added cutoff offset on hard hits (default 0.0)
-    float velocity_attack_scaling;         // 0.0 = no change, 1.0 = max attack shortening (default 0.0)
-    float velocity_to_param1_amount;       // Direct velocity → modA for waveform timbre (default 0.0)
-
-    /* ==================== CHANNEL AFTERTOUCH ==================== */
-    float aftertouch_to_filter_cutoff_hz;  // Pressure → filter sweep (default 0.0)
-    float aftertouch_to_vibrato_st;        // Pressure → extra LFO pitch depth in semitones (default 0.0)
+    /* ==================== v1.3 MODULATION MATRIX ==================== */
+    // Note: Previous hard-wired velocity/aftertouch params are removed.
+    PxModSlot mod_matrix[PX_MOD_MATRIX_SLOTS];
 } PxPatch;
 
 // --- THREAD-SAFE COMMUNICATION STRUCTURES ---
@@ -915,7 +947,11 @@ typedef enum {
     PX_CMD_SET_VELOCITY_ATTACK_SCALING,
     PX_CMD_SET_VELOCITY_TO_PARAM1,
     PX_CMD_SET_AFTERTOUCH_TO_FILTER_CUTOFF,
-    PX_CMD_SET_AFTERTOUCH_TO_VIBRATO
+    PX_CMD_SET_AFTERTOUCH_TO_VIBRATO,
+    // === v1.3 Modulation Matrix Commands ===
+    PX_CMD_SET_MOD_MATRIX_SLOT,
+    PX_CMD_ENABLE_MOD_MATRIX_SLOT,
+    PX_CMD_CLEAR_MOD_MATRIX
 } PxCommandType;
 
 typedef union {
@@ -930,6 +966,8 @@ typedef union {
     struct { bool bool_val; } param_bool;
     struct { int midi_note; int wave_idx; int key_id; float velocity; } note_on_vel;
     struct { float pressure; } aftertouch;
+    struct { int slot; int src; int dest; float amount; } mod_slot;
+    struct { int slot; bool enabled; } mod_enable;
 } PxCommandData;
 
 typedef struct {
@@ -1542,12 +1580,35 @@ static void PX_ProcessCommands(PxSynth* s) {
             case PX_CMD_CHANNEL_AFTERTOUCH:
                 s->channel_aftertouch_pressure = fmaxf(0.0f, fminf(1.0f, cmd.data.aftertouch.pressure));
                 break;
-            case PX_CMD_SET_VELOCITY_TO_AMP:             s->patch.velocity_to_amp_amount = fmaxf(0.0f, fminf(1.0f, cmd.data.param_float.float_val)); break;
-            case PX_CMD_SET_VELOCITY_TO_FILTER_CUTOFF:  s->patch.velocity_to_filter_cutoff_hz = fmaxf(0.0f, cmd.data.param_float.float_val); break;
-            case PX_CMD_SET_VELOCITY_ATTACK_SCALING:    s->patch.velocity_attack_scaling = fmaxf(0.0f, fminf(1.0f, cmd.data.param_float.float_val)); break;
-            case PX_CMD_SET_VELOCITY_TO_PARAM1:         s->patch.velocity_to_param1_amount = cmd.data.param_float.float_val; break;
-            case PX_CMD_SET_AFTERTOUCH_TO_FILTER_CUTOFF:s->patch.aftertouch_to_filter_cutoff_hz = cmd.data.param_float.float_val; break;
-            case PX_CMD_SET_AFTERTOUCH_TO_VIBRATO:      s->patch.aftertouch_to_vibrato_st = cmd.data.param_float.float_val; break;
+            case PX_CMD_SET_VELOCITY_TO_AMP:             break; // Removed in v1.3
+            case PX_CMD_SET_VELOCITY_TO_FILTER_CUTOFF:   break; // Removed in v1.3
+            case PX_CMD_SET_VELOCITY_ATTACK_SCALING:     break; // Removed in v1.3
+            case PX_CMD_SET_VELOCITY_TO_PARAM1:          break; // Removed in v1.3
+            case PX_CMD_SET_AFTERTOUCH_TO_FILTER_CUTOFF: break; // Removed in v1.3
+            case PX_CMD_SET_AFTERTOUCH_TO_VIBRATO:       break; // Removed in v1.3
+            case PX_CMD_SET_MOD_MATRIX_SLOT:
+                if (cmd.data.mod_slot.slot >= 0 && cmd.data.mod_slot.slot < PX_MOD_MATRIX_SLOTS) {
+                    int src = cmd.data.mod_slot.src;
+                    int dest = cmd.data.mod_slot.dest;
+                    if (src >= 0 && src < PX_MOD_SRC_COUNT && dest >= 0 && dest < PX_MOD_DEST_COUNT) {
+                        PxModSlot* slot = &s->patch.mod_matrix[cmd.data.mod_slot.slot];
+                        slot->source = (PxModSource)src;
+                        slot->dest = (PxModDestination)dest;
+                        slot->amount = cmd.data.mod_slot.amount;
+                    }
+                }
+                break;
+            case PX_CMD_ENABLE_MOD_MATRIX_SLOT:
+                if (cmd.data.mod_enable.slot >= 0 && cmd.data.mod_enable.slot < PX_MOD_MATRIX_SLOTS) {
+                    s->patch.mod_matrix[cmd.data.mod_enable.slot].enabled = cmd.data.mod_enable.enabled;
+                }
+                break;
+            case PX_CMD_CLEAR_MOD_MATRIX:
+                for (int i = 0; i < PX_MOD_MATRIX_SLOTS; i++) {
+                    s->patch.mod_matrix[i].enabled = false;
+                    s->patch.mod_matrix[i].amount = 0.0f;
+                }
+                break;
         }
     }
 }
@@ -1571,12 +1632,7 @@ static void PX_UpdateUISnapshot(PxSynth* s) {
     s->ui_snapshot.patch_copy.limiter_release_ms = s->patch.limiter_release_ms;
     s->ui_snapshot.patch_copy.unilegato_enabled = s->patch.unilegato_enabled;
     s->ui_snapshot.patch_copy.unilegato_slide_duration_s = s->patch.unilegato_slide_duration_s;
-    s->ui_snapshot.patch_copy.velocity_to_amp_amount = s->patch.velocity_to_amp_amount;
-    s->ui_snapshot.patch_copy.velocity_to_filter_cutoff_hz = s->patch.velocity_to_filter_cutoff_hz;
-    s->ui_snapshot.patch_copy.velocity_attack_scaling = s->patch.velocity_attack_scaling;
-    s->ui_snapshot.patch_copy.velocity_to_param1_amount = s->patch.velocity_to_param1_amount;
-    s->ui_snapshot.patch_copy.aftertouch_to_filter_cutoff_hz = s->patch.aftertouch_to_filter_cutoff_hz;
-    s->ui_snapshot.patch_copy.aftertouch_to_vibrato_st = s->patch.aftertouch_to_vibrato_st;
+    memcpy(s->ui_snapshot.patch_copy.mod_matrix, s->patch.mod_matrix, PX_MOD_MATRIX_SLOTS * sizeof(PxModSlot));
     s->ui_snapshot.lfo_update_interval_ms = s->config.lfo_update_interval_ms;
 
     for (int i = 0; i < s->config.num_voices; ++i) { s->ui_snapshot.voices[i] = PX_GetVoiceInfo_internal(s, i); }
@@ -1726,13 +1782,14 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     // Initialize Unilegato tracking members
     s->patch.unilegato_enabled = false;
     s->patch.unilegato_slide_duration_s = 0.1f;
-    // === v1.1: Velocity & Aftertouch defaults - fully disabled for backward compatibility ===
-    s->patch.velocity_to_amp_amount = 0.0f;
-    s->patch.velocity_to_filter_cutoff_hz = 0.0f;
-    s->patch.velocity_attack_scaling = 0.0f;
-    s->patch.velocity_to_param1_amount = 0.0f;
-    s->patch.aftertouch_to_filter_cutoff_hz = 0.0f;
-    s->patch.aftertouch_to_vibrato_st = 0.0f;
+
+    // === v1.3: Initialize modulation matrix (all slots disabled) ===
+    for (int i = 0; i < PX_MOD_MATRIX_SLOTS; i++) {
+        s->patch.mod_matrix[i].source = PX_MOD_SRC_VELOCITY;
+        s->patch.mod_matrix[i].dest = PX_MOD_DEST_OSC_MODA;
+        s->patch.mod_matrix[i].amount = 0.0f;
+        s->patch.mod_matrix[i].enabled = false;
+    }
 
     s->num_keys_held = 0;
     s->last_held_note_midi = -1;
@@ -1826,34 +1883,48 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 }
             }
 
-            // Update Per-Voice LFOs (existing code is fine)
+            // Update Per-Voice LFOs
             for (int v_idx = 0; v_idx < s->config.num_voices; ++v_idx) {
-                // ... (the rest of this block is unchanged) ...
+                Voice* v = &s->voices[v_idx];
+                if (!v->active) continue;
+
+                // Matrix calculation for LFOs
+                float mod_sources[PX_MOD_SRC_COUNT] = {0.0f};
+                mod_sources[PX_MOD_SRC_VELOCITY] = v->initial_velocity;
+                mod_sources[PX_MOD_SRC_AFTERTOUCH] = s->channel_aftertouch_pressure;
+                float dest_mod[PX_MOD_DEST_COUNT] = {0.0f};
+                for (int m = 0; m < PX_MOD_MATRIX_SLOTS; m++) {
+                    PxModSlot* slot = &s->patch.mod_matrix[m];
+                    if (slot->enabled) dest_mod[slot->dest] += mod_sources[slot->source] * slot->amount;
+                }
+
                 for (int lfo_idx = 0; lfo_idx < s->config.num_lfos; ++lfo_idx) {
-                    LFOInstance* vlfo = &s->voices[v_idx].lfo_instances[lfo_idx];
+                    LFOInstance* vlfo = &v->lfo_instances[lfo_idx];
                     PxLFOParams* tplfo = &s->patch.template_lfos[lfo_idx];
+
                     if (tplfo->adsr.enabled) {
                         ADSR_Update(&vlfo->adsr, lfo_update_delta_time, s->config.sample_rate);
                     } else {
                         vlfo->adsr.level = 0.0f;
                         vlfo->adsr.state = ADSR_STATE_IDLE;
                     }
+
                     if (tplfo->enabled) {
-                        bool lfo_is_contributing = false;
-                        for (int dest = 0; dest < PX_LFO_DEST_COUNT; dest++) {
-                            if (fabsf(tplfo->mod_amounts[dest]) > 0.001f) {
-                                lfo_is_contributing = true;
-                                break;
-                            }
-                        }
-                        if (lfo_is_contributing) {
-                            vlfo->phase = fmodf(vlfo->phase + (tplfo->frequency * lfo_update_delta_time), 1.0f);
-                            if (vlfo->phase < 0.0f) vlfo->phase += 1.0f;
-                            float raw_val = GenerateLFOValue(vlfo);
-                            vlfo->current_output_value = raw_val * (tplfo->adsr.enabled ? vlfo->adsr.level : 1.0f);
-                        } else {
-                            vlfo->current_output_value = 0.0f;
-                        }
+                        // Matrix Mod: Frequency
+                        float freq_mod = dest_mod[PX_MOD_DEST_LFO1_FREQ + lfo_idx * 2];
+                        float effective_freq = tplfo->frequency * powf(2.0f, freq_mod * 4.0f);
+                        effective_freq = fmaxf(0.01f, effective_freq);
+
+                        vlfo->phase = fmodf(vlfo->phase + (effective_freq * lfo_update_delta_time), 1.0f);
+                        if (vlfo->phase < 0.0f) vlfo->phase += 1.0f;
+                        float raw_val = GenerateLFOValue(vlfo);
+
+                        // Matrix Mod: Depth
+                        float depth_mod = dest_mod[PX_MOD_DEST_LFO1_DEPTH + lfo_idx * 2];
+                        float depth_scale = 1.0f + depth_mod;
+                        depth_scale = fmaxf(0.0f, depth_scale);
+
+                        vlfo->current_output_value = raw_val * (tplfo->adsr.enabled ? vlfo->adsr.level : 1.0f) * depth_scale;
                     } else {
                         vlfo->current_output_value = 0.0f;
                     }
@@ -1885,9 +1956,32 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 }
             }
 
-            // --- Step 1: Update Live Parameters & State ---
+            // === v1.3: Apply Modulation Matrix ===
+            float mod_sources[PX_MOD_SRC_COUNT] = {0.0f};
+            mod_sources[PX_MOD_SRC_VELOCITY] = v->initial_velocity;
+            mod_sources[PX_MOD_SRC_AFTERTOUCH] = s->channel_aftertouch_pressure;
+
+            float dest_mod[PX_MOD_DEST_COUNT] = {0.0f};
+            for (int m = 0; m < PX_MOD_MATRIX_SLOTS; m++) {
+                PxModSlot* slot = &s->patch.mod_matrix[m];
+                if (slot->enabled) dest_mod[slot->dest] += mod_sources[slot->source] * slot->amount;
+            }
+
+            // --- Step 1: Update Live Parameters & State (with Matrix Mod) ---
             for (int j = 0; j < s->config.num_voice_adsrs; ++j) {
-                ADSR_SetParams(&v->adsrs[j], &s->patch.template_voice_adsrs[j], s->config.sample_rate);
+                PxADSRParams* tpl = &s->patch.template_voice_adsrs[j];
+                PxADSRParams mod_params = *tpl;
+
+                if (j < 3) {
+                    int base = PX_MOD_DEST_ADSR1_ATTACK + j * 4;
+                    mod_params.attack_time  *= powf(0.05f, dest_mod[base + 0]);
+                    mod_params.decay_time   *= powf(0.1f,  dest_mod[base + 1]);
+                    mod_params.sustain_level += dest_mod[base + 2];
+                    mod_params.release_time *= powf(0.1f,  dest_mod[base + 3]);
+                }
+                mod_params.sustain_level = fmaxf(0.0f, fminf(1.0f, mod_params.sustain_level));
+
+                ADSR_SetParams(&v->adsrs[j], &mod_params, s->config.sample_rate);
                 ADSR_Update(&v->adsrs[j], s->time_per_sample, s->config.sample_rate);
             }
             for (int k = 0; k < s->config.num_lfos; ++k) {
@@ -1897,14 +1991,12 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             // --- Step 2: Calculate All Modulations LIVE from the Patch ---
             float adsr_total_param1_mod=0, adsr_total_param2_mod=0, adsr_total_param3_mod=0, adsr_total_pitch_mod_st=0, adsr_total_filter_cutoff_hz=0, adsr_filter_env_input=0, adsr_total_filter_res=0;
 
-            float velocity = v->initial_velocity;
-            float vel_amp_scale     = 1.0f + velocity * s->patch.velocity_to_amp_amount; // 1.0 + (0 to 1) → 1.0 to 2.0 max, or stays 1.0 if amount=0
-            float vel_cutoff_add    = velocity * s->patch.velocity_to_filter_cutoff_hz;
-            float vel_param1_add    = velocity * s->patch.velocity_to_param1_amount;
-
-            float aftertouch = s->channel_aftertouch_pressure;
-            float at_cutoff_add     = aftertouch * s->patch.aftertouch_to_filter_cutoff_hz;
-            float at_vibrato_add    = aftertouch * s->patch.aftertouch_to_vibrato_st;
+            // Removed v1.2 hard-wired velocity/aftertouch
+            float vel_amp_scale = 1.0f;
+            float vel_cutoff_add = 0.0f;
+            float vel_param1_add = 0.0f;
+            float at_cutoff_add = 0.0f;
+            float at_vibrato_add = 0.0f;
 
             float adsr_lfo_level_scale[s->config.num_lfos];
             for(int k=0; k<s->config.num_lfos; ++k) adsr_lfo_level_scale[k] = 1.0f;
@@ -1979,16 +2071,23 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
             // --- Step 5: Apply Modulations and Generate Audio ---
             if (!v->is_sliding) {
-                v->frequency = v->original_frequency * powf(2.0f, (lfo_pitch_env_input + adsr_total_pitch_mod_st + at_vibrato_add) / 12.0f);
+                v->frequency = v->original_frequency * powf(2.0f, (lfo_pitch_env_input + adsr_total_pitch_mod_st) / 12.0f);
                 v->main_osc_vm_params.frequency = v->frequency;
             }
             float key_track_factor = powf(2.0f, (v->midi_note - 60.0f) / 12.0f * s->patch.filter_key_track);
-            float current_filter_cutoff = (s->patch.filter_cutoff_hz * key_track_factor) + (adsr_filter_env_input + lfo_filter_env_input) * s->patch.filter_env_amount_hz + adsr_total_filter_cutoff_hz + vel_cutoff_add + at_cutoff_add; current_filter_cutoff = fmaxf(20.f, fminf(current_filter_cutoff, s->config.sample_rate * .48f));
+            float current_filter_cutoff = (s->patch.filter_cutoff_hz * key_track_factor) + (adsr_filter_env_input + lfo_filter_env_input) * s->patch.filter_env_amount_hz + adsr_total_filter_cutoff_hz;
+
+            // Apply to Filter Cutoff (v1.3 Matrix)
+            current_filter_cutoff += dest_mod[PX_MOD_DEST_FILTER_CUTOFF] * 8000.0f;
+
+            current_filter_cutoff = fmaxf(20.f, fminf(current_filter_cutoff, s->config.sample_rate * .48f));
+
             float current_filter_res = s->patch.filter_resonance_q + adsr_total_filter_res; current_filter_res = fmaxf(0.5f, fminf(current_filter_res, 20.f));
             Filter_SetCoefficients(&v->filter_instance, current_filter_cutoff, current_filter_res, s->patch.filter_mode, s->patch.filter_poles, s->config.sample_rate); v->filter_instance.drive = s->patch.filter_drive;
-            v->main_osc_vm_params.modA = lfo_bytecode_mod_a + adsr_total_param1_mod + vel_param1_add;
-            v->main_osc_vm_params.modB = lfo_bytecode_mod_b + adsr_total_param2_mod;
-            v->main_osc_vm_params.modC = lfo_bytecode_mod_c + adsr_total_param3_mod;
+
+            v->main_osc_vm_params.modA = lfo_bytecode_mod_a + adsr_total_param1_mod + dest_mod[PX_MOD_DEST_OSC_MODA] * 10.0f;
+            v->main_osc_vm_params.modB = lfo_bytecode_mod_b + adsr_total_param2_mod + dest_mod[PX_MOD_DEST_OSC_MODB] * 10.0f;
+            v->main_osc_vm_params.modC = lfo_bytecode_mod_c + adsr_total_param3_mod + dest_mod[PX_MOD_DEST_OSC_MODC] * 10.0f;
             v->main_osc_vm_params.frequency = v->frequency;
             v->main_osc_vm_params.x = v->phase * 2.f * PI;
             BytecodeChunk* chunk = default_waves[v->source_wave_index].compiled_bytecode;
@@ -2090,22 +2189,22 @@ PX_API void PX_ChannelAftertouch(PxSynth* s, float pressure) {
 }
 
 PX_API void PX_SetVelocityToAmp(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_VELOCITY_TO_AMP, .param_float = {v}); }
-PX_API float PX_GetVelocityToAmp(PxSynth* s) { return s ? s->ui_snapshot.patch_copy.velocity_to_amp_amount : 0.0f; }
+PX_API float PX_GetVelocityToAmp(PxSynth* s) { return 0.0f; }
 
 PX_API void PX_SetVelocityToFilterCutoff(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_VELOCITY_TO_FILTER_CUTOFF, .param_float = {v}); }
-PX_API float PX_GetVelocityToFilterCutoff(PxSynth* s) { return s ? s->ui_snapshot.patch_copy.velocity_to_filter_cutoff_hz : 0.0f; }
+PX_API float PX_GetVelocityToFilterCutoff(PxSynth* s) { return 0.0f; }
 
 PX_API void PX_SetVelocityAttackScaling(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_VELOCITY_ATTACK_SCALING, .param_float = {v}); }
-PX_API float PX_GetVelocityAttackScaling(PxSynth* s) { return s ? s->ui_snapshot.patch_copy.velocity_attack_scaling : 0.0f; }
+PX_API float PX_GetVelocityAttackScaling(PxSynth* s) { return 0.0f; }
 
 PX_API void PX_SetVelocityToParam1(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_VELOCITY_TO_PARAM1, .param_float = {v}); }
-PX_API float PX_GetVelocityToParam1(PxSynth* s) { return s ? s->ui_snapshot.patch_copy.velocity_to_param1_amount : 0.0f; }
+PX_API float PX_GetVelocityToParam1(PxSynth* s) { return 0.0f; }
 
 PX_API void PX_SetAftertouchToFilterCutoff(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_AFTERTOUCH_TO_FILTER_CUTOFF, .param_float = {v}); }
-PX_API float PX_GetAftertouchToFilterCutoff(PxSynth* s) { return s ? s->ui_snapshot.patch_copy.aftertouch_to_filter_cutoff_hz : 0.0f; }
+PX_API float PX_GetAftertouchToFilterCutoff(PxSynth* s) { return 0.0f; }
 
 PX_API void PX_SetAftertouchToVibrato(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_AFTERTOUCH_TO_VIBRATO, .param_float = {v}); }
-PX_API float PX_GetAftertouchToVibrato(PxSynth* s) { return s ? s->ui_snapshot.patch_copy.aftertouch_to_vibrato_st : 0.0f; }
+PX_API float PX_GetAftertouchToVibrato(PxSynth* s) { return 0.0f; }
 
 PX_API void PX_NoteOff(PxSynth* s, int key_id) { PUSH_CMD_VOID(PX_CMD_NOTE_OFF, .note_off = {key_id}); }
 PX_API void PX_SetVoiceADSRParam(PxSynth* s, int idx, PxADSRParamType p, float v) { PUSH_CMD_VOID(PX_CMD_SET_VOICE_ADSR_PARAM, .param_idx_enum_float = {idx, (int)p, v}); }
@@ -2268,6 +2367,21 @@ PX_API const char* PX_GetADSRStateName(PxADSRState s) {
     return (s >= 0 && s <= PX_ADSR_STATE_RELEASE) ? PX_ADSR_STATE_NAMES[s] : "?";
  }
 
+PX_API void PX_SetModMatrixSlot(PxSynth* s, int slot_idx, PxModSource src, PxModDestination dest, float amount) {
+    if (!s || slot_idx < 0 || slot_idx >= PX_MOD_MATRIX_SLOTS) return;
+    PUSH_CMD_VOID(PX_CMD_SET_MOD_MATRIX_SLOT, .mod_slot = {slot_idx, (int)src, (int)dest, amount});
+}
+
+PX_API void PX_EnableModMatrixSlot(PxSynth* s, int slot_idx, bool enabled) {
+    if (!s || slot_idx < 0 || slot_idx >= PX_MOD_MATRIX_SLOTS) return;
+    PUSH_CMD_VOID(PX_CMD_ENABLE_MOD_MATRIX_SLOT, .mod_enable = {slot_idx, enabled});
+}
+
+PX_API void PX_ClearModMatrix(PxSynth* s) {
+    if (!s) return;
+    PUSH_CMD_VOID(PX_CMD_CLEAR_MOD_MATRIX, .param_bool = {false}); // Data doesn't matter
+}
+
 // --- INTERNAL IMPLEMENTATIONS ---
 static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_id, float velocity) {
     if (s->patch.unilegato_enabled && s->num_keys_held > 0) {
@@ -2334,21 +2448,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     v->main_osc_vm_params.lfsr_seed = v->main_osc_vm_params.lfsr_state;
     for (int i = 0; i < s->config.num_voice_adsrs; ++i) {
         ADSR_Init(&v->adsrs[i], &s->patch.template_voice_adsrs[i], s->config.sample_rate);
-
-        // Velocity-sensitive attack shortening — only if scaling > 0
-        if (i == 0 && s->patch.template_voice_adsrs[i].enabled && s->patch.velocity_attack_scaling > 0.0f) {
-            float scale = 1.0f - v->initial_velocity * s->patch.velocity_attack_scaling;
-            scale = fmaxf(0.1f, scale); // prevent zero attack
-            float effective_attack = s->patch.template_voice_adsrs[i].attack_time * scale;
-            effective_attack = fmaxf(MIN_ADSR_TIME, effective_attack);
-
-            float saved_attack = v->adsrs[i].attack_time;
-            v->adsrs[i].attack_time = effective_attack;
-            ADSR_TriggerAttack(&v->adsrs[i]);
-            v->adsrs[i].attack_time = saved_attack; // restore template value
-        } else {
-            if (v->adsrs[i].enabled) ADSR_TriggerAttack(&v->adsrs[i]);
-        }
+        if (v->adsrs[i].enabled) ADSR_TriggerAttack(&v->adsrs[i]);
     }
     Filter_Init(&v->filter_instance);
     v->filter_cutoff_hz = s->patch.filter_cutoff_hz;
