@@ -296,8 +296,27 @@ PX_API void        PX_Process(PxSynth* s, float* stereo_buffer, int num_frames);
  * @param midi_note The MIDI note number (0-127) of the note to play.
  * @param wave_idx The index of the waveform to be used for the note's oscillator.
  * @param key_id A unique integer identifier for this note event. This ID is used to track the note so it can be released later with `PX_NoteOff`.
+ * @param velocity The velocity of the note (0.0 to 1.0).
  */
-PX_API void        PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id);
+PX_API void        PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id, float velocity); // v1.1: now with velocity
+PX_API void        PX_NoteOnLegacy(PxSynth* s, int midi_note, int wave_idx, int key_id); // Optional: explicit old version
+
+PX_API void        PX_ChannelAftertouch(PxSynth* s, float pressure); // 0.0 to 1.0
+
+PX_API void        PX_SetVelocityToAmp(PxSynth* s, float amount);
+PX_API void        PX_SetVelocityToFilterCutoff(PxSynth* s, float hz_amount);
+PX_API void        PX_SetVelocityAttackScaling(PxSynth* s, float scale);
+PX_API void        PX_SetVelocityToParam1(PxSynth* s, float amount);
+
+PX_API void        PX_SetAftertouchToFilterCutoff(PxSynth* s, float hz_amount);
+PX_API void        PX_SetAftertouchToVibrato(PxSynth* s, float semitones);
+
+PX_API float       PX_GetVelocityToAmp(PxSynth* s);
+PX_API float       PX_GetVelocityToFilterCutoff(PxSynth* s);
+PX_API float       PX_GetVelocityAttackScaling(PxSynth* s);
+PX_API float       PX_GetVelocityToParam1(PxSynth* s);
+PX_API float       PX_GetAftertouchToFilterCutoff(PxSynth* s);
+PX_API float       PX_GetAftertouchToVibrato(PxSynth* s);
 
 /**
  * @brief Releases a note that was previously triggered.
@@ -819,6 +838,8 @@ typedef struct {
     float slide_start_freq;       // The frequency where the slide began.
     float slide_progress;         // A value from 0.0 to 1.0 tracking the slide's completion.
 
+    float initial_velocity;                // Velocity stored at note-on (0.0 to 1.0)
+
     // --- State for oscillator update throttling
     float update_countdown;         // Samples remaining until the next real calculation.
     float samples_per_update;       // How many samples to wait between calculations.
@@ -848,6 +869,16 @@ typedef struct PxPatch {
     float limiter_release_ms;
     bool unilegato_enabled;
     float unilegato_slide_duration_s;
+
+    /* ==================== VELOCITY RESPONSE ==================== */
+    float velocity_to_amp_amount;          // 0.0 = no effect (default), 1.0 = full velocity scaling
+    float velocity_to_filter_cutoff_hz;    // Added cutoff offset on hard hits (default 0.0)
+    float velocity_attack_scaling;         // 0.0 = no change, 1.0 = max attack shortening (default 0.0)
+    float velocity_to_param1_amount;       // Direct velocity → modA for waveform timbre (default 0.0)
+
+    /* ==================== CHANNEL AFTERTOUCH ==================== */
+    float aftertouch_to_filter_cutoff_hz;  // Pressure → filter sweep (default 0.0)
+    float aftertouch_to_vibrato_st;        // Pressure → extra LFO pitch depth in semitones (default 0.0)
 } PxPatch;
 
 // --- THREAD-SAFE COMMUNICATION STRUCTURES ---
@@ -871,7 +902,15 @@ typedef enum {
     PX_CMD_SET_LIMITER_THRESHOLD,
     PX_CMD_SET_LIMITER_RELEASE,
     PX_CMD_SET_UNILEGATO_ENABLED,
-    PX_CMD_SET_UNILEGATO_SLIDE_TIME
+    PX_CMD_SET_UNILEGATO_SLIDE_TIME,
+    PX_CMD_NOTE_ON_VEL,                  // New: NoteOn with velocity
+    PX_CMD_CHANNEL_AFTERTOUCH,           // New: Channel aftertouch (monophonic pressure)
+    PX_CMD_SET_VELOCITY_TO_AMP,
+    PX_CMD_SET_VELOCITY_TO_FILTER_CUTOFF,
+    PX_CMD_SET_VELOCITY_ATTACK_SCALING,
+    PX_CMD_SET_VELOCITY_TO_PARAM1,
+    PX_CMD_SET_AFTERTOUCH_TO_FILTER_CUTOFF,
+    PX_CMD_SET_AFTERTOUCH_TO_VIBRATO
 } PxCommandType;
 
 typedef union {
@@ -884,6 +923,8 @@ typedef union {
     struct { int mode_val; } param_mode;
     struct { float float_val; } param_float;
     struct { bool bool_val; } param_bool;
+    struct { int midi_note; int wave_idx; int key_id; float velocity; } note_on_vel;
+    struct { float pressure; } aftertouch;
 } PxCommandData;
 
 typedef struct {
@@ -925,6 +966,8 @@ struct PxSynth {
     int num_keys_held;              // The total number of keys currently held down by the user.
     int held_notes[MAX_VOICES];     // An array acting as a "stack" to keep track of the MIDI notes of all currently held keys, in the order they were pressed.
 
+    float channel_aftertouch_pressure;     // Current channel aftertouch value (0.0 to 1.0)
+
     // --- THREAD-SAFE MEMBERS ---
     CommandQueue cmd_queue;
     UISnapshot ui_snapshot;
@@ -932,7 +975,7 @@ struct PxSynth {
 
 
 // --- FORWARD DECLARATIONS for internal functions ---
-static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_id);
+static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_id, float velocity);
 static void PX_NoteOff_internal(PxSynth* s, int key_id);
 static PxVoiceInfo PX_GetVoiceInfo_internal(PxSynth* s, int idx);
 static PxLimiterInfo PX_GetLimiterInfo_internal(PxSynth* s);
@@ -1428,7 +1471,7 @@ static void PX_ProcessCommands(PxSynth* s) {
     PxCommand cmd;
     while (cmd_pop(&s->cmd_queue, &cmd)) {
         switch (cmd.command_type) {
-            case PX_CMD_NOTE_ON: PX_NoteOn_internal(s, cmd.data.note_on.midi_note, cmd.data.note_on.wave_idx, cmd.data.note_on.key_id); break;
+            case PX_CMD_NOTE_ON: PX_NoteOn_internal(s, cmd.data.note_on.midi_note, cmd.data.note_on.wave_idx, cmd.data.note_on.key_id, 1.0f); break;
             case PX_CMD_NOTE_OFF: PX_NoteOff_internal(s, cmd.data.note_off.key_id); break;
             case PX_CMD_SET_VOICE_ADSR_PARAM: {
                 if (cmd.data.param_idx_enum_float.idx < s->config.num_voice_adsrs) {
@@ -1487,6 +1530,19 @@ static void PX_ProcessCommands(PxSynth* s) {
             case PX_CMD_SET_LIMITER_RELEASE: s->patch.limiter_release_ms = fmaxf(1.0f, cmd.data.param_float.float_val); break;
             case PX_CMD_SET_UNILEGATO_ENABLED: s->patch.unilegato_enabled = cmd.data.param_bool.bool_val; break;
             case PX_CMD_SET_UNILEGATO_SLIDE_TIME: s->patch.unilegato_slide_duration_s = fmaxf(0.01f, cmd.data.param_float.float_val); break;
+            case PX_CMD_NOTE_ON_VEL:
+                PX_NoteOn_internal(s, cmd.data.note_on_vel.midi_note, cmd.data.note_on_vel.wave_idx,
+                                   cmd.data.note_on_vel.key_id, cmd.data.note_on_vel.velocity);
+                break;
+            case PX_CMD_CHANNEL_AFTERTOUCH:
+                s->channel_aftertouch_pressure = fmaxf(0.0f, fminf(1.0f, cmd.data.aftertouch.pressure));
+                break;
+            case PX_CMD_SET_VELOCITY_TO_AMP:             s->patch.velocity_to_amp_amount = fmaxf(0.0f, fminf(1.0f, cmd.data.param_float.float_val)); break;
+            case PX_CMD_SET_VELOCITY_TO_FILTER_CUTOFF:  s->patch.velocity_to_filter_cutoff_hz = fmaxf(0.0f, cmd.data.param_float.float_val); break;
+            case PX_CMD_SET_VELOCITY_ATTACK_SCALING:    s->patch.velocity_attack_scaling = fmaxf(0.0f, fminf(1.0f, cmd.data.param_float.float_val)); break;
+            case PX_CMD_SET_VELOCITY_TO_PARAM1:         s->patch.velocity_to_param1_amount = cmd.data.param_float.float_val; break;
+            case PX_CMD_SET_AFTERTOUCH_TO_FILTER_CUTOFF:s->patch.aftertouch_to_filter_cutoff_hz = cmd.data.param_float.float_val; break;
+            case PX_CMD_SET_AFTERTOUCH_TO_VIBRATO:      s->patch.aftertouch_to_vibrato_st = cmd.data.param_float.float_val; break;
         }
     }
 }
@@ -1510,6 +1566,12 @@ static void PX_UpdateUISnapshot(PxSynth* s) {
     s->ui_snapshot.patch_copy.limiter_release_ms = s->patch.limiter_release_ms;
     s->ui_snapshot.patch_copy.unilegato_enabled = s->patch.unilegato_enabled;
     s->ui_snapshot.patch_copy.unilegato_slide_duration_s = s->patch.unilegato_slide_duration_s;
+    s->ui_snapshot.patch_copy.velocity_to_amp_amount = s->patch.velocity_to_amp_amount;
+    s->ui_snapshot.patch_copy.velocity_to_filter_cutoff_hz = s->patch.velocity_to_filter_cutoff_hz;
+    s->ui_snapshot.patch_copy.velocity_attack_scaling = s->patch.velocity_attack_scaling;
+    s->ui_snapshot.patch_copy.velocity_to_param1_amount = s->patch.velocity_to_param1_amount;
+    s->ui_snapshot.patch_copy.aftertouch_to_filter_cutoff_hz = s->patch.aftertouch_to_filter_cutoff_hz;
+    s->ui_snapshot.patch_copy.aftertouch_to_vibrato_st = s->patch.aftertouch_to_vibrato_st;
     s->ui_snapshot.lfo_update_interval_ms = s->config.lfo_update_interval_ms;
 
     for (int i = 0; i < s->config.num_voices; ++i) { s->ui_snapshot.voices[i] = PX_GetVoiceInfo_internal(s, i); }
@@ -1659,9 +1721,18 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     // Initialize Unilegato tracking members
     s->patch.unilegato_enabled = false;
     s->patch.unilegato_slide_duration_s = 0.1f;
+    // === v1.1: Velocity & Aftertouch defaults - fully disabled for backward compatibility ===
+    s->patch.velocity_to_amp_amount = 0.0f;
+    s->patch.velocity_to_filter_cutoff_hz = 0.0f;
+    s->patch.velocity_attack_scaling = 0.0f;
+    s->patch.velocity_to_param1_amount = 0.0f;
+    s->patch.aftertouch_to_filter_cutoff_hz = 0.0f;
+    s->patch.aftertouch_to_vibrato_st = 0.0f;
+
     s->num_keys_held = 0;
     s->last_held_note_midi = -1;
     memset(s->held_notes, -1, sizeof(s->held_notes));
+    s->channel_aftertouch_pressure = 0.0f;
 
     PX_UpdateUISnapshot(s);
     // Return the fully initialized synth object.
@@ -1820,6 +1891,16 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
             // --- Step 2: Calculate All Modulations LIVE from the Patch ---
             float adsr_total_param1_mod=0, adsr_total_param2_mod=0, adsr_total_param3_mod=0, adsr_total_pitch_mod_st=0, adsr_total_filter_cutoff_hz=0, adsr_filter_env_input=0, adsr_total_filter_res=0;
+
+            float velocity = v->initial_velocity;
+            float vel_amp_scale     = 1.0f + velocity * s->patch.velocity_to_amp_amount; // 1.0 + (0 to 1) → 1.0 to 2.0 max, or stays 1.0 if amount=0
+            float vel_cutoff_add    = velocity * s->patch.velocity_to_filter_cutoff_hz;
+            float vel_param1_add    = velocity * s->patch.velocity_to_param1_amount;
+
+            float aftertouch = s->channel_aftertouch_pressure;
+            float at_cutoff_add     = aftertouch * s->patch.aftertouch_to_filter_cutoff_hz;
+            float at_vibrato_add    = aftertouch * s->patch.aftertouch_to_vibrato_st;
+
             float adsr_lfo_level_scale[s->config.num_lfos];
             for(int k=0; k<s->config.num_lfos; ++k) adsr_lfo_level_scale[k] = 1.0f;
             for (int j = 0; j < s->config.num_voice_adsrs; ++j) {
@@ -1866,6 +1947,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             } else if (v->active) {
                 effective_amplitude = s->patch.default_note_amp;
             }
+
+            effective_amplitude *= vel_amp_scale;
             float final_amp_with_lfo = effective_amplitude * fmaxf(0.f, 1.f + lfo_amp_env_input);
 
             // --- Step 4: Deactivation Check ---
@@ -1891,14 +1974,14 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
             // --- Step 5: Apply Modulations and Generate Audio ---
             if (!v->is_sliding) {
-                v->frequency = v->original_frequency * powf(2.0f, (lfo_pitch_env_input + adsr_total_pitch_mod_st) / 12.0f);
+                v->frequency = v->original_frequency * powf(2.0f, (lfo_pitch_env_input + adsr_total_pitch_mod_st + at_vibrato_add) / 12.0f);
                 v->main_osc_vm_params.frequency = v->frequency;
             }
             float key_track_factor = powf(2.0f, (v->midi_note - 60.0f) / 12.0f * s->patch.filter_key_track);
-            float current_filter_cutoff = (s->patch.filter_cutoff_hz * key_track_factor) + (adsr_filter_env_input + lfo_filter_env_input) * s->patch.filter_env_amount_hz + adsr_total_filter_cutoff_hz; current_filter_cutoff = fmaxf(20.f, fminf(current_filter_cutoff, s->config.sample_rate * .48f));
+            float current_filter_cutoff = (s->patch.filter_cutoff_hz * key_track_factor) + (adsr_filter_env_input + lfo_filter_env_input) * s->patch.filter_env_amount_hz + adsr_total_filter_cutoff_hz + vel_cutoff_add + at_cutoff_add; current_filter_cutoff = fmaxf(20.f, fminf(current_filter_cutoff, s->config.sample_rate * .48f));
             float current_filter_res = s->patch.filter_resonance_q + adsr_total_filter_res; current_filter_res = fmaxf(0.5f, fminf(current_filter_res, 20.f));
             Filter_SetCoefficients(&v->filter_instance, current_filter_cutoff, current_filter_res, s->patch.filter_mode, s->patch.filter_poles, s->config.sample_rate); v->filter_instance.drive = s->patch.filter_drive;
-            v->main_osc_vm_params.modA = lfo_bytecode_mod_a + adsr_total_param1_mod;
+            v->main_osc_vm_params.modA = lfo_bytecode_mod_a + adsr_total_param1_mod + vel_param1_add;
             v->main_osc_vm_params.modB = lfo_bytecode_mod_b + adsr_total_param2_mod;
             v->main_osc_vm_params.modC = lfo_bytecode_mod_c + adsr_total_param3_mod;
             v->main_osc_vm_params.frequency = v->frequency;
@@ -1985,7 +2068,40 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
 // --- THREAD-SAFE CONTROL API ---
 #define PUSH_CMD_VOID(type, ...) do { if (!s) return; PxCommand _c = {.command_type = type, .data = {__VA_ARGS__}}; cmd_push(&s->cmd_queue, _c); } while(0)
-PX_API void PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id) { PUSH_CMD_VOID(PX_CMD_NOTE_ON, .note_on = {midi_note, wave_idx, key_id}); }
+// v1.1: Primary NoteOn with velocity (0.0 to 1.0, or use 127/127.0f from MIDI)
+PX_API void PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id, float velocity) {
+    velocity = fmaxf(0.0f, fminf(1.0f, velocity));
+    PUSH_CMD_VOID(PX_CMD_NOTE_ON_VEL, .note_on_vel = {midi_note, wave_idx, key_id, velocity});
+}
+
+// Backward compatibility: old signature calls with full velocity
+PX_API void PX_NoteOnLegacy(PxSynth* s, int midi_note, int wave_idx, int key_id) {
+    PX_NoteOn(s, midi_note, wave_idx, key_id, 1.0f);
+}
+
+PX_API void PX_ChannelAftertouch(PxSynth* s, float pressure) {
+    pressure = fmaxf(0.0f, fminf(1.0f, pressure));
+    PUSH_CMD_VOID(PX_CMD_CHANNEL_AFTERTOUCH, .aftertouch = {pressure});
+}
+
+PX_API void PX_SetVelocityToAmp(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_VELOCITY_TO_AMP, .param_float = {v}); }
+PX_API float PX_GetVelocityToAmp(PxSynth* s) { return s ? s->ui_snapshot.patch_copy.velocity_to_amp_amount : 0.0f; }
+
+PX_API void PX_SetVelocityToFilterCutoff(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_VELOCITY_TO_FILTER_CUTOFF, .param_float = {v}); }
+PX_API float PX_GetVelocityToFilterCutoff(PxSynth* s) { return s ? s->ui_snapshot.patch_copy.velocity_to_filter_cutoff_hz : 0.0f; }
+
+PX_API void PX_SetVelocityAttackScaling(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_VELOCITY_ATTACK_SCALING, .param_float = {v}); }
+PX_API float PX_GetVelocityAttackScaling(PxSynth* s) { return s ? s->ui_snapshot.patch_copy.velocity_attack_scaling : 0.0f; }
+
+PX_API void PX_SetVelocityToParam1(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_VELOCITY_TO_PARAM1, .param_float = {v}); }
+PX_API float PX_GetVelocityToParam1(PxSynth* s) { return s ? s->ui_snapshot.patch_copy.velocity_to_param1_amount : 0.0f; }
+
+PX_API void PX_SetAftertouchToFilterCutoff(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_AFTERTOUCH_TO_FILTER_CUTOFF, .param_float = {v}); }
+PX_API float PX_GetAftertouchToFilterCutoff(PxSynth* s) { return s ? s->ui_snapshot.patch_copy.aftertouch_to_filter_cutoff_hz : 0.0f; }
+
+PX_API void PX_SetAftertouchToVibrato(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_AFTERTOUCH_TO_VIBRATO, .param_float = {v}); }
+PX_API float PX_GetAftertouchToVibrato(PxSynth* s) { return s ? s->ui_snapshot.patch_copy.aftertouch_to_vibrato_st : 0.0f; }
+
 PX_API void PX_NoteOff(PxSynth* s, int key_id) { PUSH_CMD_VOID(PX_CMD_NOTE_OFF, .note_off = {key_id}); }
 PX_API void PX_SetVoiceADSRParam(PxSynth* s, int idx, PxADSRParamType p, float v) { PUSH_CMD_VOID(PX_CMD_SET_VOICE_ADSR_PARAM, .param_idx_enum_float = {idx, (int)p, v}); }
 PX_API void PX_SetVoiceADSREnabled(PxSynth* s, int idx, bool enabled) { PUSH_CMD_VOID(PX_CMD_SET_VOICE_ADSR_ENABLED, .param_idx_bool = {idx, enabled}); }
@@ -2148,7 +2264,7 @@ PX_API const char* PX_GetADSRStateName(PxADSRState s) {
  }
 
 // --- INTERNAL IMPLEMENTATIONS ---
-static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_id) {
+static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_id, float velocity) {
     if (s->patch.unilegato_enabled && s->num_keys_held > 0) {
         int active_voice_idx = -1;
         for (int i = 0; i < s->config.num_voices; ++i) if (s->voices[i].active && s->voices[i].midi_note == s->last_held_note_midi) { active_voice_idx = i; break; }
@@ -2171,6 +2287,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     if (voice_idx == -1) voice_idx = find_voice_to_steal(s);
     if (voice_idx == -1) return;
     Voice* v = &s->voices[voice_idx];
+    v->initial_velocity = fmaxf(0.0f, fminf(1.0f, velocity));
     v->active = true; v->midi_note = midi_note;
     v->original_frequency = get_midi_frequency(midi_note);
     v->frequency = v->original_frequency; v->phase = 0.0f;
@@ -2212,7 +2329,21 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     v->main_osc_vm_params.lfsr_seed = v->main_osc_vm_params.lfsr_state;
     for (int i = 0; i < s->config.num_voice_adsrs; ++i) {
         ADSR_Init(&v->adsrs[i], &s->patch.template_voice_adsrs[i], s->config.sample_rate);
-        if (v->adsrs[i].enabled) ADSR_TriggerAttack(&v->adsrs[i]);
+
+        // Velocity-sensitive attack shortening — only if scaling > 0
+        if (i == 0 && s->patch.template_voice_adsrs[i].enabled && s->patch.velocity_attack_scaling > 0.0f) {
+            float scale = 1.0f - v->initial_velocity * s->patch.velocity_attack_scaling;
+            scale = fmaxf(0.1f, scale); // prevent zero attack
+            float effective_attack = s->patch.template_voice_adsrs[i].attack_time * scale;
+            effective_attack = fmaxf(MIN_ADSR_TIME, effective_attack);
+
+            float saved_attack = v->adsrs[i].attack_time;
+            v->adsrs[i].attack_time = effective_attack;
+            ADSR_TriggerAttack(&v->adsrs[i]);
+            v->adsrs[i].attack_time = saved_attack; // restore template value
+        } else {
+            if (v->adsrs[i].enabled) ADSR_TriggerAttack(&v->adsrs[i]);
+        }
     }
     Filter_Init(&v->filter_instance);
     v->filter_cutoff_hz = s->patch.filter_cutoff_hz;

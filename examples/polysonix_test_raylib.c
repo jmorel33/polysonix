@@ -326,7 +326,7 @@ static void ProcessInput() {
             int midi_note = piano_keys[i].midi_note + octave_shift * 12;
             midi_note = (int)fmaxf(0.0f, fminf(127.0f, (float)midi_note));
             // Call the library function
-            PX_NoteOn(synth, midi_note, current_wave_index, key);
+            PX_NoteOn(synth, midi_note, current_wave_index, key, 1.0f);
         }
         if (IsKeyReleased(key)) {
             // Call the library function
