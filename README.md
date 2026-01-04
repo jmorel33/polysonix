@@ -1,4 +1,5 @@
-# polysonix.h
+# Polysonix
+**Version 1.4.0** | **Author:** Jacques Morel
 
 A single-header polyphonic synthesizer engine.
 
@@ -41,6 +42,7 @@ like UI, input handling, and audio device management.
         unique combo-filters (e.g., LP+BP), and a key feature: selectable slopes. These provide distinct tonal characters: 12dB/oct (aggressive, Oberheim-style),
         18dB/oct (balanced, Roland-style), and 24dB/oct (smooth, Moog-style), available for all filter types. The filter also includes key tracking, drive,
         and extensive envelope/LFO modulation.
+  - **Unified Modulation Matrix:** A comprehensive 16-slot modulation matrix allowing standard controllers (Velocity, Aftertouch, Mod Wheel, Pitch Bend) to modulate nearly any synthesis parameter (Oscillators, Filters, LFOs, ADSRs).
   - **Unilegato Mode**: Smooth, monophonic legato with pitch sliding between notes.
 - **Stereo Signal Path:** Full stereo output with per-voice panning and LFO pan modulation.
 - **Built-in Dynamics:** Includes a per-voice soft-clipper to prevent harsh transients and a master bus lookahead limiter to prevent final output clipping.
@@ -229,7 +231,7 @@ int main() {
     while (!SituationWindowShouldClose()) {
         SituationPollInputEvents();
 
-        if (SituationIsKeyPressed(SIT_KEY_C)) PX_NoteOn(synth, 60, 0, SIT_KEY_C);
+        if (SituationIsKeyPressed(SIT_KEY_C)) PX_NoteOn(synth, 60, 0, SIT_KEY_C, 1.0f);
         if (SituationIsKeyReleased(SIT_KEY_C)) PX_NoteOff(synth, SIT_KEY_C);
 
         // ... render ...
