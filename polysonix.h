@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 4
-#define POLYSONIX_VERSION_PATCH 5
+#define POLYSONIX_VERSION_PATCH 6
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -196,6 +196,9 @@ typedef struct {
     float mod_amounts[PX_LFO_DEST_COUNT];   /**< An array specifying the modulation amount for each possible destination. */
 } PxLFOParams;
 
+#ifndef NUM_WAVEFORMS
+    #define NUM_WAVEFORMS 212
+#endif
 
 // --- Configuration and Patch Structures ---
 
@@ -872,6 +875,10 @@ typedef struct {
 
     float poly_aftertouch_pressure;  // v1.4.1: 0.0 to 1.0, default 0.0
 
+    // v1.4.6: Current tuning offsets for this voice's oscillator
+    float current_coarse_semitones;
+    float current_fine_cents;
+
     // --- State for oscillator update throttling
     float update_countdown;         // Samples remaining until the next real calculation.
     float samples_per_update;       // How many samples to wait between calculations.
@@ -1000,6 +1007,10 @@ typedef struct PxPatch {
     // v1.4.5: Curves for velocity/aftertouch
     PxCurveType velocity_curve;     // Default PX_CURVE_LINEAR
     PxCurveType aftertouch_curve;   // Default PX_CURVE_LINEAR
+
+    // v1.4.6: Per-oscillator tuning
+    float osc_coarse_semitones[NUM_WAVEFORMS];  // -24 to +24 semitones (default 0)
+    float osc_fine_cents[NUM_WAVEFORMS];        // -100 to +100 cents (default 0)
 } PxPatch;
 
 // --- THREAD-SAFE COMMUNICATION STRUCTURES ---
@@ -1044,7 +1055,9 @@ typedef enum {
     PX_CMD_CONTROL_CHANGE,
     PX_CMD_PITCH_BEND,
     PX_CMD_SET_PITCHBEND_RANGE,
-    PX_CMD_POLY_AFTERTOUCH
+    PX_CMD_POLY_AFTERTOUCH,
+    PX_CMD_SET_OSC_COARSE_TUNE,
+    PX_CMD_SET_OSC_FINE_TUNE
 } PxCommandType;
 
 typedef union {
@@ -1068,6 +1081,7 @@ typedef union {
     struct { int cc_num; float value; } cc;
     struct { float value; } bend;  // 0.0 to 1.0
     struct { int key_id; float pressure; } poly_at;
+    struct { int wave_idx; float value; } osc_tune;
 } PxCommandData;
 
 typedef struct {
@@ -1816,6 +1830,16 @@ static void PX_ProcessCommands(PxSynth* s) {
                     }
                 }
                 break;
+            case PX_CMD_SET_OSC_COARSE_TUNE:
+                if (cmd.data.osc_tune.wave_idx >= 0 && cmd.data.osc_tune.wave_idx < NUM_WAVEFORMS) {
+                    s->patch.osc_coarse_semitones[cmd.data.osc_tune.wave_idx] = cmd.data.osc_tune.value;
+                }
+                break;
+            case PX_CMD_SET_OSC_FINE_TUNE:
+                if (cmd.data.osc_tune.wave_idx >= 0 && cmd.data.osc_tune.wave_idx < NUM_WAVEFORMS) {
+                    s->patch.osc_fine_cents[cmd.data.osc_tune.wave_idx] = cmd.data.osc_tune.value;
+                }
+                break;
         }
     }
 }
@@ -1851,6 +1875,9 @@ static void PX_UpdateUISnapshot(PxSynth* s) {
 
     s->ui_snapshot.patch_copy.velocity_curve = s->patch.velocity_curve;
     s->ui_snapshot.patch_copy.aftertouch_curve = s->patch.aftertouch_curve;
+
+    memcpy(s->ui_snapshot.patch_copy.osc_coarse_semitones, s->patch.osc_coarse_semitones, NUM_WAVEFORMS * sizeof(float));
+    memcpy(s->ui_snapshot.patch_copy.osc_fine_cents, s->patch.osc_fine_cents, NUM_WAVEFORMS * sizeof(float));
 
     s->ui_snapshot.patch_copy.pitchbend_range_semitones = s->patch.pitchbend_range_semitones;
     s->ui_snapshot.lfo_update_interval_ms = s->config.lfo_update_interval_ms;
@@ -2026,6 +2053,12 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
 
     s->patch.velocity_curve = PX_CURVE_LINEAR;
     s->patch.aftertouch_curve = PX_CURVE_LINEAR;
+
+    // v1.4.6: Default tuning = in tune
+    for (int i = 0; i < NUM_WAVEFORMS; i++) {
+        s->patch.osc_coarse_semitones[i] = 0.0f;
+        s->patch.osc_fine_cents[i] = 0.0f;
+    }
 
     Filter_Init(&s->global_filter_l);
     Filter_Init(&s->global_filter_r);
@@ -2243,7 +2276,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     v->slide_progress = 1.0f;
                     v->is_sliding = false;
                     v->frequency = v->slide_target_freq;
-                    v->original_frequency = v->slide_target_freq;
+                    // v->original_frequency remains as Base MIDI Freq for subsequent tuning application
                     v->main_osc_vm_params.frequency = v->frequency;
                 } else {
                     float t = v->slide_progress;
@@ -2403,7 +2436,11 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
             // --- Step 5: Apply Modulations and Generate Audio ---
             if (!v->is_sliding) {
-                v->frequency = v->original_frequency * powf(2.0f, (lfo_pitch_env_input + adsr_total_pitch_mod_st) / 12.0f);
+                // v1.4.6: Apply per-oscillator tuning
+                float tuning_offset_st = v->current_coarse_semitones + (v->current_fine_cents / 100.0f);
+                float tuned_freq = v->original_frequency * powf(2.0f, tuning_offset_st / 12.0f);
+
+                v->frequency = tuned_freq * powf(2.0f, (lfo_pitch_env_input + adsr_total_pitch_mod_st) / 12.0f);
                 v->main_osc_vm_params.frequency = v->frequency;
             }
             float key_track_factor = powf(2.0f, (v->midi_note - 60.0f) / 12.0f * s->patch.filter_key_track);
@@ -2633,6 +2670,26 @@ PX_API void PX_SetPitchBendRange(PxSynth* s, float semitones) {
     PUSH_CMD_VOID(PX_CMD_SET_PITCHBEND_RANGE, .param_float = {semitones});
 }
 
+PX_API void PX_SetOscCoarseTune(PxSynth* s, int wave_idx, float semitones) {
+    if (!s || wave_idx < 0 || wave_idx >= NUM_WAVEFORMS) return;
+    semitones = fmaxf(-24.0f, fminf(24.0f, semitones));
+    PUSH_CMD_VOID(PX_CMD_SET_OSC_COARSE_TUNE, .osc_tune = {wave_idx, semitones});
+}
+PX_API float PX_GetOscCoarseTune(PxSynth* s, int wave_idx) {
+    if (!s || wave_idx < 0 || wave_idx >= NUM_WAVEFORMS) return 0.0f;
+    return s->ui_snapshot.patch_copy.osc_coarse_semitones[wave_idx];
+}
+
+PX_API void PX_SetOscFineTune(PxSynth* s, int wave_idx, float cents) {
+    if (!s || wave_idx < 0 || wave_idx >= NUM_WAVEFORMS) return;
+    cents = fmaxf(-100.0f, fminf(100.0f, cents));
+    PUSH_CMD_VOID(PX_CMD_SET_OSC_FINE_TUNE, .osc_tune = {wave_idx, cents});
+}
+PX_API float PX_GetOscFineTune(PxSynth* s, int wave_idx) {
+    if (!s || wave_idx < 0 || wave_idx >= NUM_WAVEFORMS) return 0.0f;
+    return s->ui_snapshot.patch_copy.osc_fine_cents[wave_idx];
+}
+
 // --- THREAD-SAFE GET API ---
 PX_API float PX_GetVoiceADSRParam(PxSynth* s, int idx, PxADSRParamType p) {
     if (!s || idx < 0 || idx >= s->config.num_voice_adsrs) return 0.0f;
@@ -2800,12 +2857,28 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
         for (int i = 0; i < s->config.num_voices; ++i) if (s->voices[i].active && s->voices[i].midi_note == s->last_held_note_midi) { active_voice_idx = i; break; }
         if (active_voice_idx != -1) {
             Voice* v = &s->voices[active_voice_idx];
-            v->is_sliding = true;
-            v->slide_target_freq = get_midi_frequency(midi_note);
-            v->slide_start_freq = v->original_frequency;
-            v->slide_progress = 0.0f;
+
+            // Calculate start frequency using old base and old tuning
+            float old_tuning_st = v->current_coarse_semitones + (v->current_fine_cents / 100.0f);
+            float start_freq = v->original_frequency * powf(2.0f, old_tuning_st / 12.0f);
+
+            // Update voice state to new note
             v->midi_note = midi_note;
             v->key_id = key_id;
+            v->source_wave_index = wave_idx;
+            v->current_coarse_semitones = s->patch.osc_coarse_semitones[wave_idx];
+            v->current_fine_cents = s->patch.osc_fine_cents[wave_idx];
+            v->original_frequency = get_midi_frequency(midi_note); // Set new base
+
+            // Calculate target frequency using new base and new tuning
+            float new_tuning_st = v->current_coarse_semitones + (v->current_fine_cents / 100.0f);
+            float target_freq = v->original_frequency * powf(2.0f, new_tuning_st / 12.0f);
+
+            v->is_sliding = true;
+            v->slide_target_freq = target_freq;
+            v->slide_start_freq = start_freq;
+            v->slide_progress = 0.0f;
+
             for (int j = 0; j < s->config.num_voice_adsrs; ++j) if (v->adsrs[j].enabled) ADSR_TriggerAttack(&v->adsrs[j]);
             for (int k = 0; k < s->config.num_lfos; ++k) if (s->patch.template_lfos[k].adsr.enabled) ADSR_TriggerAttack(&v->lfo_instances[k].adsr);
             s->last_held_note_midi = midi_note;
@@ -2821,8 +2894,15 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     v->poly_aftertouch_pressure = 0.0f;
     v->active = true; v->midi_note = midi_note;
     v->original_frequency = get_midi_frequency(midi_note);
-    v->frequency = v->original_frequency; v->phase = 0.0f;
     v->source_wave_index = wave_idx;
+    v->current_coarse_semitones = s->patch.osc_coarse_semitones[wave_idx];
+    v->current_fine_cents = s->patch.osc_fine_cents[wave_idx];
+
+    // Apply initial tuning
+    float tuning_st = v->current_coarse_semitones + (v->current_fine_cents / 100.0f);
+    v->frequency = v->original_frequency * powf(2.0f, tuning_st / 12.0f);
+    v->phase = 0.0f;
+
     v->key_id = key_id;
     v->trigger_sequence_number = s->global_trigger_counter++;
     v->pan_position = s->patch.voice_pan_setting;

@@ -1,3 +1,28 @@
+## v1.4.6 (2026/01/05)
+
+This update completes the core analog voicing section by introducing **Per-Oscillator Coarse & Fine Tuning**.
+
+### Features
+*   **Per-Oscillator Tuning:**
+    *   **Coarse Tuning:** Each waveform can now be detuned by ±24 semitones (±2 octaves) independently.
+    *   **Fine Tuning:** Each waveform can be fine-tuned by ±100 cents (±1 semitone) for rich detuning, beating, and chorus effects.
+    *   **Per-Voice Logic:** Tuning offsets are applied at the voice level *before* modulation, ensuring stable intervals even when pitch is modulated.
+    *   **Applications:** Enables classic analog techniques such as:
+        *   Sub-octave bass layering (set coarse to -12 or -24).
+        *   Fifth intervals (set coarse to +7).
+        *   Supersaw-style detuning (using fine tune).
+        *   Fixed-frequency drones or clusters.
+
+### API Changes
+*   **New Functions:**
+    *   `PX_SetOscCoarseTune(s, wave_idx, semitones)`: Sets coarse tuning (-24 to +24).
+    *   `PX_GetOscCoarseTune(s, wave_idx)`
+    *   `PX_SetOscFineTune(s, wave_idx, cents)`: Sets fine tuning (-100 to +100).
+    *   `PX_GetOscFineTune(s, wave_idx)`
+*   **Struct Update:** `PxPatch` now includes `osc_coarse_semitones` and `osc_fine_cents` arrays.
+
+### Backward Compatibility
+*   **Defaults:** All tuning offsets default to `0.0`, ensuring that existing patches play at standard pitch and sound identical to previous versions.
 ## v1.4.5 (2026/01/05)
 
 This update refines the modulation system with **Non-Linear Response Curves** for velocity and aftertouch, plus a new **Keyboard Tracking** modulation source.
