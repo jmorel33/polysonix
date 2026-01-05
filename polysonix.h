@@ -85,13 +85,13 @@ typedef enum {
 typedef enum {
     PX_FILTER_MODE_OFF,     /**< Filter is disabled. */
     PX_FILTER_MODE_LP,      /**< Low-Pass Filter. */
-    PX_FILTER_MODE_BP,      /**< Band-Pass Filter. */
+    PX_FILTER_MODE_BP,      /**< Band-Pass Filter. (In 1-pole mode: approximates an All-Pass response). */
     PX_FILTER_MODE_HP,      /**< High-Pass Filter. */
     PX_FILTER_MODE_LP_BP,   /**< A mix of Low-Pass and Band-Pass outputs. */
     PX_FILTER_MODE_LP_HP,   /**< A mix of Low-Pass and High-Pass outputs (creates a notch-like effect). */
     PX_FILTER_MODE_BP_HP,   /**< A mix of Band-Pass and High-Pass outputs. */
-    PX_FILTER_MODE_NOTCH,   /**< Notch Filter (Band-Reject). */
-    PX_FILTER_MODE_ALLPASS, /**< All-Pass Filter (for phase shifting effects). */
+    PX_FILTER_MODE_NOTCH,   /**< Notch Filter (Band-Reject). (In 1-pole mode: passes input signal). */
+    PX_FILTER_MODE_ALLPASS, /**< All-Pass Filter (for phase shifting effects). (In 1-pole mode: approximate). */
     PX_FILTER_MODE_COUNT    /**< The total number of filter modes. */
 } PxFilterMode;
 
@@ -148,7 +148,7 @@ typedef enum {
  */
 typedef enum {
     PX_FILTER_PARAM_CUTOFF,     /**< The filter's cutoff frequency (in Hz). */
-    PX_FILTER_PARAM_RESONANCE,  /**< The filter's resonance (Q factor). */
+    PX_FILTER_PARAM_RESONANCE,  /**< The filter's resonance (Q factor). (Ignored in 1-pole mode). */
     PX_FILTER_PARAM_ENV_AMOUNT, /**< The amount of modulation applied from ADSRs to the cutoff frequency. */
     PX_FILTER_PARAM_DRIVE,      /**< The amount of saturation/drive applied at the filter's input. */
     PX_FILTER_PARAM_KEYTRACK,   /**< The amount the note's pitch affects the cutoff frequency (0.0 to 1.0). */
