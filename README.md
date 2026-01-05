@@ -45,7 +45,8 @@ like UI, input handling, and audio device management.
         *   **12 dB/oct (2-pole):** Aggressive, Oberheim-style (SVF topology).
         *   **18 dB/oct (3-pole):** Balanced, Roland-style.
         *   **24 dB/oct (4-pole):** Smooth, Moog-style.
-  - **Unified Modulation Matrix:** A comprehensive 16-slot modulation matrix allowing standard controllers (Velocity, Aftertouch, Mod Wheel, Pitch Bend) to modulate nearly any synthesis parameter (Oscillators, Filters, LFOs, ADSRs).
+  - **Unified Modulation Matrix:** A comprehensive 16-slot modulation matrix allowing standard controllers (Velocity, Aftertouch, Mod Wheel, Pitch Bend, **Key Track**) to modulate nearly any synthesis parameter (Oscillators, Filters, LFOs, ADSRs).
+    *   **Response Curves:** Velocity and Aftertouch inputs can be shaped using **Linear, Exponential, Logarithmic, or S-Curve** mappings for expressive control.
   - **Unilegato Mode**: Smooth, monophonic legato with pitch sliding between notes.
   - **Global Post-Filter**: A stereo master filter (LP/HP/BP/etc.) placed after voice mixing for final tone shaping.
 - **Stereo Signal Path:** Full stereo output with per-voice panning and LFO pan modulation.
@@ -271,6 +272,7 @@ The library also provides a comprehensive set of `PX_Set...` and `PX_Get...` fun
 - Voice ADSR parameters
 - LFO parameters and routing
 - Filter parameters (Per-Voice and Global)
+- **Velocity/Aftertouch Curves**
 - Global settings like pan and limiter
 - Unilegato settings
 
@@ -286,7 +288,8 @@ Enums are used extensively in `polysonix.h` to define modes, targets, and parame
 *   `PxLFODestination`: `PX_LFO_DEST_NONE`, `PX_LFO_DEST_PARAM1`, `PX_LFO_DEST_PARAM2`, `PX_LFO_DEST_PARAM3`, `PX_LFO_DEST_FILTER_CUTOFF`, `PX_LFO_DEST_AMP`, `PX_LFO_DEST_PITCH`, `PX_LFO_DEST_PAN`.
 *   `PxADSRParamType`: `PX_ADSR_PARAM_ATTACK`, `PX_ADSR_PARAM_DECAY`, `PX_ADSR_PARAM_SUSTAIN`, `PX_ADSR_PARAM_RELEASE`.
 *   `PxFilterParamType`: `PX_FILTER_PARAM_CUTOFF`, `PX_FILTER_PARAM_RESONANCE`, `PX_FILTER_PARAM_ENV_AMOUNT`, `PX_FILTER_PARAM_DRIVE`, `PX_FILTER_PARAM_KEYTRACK`, `PX_FILTER_PARAM_POLES`.
-*   `PxModSource`: `PX_MOD_SRC_VELOCITY`, `PX_MOD_SRC_AFTERTOUCH`, `PX_MOD_SRC_MODWHEEL` (CC #1), `PX_MOD_SRC_PITCHBEND`, `PX_MOD_SRC_POLY_AFTERTOUCH`.
+*   `PxModSource`: `PX_MOD_SRC_VELOCITY`, `PX_MOD_SRC_AFTERTOUCH`, `PX_MOD_SRC_MODWHEEL` (CC #1), `PX_MOD_SRC_PITCHBEND`, `PX_MOD_SRC_POLY_AFTERTOUCH`, `PX_MOD_SRC_KEY_TRACK`.
+*   `PxCurveType`: `PX_CURVE_LINEAR` (default), `PX_CURVE_EXP`, `PX_CURVE_LOG`, `PX_CURVE_S`.
 *   `PxOscillatorUpdateMode`: `PX_OSC_UPDATE_MODE_PER_SAMPLE`, `PX_OSC_UPDATE_MODE_FIXED_RATE`, `PX_OSC_UPDATE_MODE_NYQUIST`.
 
 ### Core Structures
