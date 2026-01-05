@@ -1,5 +1,5 @@
 # Polysonix
-**Version 1.4.4** | **Author:** Jacques Morel
+**Version 1.4.6** | **Author:** Jacques Morel
 
 A single-header polyphonic synthesizer engine.
 
@@ -45,6 +45,7 @@ like UI, input handling, and audio device management.
         *   **12 dB/oct (2-pole):** Aggressive, Oberheim-style (SVF topology).
         *   **18 dB/oct (3-pole):** Balanced, Roland-style.
         *   **24 dB/oct (4-pole):** Smooth, Moog-style.
+  - **Per-Oscillator Tuning:** Independent **Coarse** (±24 semitones) and **Fine** (±100 cents) tuning per waveform, enabling interval layering (fifths, octaves), detuned supersaws, and sub-bass reinforcement.
   - **Unified Modulation Matrix:** A comprehensive 16-slot modulation matrix allowing standard controllers (Velocity, Aftertouch, Mod Wheel, Pitch Bend, **Key Track**) to modulate nearly any synthesis parameter (Oscillators, Filters, LFOs, ADSRs).
     *   **Response Curves:** Velocity and Aftertouch inputs can be shaped using **Linear, Exponential, Logarithmic, or S-Curve** mappings for expressive control.
   - **Unilegato Mode**: Smooth, monophonic legato with pitch sliding between notes.
