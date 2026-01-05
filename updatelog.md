@@ -1,6 +1,6 @@
 # Polysonix Update Log
 
-## v1.4.4 (2026/01/09)
+## v1.4.4 (2026/01/05)
 
 This update introduces a **Global Post-Filter**, allowing final tone shaping of the entire mix before the limiter.
 
@@ -17,7 +17,7 @@ This update introduces a **Global Post-Filter**, allowing final tone shaping of 
 *   **Disabled by Default:** The global filter is disabled in default patches (`global_filter_enabled = false`), ensuring existing projects sound identical.
 *   **Struct Update:** `PxSynth` and `PxPatch` structures have been updated to include global filter state.
 
-## v1.4.3 (2026/01/08)
+## v1.4.3 (2026/01/05)
 
 This update delivers **Full Combo Filter Support** at all filter slopes, including the gentle **6 dB/oct (1-pole)** setting.
 
@@ -30,7 +30,7 @@ This update delivers **Full Combo Filter Support** at all filter slopes, includi
 ### Backward Compatibility
 *   Fully backward compatible. Existing patches using steeper slopes (12/18/24 dB/oct) or single modes at 6 dB/oct use existing code paths and sound identical.
 
-## v1.4.2 (2026/01/07)
+## v1.4.2 (2026/01/05)
 
 This update introduces full support for **1-Pole (6 dB/oct)** filtering, enabling gentler, broader tonal shaping.
 
@@ -44,7 +44,7 @@ This update introduces full support for **1-Pole (6 dB/oct)** filtering, enablin
 *   Fully backward compatible. Existing patches using 2, 3, or 4 poles are unaffected.
 *   `PX_FILTER_PARAM_POLES` clamping has been updated to accept values down to `1.0`.
 
-## v1.4.1 (2026/01/06)
+## v1.4.1 (2026/01/05)
 
 This update adds comprehensive support for **Polyphonic Aftertouch** (per-note pressure) within the unified Modulation Matrix.
 
@@ -64,7 +64,7 @@ This update adds comprehensive support for **Polyphonic Aftertouch** (per-note p
 ### Backward Compatibility
 *   Fully backward compatible. The new modulation source defaults to 0.0, and existing code not calling `PX_PolyAftertouch` will function unchanged.
 
-## v1.4 (2026/01/06)
+## v1.4 (2026/01/05)
 
 This release completes the unification of the modulation system by treating **Mod Wheel** and **Pitch Bend** as first-class citizens in the Modulation Matrix.
 
