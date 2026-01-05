@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 4
-#define POLYSONIX_VERSION_PATCH 4
+#define POLYSONIX_VERSION_PATCH 5
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -94,6 +94,14 @@ typedef enum {
     PX_FILTER_MODE_ALLPASS, /**< All-Pass Filter (for phase shifting effects). (In 1-pole mode: approximate). */
     PX_FILTER_MODE_COUNT    /**< The total number of filter modes. */
 } PxFilterMode;
+
+typedef enum {
+    PX_CURVE_LINEAR,       // Default: straight 0-1 mapping
+    PX_CURVE_EXP,          // Exponential: sensitive low, steep high
+    PX_CURVE_LOG,          // Logarithmic: steep low, sensitive high
+    PX_CURVE_S,            // S-curve: ease-in/out for smooth response
+    PX_CURVE_COUNT
+} PxCurveType;
 
 /**
  * @enum PxADSRDestination
@@ -918,6 +926,7 @@ typedef enum {
     PX_MOD_SRC_MODWHEEL,      // CC #1, 0.0 to 1.0
     PX_MOD_SRC_PITCHBEND,     // -1.0 to +1.0 (bipolar, full range)
     PX_MOD_SRC_POLY_AFTERTOUCH,   // v1.4.1: Per-note pressure
+    PX_MOD_SRC_KEY_TRACK,  // v1.4.5: Normalized key position (-1.0 low to +1.0 high)
     PX_MOD_SRC_COUNT
 } PxModSource;
 
@@ -987,6 +996,10 @@ typedef struct PxPatch {
     float global_filter_key_track;      // Ignored (global, no key)
     int global_filter_poles;
     PxFilterMode global_filter_mode;
+
+    // v1.4.5: Curves for velocity/aftertouch
+    PxCurveType velocity_curve;     // Default PX_CURVE_LINEAR
+    PxCurveType aftertouch_curve;   // Default PX_CURVE_LINEAR
 } PxPatch;
 
 // --- THREAD-SAFE COMMUNICATION STRUCTURES ---
@@ -1026,6 +1039,8 @@ typedef enum {
     PX_CMD_SET_GLOBAL_FILTER_ENABLED,
     PX_CMD_SET_GLOBAL_FILTER_PARAM,
     PX_CMD_SET_GLOBAL_FILTER_MODE,
+    PX_CMD_SET_VELOCITY_CURVE,
+    PX_CMD_SET_AFTERTOUCH_CURVE,
     PX_CMD_CONTROL_CHANGE,
     PX_CMD_PITCH_BEND,
     PX_CMD_SET_PITCHBEND_RANGE,
@@ -1049,6 +1064,7 @@ typedef union {
     struct { bool enabled; } global_filter_enable;
     struct { int param_type; float value; } global_filter_param;
     struct { int mode; } global_filter_mode;
+    struct { int curve_type; } curve;
     struct { int cc_num; float value; } cc;
     struct { float value; } bend;  // 0.0 to 1.0
     struct { int key_id; float pressure; } poly_at;
@@ -1769,6 +1785,12 @@ static void PX_ProcessCommands(PxSynth* s) {
             case PX_CMD_SET_GLOBAL_FILTER_MODE:
                 s->patch.global_filter_mode = (PxFilterMode)cmd.data.global_filter_mode.mode;
                 break;
+            case PX_CMD_SET_VELOCITY_CURVE:
+                s->patch.velocity_curve = (PxCurveType)cmd.data.curve.curve_type;
+                break;
+            case PX_CMD_SET_AFTERTOUCH_CURVE:
+                s->patch.aftertouch_curve = (PxCurveType)cmd.data.curve.curve_type;
+                break;
             case PX_CMD_CONTROL_CHANGE:
                 if (cmd.data.cc.cc_num == 1) {  // Mod Wheel only
                     s->modwheel_value = fmaxf(0.0f, fminf(1.0f, cmd.data.cc.value));
@@ -1826,6 +1848,10 @@ static void PX_UpdateUISnapshot(PxSynth* s) {
     s->ui_snapshot.patch_copy.global_filter_key_track = s->patch.global_filter_key_track;
     s->ui_snapshot.patch_copy.global_filter_poles = s->patch.global_filter_poles;
     s->ui_snapshot.patch_copy.global_filter_mode = s->patch.global_filter_mode;
+
+    s->ui_snapshot.patch_copy.velocity_curve = s->patch.velocity_curve;
+    s->ui_snapshot.patch_copy.aftertouch_curve = s->patch.aftertouch_curve;
+
     s->ui_snapshot.patch_copy.pitchbend_range_semitones = s->patch.pitchbend_range_semitones;
     s->ui_snapshot.lfo_update_interval_ms = s->config.lfo_update_interval_ms;
 
@@ -1997,6 +2023,10 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     s->patch.global_filter_key_track = 0.0f; // Ignored
     s->patch.global_filter_poles = 3;
     s->patch.global_filter_mode = PX_FILTER_MODE_LP;
+
+    s->patch.velocity_curve = PX_CURVE_LINEAR;
+    s->patch.aftertouch_curve = PX_CURVE_LINEAR;
+
     Filter_Init(&s->global_filter_l);
     Filter_Init(&s->global_filter_r);
 
@@ -2121,11 +2151,43 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
                 // Matrix calculation for LFOs
                 float mod_sources[PX_MOD_SRC_COUNT] = {0.0f};
-                mod_sources[PX_MOD_SRC_VELOCITY] = v->initial_velocity;
-                mod_sources[PX_MOD_SRC_AFTERTOUCH] = s->channel_aftertouch_pressure;
+                float raw_vel = v->initial_velocity;
+                float raw_at = s->channel_aftertouch_pressure;
+                float raw_poly_at = v->poly_aftertouch_pressure;
+
+                // v1.4.5: Apply velocity curve
+                switch (s->patch.velocity_curve) {
+                    case PX_CURVE_EXP: raw_vel = powf(raw_vel, 2.0f); break; // Steep high
+                    case PX_CURVE_LOG: raw_vel = logf(1.0f + raw_vel * (expf(1.0f) - 1.0f)); break; // Steep low
+                    case PX_CURVE_S:   raw_vel = raw_vel * raw_vel * (3.0f - 2.0f * raw_vel); break; // Smooth S
+                    default: break; // Linear
+                }
+                mod_sources[PX_MOD_SRC_VELOCITY] = raw_vel;
+
+                // Apply aftertouch curve (same for channel/poly)
+                float curve_at = raw_at;
+                switch (s->patch.aftertouch_curve) {
+                    case PX_CURVE_EXP: curve_at = powf(curve_at, 2.0f); break;
+                    case PX_CURVE_LOG: curve_at = logf(1.0f + curve_at * (expf(1.0f) - 1.0f)); break;
+                    case PX_CURVE_S:   curve_at = curve_at * curve_at * (3.0f - 2.0f * curve_at); break;
+                    default: break;
+                }
+                mod_sources[PX_MOD_SRC_AFTERTOUCH] = curve_at;
+
+                float curve_poly_at = raw_poly_at;
+                switch (s->patch.aftertouch_curve) {
+                    case PX_CURVE_EXP: curve_poly_at = powf(curve_poly_at, 2.0f); break;
+                    case PX_CURVE_LOG: curve_poly_at = logf(1.0f + curve_poly_at * (expf(1.0f) - 1.0f)); break;
+                    case PX_CURVE_S:   curve_poly_at = curve_poly_at * curve_poly_at * (3.0f - 2.0f * curve_poly_at); break;
+                    default: break;
+                }
+                mod_sources[PX_MOD_SRC_POLY_AFTERTOUCH] = curve_poly_at;
+
+                // v1.4.5: Keyboard tracking source
+                mod_sources[PX_MOD_SRC_KEY_TRACK] = ((float)v->midi_note - 60.0f) / 60.0f; // Normalized -1.0 (C0) to +1.0 (C10)
+
                 mod_sources[PX_MOD_SRC_MODWHEEL] = s->modwheel_value;
                 mod_sources[PX_MOD_SRC_PITCHBEND] = s->pitchbend_value;  // bipolar!
-                mod_sources[PX_MOD_SRC_POLY_AFTERTOUCH] = v->poly_aftertouch_pressure;
 
                 float dest_mod[PX_MOD_DEST_COUNT] = {0.0f};
                 for (int m = 0; m < PX_MOD_MATRIX_SLOTS; m++) {
@@ -2193,11 +2255,43 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
             // === v1.3: Apply Modulation Matrix ===
             float mod_sources[PX_MOD_SRC_COUNT] = {0.0f};
-            mod_sources[PX_MOD_SRC_VELOCITY] = v->initial_velocity;
-            mod_sources[PX_MOD_SRC_AFTERTOUCH] = s->channel_aftertouch_pressure;
+            float raw_vel = v->initial_velocity;
+            float raw_at = s->channel_aftertouch_pressure;
+            float raw_poly_at = v->poly_aftertouch_pressure;
+
+            // v1.4.5: Apply velocity curve
+            switch (s->patch.velocity_curve) {
+                case PX_CURVE_EXP: raw_vel = powf(raw_vel, 2.0f); break; // Steep high
+                case PX_CURVE_LOG: raw_vel = logf(1.0f + raw_vel * (expf(1.0f) - 1.0f)); break; // Steep low
+                case PX_CURVE_S:   raw_vel = raw_vel * raw_vel * (3.0f - 2.0f * raw_vel); break; // Smooth S
+                default: break; // Linear
+            }
+            mod_sources[PX_MOD_SRC_VELOCITY] = raw_vel;
+
+            // Apply aftertouch curve (same for channel/poly)
+            float curve_at = raw_at;
+            switch (s->patch.aftertouch_curve) {
+                case PX_CURVE_EXP: curve_at = powf(curve_at, 2.0f); break;
+                case PX_CURVE_LOG: curve_at = logf(1.0f + curve_at * (expf(1.0f) - 1.0f)); break;
+                case PX_CURVE_S:   curve_at = curve_at * curve_at * (3.0f - 2.0f * curve_at); break;
+                default: break;
+            }
+            mod_sources[PX_MOD_SRC_AFTERTOUCH] = curve_at;
+
+            float curve_poly_at = raw_poly_at;
+            switch (s->patch.aftertouch_curve) {
+                case PX_CURVE_EXP: curve_poly_at = powf(curve_poly_at, 2.0f); break;
+                case PX_CURVE_LOG: curve_poly_at = logf(1.0f + curve_poly_at * (expf(1.0f) - 1.0f)); break;
+                case PX_CURVE_S:   curve_poly_at = curve_poly_at * curve_poly_at * (3.0f - 2.0f * curve_poly_at); break;
+                default: break;
+            }
+            mod_sources[PX_MOD_SRC_POLY_AFTERTOUCH] = curve_poly_at;
+
+            // v1.4.5: Keyboard tracking source
+            mod_sources[PX_MOD_SRC_KEY_TRACK] = ((float)v->midi_note - 60.0f) / 60.0f; // Normalized -1.0 (C0) to +1.0 (C10)
+
             mod_sources[PX_MOD_SRC_MODWHEEL] = s->modwheel_value;
             mod_sources[PX_MOD_SRC_PITCHBEND] = s->pitchbend_value;  // bipolar!
-            mod_sources[PX_MOD_SRC_POLY_AFTERTOUCH] = v->poly_aftertouch_pressure;
 
             float dest_mod[PX_MOD_DEST_COUNT] = {0.0f};
             for (int m = 0; m < PX_MOD_MATRIX_SLOTS; m++) {
@@ -2502,6 +2596,20 @@ PX_API void PX_SetGlobalFilterMode(PxSynth* s, PxFilterMode mode) {
 }
 PX_API PxFilterMode PX_GetGlobalFilterMode(PxSynth* s) {
     return s ? s->ui_snapshot.patch_copy.global_filter_mode : PX_FILTER_MODE_OFF;
+}
+
+PX_API void PX_SetVelocityCurve(PxSynth* s, PxCurveType curve) {
+    PUSH_CMD_VOID(PX_CMD_SET_VELOCITY_CURVE, .curve = {(int)curve});
+}
+PX_API PxCurveType PX_GetVelocityCurve(PxSynth* s) {
+    return s ? s->ui_snapshot.patch_copy.velocity_curve : PX_CURVE_LINEAR;
+}
+
+PX_API void PX_SetAftertouchCurve(PxSynth* s, PxCurveType curve) {
+    PUSH_CMD_VOID(PX_CMD_SET_AFTERTOUCH_CURVE, .curve = {(int)curve});
+}
+PX_API PxCurveType PX_GetAftertouchCurve(PxSynth* s) {
+    return s ? s->ui_snapshot.patch_copy.aftertouch_curve : PX_CURVE_LINEAR;
 }
 
 PX_API void PX_SetGlobalVoicePan(PxSynth* s, float pan) { PUSH_CMD_VOID(PX_CMD_SET_GLOBAL_PAN, .param_float = {pan}); }

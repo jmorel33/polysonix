@@ -1,3 +1,30 @@
+## v1.4.5 (2026/01/05)
+
+This update refines the modulation system with **Non-Linear Response Curves** for velocity and aftertouch, plus a new **Keyboard Tracking** modulation source.
+
+### Features
+*   **Response Curves:**
+    *   **Per-Source Customization:** Velocity and Aftertouch (Channel & Poly) can now be mapped using one of four curves: `Linear` (default), `Exponential`, `Logarithmic`, or `S-Curve`.
+    *   **Global Application:** Curves are applied globally per patch, transforming the raw input (0.0–1.0) before it enters the modulation matrix.
+    *   **Curve Types:**
+        *   `PX_CURVE_LINEAR`: 1:1 mapping.
+        *   `PX_CURVE_EXP`: Sensitive at high velocities/pressures (power of 2).
+        *   `PX_CURVE_LOG`: Sensitive at low velocities/pressures (logarithmic).
+        *   `PX_CURVE_S`: Smooth ease-in/ease-out response.
+*   **Keyboard Tracking Source:**
+    *   **New Source:** Added `PX_MOD_SRC_KEY_TRACK` to the modulation matrix.
+    *   **Functionality:** Generates a modulation signal based on the note pitch, normalized relative to C4 (MIDI 60).
+    *   **Range:** -1.0 (low keys) to +1.0 (high keys), allowing key position to modulate any parameter (e.g., filter cutoff, LFO speed).
+
+### API Changes
+*   **New Functions:**
+    *   `PX_SetVelocityCurve(s, curve)` / `PX_GetVelocityCurve(s)`
+    *   `PX_SetAftertouchCurve(s, curve)` / `PX_GetAftertouchCurve(s)`
+*   **New Enums:** `PxCurveType` (`PX_CURVE_LINEAR`, `PX_CURVE_EXP`, etc.).
+*   **Updated Enum:** Added `PX_MOD_SRC_KEY_TRACK` to `PxModSource`.
+
+### Backward Compatibility
+*   Defaults to `PX_CURVE_LINEAR` and 0.0 amount for Key Track modulation, preserving existing patch behavior.
 # Polysonix Update Log
 
 ## v1.4.4 (2026/01/05)
