@@ -166,7 +166,6 @@ This major update introduces a full **Modulation Matrix** for Velocity and Chann
 *   **Migration:** Code using v1.2 velocity functions must be updated to use `PX_SetModMatrixSlot` to achieve similar results.
 
 ## v1.2 (2026/01/04)
-## v1.2 (2026/01/04)
 
 This release introduces expressive capabilities with full support for **MIDI Velocity** and **Channel Aftertouch**.
 
