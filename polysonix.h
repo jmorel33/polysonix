@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 4
-#define POLYSONIX_VERSION_PATCH 2
+#define POLYSONIX_VERSION_PATCH 3
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -791,6 +791,10 @@ typedef struct {
     float f_coeff;
     float q_inv_coeff;
     float pole3_coeff; // Coefficient for the 1-pole stage
+
+    // v1.4.3: Parallel 1-pole states for combo modes at 6 dB
+    float combo_lp_state;
+    float combo_hp_state;
     PxFilterMode current_mode;
     int poles; // Will be 2, 3, or 4
     float drive;
@@ -1314,6 +1318,8 @@ static void Filter_Init(Filter* filter) {
     filter->dc_block_y1 = 0.0f;
     filter->os_x1 = 0.0f;
     filter->os_x2 = 0.0f;
+    filter->combo_lp_state = 0.0f;
+    filter->combo_hp_state = 0.0f;
 }
 
 static void Filter_SetCoefficients(Filter* filter, float cutoff_hz, float resonance_q, PxFilterMode mode, int poles, float sample_rate) {
@@ -1369,6 +1375,27 @@ static float Filter_Process_Internal(Filter* filter, float input_sample) {
     filter->dc_block_x1 = input_sample;
     filter->dc_block_y1 = dc_blocked;
     float driven_input = tanhf(dc_blocked * filter->drive);
+
+    // v1.4.3: Full combo support at 6 dB/oct using parallel 1-pole filters
+    bool is_combo = (filter->current_mode == PX_FILTER_MODE_LP_BP ||
+                     filter->current_mode == PX_FILTER_MODE_LP_HP ||
+                     filter->current_mode == PX_FILTER_MODE_BP_HP);
+
+    if (filter->poles == 1 && is_combo) {
+        // Parallel: one dedicated LP and one HP 1-pole
+        filter->combo_lp_state += filter->pole3_coeff * (driven_input - filter->combo_lp_state);
+        filter->combo_hp_state += filter->pole3_coeff * (driven_input - filter->combo_hp_state);
+
+        float lp = filter->combo_lp_state;
+        float hp = driven_input - filter->combo_hp_state;
+
+        switch (filter->current_mode) {
+            case PX_FILTER_MODE_LP_BP: return (lp + (driven_input - lp - hp)) * 0.707f;  // LP + derived BP
+            case PX_FILTER_MODE_LP_HP: return (lp + hp) * 0.707f;
+            case PX_FILTER_MODE_BP_HP: return ((driven_input - lp - hp) + hp) * 0.707f;
+            default: return driven_input;
+        }
+    }
 
     // v1.4.2: Handle 1-pole (6 dB/oct) modes efficiently
     if (filter->poles == 1) {
