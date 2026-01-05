@@ -1,5 +1,22 @@
 # Polysonix Update Log
 
+## v1.4.4 (2026/01/09)
+
+This update introduces a **Global Post-Filter**, allowing final tone shaping of the entire mix before the limiter.
+
+### Features
+*   **Global Post-Filter:**
+    *   **Architecture:** Adds a new filter stage after voice mixing and before the master limiter.
+    *   **Stereo Processing:** Uses two independent filter instances (Left/Right) to ensure correct stereo signal processing without state crosstalk.
+    *   **Full Control:** Supports all existing filter modes (LP, HP, BP, Notch, Allpass, Combo) and slopes (6/12/18/24 dB/oct).
+    *   **API:** New functions to control the global filter: `PX_SetGlobalFilterEnabled`, `PX_SetGlobalFilterParam`, `PX_SetGlobalFilterMode`.
+*   **Optimization:**
+    *   Calculates filter coefficients once per block and shares them between Left/Right channels for efficiency.
+
+### Backward Compatibility
+*   **Disabled by Default:** The global filter is disabled in default patches (`global_filter_enabled = false`), ensuring existing projects sound identical.
+*   **Struct Update:** `PxSynth` and `PxPatch` structures have been updated to include global filter state.
+
 ## v1.4.3 (2026/01/08)
 
 This update delivers **Full Combo Filter Support** at all filter slopes, including the gentle **6 dB/oct (1-pole)** setting.
