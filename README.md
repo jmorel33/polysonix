@@ -272,17 +272,84 @@ The library also provides a comprehensive set of `PX_Set...` and `PX_Get...` fun
 
 Additionally, there are several `PX_Get...Info()` functions that provide read-only snapshots of the internal state for UI display.
 
-## Data Structures
+## Data Structures & Enums
 
-- `PxSynth`: An opaque handle representing the synthesizer instance.
-- `PxConfig`: A struct for configuring the synthesizer upon creation.
-- `PxPatch`: A struct that holds the editable parameters of the sound.
-- `PxVoiceInfo`: A read-only snapshot of a voice's real-time state.
-- `PxLimiterInfo`: A read-only snapshot of the limiter's state.
-- `PxWaveInfo`: Information about a specific waveform.
-- `PxLFOInfo`: A read-only snapshot of an LFO's state.
-- `PxADSRParams`: A struct for defining ADSR envelope parameters.
-- `PxLFOParams`: A struct for defining LFO parameters.
+### Enums
+Enums are used extensively in `polysonix.h` to define modes, targets, and parameters.
+
+*   `PxFilterMode`: `PX_FILTER_MODE_OFF`, `PX_FILTER_MODE_LP`, `PX_FILTER_MODE_BP`, `PX_FILTER_MODE_HP`, `PX_FILTER_MODE_LP_BP`, `PX_FILTER_MODE_LP_HP`, `PX_FILTER_MODE_BP_HP`, `PX_FILTER_MODE_NOTCH`, `PX_FILTER_MODE_ALLPASS`.
+*   `PxADSRDestination`: `PX_ADSR_DEST_NONE`, `PX_ADSR_DEST_PARAM1` (Mod A), `PX_ADSR_DEST_PARAM2` (Mod B), `PX_ADSR_DEST_PARAM3` (Mod C), `PX_ADSR_DEST_AMP`, `PX_ADSR_DEST_FREQUENCY`, `PX_ADSR_DEST_LFO0_OUTPUT_LEVEL`, `PX_ADSR_DEST_LFO1_OUTPUT_LEVEL`, `PX_ADSR_DEST_LFO2_OUTPUT_LEVEL`, `PX_ADSR_DEST_FILTER_CUTOFF`, `PX_ADSR_DEST_FILTER_ENV_INPUT`, `PX_ADSR_DEST_FILTER_RESONANCE`.
+*   `PxLFODestination`: `PX_LFO_DEST_NONE`, `PX_LFO_DEST_PARAM1`, `PX_LFO_DEST_PARAM2`, `PX_LFO_DEST_PARAM3`, `PX_LFO_DEST_FILTER_CUTOFF`, `PX_LFO_DEST_AMP`, `PX_LFO_DEST_PITCH`, `PX_LFO_DEST_PAN`.
+*   `PxADSRParamType`: `PX_ADSR_PARAM_ATTACK`, `PX_ADSR_PARAM_DECAY`, `PX_ADSR_PARAM_SUSTAIN`, `PX_ADSR_PARAM_RELEASE`.
+*   `PxFilterParamType`: `PX_FILTER_PARAM_CUTOFF`, `PX_FILTER_PARAM_RESONANCE`, `PX_FILTER_PARAM_ENV_AMOUNT`, `PX_FILTER_PARAM_DRIVE`, `PX_FILTER_PARAM_KEYTRACK`, `PX_FILTER_PARAM_POLES`.
+*   `PxModSource`: `PX_MOD_SRC_VELOCITY`, `PX_MOD_SRC_AFTERTOUCH`, `PX_MOD_SRC_MODWHEEL` (CC #1), `PX_MOD_SRC_PITCHBEND`, `PX_MOD_SRC_POLY_AFTERTOUCH`.
+*   `PxOscillatorUpdateMode`: `PX_OSC_UPDATE_MODE_PER_SAMPLE`, `PX_OSC_UPDATE_MODE_FIXED_RATE`, `PX_OSC_UPDATE_MODE_NYQUIST`.
+
+### Core Structures
+
+**`PxConfig`**
+Configuration settings passed to `PX_Create`.
+```c
+typedef struct PxConfig {
+    int num_voices;                     // Max simultaneous voices (e.g., 16)
+    int num_lfos;                       // Global LFOs (e.g., 3)
+    int num_voice_adsrs;                // ADSRs per voice (e.g., 3)
+    float sample_rate;                  // Sample rate in Hz (e.g., 44100.0f)
+    int samples_per_lfo_update;         // Audio samples between LFO updates
+    float lfo_update_interval_ms;       // LFO update interval in ms
+    PxOscillatorUpdateMode osc_update_mode; // Quality vs Performance mode
+    float osc_fixed_update_rate_hz;     // Rate for FIXED_RATE mode
+    float nyquist_precision_multiplier; // Multiplier for NYQUIST mode
+    bool use_gpu;                       // Enable GPU acceleration (if supported)
+} PxConfig;
+```
+
+**`PxVoiceInfo`**
+Read-only snapshot of a voice's real-time state (via `PX_GetVoiceInfo`).
+```c
+typedef struct PxVoiceInfo {
+    bool active;                // Is the voice currently playing/releasing?
+    int midi_note;              // MIDI note number
+    float frequency;            // Current frequency in Hz
+    float pan_position;         // Stereo pan (-1.0 to 1.0)
+    float effective_amplitude;  // Final amplitude
+    PxADSRState adsr_states[3]; // Current state (IDLE, ATTACK, etc.) of ADSRs
+    float adsr_levels[3];       // Current output level of ADSRs
+    float lfo_outputs[3];       // Current output value of LFOs
+} PxVoiceInfo;
+```
+
+**`PxLFOInfo`**
+Read-only snapshot of an LFO's state (via `PX_GetLFOInfo`).
+```c
+typedef struct PxLFOInfo {
+    bool enabled;           // Is LFO active?
+    int wave_idx;           // Waveform index
+    float frequency;        // Rate in Hz
+    bool reset_on_key_on;   // Does phase reset on Note On?
+    bool adsr_enabled;      // Is internal ADSR active?
+    float adsr_level;       // Current internal ADSR level
+    float phase;            // Current phase (0.0 to 1.0)
+    float raw_output;       // Raw waveform output (-1.0 to 1.0)
+    float final_output;     // Final output after ADSR shaping
+} PxLFOInfo;
+```
+
+**`PxLimiterInfo`**
+Read-only snapshot of the limiter (via `PX_GetLimiterInfo`).
+```c
+typedef struct PxLimiterInfo {
+    bool initialized;           // Is limiter running?
+    float gain_reduction_db;    // Current reduction in dB (non-negative)
+} PxLimiterInfo;
+```
+
+**Other Structures**
+*   `PxSynth`: An opaque handle representing the synthesizer instance.
+*   `PxPatch`: A struct that holds the editable parameters of the sound (internal use, modified via API).
+*   `PxWaveInfo`: Information about a specific waveform (name, compilation status).
+*   `PxADSRParams`: Configuration for an ADSR envelope (attack, decay, sustain, release, enabled).
+*   `PxLFOParams`: Configuration for an LFO (waveform, frequency, etc.).
 
 ## Changelog
 For the full history of changes, please see [updatelog.txt](updatelog.txt).
