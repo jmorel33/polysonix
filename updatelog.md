@@ -50,7 +50,6 @@ This update refines the modulation system with **Non-Linear Response Curves** fo
 
 ### Backward Compatibility
 *   Defaults to `PX_CURVE_LINEAR` and 0.0 amount for Key Track modulation, preserving existing patch behavior.
-# Polysonix Update Log
 
 ## v1.4.4 (2026/01/05)
 
