@@ -1,5 +1,18 @@
 # Polysonix Update Log
 
+## v1.4.3 (2026/01/08)
+
+This update delivers **Full Combo Filter Support** at all filter slopes, including the gentle **6 dB/oct (1-pole)** setting.
+
+### Features
+*   **True Combo Modes at 6 dB/oct:**
+    *   **New Architecture:** Implemented parallel independent 1-pole filter stages (`combo_lp_state`, `combo_hp_state`) specifically for combo modes (`LP+BP`, `LP+HP`, `BP+HP`) when `poles == 1`.
+    *   **Accurate Summation:** Ensures mathematically correct and musically useful signal summation for these combinations, which was previously limited or approximated at 6 dB/oct.
+    *   **Optimized:** Standard single modes (LP, HP, BP, Notch, Allpass) continue to use the efficient shared-state path.
+
+### Backward Compatibility
+*   Fully backward compatible. Existing patches using steeper slopes (12/18/24 dB/oct) or single modes at 6 dB/oct use existing code paths and sound identical.
+
 ## v1.4.2 (2026/01/07)
 
 This update introduces full support for **1-Pole (6 dB/oct)** filtering, enabling gentler, broader tonal shaping.

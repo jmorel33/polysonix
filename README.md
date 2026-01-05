@@ -38,10 +38,13 @@ like UI, input handling, and audio device management.
   - **Polyphony:** Configurable number of voices (up to 16) with intelligent voice stealing.
   - **ADSR Envelopes**: Up to 3 independent ADSR envelopes per voice for modulating various parameters.
   - **LFOs**: Up to 3 independent Low-Frequency Oscillators (LFOs) with their own ADSRs and flexible routing.
-  - **Advanced Multi-Mode Filter:** A highly flexible state-variable filter per voice. It features multiple modes including standard shapes (LP, BP, HP, Notch),
-        unique combo-filters (e.g., LP+BP), and a key feature: selectable slopes. These provide distinct tonal characters: 12dB/oct (aggressive, Oberheim-style),
-        18dB/oct (balanced, Roland-style), and 24dB/oct (smooth, Moog-style), available for all filter types. The filter also includes key tracking, drive,
-        and extensive envelope/LFO modulation.
+  - **Advanced Multi-Mode Filter:** A highly flexible state-variable filter per voice with key tracking, drive, and extensive modulation.
+    *   **Modes:** Standard (LP, BP, HP, Notch, Allpass) and Combos (LP+BP, LP+HP, BP+HP).
+    *   **Selectable Slopes:**
+        *   **6 dB/oct (1-pole):** Gentle, broad shaping. Uses **parallel independent filters** for true combo modes (e.g., LP+BP is accurately summed).
+        *   **12 dB/oct (2-pole):** Aggressive, Oberheim-style (SVF topology).
+        *   **18 dB/oct (3-pole):** Balanced, Roland-style.
+        *   **24 dB/oct (4-pole):** Smooth, Moog-style.
   - **Unified Modulation Matrix:** A comprehensive 16-slot modulation matrix allowing standard controllers (Velocity, Aftertouch, Mod Wheel, Pitch Bend) to modulate nearly any synthesis parameter (Oscillators, Filters, LFOs, ADSRs).
   - **Unilegato Mode**: Smooth, monophonic legato with pitch sliding between notes.
 - **Stereo Signal Path:** Full stereo output with per-voice panning and LFO pan modulation.
