@@ -1,5 +1,5 @@
 # Polysonix
-**Version 1.4.2** | **Author:** Jacques Morel
+**Version 1.4.4** | **Author:** Jacques Morel
 
 A single-header polyphonic synthesizer engine.
 
@@ -47,6 +47,7 @@ like UI, input handling, and audio device management.
         *   **24 dB/oct (4-pole):** Smooth, Moog-style.
   - **Unified Modulation Matrix:** A comprehensive 16-slot modulation matrix allowing standard controllers (Velocity, Aftertouch, Mod Wheel, Pitch Bend) to modulate nearly any synthesis parameter (Oscillators, Filters, LFOs, ADSRs).
   - **Unilegato Mode**: Smooth, monophonic legato with pitch sliding between notes.
+  - **Global Post-Filter**: A stereo master filter (LP/HP/BP/etc.) placed after voice mixing for final tone shaping.
 - **Stereo Signal Path:** Full stereo output with per-voice panning and LFO pan modulation.
 - **Built-in Dynamics:** Includes a per-voice soft-clipper to prevent harsh transients and a master bus lookahead limiter to prevent final output clipping.
 - **Oscillator Quality Modes**: Choose between per-sample calculation for quality or interpolated modes for performance.
@@ -269,7 +270,7 @@ The library also provides a comprehensive set of `PX_Set...` and `PX_Get...` fun
 
 - Voice ADSR parameters
 - LFO parameters and routing
-- Filter parameters
+- Filter parameters (Per-Voice and Global)
 - Global settings like pan and limiter
 - Unilegato settings
 
@@ -355,7 +356,7 @@ typedef struct PxLimiterInfo {
 *   `PxLFOParams`: Configuration for an LFO (waveform, frequency, etc.).
 
 ## Changelog
-For the full history of changes, please see [updatelog.txt](updatelog.txt).
+For the full history of changes, please see [updatelog.md](updatelog.md).
 
 ## Polysonix Waveform Scripting Language
 The Polysonix Waveform Scripting Language is a domain-specific language for defining mathematical expressions that generate audio waveforms in the Polysonix synthesizer. Expressions are stored as strings, tokenized, parsed into an abstract syntax tree (AST), compiled into bytecode, and executed by a virtual machine (VM) for real-time audio synthesis.

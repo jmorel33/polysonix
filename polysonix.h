@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 4
-#define POLYSONIX_VERSION_PATCH 3
+#define POLYSONIX_VERSION_PATCH 4
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -602,6 +602,17 @@ PX_API void        PX_SetFilterMode(PxSynth* s, PxFilterMode mode);
  */
 PX_API PxFilterMode PX_GetFilterMode(PxSynth* s);
 
+// --- Global Post-Filter API (v1.4.4) ---
+
+PX_API void PX_SetGlobalFilterEnabled(PxSynth* s, bool enabled);
+PX_API bool PX_GetGlobalFilterEnabled(PxSynth* s);
+
+PX_API void PX_SetGlobalFilterParam(PxSynth* s, PxFilterParamType p, float v);
+PX_API float PX_GetGlobalFilterParam(PxSynth* s, PxFilterParamType p);
+
+PX_API void PX_SetGlobalFilterMode(PxSynth* s, PxFilterMode mode);
+PX_API PxFilterMode PX_GetGlobalFilterMode(PxSynth* s);
+
 
 // --- Global & Limiter Parameters ---
 
@@ -966,6 +977,16 @@ typedef struct PxPatch {
 
     // === v1.4: Pitch Bend Range (for classic feel when routed to pitch) ===
     float pitchbend_range_semitones;  // Default 2.0 — used only if matrix routes to pitch
+
+    // v1.4.4: Global post-filter params (independent of per-voice)
+    bool global_filter_enabled;         // Default false
+    float global_filter_cutoff_hz;
+    float global_filter_resonance_q;
+    float global_filter_env_amount_hz;  // Ignored (global, no env)
+    float global_filter_drive;
+    float global_filter_key_track;      // Ignored (global, no key)
+    int global_filter_poles;
+    PxFilterMode global_filter_mode;
 } PxPatch;
 
 // --- THREAD-SAFE COMMUNICATION STRUCTURES ---
@@ -1002,6 +1023,9 @@ typedef enum {
     PX_CMD_SET_MOD_MATRIX_SLOT,
     PX_CMD_ENABLE_MOD_MATRIX_SLOT,
     PX_CMD_CLEAR_MOD_MATRIX,
+    PX_CMD_SET_GLOBAL_FILTER_ENABLED,
+    PX_CMD_SET_GLOBAL_FILTER_PARAM,
+    PX_CMD_SET_GLOBAL_FILTER_MODE,
     PX_CMD_CONTROL_CHANGE,
     PX_CMD_PITCH_BEND,
     PX_CMD_SET_PITCHBEND_RANGE,
@@ -1022,6 +1046,9 @@ typedef union {
     struct { float pressure; } aftertouch;
     struct { int slot; int src; int dest; float amount; } mod_slot;
     struct { int slot; bool enabled; } mod_enable;
+    struct { bool enabled; } global_filter_enable;
+    struct { int param_type; float value; } global_filter_param;
+    struct { int mode; } global_filter_mode;
     struct { int cc_num; float value; } cc;
     struct { float value; } bend;  // 0.0 to 1.0
     struct { int key_id; float pressure; } poly_at;
@@ -1073,6 +1100,10 @@ struct PxSynth {
     float pitchbend_value;            // -1.0 to +1.0 (live global value)
 
     // No global poly aftertouch needed — stored per-voice
+
+    // v1.4.4: Global post-filter instance
+    Filter global_filter_l;
+    Filter global_filter_r;
 
     // --- THREAD-SAFE MEMBERS ---
     CommandQueue cmd_queue;
@@ -1714,6 +1745,30 @@ static void PX_ProcessCommands(PxSynth* s) {
                     s->patch.mod_matrix[i].amount = 0.0f;
                 }
                 break;
+            case PX_CMD_SET_GLOBAL_FILTER_ENABLED:
+                s->patch.global_filter_enabled = cmd.data.global_filter_enable.enabled;
+                break;
+            case PX_CMD_SET_GLOBAL_FILTER_PARAM:
+                {
+                    int p = cmd.data.global_filter_param.param_type;
+                    float v = cmd.data.global_filter_param.value;
+                    switch ((PxFilterParamType)p) {
+                        case PX_FILTER_PARAM_CUTOFF: s->patch.global_filter_cutoff_hz = fmaxf(20.0f, v); break;
+                        case PX_FILTER_PARAM_RESONANCE: s->patch.global_filter_resonance_q = fmaxf(0.5f, v); break;
+                        case PX_FILTER_PARAM_DRIVE: s->patch.global_filter_drive = fmaxf(0.1f, v); break;
+                        case PX_FILTER_PARAM_POLES:
+                            if (v < 1.5f) s->patch.global_filter_poles = 1;
+                            else if (v < 2.5f) s->patch.global_filter_poles = 2;
+                            else if (v < 3.5f) s->patch.global_filter_poles = 3;
+                            else s->patch.global_filter_poles = 4;
+                            break;
+                        default: break; // Env/keytrack ignored for global
+                    }
+                }
+                break;
+            case PX_CMD_SET_GLOBAL_FILTER_MODE:
+                s->patch.global_filter_mode = (PxFilterMode)cmd.data.global_filter_mode.mode;
+                break;
             case PX_CMD_CONTROL_CHANGE:
                 if (cmd.data.cc.cc_num == 1) {  // Mod Wheel only
                     s->modwheel_value = fmaxf(0.0f, fminf(1.0f, cmd.data.cc.value));
@@ -1763,6 +1818,14 @@ static void PX_UpdateUISnapshot(PxSynth* s) {
     s->ui_snapshot.patch_copy.unilegato_enabled = s->patch.unilegato_enabled;
     s->ui_snapshot.patch_copy.unilegato_slide_duration_s = s->patch.unilegato_slide_duration_s;
     memcpy(s->ui_snapshot.patch_copy.mod_matrix, s->patch.mod_matrix, PX_MOD_MATRIX_SLOTS * sizeof(PxModSlot));
+    s->ui_snapshot.patch_copy.global_filter_enabled = s->patch.global_filter_enabled;
+    s->ui_snapshot.patch_copy.global_filter_cutoff_hz = s->patch.global_filter_cutoff_hz;
+    s->ui_snapshot.patch_copy.global_filter_resonance_q = s->patch.global_filter_resonance_q;
+    s->ui_snapshot.patch_copy.global_filter_env_amount_hz = s->patch.global_filter_env_amount_hz;
+    s->ui_snapshot.patch_copy.global_filter_drive = s->patch.global_filter_drive;
+    s->ui_snapshot.patch_copy.global_filter_key_track = s->patch.global_filter_key_track;
+    s->ui_snapshot.patch_copy.global_filter_poles = s->patch.global_filter_poles;
+    s->ui_snapshot.patch_copy.global_filter_mode = s->patch.global_filter_mode;
     s->ui_snapshot.patch_copy.pitchbend_range_semitones = s->patch.pitchbend_range_semitones;
     s->ui_snapshot.lfo_update_interval_ms = s->config.lfo_update_interval_ms;
 
@@ -1924,6 +1987,19 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     }
 
     s->patch.pitchbend_range_semitones = 2.0f;  // Classic ±2 semitones when used
+
+    // v1.4.4: Global filter defaults (disabled)
+    s->patch.global_filter_enabled = false;
+    s->patch.global_filter_cutoff_hz = 2000.0f;
+    s->patch.global_filter_resonance_q = 0.707f;
+    s->patch.global_filter_env_amount_hz = 0.0f; // Ignored
+    s->patch.global_filter_drive = 1.0f;
+    s->patch.global_filter_key_track = 0.0f; // Ignored
+    s->patch.global_filter_poles = 3;
+    s->patch.global_filter_mode = PX_FILTER_MODE_LP;
+    Filter_Init(&s->global_filter_l);
+    Filter_Init(&s->global_filter_r);
+
     s->modwheel_value = 0.0f;
     s->pitchbend_value = 0.0f;  // Centered
 
@@ -1975,6 +2051,25 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
     if (s->limiter.threshold != s->patch.limiter_threshold || s->limiter.release_ms_cache != s->patch.limiter_release_ms) {
         InitializeEnhancedLimiter(&s->limiter, s->config.sample_rate, s->patch.limiter_threshold, s->patch.limiter_release_ms);
     }
+
+    // v1.4.4: Pre-calculate global filter coefficients if enabled (Optimization)
+    if (s->patch.global_filter_enabled) {
+        Filter_SetCoefficients(&s->global_filter_l, s->patch.global_filter_cutoff_hz,
+                               s->patch.global_filter_resonance_q,
+                               s->patch.global_filter_mode,
+                               s->patch.global_filter_poles,
+                               s->config.sample_rate);
+        s->global_filter_l.drive = s->patch.global_filter_drive;
+
+        // Copy coefficients to right channel filter
+        s->global_filter_r.f_coeff = s->global_filter_l.f_coeff;
+        s->global_filter_r.q_inv_coeff = s->global_filter_l.q_inv_coeff;
+        s->global_filter_r.pole3_coeff = s->global_filter_l.pole3_coeff;
+        s->global_filter_r.current_mode = s->global_filter_l.current_mode;
+        s->global_filter_r.poles = s->global_filter_l.poles;
+        s->global_filter_r.drive = s->global_filter_l.drive;
+    }
+
     memset(stereo_buffer, 0, num_frames * 2 * sizeof(float));
     // --- Main Sample Loop ---
     for (int i = 0; i < num_frames; i++) {
@@ -2303,6 +2398,13 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             v->phase = fmodf(v->phase + (v->frequency * s->time_per_sample), 1.f);
         } // End voice loop
 
+        // v1.4.4: Global post-filter (if enabled)
+        if (s->patch.global_filter_enabled) {
+            // Apply to left and right separately
+            mixed_sample_l_f = Filter_Process_Internal(&s->global_filter_l, mixed_sample_l_f);
+            mixed_sample_r_f = Filter_Process_Internal(&s->global_filter_r, mixed_sample_r_f);
+        }
+
         // --- Limiter and Final Output ---
         float output_l_f, output_r_f;
         ProcessEnhancedLimiter(&s->limiter, &mixed_sample_l_f, &mixed_sample_r_f, &output_l_f, &output_r_f, s->config.sample_rate);
@@ -2371,6 +2473,37 @@ PX_API void PX_SetUnilegatoEnabled(PxSynth* s, bool enabled) { PUSH_CMD_VOID(PX_
 PX_API void PX_SetUnilegatoSlideTime(PxSynth* s, float duration_s) { PUSH_CMD_VOID(PX_CMD_SET_UNILEGATO_SLIDE_TIME, .param_float = {duration_s}); }
 PX_API void PX_SetFilterParam(PxSynth* s, PxFilterParamType p, float v) { PUSH_CMD_VOID(PX_CMD_SET_FILTER_PARAM, .param_enum_float = {(int)p, v}); }
 PX_API void PX_SetFilterMode(PxSynth* s, PxFilterMode mode) { PUSH_CMD_VOID(PX_CMD_SET_FILTER_MODE, .param_mode = {(int)mode}); }
+
+PX_API void PX_SetGlobalFilterEnabled(PxSynth* s, bool enabled) {
+    PUSH_CMD_VOID(PX_CMD_SET_GLOBAL_FILTER_ENABLED, .global_filter_enable = {enabled});
+}
+PX_API bool PX_GetGlobalFilterEnabled(PxSynth* s) {
+    return s ? s->ui_snapshot.patch_copy.global_filter_enabled : false;
+}
+
+PX_API void PX_SetGlobalFilterParam(PxSynth* s, PxFilterParamType p, float v) {
+    PUSH_CMD_VOID(PX_CMD_SET_GLOBAL_FILTER_PARAM, .global_filter_param = {(int)p, v});
+}
+PX_API float PX_GetGlobalFilterParam(PxSynth* s, PxFilterParamType p) {
+    if (!s) return 0.0f;
+    switch (p) {
+        case PX_FILTER_PARAM_CUTOFF: return s->ui_snapshot.patch_copy.global_filter_cutoff_hz;
+        case PX_FILTER_PARAM_RESONANCE: return s->ui_snapshot.patch_copy.global_filter_resonance_q;
+        case PX_FILTER_PARAM_ENV_AMOUNT: return s->ui_snapshot.patch_copy.global_filter_env_amount_hz;
+        case PX_FILTER_PARAM_DRIVE: return s->ui_snapshot.patch_copy.global_filter_drive;
+        case PX_FILTER_PARAM_KEYTRACK: return s->ui_snapshot.patch_copy.global_filter_key_track;
+        case PX_FILTER_PARAM_POLES: return (float)s->ui_snapshot.patch_copy.global_filter_poles;
+    }
+    return 0.0f;
+}
+
+PX_API void PX_SetGlobalFilterMode(PxSynth* s, PxFilterMode mode) {
+    PUSH_CMD_VOID(PX_CMD_SET_GLOBAL_FILTER_MODE, .global_filter_mode = {(int)mode});
+}
+PX_API PxFilterMode PX_GetGlobalFilterMode(PxSynth* s) {
+    return s ? s->ui_snapshot.patch_copy.global_filter_mode : PX_FILTER_MODE_OFF;
+}
+
 PX_API void PX_SetGlobalVoicePan(PxSynth* s, float pan) { PUSH_CMD_VOID(PX_CMD_SET_GLOBAL_PAN, .param_float = {pan}); }
 PX_API void PX_SetLimiterThreshold(PxSynth* s, float threshold) { PUSH_CMD_VOID(PX_CMD_SET_LIMITER_THRESHOLD, .param_float = {threshold}); }
 PX_API void PX_SetLimiterRelease(PxSynth* s, float release_ms) { PUSH_CMD_VOID(PX_CMD_SET_LIMITER_RELEASE, .param_float = {release_ms}); }
