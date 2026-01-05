@@ -1376,43 +1376,32 @@ static float Filter_Process_Internal(Filter* filter, float input_sample) {
     filter->dc_block_y1 = dc_blocked;
     float driven_input = tanhf(dc_blocked * filter->drive);
 
-    // v1.4.3: Full combo support at 6 dB/oct using parallel 1-pole filters
-    bool is_combo = (filter->current_mode == PX_FILTER_MODE_LP_BP ||
-                     filter->current_mode == PX_FILTER_MODE_LP_HP ||
-                     filter->current_mode == PX_FILTER_MODE_BP_HP);
-
-    if (filter->poles == 1 && is_combo) {
-        // Parallel: one dedicated LP and one HP 1-pole
+    // v1.4.3: Unified 6 dB/oct (1-pole) path with full combo support
+    if (filter->poles == 1) {
+        // Always compute both LP and HP 1-pole responses in parallel
         filter->combo_lp_state += filter->pole3_coeff * (driven_input - filter->combo_lp_state);
         filter->combo_hp_state += filter->pole3_coeff * (driven_input - filter->combo_hp_state);
 
         float lp = filter->combo_lp_state;
         float hp = driven_input - filter->combo_hp_state;
+        float bp = driven_input - lp - hp;  // Derived band-pass
 
+        float output;
         switch (filter->current_mode) {
-            case PX_FILTER_MODE_LP_BP: return (lp + (driven_input - lp - hp)) * 0.707f;  // LP + derived BP
-            case PX_FILTER_MODE_LP_HP: return (lp + hp) * 0.707f;
-            case PX_FILTER_MODE_BP_HP: return ((driven_input - lp - hp) + hp) * 0.707f;
-            default: return driven_input;
+            case PX_FILTER_MODE_LP:       output = lp; break;
+            case PX_FILTER_MODE_HP:       output = hp; break;
+            case PX_FILTER_MODE_BP:       output = bp; break;
+            case PX_FILTER_MODE_NOTCH:    output = lp + hp; break;
+            case PX_FILTER_MODE_ALLPASS:  output = driven_input - 2.0f * bp; break;
+            case PX_FILTER_MODE_LP_BP:    output = (lp + bp) * 0.707f; break;
+            case PX_FILTER_MODE_LP_HP:    output = (lp + hp) * 0.707f; break;
+            case PX_FILTER_MODE_BP_HP:    output = (bp + hp) * 0.707f; break;
+            default:                      output = driven_input; break;
         }
+        return output;
     }
 
-    // v1.4.2: Handle 1-pole (6 dB/oct) modes efficiently
-    if (filter->poles == 1) {
-        // Use single 1-pole stage (reuse pole3 state)
-        float lp = filter->pole3_lp_state + filter->pole3_coeff * (driven_input - filter->pole3_lp_state);
-        filter->pole3_lp_state = lp;
-
-        switch (filter->current_mode) {
-            case PX_FILTER_MODE_LP:      return lp;
-            case PX_FILTER_MODE_HP:      return driven_input - lp;
-            case PX_FILTER_MODE_BP:      return driven_input - 2.0f * lp; // Approximation
-            case PX_FILTER_MODE_NOTCH:   return driven_input; // No notch in 1-pole
-            case PX_FILTER_MODE_ALLPASS: return driven_input - 2.0f * lp + input_sample; // Approx
-            default: return driven_input;
-        }
-    }
-
+    // --- Multi-pole path (poles >= 2): Full SVF with combos ---
     // --- Stage 1: 12dB SVF (Always runs) ---
     // These are the raw 12dB outputs, calculated fresh each sample.
     float notch1 = driven_input - filter->q_inv_coeff * filter->bp_state1;
