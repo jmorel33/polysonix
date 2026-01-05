@@ -41,7 +41,7 @@ like UI, input handling, and audio device management.
   - **Advanced Multi-Mode Filter:** A highly flexible state-variable filter per voice with key tracking, drive, and extensive modulation.
     *   **Modes:** Standard (LP, BP, HP, Notch, Allpass) and Combos (LP+BP, LP+HP, BP+HP).
     *   **Selectable Slopes:**
-        *   **6 dB/oct (1-pole):** Gentle, broad shaping. Uses **parallel independent filters** for true combo modes (e.g., LP+BP is accurately summed).
+        *   **6 dB/oct (1-pole):** Gentle, Korg MS-20, Roland SH series, EMS VCS3. Uses **parallel independent filters** for true combo modes (e.g., LP+BP is accurately summed).
         *   **12 dB/oct (2-pole):** Aggressive, Oberheim-style (SVF topology).
         *   **18 dB/oct (3-pole):** Balanced, Roland-style.
         *   **24 dB/oct (4-pole):** Smooth, Moog-style.
