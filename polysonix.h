@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 4
-#define POLYSONIX_VERSION_PATCH 1
+#define POLYSONIX_VERSION_PATCH 2
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -152,7 +152,7 @@ typedef enum {
     PX_FILTER_PARAM_ENV_AMOUNT, /**< The amount of modulation applied from ADSRs to the cutoff frequency. */
     PX_FILTER_PARAM_DRIVE,      /**< The amount of saturation/drive applied at the filter's input. */
     PX_FILTER_PARAM_KEYTRACK,   /**< The amount the note's pitch affects the cutoff frequency (0.0 to 1.0). */
-    PX_FILTER_PARAM_POLES       /**< The number of poles (filter slope). The float value is rounded and clamped to an integer of 2 (12dB/oct), 3 (18dB/oct), or 4 (24dB/oct). */
+    PX_FILTER_PARAM_POLES       /**< The number of poles (filter slope). The float value is rounded and clamped to an integer of 1 (6dB/oct), 2 (12dB/oct), 3 (18dB/oct), or 4 (24dB/oct). */
 } PxFilterParamType;
 
 /**
@@ -1336,6 +1336,10 @@ static void Filter_SetCoefficients(Filter* filter, float cutoff_hz, float resona
     } else if (poles == 4) {
         q_for_poles = sqrtf(resonance_q);
     }
+    // For 1-pole (6dB), resonance has little effect — clamp gently
+    else if (poles == 1) {
+        q_for_poles = 0.707f;  // Neutral, no peaking
+    }
 
     float freq_factor = cutoff_hz / sample_rate;
     float max_q_at_freq = 20.0f * (1.0f - freq_factor * freq_factor);
@@ -1365,6 +1369,22 @@ static float Filter_Process_Internal(Filter* filter, float input_sample) {
     filter->dc_block_x1 = input_sample;
     filter->dc_block_y1 = dc_blocked;
     float driven_input = tanhf(dc_blocked * filter->drive);
+
+    // v1.4.2: Handle 1-pole (6 dB/oct) modes efficiently
+    if (filter->poles == 1) {
+        // Use single 1-pole stage (reuse pole3 state)
+        float lp = filter->pole3_lp_state + filter->pole3_coeff * (driven_input - filter->pole3_lp_state);
+        filter->pole3_lp_state = lp;
+
+        switch (filter->current_mode) {
+            case PX_FILTER_MODE_LP:      return lp;
+            case PX_FILTER_MODE_HP:      return driven_input - lp;
+            case PX_FILTER_MODE_BP:      return driven_input - 2.0f * lp; // Approximation
+            case PX_FILTER_MODE_NOTCH:   return driven_input; // No notch in 1-pole
+            case PX_FILTER_MODE_ALLPASS: return driven_input - 2.0f * lp + input_sample; // Approx
+            default: return driven_input;
+        }
+    }
 
     // --- Stage 1: 12dB SVF (Always runs) ---
     // These are the raw 12dB outputs, calculated fresh each sample.
@@ -1620,9 +1640,13 @@ static void PX_ProcessCommands(PxSynth* s) {
                     case PX_FILTER_PARAM_DRIVE: s->patch.filter_drive = fmaxf(0.1f, cmd.data.param_enum_float.float_val); break;
                     case PX_FILTER_PARAM_KEYTRACK: s->patch.filter_key_track = fmaxf(0.0f, fminf(1.0f, cmd.data.param_enum_float.float_val)); break;
                     case PX_FILTER_PARAM_POLES:
-                        if (cmd.data.param_enum_float.float_val < 2.5f) s->patch.filter_poles = 2;
-                        else if (cmd.data.param_enum_float.float_val < 3.5f) s->patch.filter_poles = 3;
-                        else s->patch.filter_poles = 4;
+                        {
+                            float p = cmd.data.param_enum_float.float_val;
+                            if (p < 1.5f) s->patch.filter_poles = 1;        // 6 dB/oct
+                            else if (p < 2.5f) s->patch.filter_poles = 2;   // 12 dB/oct
+                            else if (p < 3.5f) s->patch.filter_poles = 3;   // 18 dB/oct
+                            else s->patch.filter_poles = 4;                 // 24 dB/oct
+                        }
                         break;
                 }
                 break;

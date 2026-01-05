@@ -1,5 +1,19 @@
 # Polysonix Update Log
 
+## v1.4.2 (2026/01/07)
+
+This update introduces full support for **1-Pole (6 dB/oct)** filtering, enabling gentler, broader tonal shaping.
+
+### Features
+*   **True 1-Pole Filter Support:**
+    *   **New Pole Option:** `PX_SetFilterParam(s, PX_FILTER_PARAM_POLES, 1.0f)` now enables a true 6 dB/oct slope.
+    *   **Unified Modes:** Works with existing `LP`, `HP`, `BP`, and `Allpass` modes. (Note: BP and Allpass are 1-pole approximations).
+    *   **Optimized Path:** Internally bypasses the standard SVF stages when running in 1-pole mode for efficiency.
+
+### Backward Compatibility
+*   Fully backward compatible. Existing patches using 2, 3, or 4 poles are unaffected.
+*   `PX_FILTER_PARAM_POLES` clamping has been updated to accept values down to `1.0`.
+
 ## v1.4.1 (2026/01/06)
 
 This update adds comprehensive support for **Polyphonic Aftertouch** (per-note pressure) within the unified Modulation Matrix.
