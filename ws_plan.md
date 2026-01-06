@@ -24,31 +24,31 @@ Implement a per-voice, bytecode-driven Wave Sequencer with 8-byte steps, microto
 // 16-Bit Logic Flags
 // --- FLOW CONTROL (Bits 0-3) ---
 #define PX_WSEQ_END             (1 << 0)  // Stop sequence (hold step)
-#define PX_WSEQ_LOOP            (1 << 1)  // Jump to Step 0
-#define PX_WSEQ_PINGPONG        (1 << 2)  // Reverse direction at ends
-#define PX_WSEQ_JUMP_RANDOM     (1 << 3)  // Jump to random step
+#define PX_WSEQ_LOOP            (1 << 1)  // Jump to Step 0 of Sequence
+#define PX_WSEQ_PINGPONG        (1 << 2)  // Reverse Wave Sequence direction at ends
+#define PX_WSEQ_JUMP_RANDOM     (1 << 3)  // Jump Wave Sequence to random step (within valid range on Sequence)
 
 // --- MODULATION / RESET (Bits 4-7) ---
-#define PX_WSEQ_RESET_LFO       (1 << 4)  // Reset all LFO phases to 0
-#define PX_WSEQ_RETRIG_ADSR     (1 << 5)  // Retrigger ADSR Attack
-#define PX_WSEQ_GLIDE           (1 << 6)  // (Reserved for Glide logic - Future)
-#define PX_WSEQ_LOCK_PHASE      (1 << 7)  // Hard Sync (Phase = 0)
+#define PX_WSEQ_RESET_LFO       (1 << 4)  // Reset Affected LFO phases to 0
+#define PX_WSEQ_RETRIG_ADSR     (1 << 5)  // Retrigger Affected ADSR Attack
+#define PX_WSEQ_GLIDE           (1 << 6)  // (Reserved for Glide Wave logic - Future)
+#define PX_WSEQ_LOCK_PHASE      (1 << 7)  // Wave Hard Sync (Phase = 0)
 
 // --- GENERATIVE (Bits 8-11) ---
-#define PX_WSEQ_PROB_50_MUTE    (1 << 8)  // 50% chance to output silence
-#define PX_WSEQ_PROB_50_SKIP    (1 << 9)  // 50% chance to skip step (0 time)
-#define PX_WSEQ_RND_OCTAVE      (1 << 10) // Random +/- 1 Octave
-#define PX_WSEQ_RND_WAVE        (1 << 11) // Random Wave Index
+#define PX_WSEQ_PROB_50_MUTE    (1 << 8)  // 50% chance to output silence (same time spent, 50% chance of silence on TRUE)
+#define PX_WSEQ_PROB_50_SKIP    (1 << 9)  // 50% chance to skip step (0 time spent, 50% chance of skip to next step on TRUE)
+#define PX_WSEQ_RND_OCTAVE      (1 << 10) // Random +/- 1 Octave (Either shifts up or down 50/50 chance on TRUE)
+#define PX_WSEQ_RND_WAVE        (1 << 11) // Random Wave Index  (Pick Wave within valid occupied range)
 
 // --- GLITCH / TIMBRE (Bits 12-15) ---
-#define PX_WSEQ_REVERSE_PLAY    (1 << 12) // Negative Frequency
+#define PX_WSEQ_REVERSE_PLAY    (1 << 12) // Negative Wave Frequency
 #define PX_WSEQ_BITCRUSH        (1 << 13) // 2-bit quantization
-#define PX_WSEQ_XMOD_SELF       (1 << 14) // Feedback FM
-#define PX_WSEQ_RING_MOD        (1 << 15) // Square Wave Ring Mod (Octave Up)
+#define PX_WSEQ_XMOD_SELF       (1 << 14) // Feedback Wave FM
+#define PX_WSEQ_RING_MOD        (1 << 15) // Square Wave Ring Mod (Octave Up) on Wave
 
 // 8-Byte Step Structure (Aligned)
 typedef struct {
-    uint16_t wave_idx;        // 0-65535 (Waveform index)
+    uint16_t wave_idx;        // 0-65535 (Waveform index) - Invalid (empty) Wave slots will be ignored by play routine
     uint16_t duration_cycles; // 0-65535 (Number of oscillator cycles to hold this step)
     int16_t  pitch_offset;    // Cents: -32768 to +32767 (Relative to note pitch)
     uint16_t flags;           // Bitfield (PX_WSEQ_*)
