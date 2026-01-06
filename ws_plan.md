@@ -1,29 +1,23 @@
-# Polysonix v1.5: Wave Sequencing Integration Plan
+# Polysonix v1.5: Wave Sequencing Implementation Plan
 
 ## Objective
-Implement a per-voice, bytecode-driven Wave Sequencer with 8-byte steps, microtonal precision, and 16-bit logic flags.
+Implement a per-voice, bytecode-driven Wave Sequencer with 8-byte steps, microtonal precision, and 16-bit logic flags. The implementation must be zero-allocation at runtime and fit within a 64KB static ROM budget.
 
 ## Philosophy
 "Per-Cycle" logic for phase-perfect transitions.
 
-## Constraint
-Zero memory allocation during runtime. 64KB static ROM.
+## Phase 1: Data Structures & Constants (polysonix.h)
 
----
-
-## Phase 1: Data Structures & Constants
-
-**Goal:** Define the storage format and logic flags without breaking existing code.
+**Goal:** Define the storage format and logic flags.
 
 **Actionables:**
-1.  **Modify `polysonix.h`**:
-    *   Locate the "Public Enums and Structs" section (around line 50).
-    *   Add the 16-Bit Logic Flags macros (`PX_WSEQ_END`, `PX_WSEQ_LOOP`, etc.).
-    *   Add the `PxWaveSeqStep` struct definition (8-byte aligned).
-    *   Add the `PxWaveSequence` struct definition.
-    *   Declare the global ROM: `extern PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS];`.
+- [ ] **Modify `polysonix.h` (Public Enums and Structs section)**:
+    - [ ] Add 16-Bit Logic Flags macros.
+    - [ ] Define `PxWaveSeqStep` struct (strictly 8-byte aligned).
+    - [ ] Define `PxWaveSequence` struct.
+    - [ ] Define `PX_NUM_WSEQ_BANKS` (128) and `PX_MAX_WSEQ_STEPS` (64).
 
-**Code Snippet:**
+**Detail:**
 ```c
 // --- v1.5 Wave Sequencing Definitions ---
 
@@ -34,7 +28,7 @@ Zero memory allocation during runtime. 64KB static ROM.
 #define PX_WSEQ_JUMP_RANDOM     (1 << 3)  // Jump to random step
 #define PX_WSEQ_RESET_LFO       (1 << 4)  // Reset all LFO phases to 0
 #define PX_WSEQ_RETRIG_ADSR     (1 << 5)  // Retrigger ADSR Attack
-#define PX_WSEQ_GLIDE           (1 << 6)  // (Reserved for Glide logic)
+#define PX_WSEQ_GLIDE           (1 << 6)  // (Reserved for Glide logic - Future)
 #define PX_WSEQ_LOCK_PHASE      (1 << 7)  // Hard Sync (Phase = 0)
 #define PX_WSEQ_PROB_50_MUTE    (1 << 8)  // 50% chance to output silence
 #define PX_WSEQ_PROB_50_SKIP    (1 << 9)  // 50% chance to skip step (0 time)
@@ -47,10 +41,10 @@ Zero memory allocation during runtime. 64KB static ROM.
 
 // 8-Byte Step Structure (Aligned)
 typedef struct {
-    uint16_t wave_idx;        // 0-65535
-    uint16_t duration_cycles; // 0-65535
-    int16_t  pitch_offset;    // Cents: -32768 to +32767
-    uint16_t flags;           // Bitfield
+    uint16_t wave_idx;        // 0-65535 (Waveform index)
+    uint16_t duration_cycles; // 0-65535 (Number of oscillator cycles to hold this step)
+    int16_t  pitch_offset;    // Cents: -32768 to +32767 (Relative to note pitch)
+    uint16_t flags;           // Bitfield (PX_WSEQ_*)
 } PxWaveSeqStep;
 
 #define PX_MAX_WSEQ_STEPS 64
@@ -59,39 +53,27 @@ typedef struct {
 typedef struct {
     PxWaveSeqStep steps[PX_MAX_WSEQ_STEPS];
 } PxWaveSequence;
-
-// Global ROM (Defined in implementation)
-extern PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS];
 ```
 
----
+**Memory Storage:**
+*   In `polysonix.h` (Implementation section):
+    ```c
+    // Global ROM (Static Const to reside in Flash/RO)
+    static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS];
+    ```
 
-## Phase 2: Core Engine State
+## Phase 2: Core Engine State (polysonix.h)
 
-**Goal:** Update the Voice and Patch structs to track sequence state.
+**Goal:** Update `Voice` and `PxPatch` structs to track sequence state.
 
 **Actionables:**
-1.  **Modify `PxPatch` struct** in `polysonix.h`:
-    *   Add `int selected_sequence_id;` (Default: -1).
-    *   Add this field near other int fields (e.g., `filter_poles`).
-2.  **Modify `Voice` struct** in `polysonix.h` (Internal Data Structures section):
-    *   Add the sequencer state machine fields:
-        *   `int seq_id;`
-        *   `int seq_step_idx;`
-        *   `int seq_direction;`
-        *   `int seq_cycles_counter;`
-        *   `bool seq_finished;`
-    *   Add per-step cached values for optimization:
-        *   `uint16_t step_flags;`
-        *   `float step_pitch_ratio;`
-        *   `bool step_mute_state;`
-3.  **Update `PX_NoteOn_internal`**:
-    *   Initialize the sequence state when a note starts.
-    *   Copy `s->patch.selected_sequence_id` to `v->seq_id`.
-    *   Set initial `seq_step_idx` to 0, `seq_direction` to 1, etc.
-    *   **Crucial:** If `v->seq_id >= 0`, immediately load data for Step 0 (calculate pitch ratio, load flags, set wave index).
+- [ ] **Modify `PxPatch` struct:**
+    - [ ] Add `int selected_sequence_id;` (Default: -1, Range: -1 to 127).
+- [ ] **Modify `Voice` struct (Internal Data Structures):**
+    - [ ] Add sequencer state fields.
+    - [ ] Add per-step optimization cache fields.
 
-**Code Snippet (Voice Struct):**
+**Detail (Voice Struct Additions):**
 ```c
 typedef struct Voice {
     // ... existing fields ...
@@ -105,105 +87,105 @@ typedef struct Voice {
 
     // --- Per-Step Cached Values (Optimization) ---
     uint16_t step_flags;        // Current flags
-    float    step_pitch_ratio;  // Pre-calculated frequency multiplier
+    float    step_pitch_ratio;  // Pre-calculated frequency multiplier (from cents)
     bool     step_mute_state;   // Latch for Mute probability
 
     // ... existing fields ...
 } Voice;
 ```
 
----
+## Phase 3: The Audio Loop (The Meat)
 
-## Phase 3: The Audio Loop (The "Meat")
-
-**Goal:** Inject the logic into `PX_Process` in `polysonix.h`.
+**Goal:** Inject logic into `PX_Process` and `PX_NoteOn_internal`.
 
 **Actionables:**
-1.  **Frequency Injection**:
-    *   In `PX_Process`, find the "Step 5: Apply Modulations and Generate Audio" section.
-    *   After `v->frequency` is calculated (based on tuning and LFOs), inject the sequencer pitch modification.
-    *   `if (v->seq_id >= 0) v->frequency *= v->step_pitch_ratio;`
-    *   Update `v->main_osc_vm_params.frequency` accordingly.
-    *   **Optimization Note:** Calculating `powf(2.0f, cents/1200.0f)` for `step_pitch_ratio` only happens on step changes (not per sample), so standard `powf` is acceptable for v1.5. If CPU usage spikes on fast sequences, consider replacing `powf` with a fast approximation or lookup table.
-2.  **Audio FX Injection**:
-    *   Locate the `execute_bytecode` calls (both in the "Highest Quality" path and "Performance Modes" path).
-    *   Immediately after `raw_sample` is calculated (or interpolated), inject the FX logic.
-    *   Apply Mute, Bitcrush, Ring Mod, and Feedback FM (XMOD) based on `v->step_flags`.
-3.  **Phase & Logic Injection**:
-    *   At the end of the voice loop, where `v->phase` is updated.
-    *   Modify phase update to support `PX_WSEQ_REVERSE_PLAY` (negative frequency).
-    *   Detect cycle completion (phase wrapping).
-    *   Inside the cycle completion block:
-        *   Handle sequencer stepping logic (advance `seq_cycles_counter`).
-        *   **Safety Valve:** When reading `duration_cycles` from ROM, enforce a minimum of 1 cycle to prevent infinite loops: `if (target_cycles < 1) target_cycles = 1;`.
-        *   Check against `duration_cycles`.
-        *   If step complete: Handle `PX_WSEQ_LOOP`, `PX_WSEQ_PINGPONG`, `PX_WSEQ_END`, `PX_WSEQ_JUMP_RANDOM`.
-        *   Load next step data (wave index, pitch ratio, flags).
-        *   Handle `PX_WSEQ_RESET_LFO`, `PX_WSEQ_RETRIG_ADSR`, `PX_WSEQ_LOCK_PHASE`.
+- [ ] **Update `PX_NoteOn_internal`:**
+    - [ ] Initialize `v->seq_id = s->patch.selected_sequence_id`.
+    - [ ] If `seq_id >= 0`:
+        - [ ] Reset `seq_step_idx = 0`, `seq_direction = 1`, `seq_cycles_counter = 0`, `seq_finished = false`.
+        - [ ] **Load Step 0:** Call a helper to load step parameters (pitch ratio, flags, mute state, wave index).
+        - [ ] **Safety Valve:** Clamp `duration_cycles` to a minimum of 1.
+        - [ ] Handle initialization flags (e.g., `PX_WSEQ_LOCK_PHASE`).
 
-**Code Snippet (Audio FX):**
-```c
-// v1.5 FX Processing
-if (v->seq_id >= 0) {
-    if (v->step_mute_state) raw_sample = 0.0f;
+- [ ] **Update `PX_Process` (Inside Voice Loop):**
 
-    if (v->step_flags & PX_WSEQ_BITCRUSH) {
-        raw_sample = floorf(raw_sample * 4.0f) * 0.25f;
-    }
+    - [ ] **Logic Injection Point 1: Frequency Calc (Before Oscillator Update)**
+        - [ ] Apply `v->frequency *= v->step_pitch_ratio`.
+        - [ ] Ensure this happens *after* slide/tuning logic but *before* VM execution.
+        - [ ] **Optimization Note:** `step_pitch_ratio` is calculated using `powf(2.0f, cents/1200.0f)` only on step changes. This is acceptable performance-wise; use fast approximation only if profiling shows issues.
 
-    if (v->step_flags & PX_WSEQ_RING_MOD) {
-        // Optimized "Ham Crazy" Square Ring Mod
-        float ring_mod = ((int)(v->phase * 4.0f) & 1) ? -1.0f : 1.0f;
-        raw_sample *= ring_mod;
-    }
+    - [ ] **Logic Injection Point 2: Audio FX (After Bytecode/Interp, Before Filter/Pan)**
+        - [ ] Apply Mute: `if (v->step_mute_state) raw_sample = 0.0f;`
+        - [ ] Apply Bitcrush (if flag set): `raw_sample = floorf(raw_sample * 4.0f) * 0.25f;`
+        - [ ] Apply Ring Mod (if flag set):
+            ```c
+            // Optimized "Ham Crazy" Square Ring Mod (Octave Up)
+            float ring_mod = ((int)(v->phase * 4.0f) & 1) ? -1.0f : 1.0f;
+            raw_sample *= ring_mod;
+            ```
+        - [ ] Apply Feedback FM (XMOD) (if flag set):
+            ```c
+            v->phase += raw_sample * 0.25f;
+            if (v->phase >= 1.0f) v->phase -= 1.0f;
+            else if (v->phase < 0.0f) v->phase += 1.0f;
+            ```
 
-    if (v->step_flags & PX_WSEQ_XMOD_SELF) {
-        v->phase += raw_sample * 0.25f; // Feedback FM
-        // Wrap phase immediately
-        if (v->phase >= 1.0f) v->phase -= 1.0f;
-        else if (v->phase < 0.0f) v->phase += 1.0f;
-    }
-}
-```
+    - [ ] **Logic Injection Point 3: Phase & Step Advancement (End of Loop)**
+        - [ ] Detect cycle completion: `if (v->phase < previous_phase)` (taking `PX_WSEQ_REVERSE_PLAY` into account).
+        - [ ] Increment `seq_cycles_counter`.
+        - [ ] Check against duration: `if (seq_cycles_counter >= target_duration)`.
+        - [ ] **Advance Step Logic:**
+            - [ ] Update `seq_step_idx += seq_direction`.
+            - [ ] **Handle Flags:**
+                - [ ] `PX_WSEQ_LOOP`: `seq_step_idx = 0`.
+                - [ ] `PX_WSEQ_PINGPONG`: Flip `seq_direction`.
+                - [ ] `PX_WSEQ_END`: Set `seq_finished = true`.
+                - [ ] `PX_WSEQ_JUMP_RANDOM`: `seq_step_idx = rand() % PX_MAX_WSEQ_STEPS` (or length).
+            - [ ] **Load Next Step:**
+                - [ ] Read `wave_idx`, `pitch_offset`, `flags` from ROM.
+                - [ ] **Safety Valve:** Enforce `duration_cycles >= 1` to prevent infinite loops.
+                - [ ] Update `v->source_wave_index`.
+                - [ ] Update `v->step_pitch_ratio = powf(2.0f, pitch_offset / 1200.0f)`.
+                - [ ] Update `v->step_flags`.
+                - [ ] Calculate `v->step_mute_state` based on `PX_WSEQ_PROB_50_MUTE`.
+            - [ ] Reset `seq_cycles_counter = 0`.
+            - [ ] Handle Trigger Flags: `PX_WSEQ_RESET_LFO`, `PX_WSEQ_RETRIG_ADSR`.
 
----
+## Phase 4: API & Control (polysonix.h)
 
-## Phase 4: API & Control
-
-**Goal:** Allow the UI/User to select sequences.
+**Goal:** Allow user control.
 
 **Actionables:**
-1.  **Update `PxCommandType` enum** in `polysonix.h`:
-    *   Add `PX_CMD_SET_SEQUENCE_ID`.
-2.  **Add Public API functions**:
-    *   `PX_API void PX_SetSequenceID(PxSynth* s, int seq_id);`
-    *   `PX_API int PX_GetSequenceID(PxSynth* s);`
-3.  **Implement Command Handling** in `PX_ProcessCommands`:
-    *   Add case for `PX_CMD_SET_SEQUENCE_ID`.
-    *   Update `s->patch.selected_sequence_id` (clamp between -1 and 127).
-4.  **Update UI Snapshot**:
-    *   Add `selected_sequence_id` to `PxPatch` copy in `UISnapshot` and update it in `PX_UpdateUISnapshot`.
-
----
+- [ ] **Update `PxCommandType`:** Add `PX_CMD_SET_SEQUENCE_ID`.
+- [ ] **Add API Functions:**
+    - [ ] `PX_API void PX_SetSequenceID(PxSynth* s, int seq_id);`
+    - [ ] `PX_API int PX_GetSequenceID(PxSynth* s);`
+- [ ] **Implement Command Handling:** Update `s->patch.selected_sequence_id` (clamp -1 to 127).
+- [ ] **Update UI Snapshot:** Copy `selected_sequence_id` to `UISnapshot`.
 
 ## Phase 5: Content (ROM)
 
-**Goal:** Populate the static memory so the feature actually makes sound.
+**Goal:** Populate `ROM_WAVE_SEQUENCES` with at least 4 diverse presets.
+
+**Presets:**
+- [ ] **Seq 0 (Basic):** 4 steps, Sine/Tri/Saw/Square, no pitch shift.
+- [ ] **Seq 1 (Arp):** Major triad arpeggio (0, +400, +700 cents), 10 cycles each.
+- [ ] **Seq 2 (Rhythmic):** Uses `PX_WSEQ_PROB_50_MUTE` for rhythmic gaps.
+- [ ] **Seq 3 (FX):** Fast steps (2 cycles), `PX_WSEQ_BITCRUSH` and `PX_WSEQ_RING_MOD`.
+
+## Phase 6: Verification Strategy
+
+**Goal:** Ensure 100% integral outcome without a formal test suite.
 
 **Actionables:**
-1.  **Define Global ROM** in `polysonix.h` (Implementation section):
-    *   Declare as `static const` to ensure it stays in Flash/RO memory and saves RAM.
-    *   `static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = { ... };`
-2.  **Populate Starter Sequences**:
-    *   **Seq 0 (Basic):** 4 steps, simple wave swap, no pitch change.
-    *   **Seq 1 (Rhythmic):** 8 steps, using MUTE probability for gaps.
-    *   **Seq 2 (Glitch):** Fast duration, BITCRUSH + RING_MOD flags.
-    *   **Seq 3 (Generative):** JUMP_RANDOM + RND_OCTAVE flags.
-
----
-
-## Success Criteria
-*   **Legacy Safety:** Loading the synth with `seq_id = -1` sounds exactly like v1.4.
-*   **Performance:** No audible CPU spike when a sequence advances a step.
-*   **Stability:** `JUMP_RANDOM` or `PINGPONG` never causes an array out-of-bounds crash.
-*   **Audio Quality:** Ring Mod and Bitcrush sound aggressive but clean (no aliasing popping from bad phase wraps).
+- [ ] **Compile Check:** Verify `polysonix.h` compiles with `POLYSONIX_IMPLEMENTATION`.
+- [ ] **Manual Test Harness:** Create a temporary `test_seq.c` that:
+    - [ ] Creates a `PxSynth`.
+    - [ ] Sets a sequence ID (e.g., Seq 1 Arp).
+    - [ ] Calls `PX_NoteOn`.
+    - [ ] Calls `PX_Process` for several blocks.
+    - [ ] Prints `v->frequency` and `v->seq_step_idx` every 100 samples to verify progression.
+- [ ] **Success Criteria:**
+    - [ ] Step index advances.
+    - [ ] Frequency changes according to pitch offset.
+    - [ ] No crashes on step transitions.
