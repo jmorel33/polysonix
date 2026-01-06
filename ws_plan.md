@@ -22,18 +22,25 @@ Implement a per-voice, bytecode-driven Wave Sequencer with 8-byte steps, microto
 // --- v1.5 Wave Sequencing Definitions ---
 
 // 16-Bit Logic Flags
+// --- FLOW CONTROL (Bits 0-3) ---
 #define PX_WSEQ_END             (1 << 0)  // Stop sequence (hold step)
 #define PX_WSEQ_LOOP            (1 << 1)  // Jump to Step 0
 #define PX_WSEQ_PINGPONG        (1 << 2)  // Reverse direction at ends
 #define PX_WSEQ_JUMP_RANDOM     (1 << 3)  // Jump to random step
+
+// --- MODULATION / RESET (Bits 4-7) ---
 #define PX_WSEQ_RESET_LFO       (1 << 4)  // Reset all LFO phases to 0
 #define PX_WSEQ_RETRIG_ADSR     (1 << 5)  // Retrigger ADSR Attack
 #define PX_WSEQ_GLIDE           (1 << 6)  // (Reserved for Glide logic - Future)
 #define PX_WSEQ_LOCK_PHASE      (1 << 7)  // Hard Sync (Phase = 0)
+
+// --- GENERATIVE (Bits 8-11) ---
 #define PX_WSEQ_PROB_50_MUTE    (1 << 8)  // 50% chance to output silence
 #define PX_WSEQ_PROB_50_SKIP    (1 << 9)  // 50% chance to skip step (0 time)
 #define PX_WSEQ_RND_OCTAVE      (1 << 10) // Random +/- 1 Octave
 #define PX_WSEQ_RND_WAVE        (1 << 11) // Random Wave Index
+
+// --- GLITCH / TIMBRE (Bits 12-15) ---
 #define PX_WSEQ_REVERSE_PLAY    (1 << 12) // Negative Frequency
 #define PX_WSEQ_BITCRUSH        (1 << 13) // 2-bit quantization
 #define PX_WSEQ_XMOD_SELF       (1 << 14) // Feedback FM
