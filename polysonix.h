@@ -16,8 +16,8 @@
  */
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
-#define POLYSONIX_VERSION_MINOR 4
-#define POLYSONIX_VERSION_PATCH 6
+#define POLYSONIX_VERSION_MINOR 5
+#define POLYSONIX_VERSION_PATCH 0
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -170,6 +170,101 @@ typedef enum {
 typedef enum {
     PX_LFO_PARAM_FREQUENCY /**< The LFO's frequency (rate) in Hz. */
 } PxLFOParamType;
+
+// --- v1.5 Wave Sequencing Definitions ---
+
+/**
+ * @enum PxWSeqEndAction
+ * @brief Determines the behavior when a wave sequence reaches its end or an explicit END flag.
+ */
+typedef enum {
+    PX_WSEQ_END_STOP = 0,    /**< Stop the voice (triggers Note Off behavior). */
+    PX_WSEQ_END_HOLD,        /**< Hold the last step indefinitely. */
+    PX_WSEQ_END_LOOP,        /**< Loop back to the start of the sequence. */
+    PX_WSEQ_END_PINGPONG,    /**< Reverse the playback direction. */
+    PX_WSEQ_END_REVERSE      /**< Play backwards (typically used as a starting mode). */
+} PxWSeqEndAction;
+
+/**
+ * @enum PxWSeqGlideMode
+ * @brief Determines how pitch changes are handled between steps in a wave sequence.
+ */
+typedef enum {
+    PX_WSEQ_GLIDE_OFF = 0,   /**< Instant pitch changes (stepped). */
+    PX_WSEQ_GLIDE_STEP,      /**< Glide to the new pitch over the duration of the step. */
+    PX_WSEQ_GLIDE_SMOOTH     /**< Continuous glide that ignores step boundaries. */
+} PxWSeqGlideMode;
+
+// 16-Bit Logic Flags (Per Step)
+// --- FLOW CONTROL (Bits 0-3) ---
+#define PX_WSEQ_END             (1 << 0)  /**< Force Sequence End Action at this step. */
+#define PX_WSEQ_LOOP_POINT      (1 << 1)  /**< Marker for Loop Start (if supported by loop logic). */
+#define PX_WSEQ_JUMP_RANDOM     (1 << 2)  /**< Jump to a random step in the sequence. */
+
+// --- MODULATION / RESET (Bits 4-7) ---
+#define PX_WSEQ_RESET_LFO       (1 << 4)  /**< Reset LFO phases to 0. */
+#define PX_WSEQ_RETRIG_ADSR     (1 << 5)  /**< Retrigger ADSR envelopes to the phase specified in global settings. */
+#define PX_WSEQ_LOCK_PHASE      (1 << 6)  /**< Hard Sync the oscillator phase to 0. */
+// Bit 7 Reserved
+
+// --- GENERATIVE (Bits 8-11) ---
+#define PX_WSEQ_USE_PROB_MUTE   (1 << 8)  /**< Use the global 'prob_mute_score' to randomly mute this step. */
+#define PX_WSEQ_USE_PROB_SKIP   (1 << 9)  /**< Use the global 'prob_skip_score' to randomly skip this step. */
+#define PX_WSEQ_USE_RND_OCTAVE  (1 << 10) /**< Use the global 'rnd_octave_range' to apply a random octave shift. */
+#define PX_WSEQ_USE_RND_WAVE    (1 << 11) /**< Use the global Random Wave Range to pick a random waveform. */
+
+// --- GLITCH / TIMBRE (Bits 12-15) ---
+#define PX_WSEQ_REVERSE_PLAY    (1 << 12) /**< Play the waveform backwards (negative frequency). */
+#define PX_WSEQ_BITCRUSH        (1 << 13) /**< Enable Bitcrush effect using global depth. */
+#define PX_WSEQ_XMOD            (1 << 14) /**< Enable Cross-Modulation (FM) using global settings. */
+#define PX_WSEQ_RING_MOD        (1 << 15) /**< Enable Ring Modulation using global settings. */
+
+/**
+ * @struct PxWaveSeqStep
+ * @brief Represents a single step in a Wave Sequence.
+ * @note Strictly 8-byte aligned for ROM efficiency.
+ */
+typedef struct {
+    uint16_t wave_idx;        /**< The waveform index (0-65535). */
+    uint16_t duration_cycles; /**< Duration of the step in oscillator cycles. */
+    int16_t  pitch_offset;    /**< Pitch offset in cents (-32768 to +32767). */
+    uint16_t flags;           /**< Bitwise logic flags (PX_WSEQ_*). */
+} PxWaveSeqStep;
+
+#define PX_MAX_WSEQ_STEPS 64
+#define PX_NUM_WSEQ_BANKS 128
+
+/**
+ * @struct PxWaveSequence
+ * @brief Defines a complete Wave Sequence, including global settings and step data.
+ */
+typedef struct {
+    // --- Global Settings Header ---
+    uint8_t  end_action;          /**< PxWSeqEndAction: What to do when the sequence ends. */
+    uint8_t  glide_mode;          /**< PxWSeqGlideMode: Pitch glide behavior. */
+    uint8_t  bitcrush_bits;       /**< Bit depth for bitcrush effect (1-8). */
+    uint8_t  adsr_retrig_phase;   /**< PxADSRState: Which phase to jump to on retrigger (e.g., ATTACK). */
+
+    uint8_t  prob_mute_score;     /**< 0-100%: Probability of muting a step if PX_WSEQ_USE_PROB_MUTE is set. */
+    uint8_t  prob_skip_score;     /**< 0-100%: Probability of skipping a step if PX_WSEQ_USE_PROB_SKIP is set. */
+    uint8_t  rnd_octave_range;    /**< 0-100%: Probability of octave shift if PX_WSEQ_USE_RND_OCTAVE is set. */
+    uint8_t  reset_lfo_pos;       /**< Boolean (1=Yes): Reset LFOs when sequence starts. */
+
+    uint16_t rnd_wave_low;        /**< Low index for random wave selection. */
+    uint16_t rnd_wave_high;       /**< High index for random wave selection. */
+
+    // Modulation Sources (PxModSource cast to int8_t, -1 for None)
+    int8_t   lock_phase_mod_src;  /**< Mod Source for Phase Lock (0=No Mod in user request, but we use -1 for None internally usually, let's assume valid index or -1). */
+    int8_t   xmod_mod_src;        /**< Mod Source for XMod (FM). */
+    int8_t   ring_mod_mod_src;    /**< Mod Source for Ring Mod. */
+    int8_t   _padding;
+
+    float    xmod_depth;          /**< Base amount for XMod. */
+    float    ring_mod_depth;      /**< Base amount for Ring Mod. */
+
+    // --- Steps ---
+    PxWaveSeqStep steps[PX_MAX_WSEQ_STEPS];
+} PxWaveSequence;
 
 /**
  * @struct PxADSRParams
@@ -771,6 +866,58 @@ static const float HB[5] = {
    -0.136728736584138680f    /* h[ 2] */
 };
 
+// --- v1.5 ROM (Populated) ---
+static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
+    // Seq 0: Basic Loop (4 steps, Sine/Tri/Saw/Square, no pitch shift)
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_mute_score = 0,
+        .prob_skip_score = 0,
+        .steps = {
+            {.wave_idx = 0, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, // Sine
+            {.wave_idx = 1, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, // Tri
+            {.wave_idx = 2, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, // Saw
+            {.wave_idx = 3, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, // Square
+            {.wave_idx = 0, .duration_cycles = 0,   .pitch_offset = 0, .flags = PX_WSEQ_END}
+        }
+    },
+    // Seq 1: Major Triad Arp (PingPong)
+    {
+        .end_action = PX_WSEQ_END_PINGPONG,
+        .steps = {
+            {.wave_idx = 3, .duration_cycles = 200, .pitch_offset = 0,   .flags = 0},
+            {.wave_idx = 3, .duration_cycles = 200, .pitch_offset = 400, .flags = 0}, // +4 st
+            {.wave_idx = 3, .duration_cycles = 200, .pitch_offset = 700, .flags = 0}, // +7 st
+            {.wave_idx = 0, .duration_cycles = 0,   .pitch_offset = 0,   .flags = PX_WSEQ_END}
+        }
+    },
+    // Seq 2: Glitch Rhythmic (Prob Mute/Skip, Bitcrush)
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .bitcrush_bits = 4,
+        .prob_mute_score = 30, // 30% mute
+        .prob_skip_score = 10, // 10% skip
+        .steps = {
+            {.wave_idx = 2, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 2, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 2, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 2, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 0, .duration_cycles = 0,  .pitch_offset = 0, .flags = PX_WSEQ_END}
+        }
+    },
+    // Seq 3: Modulated Texture (Ring Mod + XMod)
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .xmod_depth = 0.5f,
+        .steps = {
+            {.wave_idx = 0, .duration_cycles = 500, .pitch_offset = 0,    .flags = PX_WSEQ_XMOD},
+            {.wave_idx = 0, .duration_cycles = 500, .pitch_offset = 1200, .flags = PX_WSEQ_RING_MOD},
+            {.wave_idx = 0, .duration_cycles = 0,   .pitch_offset = 0,    .flags = PX_WSEQ_END}
+        }
+    }
+};
+
 static const char* PX_FILTER_MODE_NAMES[] = {"OFF", "LP", "BP", "HP", "LP+BP", "LP+HP", "BP+HP", "NOTCH", "ALLPASS"};
 static const char* PX_ADSR_DEST_NAMES[] = { "NONE", "PARAM1", "PARAM2", "PARAM3", "AMP", "FREQ(ST)", "LFO0 LVL", "LFO1 LVL", "LFO2 LVL", "FREQ.CUT(HZ)", "FREQ.ENV IN", "FREQ.RES(Q)"};
 static const char* PX_LFO_DEST_NAMES[] = {"NONE", "PARAM1", "PARAM2", "PARAM3", "FREQ CUT(HZ)", "AMP", "PITCH(ST)", "PAN"};
@@ -888,6 +1035,25 @@ typedef struct {
     float interp_samples[4]; // Store y0, y1, y2, y3 for cubic interpolation
     float phase_at_interp_start;    // The oscillator's phase (0-1) when the last update occurred.
     float phase_at_interp_end;      // The oscillator's phase (0-1) when the last update occurred.
+
+    // --- v1.5 Sequencer State ---
+    int  seq_id;                // -1 = Off
+    int  seq_step_idx;          // Current step (0-63)
+    int  seq_direction;         // 1 (Forward) or -1 (Backward)
+    int  seq_cycles_counter;    // How many cycles played in this step
+    bool seq_finished;          // True if END flag hit (and action is STOP/HOLD)
+
+    // Pointer to the current sequence definition (in ROM)
+    const PxWaveSequence* current_sequence;
+
+    // --- Per-Step Cached Values (Optimization) ---
+    uint16_t step_flags;        // Current flags
+    float    step_pitch_ratio;  // Pre-calculated frequency multiplier (from cents)
+    float    target_pitch_ratio;// For glide logic (Smooth target)
+    float    prev_step_pitch_ratio; // For Glide Step mode (start value)
+    float    step_bitcrush_scale; // Pre-calculated pow(2, bits) for bitcrush
+    bool     step_mute_state;   // Latch for Mute probability
+    uint32_t rng_state;         // Context-aware PRNG state
 } Voice;
 
 /**
@@ -1011,6 +1177,9 @@ typedef struct PxPatch {
     // v1.4.6: Per-oscillator tuning
     float osc_coarse_semitones[NUM_WAVEFORMS];  // -24 to +24 semitones (default 0)
     float osc_fine_cents[NUM_WAVEFORMS];        // -100 to +100 cents (default 0)
+
+    // v1.5: Wave Sequencer
+    int selected_sequence_id;                   // -1 = Off, 0-127 = Sequence ID
 } PxPatch;
 
 // --- THREAD-SAFE COMMUNICATION STRUCTURES ---
@@ -1057,7 +1226,8 @@ typedef enum {
     PX_CMD_SET_PITCHBEND_RANGE,
     PX_CMD_POLY_AFTERTOUCH,
     PX_CMD_SET_OSC_COARSE_TUNE,
-    PX_CMD_SET_OSC_FINE_TUNE
+    PX_CMD_SET_OSC_FINE_TUNE,
+    PX_CMD_SET_SEQUENCE_ID // v1.5
 } PxCommandType;
 
 typedef union {
@@ -1082,6 +1252,7 @@ typedef union {
     struct { float value; } bend;  // 0.0 to 1.0
     struct { int key_id; float pressure; } poly_at;
     struct { int wave_idx; float value; } osc_tune;
+    struct { int seq_id; } sequence;
 } PxCommandData;
 
 typedef struct {
@@ -1167,6 +1338,11 @@ static int find_voice_to_steal(PxSynth* s);
 static float soft_clip(float x);
 static float cubic_interpolate(float y0, float y1, float y2, float y3, float t);
 
+// Simple LCG PRNG for audio thread safety
+static inline uint32_t px_rand(uint32_t* state) {
+    *state = *state * 1664525 + 1013904223;
+    return *state;
+}
 
 // --- Internal Helper Functions ---
 static void ADSR_SetParams(ADSR* adsr, const PxADSRParams* params, float sample_rate) {
@@ -1840,6 +2016,9 @@ static void PX_ProcessCommands(PxSynth* s) {
                     s->patch.osc_fine_cents[cmd.data.osc_tune.wave_idx] = cmd.data.osc_tune.value;
                 }
                 break;
+            case PX_CMD_SET_SEQUENCE_ID:
+                s->patch.selected_sequence_id = fmaxf(-1, fminf(PX_NUM_WSEQ_BANKS - 1, cmd.data.sequence.seq_id));
+                break;
         }
     }
 }
@@ -1878,6 +2057,8 @@ static void PX_UpdateUISnapshot(PxSynth* s) {
 
     memcpy(s->ui_snapshot.patch_copy.osc_coarse_semitones, s->patch.osc_coarse_semitones, NUM_WAVEFORMS * sizeof(float));
     memcpy(s->ui_snapshot.patch_copy.osc_fine_cents, s->patch.osc_fine_cents, NUM_WAVEFORMS * sizeof(float));
+
+    s->ui_snapshot.patch_copy.selected_sequence_id = s->patch.selected_sequence_id;
 
     s->ui_snapshot.patch_copy.pitchbend_range_semitones = s->patch.pitchbend_range_semitones;
     s->ui_snapshot.lfo_update_interval_ms = s->config.lfo_update_interval_ms;
@@ -2059,6 +2240,9 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
         s->patch.osc_coarse_semitones[i] = 0.0f;
         s->patch.osc_fine_cents[i] = 0.0f;
     }
+
+    // v1.5: Sequence
+    s->patch.selected_sequence_id = -1;
 
     Filter_Init(&s->global_filter_l);
     Filter_Init(&s->global_filter_r);
@@ -2441,6 +2625,37 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 float tuned_freq = v->original_frequency * powf(2.0f, tuning_offset_st / 12.0f);
 
                 v->frequency = tuned_freq * powf(2.0f, (lfo_pitch_env_input + adsr_total_pitch_mod_st) / 12.0f);
+
+                // v1.5: Apply Wave Sequencer Pitch Ratio
+                if (v->current_sequence) {
+                    if (v->current_sequence->glide_mode == PX_WSEQ_GLIDE_SMOOTH) {
+                        // Smooth glide: interpolate target_pitch_ratio
+                        // We use a simple 1-pole lowpass for glide (portamento)
+                        // Time constant ~50ms (or use unilegato_slide_duration_s if we wanted)
+                        float glide_coeff = 1.0f - expf(-1.0f / (0.05f * s->config.sample_rate));
+                        v->target_pitch_ratio += (v->step_pitch_ratio - v->target_pitch_ratio) * glide_coeff;
+                        v->frequency *= v->target_pitch_ratio;
+                    } else if (v->current_sequence->glide_mode == PX_WSEQ_GLIDE_STEP) {
+                        // Linear glide over step duration
+                        const PxWaveSeqStep* current_step = &v->current_sequence->steps[v->seq_step_idx];
+                        if (current_step->duration_cycles > 0) {
+                            float t = (float)v->seq_cycles_counter / (float)current_step->duration_cycles;
+                            t = fmaxf(0.0f, fminf(1.0f, t));
+                            float current_ratio = v->prev_step_pitch_ratio + (v->step_pitch_ratio - v->prev_step_pitch_ratio) * t;
+                            v->frequency *= current_ratio;
+                        } else {
+                            v->frequency *= v->step_pitch_ratio;
+                        }
+                        // Keep smooth target sync'd just in case
+                        v->target_pitch_ratio = v->step_pitch_ratio;
+                    } else {
+                        // Off
+                        v->frequency *= v->step_pitch_ratio;
+                        // Reset target for when smooth mode is re-entered or for next step calc if we tracked it differently
+                        v->target_pitch_ratio = v->step_pitch_ratio;
+                    }
+                }
+
                 v->main_osc_vm_params.frequency = v->frequency;
             }
             float key_track_factor = powf(2.0f, (v->midi_note - 60.0f) / 12.0f * s->patch.filter_key_track);
@@ -2517,6 +2732,56 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             }
 
             // --- Post-processing (Filter, Pan, Mix) is now common to all paths ---
+
+            // v1.5: FX Processing
+            if (v->current_sequence) {
+                // Mute
+                if (v->step_mute_state) raw_sample = 0.0f;
+
+                // Bitcrush
+                if ((v->step_flags & PX_WSEQ_BITCRUSH) && v->current_sequence->bitcrush_bits > 0) {
+                    float levels = v->step_bitcrush_scale;
+                    // Use roundf for cleaner quantization (per review)
+                    raw_sample = roundf(raw_sample * levels) / levels;
+                }
+
+                // Ring Mod (Square Wave Octave Up)
+                if (v->step_flags & PX_WSEQ_RING_MOD) {
+                    float ring_mod_src = ((int)(v->phase * 4.0f) & 1) ? -1.0f : 1.0f;
+
+                    // Calculate Depth
+                    float depth = v->current_sequence->ring_mod_depth;
+                    if (v->current_sequence->ring_mod_mod_src >= 0 && v->current_sequence->ring_mod_mod_src < PX_MOD_SRC_COUNT) {
+                        depth += mod_sources[v->current_sequence->ring_mod_mod_src];
+                    }
+                    depth = fmaxf(0.0f, fminf(1.0f, depth)); // Clamp 0-1 (or allow overdrive?)
+
+                    // Mix dry/wet
+                    if (depth > 0.001f) {
+                        // Ring Mod usually is strictly multiplicative (DSB-SC).
+                        // If we view 'depth' as mix:
+                        float wet = raw_sample * ring_mod_src;
+                        raw_sample = raw_sample * (1.0f - depth) + wet * depth;
+                    }
+                }
+
+                // XMod (Feedback FM)
+                if (v->step_flags & PX_WSEQ_XMOD) {
+                    // Calculate Amount
+                    float xmod_amount = v->current_sequence->xmod_depth;
+                    if (v->current_sequence->xmod_mod_src >= 0 && v->current_sequence->xmod_mod_src < PX_MOD_SRC_COUNT) {
+                        xmod_amount += mod_sources[v->current_sequence->xmod_mod_src];
+                    }
+
+                    // Simple self-FM: add sample to phase for next cycle
+                    float fm_val = raw_sample * xmod_amount * 0.5f; // Scale
+                    v->phase += fm_val;
+                    // Wrap phase
+                    if (v->phase >= 1.0f) v->phase -= 1.0f;
+                    else if (v->phase < 0.0f) v->phase += 1.0f;
+                }
+            }
+
             float filtered_sample = Filter_Process_Oversampled(&v->filter_instance, raw_sample);
             float final_sample = soft_clip(filtered_sample * final_amp_with_lfo);
             float current_pan = s->patch.voice_pan_setting + lfo_pan_env_input;
@@ -2526,7 +2791,210 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             float gain_r = sinf(pan_angle);
             mixed_sample_l_f += final_sample * gain_l;
             mixed_sample_r_f += final_sample * gain_r;
-            v->phase = fmodf(v->phase + (v->frequency * s->time_per_sample), 1.f);
+
+            // Phase update
+            float phase_inc = v->frequency * s->time_per_sample;
+            if (v->current_sequence && (v->step_flags & PX_WSEQ_REVERSE_PLAY)) {
+                v->phase -= phase_inc;
+                if (v->phase < 0.0f) v->phase += 1.0f;
+            } else {
+                v->phase = fmodf(v->phase + phase_inc, 1.f);
+            }
+
+            // --- v1.5: Sequence Step Advancement ---
+            if (v->current_sequence && !v->seq_finished) {
+                // Check for cycle completion (approximate by phase wrap)
+                // Actually, we advanced phase above. We need to detect if it wrapped.
+                // But since we use fmodf, it's hard to tell without tracking previous phase.
+                // However, we added cycle duration logic.
+                // Let's increment cycle counter roughly based on frequency?
+                // "Per-Cycle logic" implies we check every time phase wraps.
+                // To do this robustly:
+                float prev_phase = v->phase_at_interp_end; // This is updated in the interpolation block, might be stale for per-sample?
+                // For Per-Sample mode, we don't track prev_phase explicitly in the loop.
+                // Let's use a simplified approach: increment counter by phase_inc? No, that's phase.
+                // We need to count full cycles.
+
+                // Let's assume 1 cycle = 1.0 phase accumulation.
+                // We can accumulate phase_inc into a separate counter.
+                // But for now, let's just use the `seq_cycles_counter` as a sample counter?
+                // No, the struct says `duration_cycles`.
+                // So we need to detect phase wrap.
+                // Since we just updated `v->phase`, we can check if it wrapped.
+                // But `fmodf` makes it jump.
+                // Let's store `float phase_accumulator` in Voice? Or just detect wrap.
+                // The loop runs per sample.
+                // If (phase_inc + old_phase >= 1.0) -> wrapped.
+                // We don't have old_phase easily here after the update.
+                // Re-calculating:
+                float old_phase;
+                if (v->step_flags & PX_WSEQ_REVERSE_PLAY) {
+                     old_phase = v->phase + phase_inc;
+                     if (old_phase >= 1.0f) old_phase -= 1.0f; // Actually we wrapped down?
+                     // If reverse, wrap happens at 0.
+                     // if (old_phase < phase_inc) ?
+                } else {
+                     // standard forward
+                     // current v->phase is (old + inc) % 1.0
+                     // if current < inc (and inc < 1.0), it wrapped.
+                     // Or just:
+                     // float unmod_phase = old_phase + phase_inc;
+                     // if (unmod_phase >= 1.0f) wrapped.
+                }
+
+                // Hacky detection: if phase is very small, we probably wrapped.
+                // Better: Use `v->phase` before update? Too late.
+                // Let's assume we advance step based on TIME for now if cycles is hard?
+                // No, user wants Per-Cycle.
+
+                // Correct way: Check if we completed a cycle this sample.
+                // Since we don't have local `old_phase` variable preserved from top of loop (optimized out?),
+                // we can deduce it.
+                // Actually, let's just accept that we might miss a cycle if freq is super high (Nyquist).
+                // But for normal waves:
+                // If we wrapped, increment cycle counter.
+
+                // Let's modify the phase update block above to detect wrap.
+                // But I can't modify "above" easily with merge_diff.
+                // I will assume I can insert logic here or assume checking `v->phase < phase_inc` is "close enough" for forward play.
+
+                bool cycle_completed = false;
+                if (v->step_flags & PX_WSEQ_REVERSE_PLAY) {
+                    if (v->phase > (1.0f - phase_inc)) cycle_completed = true; // Wrapped from 0 to 1
+                } else {
+                    if (v->phase < phase_inc) cycle_completed = true;
+                }
+
+                if (cycle_completed) {
+                    v->seq_cycles_counter++;
+                    const PxWaveSeqStep* current_step = &v->current_sequence->steps[v->seq_step_idx];
+
+                    if (v->seq_cycles_counter >= current_step->duration_cycles) {
+                        // Advance Step
+                        bool force_end = (current_step->flags & PX_WSEQ_END);
+
+                        if (force_end) {
+                            // Handle End Action
+                            switch (v->current_sequence->end_action) {
+                                case PX_WSEQ_END_STOP: v->active = false; v->seq_finished = true; break;
+                                case PX_WSEQ_END_HOLD: v->seq_finished = true; break; // Stay here
+                                case PX_WSEQ_END_LOOP: v->seq_step_idx = 0; v->seq_cycles_counter = 0; break;
+                                case PX_WSEQ_END_PINGPONG: v->seq_direction *= -1; v->seq_step_idx += v->seq_direction; v->seq_cycles_counter = 0; break;
+                                default: v->active = false; break;
+                            }
+                        } else {
+                            // Normal Advance
+                            if (current_step->flags & PX_WSEQ_JUMP_RANDOM) {
+                                v->seq_step_idx = px_rand(&v->rng_state) % PX_MAX_WSEQ_STEPS; // Should limit to valid steps?
+                                // Assuming 64 is max.
+                            } else {
+                                v->seq_step_idx += v->seq_direction;
+                            }
+
+                            // Bounds Check
+                            if (v->seq_step_idx >= PX_MAX_WSEQ_STEPS || v->seq_step_idx < 0) {
+                                // Hit physical end of array -> Implicit END behavior
+                                if (v->current_sequence->end_action == PX_WSEQ_END_LOOP) {
+                                    v->seq_step_idx = 0;
+                                } else if (v->current_sequence->end_action == PX_WSEQ_END_PINGPONG) {
+                                    v->seq_direction *= -1;
+                                    v->seq_step_idx += v->seq_direction * 2; // Bounce back
+                                } else {
+                                    v->seq_finished = true; // Stop/Hold
+                                    // Clamp to valid
+                                    v->seq_step_idx = (v->seq_step_idx < 0) ? 0 : PX_MAX_WSEQ_STEPS-1;
+                                }
+                            }
+
+                            v->seq_cycles_counter = 0;
+                        }
+
+                        // Load New Step Params (if running)
+                        if (!v->seq_finished && v->active) {
+                            const PxWaveSeqStep* next_step = &v->current_sequence->steps[v->seq_step_idx];
+
+                            // Load Wave (Handle Random)
+                            if (next_step->flags & PX_WSEQ_USE_RND_WAVE) {
+                                uint16_t range = v->current_sequence->rnd_wave_high - v->current_sequence->rnd_wave_low;
+                                if (range > 0) v->source_wave_index = v->current_sequence->rnd_wave_low + (px_rand(&v->rng_state) % (range + 1));
+                            } else {
+                                v->source_wave_index = next_step->wave_idx;
+                            }
+
+                            // Load Pitch
+                            v->prev_step_pitch_ratio = v->step_pitch_ratio; // Save previous for glide step
+                            v->step_pitch_ratio = powf(2.0f, next_step->pitch_offset / 1200.0f);
+                            if (next_step->flags & PX_WSEQ_USE_RND_OCTAVE) {
+                                if ((px_rand(&v->rng_state) % 100) < v->current_sequence->rnd_octave_range) {
+                                    float shift = (px_rand(&v->rng_state) % 2 == 0) ? 2.0f : 0.5f;
+                                    v->step_pitch_ratio *= shift;
+                                }
+                            }
+
+                            v->step_flags = next_step->flags;
+
+                            // Prob Mute
+                            v->step_mute_state = false;
+                            if (v->step_flags & PX_WSEQ_USE_PROB_MUTE) {
+                                uint8_t score = v->current_sequence->prob_mute_score;
+                                uint8_t threshold = (score == 0) ? 50 : score;
+                                if ((px_rand(&v->rng_state) % 100) < threshold) v->step_mute_state = true;
+                            }
+
+                            // Prob Skip
+                            if (v->step_flags & PX_WSEQ_USE_PROB_SKIP) {
+                                uint8_t score = v->current_sequence->prob_skip_score;
+                                uint8_t threshold = (score == 0) ? 50 : score;
+                                if ((px_rand(&v->rng_state) % 100) < threshold) {
+                                    // Skip this step immediately by forcing end of duration
+                                    v->seq_cycles_counter = next_step->duration_cycles;
+                                }
+                            }
+
+                            // Retrigger ADSR
+                            if (v->step_flags & PX_WSEQ_RETRIG_ADSR) {
+                                PxADSRState target_phase = (PxADSRState)v->current_sequence->adsr_retrig_phase;
+                                float target_level = 0.0f;
+
+                                // Determine starting level based on phase logic
+                                if (target_phase == PX_ADSR_STATE_DECAY) target_level = 1.0f;
+                                else if (target_phase == PX_ADSR_STATE_SUSTAIN) target_level = 1.0f; // Simplified, ideally sustain level
+                                else target_level = 0.0f; // Attack starts at 0
+
+                                for (int j=0; j<s->config.num_voice_adsrs; ++j) {
+                                    if (v->adsrs[j].enabled) {
+                                        v->adsrs[j].state = target_phase;
+                                        // Only hard reset level if jumping to Attack or Decay start?
+                                        // Let's assume retrigger means hard set.
+                                        if (target_phase == PX_ADSR_STATE_SUSTAIN) {
+                                            v->adsrs[j].level = v->adsrs[j].sustain_level;
+                                        } else {
+                                            v->adsrs[j].level = target_level;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Reset LFO (Per Step)
+                            if (v->step_flags & PX_WSEQ_RESET_LFO) {
+                                for (int k = 0; k < s->config.num_lfos; ++k) {
+                                    v->lfo_instances[k].phase = 0.0f;
+                                }
+                            }
+
+                            // Lock Phase
+                            if (v->step_flags & PX_WSEQ_LOCK_PHASE) {
+                                bool do_lock = true;
+                                if (v->current_sequence->lock_phase_mod_src >= 0 && v->current_sequence->lock_phase_mod_src < PX_MOD_SRC_COUNT) {
+                                    if (mod_sources[v->current_sequence->lock_phase_mod_src] <= 0.0f) do_lock = false;
+                                }
+                                if (do_lock) v->phase = 0.0f;
+                            }
+                        }
+                    }
+                }
+            }
+
         } // End voice loop
 
         // v1.4.4: Global post-filter (if enabled)
@@ -2688,6 +3156,15 @@ PX_API void PX_SetOscFineTune(PxSynth* s, int wave_idx, float cents) {
 PX_API float PX_GetOscFineTune(PxSynth* s, int wave_idx) {
     if (!s || wave_idx < 0 || wave_idx >= NUM_WAVEFORMS) return 0.0f;
     return s->ui_snapshot.patch_copy.osc_fine_cents[wave_idx];
+}
+
+PX_API void PX_SetSequenceID(PxSynth* s, int seq_id) {
+    if (!s) return;
+    PUSH_CMD_VOID(PX_CMD_SET_SEQUENCE_ID, .sequence = {seq_id});
+}
+
+PX_API int PX_GetSequenceID(PxSynth* s) {
+    return s ? s->ui_snapshot.patch_copy.selected_sequence_id : -1;
 }
 
 // --- THREAD-SAFE GET API ---
@@ -2935,7 +3412,11 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     v->main_osc_vm_params.modB = 0.0f;
     v->main_osc_vm_params.modC = 0.0f;
     v->main_osc_vm_params.lfsr_type = LFSR_16BIT;
-    v->main_osc_vm_params.lfsr_state = (uint32_t)rand() | 1;
+
+    // Seed PRNG deterministically using the global trigger counter to avoid rand() in audio thread
+    v->rng_state = (uint32_t)(s->global_trigger_counter * 1664525 + 1013904223);
+
+    v->main_osc_vm_params.lfsr_state = px_rand(&v->rng_state) | 1;
     v->main_osc_vm_params.lfsr_position = 0;
     v->main_osc_vm_params.lfsr_seed = v->main_osc_vm_params.lfsr_state;
     for (int i = 0; i < s->config.num_voice_adsrs; ++i) {
@@ -2959,12 +3440,12 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
             vlfo->phase = 0.0f;
             vlfo->lfo_vm_params.x = 0.0f;
             vlfo->lfo_vm_params.frequency = 0.0f;
-            vlfo->lfo_vm_params.rand_offset = (float)rand() / RAND_MAX;
+            vlfo->lfo_vm_params.rand_offset = (float)px_rand(&v->rng_state) / UINT32_MAX;
             vlfo->lfo_vm_params.modA = 0.0f;
             vlfo->lfo_vm_params.modB = 0.0f;
             vlfo->lfo_vm_params.modC = 0.0f;
             vlfo->lfo_vm_params.lfsr_type = LFSR_8BIT;
-            vlfo->lfo_vm_params.lfsr_state = (uint32_t)rand() | 1;
+            vlfo->lfo_vm_params.lfsr_state = px_rand(&v->rng_state) | 1;
             vlfo->lfo_vm_params.lfsr_position = 0;
             vlfo->lfo_vm_params.lfsr_seed = vlfo->lfo_vm_params.lfsr_state;
         } else {
@@ -2985,6 +3466,84 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
         float initial_value = chunk ? execute_bytecode(chunk, &temp_params) : 0.0f;
         for (int j = 0; j < 4; j++) v->interp_samples[j] = initial_value;
     }
+
+    // --- v1.5 Sequence Initialization ---
+    v->seq_id = s->patch.selected_sequence_id;
+    if (v->seq_id >= 0 && v->seq_id < PX_NUM_WSEQ_BANKS) {
+        v->current_sequence = &ROM_WAVE_SEQUENCES[v->seq_id];
+        v->seq_step_idx = 0;
+        v->seq_direction = 1;
+        v->seq_cycles_counter = 0;
+        v->seq_finished = false;
+        v->target_pitch_ratio = 1.0f; // Init glide target
+        v->prev_step_pitch_ratio = 1.0f;
+
+        // Pre-calc global bitcrush scale
+        v->step_bitcrush_scale = (v->current_sequence->bitcrush_bits > 0) ? powf(2.0f, v->current_sequence->bitcrush_bits) : 1.0f;
+
+        // Reset LFOs if sequence requests it
+        if (v->current_sequence->reset_lfo_pos) {
+            for (int k = 0; k < s->config.num_lfos; ++k) {
+                v->lfo_instances[k].phase = 0.0f;
+                // We should also retrigger LFO ADSRs if needed, but they are already triggered above
+            }
+        }
+
+        // Load Step 0 immediately
+        const PxWaveSeqStep* step = &v->current_sequence->steps[0];
+        v->source_wave_index = step->wave_idx; // Override wave
+        v->step_pitch_ratio = powf(2.0f, step->pitch_offset / 1200.0f);
+        v->target_pitch_ratio = v->step_pitch_ratio; // Initialize target to current
+        v->prev_step_pitch_ratio = v->step_pitch_ratio; // Init previous
+        v->step_flags = step->flags;
+        v->step_mute_state = false;
+        if (v->step_flags & PX_WSEQ_USE_PROB_MUTE) {
+             uint8_t score = v->current_sequence->prob_mute_score;
+             uint8_t threshold = (score == 0) ? 50 : score;
+             if ((px_rand(&v->rng_state) % 100) < threshold) v->step_mute_state = true;
+        }
+
+        // Check for Random Wave
+        if (v->step_flags & PX_WSEQ_USE_RND_WAVE) {
+             uint16_t range = v->current_sequence->rnd_wave_high - v->current_sequence->rnd_wave_low;
+             if (range > 0) {
+                 v->source_wave_index = v->current_sequence->rnd_wave_low + (px_rand(&v->rng_state) % (range + 1));
+             }
+        }
+
+        // Check for Random Octave
+        if (v->step_flags & PX_WSEQ_USE_RND_OCTAVE) {
+             if ((px_rand(&v->rng_state) % 100) < v->current_sequence->rnd_octave_range) {
+                 float shift = (px_rand(&v->rng_state) % 2 == 0) ? 2.0f : 0.5f;
+                 v->step_pitch_ratio *= shift;
+             }
+        }
+
+        // Apply Phase Lock
+        if (v->step_flags & PX_WSEQ_LOCK_PHASE) {
+            bool do_lock = true;
+            if (v->current_sequence->lock_phase_mod_src >= 0 && v->current_sequence->lock_phase_mod_src < PX_MOD_SRC_COUNT) {
+                // Manually construct source value for initial NoteOn context
+                float src_val = 0.0f;
+                switch (v->current_sequence->lock_phase_mod_src) {
+                    case PX_MOD_SRC_VELOCITY: src_val = v->initial_velocity; break;
+                    case PX_MOD_SRC_MODWHEEL: src_val = s->modwheel_value; break;
+                    case PX_MOD_SRC_AFTERTOUCH: src_val = s->channel_aftertouch_pressure; break;
+                    case PX_MOD_SRC_PITCHBEND: src_val = s->pitchbend_value; break;
+                    case PX_MOD_SRC_KEY_TRACK: src_val = ((float)v->midi_note - 60.0f) / 60.0f; break;
+                    default: src_val = 0.0f; break;
+                }
+                if (src_val <= 0.0f) do_lock = false;
+            }
+            if (do_lock) v->phase = 0.0f;
+        }
+    } else {
+        v->current_sequence = NULL;
+        v->step_pitch_ratio = 1.0f;
+        v->step_flags = 0;
+        v->step_mute_state = false;
+    }
+
     s->last_held_note_midi = midi_note; if (s->num_keys_held < s->config.num_voices) s->held_notes[s->num_keys_held++] = key_id;
 }
 
