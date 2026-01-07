@@ -11,12 +11,12 @@ Implement a per-voice, bytecode-driven Wave Sequencer with 8-byte steps, microto
 **Goal:** Define the storage format, logic flags, and global sequence settings.
 
 **Actionables:**
-- [ ] **Modify `polysonix.h` (Public Enums and Structs section)**:
-    - [ ] Add 16-Bit Logic Flags macros.
-    - [ ] Define Enums: `PxWSeqEndAction`, `PxWSeqGlideMode`.
-    - [ ] Define `PxWaveSeqStep` struct (strictly 8-byte aligned).
-    - [ ] Define `PxWaveSequence` struct including the new Settings Header.
-    - [ ] Define `PX_NUM_WSEQ_BANKS` (128) and `PX_MAX_WSEQ_STEPS` (64).
+- [x] **Modify `polysonix.h` (Public Enums and Structs section)**:
+    - [x] Add 16-Bit Logic Flags macros.
+    - [x] Define Enums: `PxWSeqEndAction`, `PxWSeqGlideMode`.
+    - [x] Define `PxWaveSeqStep` struct (strictly 8-byte aligned).
+    - [x] Define `PxWaveSequence` struct including the new Settings Header.
+    - [x] Define `PX_NUM_WSEQ_BANKS` (128) and `PX_MAX_WSEQ_STEPS` (64).
 
 **Detail:**
 
@@ -115,12 +115,12 @@ typedef struct {
 **Goal:** Update `Voice` and `PxPatch` structs to track sequence state.
 
 **Actionables:**
-- [ ] **Modify `PxPatch` struct:**
-    - [ ] Add `int selected_sequence_id;` (Default: -1, Range: -1 to 127).
-- [ ] **Modify `Voice` struct (Internal Data Structures):**
-    - [ ] Add sequencer state fields.
-    - [ ] Add per-step optimization cache fields.
-    - [ ] Add pointer/index to current sequence.
+- [x] **Modify `PxPatch` struct:**
+    - [x] Add `int selected_sequence_id;` (Default: -1, Range: -1 to 127).
+- [x] **Modify `Voice` struct (Internal Data Structures):**
+    - [x] Add sequencer state fields.
+    - [x] Add per-step optimization cache fields.
+    - [x] Add pointer/index to current sequence.
 
 **Detail (Voice Struct Additions):**
 ```c
@@ -151,60 +151,60 @@ typedef struct Voice {
 **Goal:** Inject logic into `PX_Process` and `PX_NoteOn_internal` using the new Header settings.
 
 **Actionables:**
-- [ ] **Update `PX_NoteOn_internal`:**
-    - [ ] Initialize `v->seq_id`.
-    - [ ] Check `reset_lfo_pos` from header.
-    - [ ] Load Step 0.
+- [x] **Update `PX_NoteOn_internal`:**
+    - [x] Initialize `v->seq_id`.
+    - [x] Check `reset_lfo_pos` from header.
+    - [x] Load Step 0.
 
-- [ ] **Update `PX_Process` (Inside Voice Loop):**
+- [x] **Update `PX_Process` (Inside Voice Loop):**
 
-    - [ ] **Logic Injection Point 1: Frequency Calc**
-        - [ ] Apply pitch ratio.
-        - [ ] **Glide:** Implement `glide_mode` logic here (Step vs Smooth).
+    - [x] **Logic Injection Point 1: Frequency Calc**
+        - [x] Apply pitch ratio.
+        - [x] **Glide:** Implement `glide_mode` logic here (Step vs Smooth).
 
-    - [ ] **Logic Injection Point 2: Audio FX (Generative & Glitch)**
-        - [ ] **Prob Mute:** Use `prob_mute_score` from header if `PX_WSEQ_USE_PROB_MUTE` flag is set.
-        - [ ] **Prob Skip:** Use `prob_skip_score` logic during step transition.
-        - [ ] **Bitcrush:** `val = floor(val * pow(2, bits)) / pow(2, bits)` using `bitcrush_bits` if `PX_WSEQ_BITCRUSH`.
-        - [ ] **XMod/RingMod:**
-            - [ ] Calculate `amount = depth + (mod_src_val * depth)`.
-            - [ ] Apply FM/RingMod.
-        - [ ] **Lock Phase:**
-            - [ ] If `PX_WSEQ_LOCK_PHASE`:
-                - [ ] If `lock_phase_mod_src > 0`: check threshold? Or use value as phase reset point? "0 = no mod, Otherwise MOD Matrix choice".
+    - [x] **Logic Injection Point 2: Audio FX (Generative & Glitch)**
+        - [x] **Prob Mute:** Use `prob_mute_score` from header if `PX_WSEQ_USE_PROB_MUTE` flag is set.
+        - [x] **Prob Skip:** Use `prob_skip_score` logic during step transition.
+        - [x] **Bitcrush:** `val = floor(val * pow(2, bits)) / pow(2, bits)` using `bitcrush_bits` if `PX_WSEQ_BITCRUSH`.
+        - [x] **XMod/RingMod:**
+            - [x] Calculate `amount = depth + (mod_src_val * depth)`.
+            - [x] Apply FM/RingMod.
+        - [x] **Lock Phase:**
+            - [x] If `PX_WSEQ_LOCK_PHASE`:
+                - [x] If `lock_phase_mod_src > 0`: check threshold? Or use value as phase reset point? "0 = no mod, Otherwise MOD Matrix choice".
 
-    - [ ] **Logic Injection Point 3: Phase & Step Advancement**
-        - [ ] **End Action:**
-            - [ ] `STOP`: Silence voice.
-            - [ ] `HOLD`: Keep playing last step.
-            - [ ] `LOOP`: `step_idx = 0`.
-            - [ ] `PINGPONG`: `direction *= -1`.
-        - [ ] **Retrigger:**
-            - [ ] `PX_WSEQ_RETRIG_ADSR`: Use `adsr_retrig_phase` from header to determine where to reset ADSR (e.g. to ATTACK start).
+    - [x] **Logic Injection Point 3: Phase & Step Advancement**
+        - [x] **End Action:**
+            - [x] `STOP`: Silence voice.
+            - [x] `HOLD`: Keep playing last step.
+            - [x] `LOOP`: `step_idx = 0`.
+            - [x] `PINGPONG`: `direction *= -1`.
+        - [x] **Retrigger:**
+            - [x] `PX_WSEQ_RETRIG_ADSR`: Use `adsr_retrig_phase` from header to determine where to reset ADSR (e.g. to ATTACK start).
 
 ## Phase 4: API & Control (polysonix.h)
 
 **Goal:** Allow user control.
 
 **Actionables:**
-- [ ] **Update `PxCommandType`:** Add `PX_CMD_SET_SEQUENCE_ID`.
-- [ ] **Add API Functions:**
-    - [ ] `PX_API void PX_SetSequenceID(PxSynth* s, int seq_id);`
-    - [ ] `PX_API int PX_GetSequenceID(PxSynth* s);`
-- [ ] **Implement Command Handling.**
+- [x] **Update `PxCommandType`:** Add `PX_CMD_SET_SEQUENCE_ID`.
+- [x] **Add API Functions:**
+    - [x] `PX_API void PX_SetSequenceID(PxSynth* s, int seq_id);`
+    - [x] `PX_API int PX_GetSequenceID(PxSynth* s);`
+- [x] **Implement Command Handling.**
 
 ## Phase 5: Content (ROM)
 
 **Goal:** Populate `ROM_WAVE_SEQUENCES`.
 
 **Presets:**
-- [ ] **Seq 0 (Basic):** 4 steps, Sine/Tri/Saw/Square.
-- [ ] **Seq 1 (Arp):** Major triad arpeggio.
-- [ ] **Seq 2 (Rhythmic):** Uses `PX_WSEQ_USE_PROB_MUTE` with `prob_mute_score`.
-- [ ] **Seq 3 (FX):** Uses Bitcrush and RingMod with header settings.
+- [x] **Seq 0 (Basic):** 4 steps, Sine/Tri/Saw/Square.
+- [x] **Seq 1 (Arp):** Major triad arpeggio.
+- [x] **Seq 2 (Rhythmic):** Uses `PX_WSEQ_USE_PROB_MUTE` with `prob_mute_score`.
+- [x] **Seq 3 (FX):** Uses Bitcrush and RingMod with header settings.
 
 ## Phase 6: Verification Strategy
 
 **Actionables:**
-- [ ] **Compile Check.**
-- [ ] **Manual Test Harness:** `test_seq.c`.
+- [x] **Compile Check.**
+- [ ] **Manual Test Harness:** `test_seq.c`

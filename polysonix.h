@@ -867,56 +867,7 @@ static const float HB[5] = {
 };
 
 // --- v1.5 ROM (Populated) ---
-static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
-    // Seq 0: Basic Loop (4 steps, Sine/Tri/Saw/Square, no pitch shift)
-    {
-        .end_action = PX_WSEQ_END_LOOP,
-        .glide_mode = PX_WSEQ_GLIDE_OFF,
-        .prob_mute_score = 0,
-        .prob_skip_score = 0,
-        .steps = {
-            {.wave_idx = 0, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, // Sine
-            {.wave_idx = 1, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, // Tri
-            {.wave_idx = 2, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, // Saw
-            {.wave_idx = 3, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, // Square
-            {.wave_idx = 0, .duration_cycles = 0,   .pitch_offset = 0, .flags = PX_WSEQ_END}
-        }
-    },
-    // Seq 1: Major Triad Arp (PingPong)
-    {
-        .end_action = PX_WSEQ_END_PINGPONG,
-        .steps = {
-            {.wave_idx = 3, .duration_cycles = 200, .pitch_offset = 0,   .flags = 0},
-            {.wave_idx = 3, .duration_cycles = 200, .pitch_offset = 400, .flags = 0}, // +4 st
-            {.wave_idx = 3, .duration_cycles = 200, .pitch_offset = 700, .flags = 0}, // +7 st
-            {.wave_idx = 0, .duration_cycles = 0,   .pitch_offset = 0,   .flags = PX_WSEQ_END}
-        }
-    },
-    // Seq 2: Glitch Rhythmic (Prob Mute/Skip, Bitcrush)
-    {
-        .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 4,
-        .prob_mute_score = 30, // 30% mute
-        .prob_skip_score = 10, // 10% skip
-        .steps = {
-            {.wave_idx = 2, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 2, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
-            {.wave_idx = 2, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 2, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
-            {.wave_idx = 0, .duration_cycles = 0,  .pitch_offset = 0, .flags = PX_WSEQ_END}
-        }
-    },
-    // Seq 3: Modulated Texture (Ring Mod + XMod)
-    {
-        .end_action = PX_WSEQ_END_LOOP,
-        .xmod_depth = 0.5f,
-        .steps = {
-            {.wave_idx = 0, .duration_cycles = 500, .pitch_offset = 0,    .flags = PX_WSEQ_XMOD},
-            {.wave_idx = 0, .duration_cycles = 500, .pitch_offset = 1200, .flags = PX_WSEQ_RING_MOD},
-            {.wave_idx = 0, .duration_cycles = 0,   .pitch_offset = 0,    .flags = PX_WSEQ_END}
-        }
-    }
-};
+#include "wseq_rom.h"
 
 static const char* PX_FILTER_MODE_NAMES[] = {"OFF", "LP", "BP", "HP", "LP+BP", "LP+HP", "BP+HP", "NOTCH", "ALLPASS"};
 static const char* PX_ADSR_DEST_NAMES[] = { "NONE", "PARAM1", "PARAM2", "PARAM3", "AMP", "FREQ(ST)", "LFO0 LVL", "LFO1 LVL", "LFO2 LVL", "FREQ.CUT(HZ)", "FREQ.ENV IN", "FREQ.RES(Q)"};
@@ -2792,84 +2743,38 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             mixed_sample_l_f += final_sample * gain_l;
             mixed_sample_r_f += final_sample * gain_r;
 
-            // Phase update
+            // --- Phase Update & Cycle Detection (Mastered) ---
             float phase_inc = v->frequency * s->time_per_sample;
+            bool cycle_completed = false;
+
             if (v->current_sequence && (v->step_flags & PX_WSEQ_REVERSE_PLAY)) {
                 v->phase -= phase_inc;
-                if (v->phase < 0.0f) v->phase += 1.0f;
+                if (v->phase < 0.0f) {
+                    v->phase += 1.0f; // Wrap 0 -> 1
+                    // Ensure it's in range if phase_inc was huge (robustness)
+                    if (v->phase < 0.0f) v->phase = fmodf(v->phase, 1.0f) + 1.0f;
+                    cycle_completed = true;
+                }
             } else {
-                v->phase = fmodf(v->phase + phase_inc, 1.f);
+                v->phase += phase_inc;
+                if (v->phase >= 1.0f) {
+                    v->phase -= 1.0f; // Wrap 1 -> 0
+                    if (v->phase >= 1.0f) v->phase = fmodf(v->phase, 1.0f);
+                    cycle_completed = true;
+                }
             }
 
             // --- v1.5: Sequence Step Advancement ---
             if (v->current_sequence && !v->seq_finished) {
-                // Check for cycle completion (approximate by phase wrap)
-                // Actually, we advanced phase above. We need to detect if it wrapped.
-                // But since we use fmodf, it's hard to tell without tracking previous phase.
-                // However, we added cycle duration logic.
-                // Let's increment cycle counter roughly based on frequency?
-                // "Per-Cycle logic" implies we check every time phase wraps.
-                // To do this robustly:
-                float prev_phase = v->phase_at_interp_end; // This is updated in the interpolation block, might be stale for per-sample?
-                // For Per-Sample mode, we don't track prev_phase explicitly in the loop.
-                // Let's use a simplified approach: increment counter by phase_inc? No, that's phase.
-                // We need to count full cycles.
-
-                // Let's assume 1 cycle = 1.0 phase accumulation.
-                // We can accumulate phase_inc into a separate counter.
-                // But for now, let's just use the `seq_cycles_counter` as a sample counter?
-                // No, the struct says `duration_cycles`.
-                // So we need to detect phase wrap.
-                // Since we just updated `v->phase`, we can check if it wrapped.
-                // But `fmodf` makes it jump.
-                // Let's store `float phase_accumulator` in Voice? Or just detect wrap.
-                // The loop runs per sample.
-                // If (phase_inc + old_phase >= 1.0) -> wrapped.
-                // We don't have old_phase easily here after the update.
-                // Re-calculating:
-                float old_phase;
-                if (v->step_flags & PX_WSEQ_REVERSE_PLAY) {
-                     old_phase = v->phase + phase_inc;
-                     if (old_phase >= 1.0f) old_phase -= 1.0f; // Actually we wrapped down?
-                     // If reverse, wrap happens at 0.
-                     // if (old_phase < phase_inc) ?
-                } else {
-                     // standard forward
-                     // current v->phase is (old + inc) % 1.0
-                     // if current < inc (and inc < 1.0), it wrapped.
-                     // Or just:
-                     // float unmod_phase = old_phase + phase_inc;
-                     // if (unmod_phase >= 1.0f) wrapped.
-                }
-
-                // Hacky detection: if phase is very small, we probably wrapped.
-                // Better: Use `v->phase` before update? Too late.
-                // Let's assume we advance step based on TIME for now if cycles is hard?
-                // No, user wants Per-Cycle.
-
-                // Correct way: Check if we completed a cycle this sample.
-                // Since we don't have local `old_phase` variable preserved from top of loop (optimized out?),
-                // we can deduce it.
-                // Actually, let's just accept that we might miss a cycle if freq is super high (Nyquist).
-                // But for normal waves:
-                // If we wrapped, increment cycle counter.
-
-                // Let's modify the phase update block above to detect wrap.
-                // But I can't modify "above" easily with merge_diff.
-                // I will assume I can insert logic here or assume checking `v->phase < phase_inc` is "close enough" for forward play.
-
-                bool cycle_completed = false;
-                if (v->step_flags & PX_WSEQ_REVERSE_PLAY) {
-                    if (v->phase > (1.0f - phase_inc)) cycle_completed = true; // Wrapped from 0 to 1
-                } else {
-                    if (v->phase < phase_inc) cycle_completed = true;
-                }
-
                 if (cycle_completed) {
                     v->seq_cycles_counter++;
                     const PxWaveSeqStep* current_step = &v->current_sequence->steps[v->seq_step_idx];
 
-                    if (v->seq_cycles_counter >= current_step->duration_cycles) {
+                    // Safety check: prevent infinite loops on zero duration
+                    int target_cycles = current_step->duration_cycles;
+                    if (target_cycles < 1) target_cycles = 1;
+
+                    if (v->seq_cycles_counter >= target_cycles) {
                         // Advance Step
                         bool force_end = (current_step->flags & PX_WSEQ_END);
 
