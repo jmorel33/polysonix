@@ -84,14 +84,14 @@ flowchart TD
 
     %% CPU Path
     Mode -->|Default| CPU_Exec[CPU Execution]
-    subgraph CPU_Exec [CPU Backend (polysonix_wave.h)]
+    subgraph CPU_Exec ["CPU Backend (polysonix_wave.h)"]
         direction TB
         CPU_VM["CPU VM\n(Recursive, Computed Gotos)"] -->|Synthesize| CPU_Out[Float Audio Buffer]
     end
 
     %% GPU Path
     Mode -->|POLYSONIX_USE_GPU| GPU_Exec[GPU Execution]
-    subgraph GPU_Exec [GPU Backend (polysonix_wave.comp)]
+    subgraph GPU_Exec ["GPU Backend (polysonix_wave.comp)"]
         direction TB
         Serializer["Serializer\n(Packs structs for std430)"] -->|Upload| SSBO[GPU SSBO Buffer]
         SSBO -->|Bindless Access| Shader["Compute Shader VM\n(Iterative, Explicit Stack)"]
