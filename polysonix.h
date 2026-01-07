@@ -994,6 +994,8 @@ typedef struct {
     int  seq_cycles_counter;    // How many cycles played in this step
     bool seq_finished;          // True if END flag hit (and action is STOP/HOLD)
 
+    int  seq_loop_start_idx;    // Cached index of the step with PX_WSEQ_LOOP_POINT
+
     // Pointer to the current sequence definition (in ROM)
     const PxWaveSequence* current_sequence;
 
@@ -2784,7 +2786,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                             switch (v->current_sequence->end_action) {
                                 case PX_WSEQ_END_STOP: v->active = false; v->seq_finished = true; break;
                                 case PX_WSEQ_END_HOLD: v->seq_finished = true; break; // Stay here
-                                case PX_WSEQ_END_LOOP: v->seq_step_idx = 0; v->seq_cycles_counter = 0; break;
+                                case PX_WSEQ_END_LOOP: v->seq_step_idx = v->seq_loop_start_idx; v->seq_cycles_counter = 0; break;
                                 case PX_WSEQ_END_PINGPONG: v->seq_direction *= -1; v->seq_step_idx += v->seq_direction; v->seq_cycles_counter = 0; break;
                                 default: v->active = false; break;
                             }
@@ -2801,7 +2803,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                             if (v->seq_step_idx >= PX_MAX_WSEQ_STEPS || v->seq_step_idx < 0) {
                                 // Hit physical end of array -> Implicit END behavior
                                 if (v->current_sequence->end_action == PX_WSEQ_END_LOOP) {
-                                    v->seq_step_idx = 0;
+                                    v->seq_step_idx = v->seq_loop_start_idx;
                                 } else if (v->current_sequence->end_action == PX_WSEQ_END_PINGPONG) {
                                     v->seq_direction *= -1;
                                     v->seq_step_idx += v->seq_direction * 2; // Bounce back
@@ -3383,6 +3385,15 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
         v->seq_finished = false;
         v->target_pitch_ratio = 1.0f; // Init glide target
         v->prev_step_pitch_ratio = 1.0f;
+
+        // Cache Loop Point
+        v->seq_loop_start_idx = 0;
+        for (int i = 0; i < PX_MAX_WSEQ_STEPS; i++) {
+            if (v->current_sequence->steps[i].flags & PX_WSEQ_LOOP_POINT) {
+                v->seq_loop_start_idx = i;
+                break;
+            }
+        }
 
         // Pre-calc global bitcrush scale
         v->step_bitcrush_scale = (v->current_sequence->bitcrush_bits > 0) ? powf(2.0f, v->current_sequence->bitcrush_bits) : 1.0f;
