@@ -1,3 +1,35 @@
+## v1.5.0 (2026/01/06)
+
+This major release introduces the **Wave Sequencer**, a powerful per-voice sequencing engine for rhythmic, glitch, and generative sound design.
+
+### Features
+*   **Wave Sequencer:**
+    *   **Per-Voice Logic:** Each voice runs its own independent sequencer instance, allowing for polyrhythmic and phase-perfect step transitions.
+    *   **Per-Cycle Precision:** Step advancement and logic are evaluated every waveform cycle, ensuring tight synchronization with the oscillator phase.
+    *   **Global Settings:**
+        *   **End Actions:** Loop, PingPong, Stop, Hold, or Reverse.
+        *   **Glide Modes:** `STEP` (linear glide over step duration) and `SMOOTH` (continuous 1-pole portamento).
+        *   **FX:** Bitcrush (1-8 bits), Ring Mod, and XMod (Feedback FM), with modulation depth control via standard sources (Velocity, Mod Wheel, Aftertouch).
+        *   **Probabilities:** Global "scores" (0-100%) for randomly muting or skipping steps.
+    *   **Per-Step Flags:**
+        *   **Control:** `JUMP_RANDOM`, `END`, `LOOP_POINT`.
+        *   **Generative:** `USE_PROB_MUTE`, `USE_PROB_SKIP`, `USE_RND_OCTAVE`, `USE_RND_WAVE`.
+        *   **Modulation:** `RESET_LFO`, `RETRIG_ADSR` (to specific phase), `LOCK_PHASE` (Hard Sync).
+        *   **FX:** `BITCRUSH`, `RING_MOD`, `XMOD`, `REVERSE_PLAY`.
+
+*   **Audio Engine Improvements:**
+    *   **Thread-Safe PRNG:** Replaced `rand()` in the audio path with a context-aware Linear Congruential Generator (`px_rand`), seeded deterministically per-voice.
+    *   **Optimized DSP:** Bitcrush and pitch ratios are pre-calculated per step to minimize CPU load.
+
+### API Changes
+*   **New Functions:**
+    *   `PX_SetSequenceID(s, seq_id)`: Selects the active sequence (-1 for off).
+    *   `PX_GetSequenceID(s)`
+*   **New Structs:** `PxWaveSequence` and `PxWaveSeqStep` defined in `polysonix.h`.
+*   **ROM Storage:** Sequences are stored in `ROM_WAVE_SEQUENCES` (Flash/RO memory friendly).
+
+### Backward Compatibility
+*   **Default State:** Sequence ID defaults to -1 (Off). Existing patches behave identically to previous versions.
 ## v1.4.6 (2026/01/05)
 
 This update completes the core analog voicing section by introducing **Per-Oscillator Coarse & Fine Tuning**.
