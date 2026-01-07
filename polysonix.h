@@ -178,8 +178,8 @@ typedef enum {
  * @brief Determines the behavior when a wave sequence reaches its end or an explicit END flag.
  */
 typedef enum {
-    PX_WSEQ_END_STOP = 0,    /**< Stop the voice (triggers Note Off behavior). */
-    PX_WSEQ_END_HOLD,        /**< Hold the last step indefinitely. */
+    PX_WSEQ_END_STOP = 0,    /**< Stop the voice (triggers release behavior). */
+    PX_WSEQ_END_HOLD,        /**< Hold the last step indefinitely (keeps voice active). */
     PX_WSEQ_END_LOOP,        /**< Loop back to the start of the sequence. */
     PX_WSEQ_END_PINGPONG,    /**< Reverse the playback direction. */
     PX_WSEQ_END_REVERSE      /**< Play backwards (typically used as a starting mode). */
@@ -208,8 +208,8 @@ typedef enum {
 // Bit 7 Reserved
 
 // --- GENERATIVE (Bits 8-11) ---
-#define PX_WSEQ_USE_PROB_MUTE   (1 << 8)  /**< Use the global 'prob_mute_score' to randomly mute this step. */
-#define PX_WSEQ_USE_PROB_SKIP   (1 << 9)  /**< Use the global 'prob_skip_score' to randomly skip this step. */
+#define PX_WSEQ_USE_PROB_MUTE   (1 << 8)  /**< Use the global 'prob_mute_score' to randomly mute this step (rolled once per step load). */
+#define PX_WSEQ_USE_PROB_SKIP   (1 << 9)  /**< Use the global 'prob_skip_score' to randomly skip this step (rolled once per step load). */
 #define PX_WSEQ_USE_RND_OCTAVE  (1 << 10) /**< Use the global 'rnd_octave_range' to apply a random octave shift. */
 #define PX_WSEQ_USE_RND_WAVE    (1 << 11) /**< Use the global Random Wave Range to pick a random waveform. */
 
@@ -2593,7 +2593,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         // Linear glide over step duration
                         const PxWaveSeqStep* current_step = &v->current_sequence->steps[v->seq_step_idx];
                         if (current_step->duration_cycles > 0) {
-                            float t = (float)v->seq_cycles_counter / (float)current_step->duration_cycles;
+                            float t = ((float)v->seq_cycles_counter + v->phase) / (float)current_step->duration_cycles;
                             t = fmaxf(0.0f, fminf(1.0f, t));
                             float current_ratio = v->prev_step_pitch_ratio + (v->step_pitch_ratio - v->prev_step_pitch_ratio) * t;
                             v->frequency *= current_ratio;
@@ -2699,9 +2699,9 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     raw_sample = roundf(raw_sample * levels) / levels;
                 }
 
-                // Ring Mod (Square Wave Octave Up)
+                // Ring Mod (Sine Wave Octave Up)
                 if (v->step_flags & PX_WSEQ_RING_MOD) {
-                    float ring_mod_src = ((int)(v->phase * 4.0f) & 1) ? -1.0f : 1.0f;
+                    float ring_mod_src = sinf(v->phase * 4.0f * PI);
 
                     // Calculate Depth
                     float depth = v->current_sequence->ring_mod_depth;
@@ -2728,7 +2728,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     }
 
                     // Simple self-FM: add sample to phase for next cycle
-                    float fm_val = raw_sample * xmod_amount * 0.5f; // Scale
+                    float fm_val = raw_sample * xmod_amount * 0.1f; // Scale
                     v->phase += fm_val;
                     // Wrap phase
                     if (v->phase >= 1.0f) v->phase -= 1.0f;
@@ -2784,7 +2784,13 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         if (force_end) {
                             // Handle End Action
                             switch (v->current_sequence->end_action) {
-                                case PX_WSEQ_END_STOP: v->active = false; v->seq_finished = true; break;
+                                case PX_WSEQ_END_STOP:
+                                    // Trigger Release
+                                    for (int j = 0; j < s->config.num_voice_adsrs; j++) if (v->adsrs[j].enabled) ADSR_TriggerRelease(&v->adsrs[j]);
+                                    for (int k = 0; k < s->config.num_lfos; k++) if (s->patch.template_lfos[k].adsr.enabled) ADSR_TriggerRelease(&v->lfo_instances[k].adsr);
+                                    v->key_id = -1; // Detach from key
+                                    v->seq_finished = true;
+                                    break;
                                 case PX_WSEQ_END_HOLD: v->seq_finished = true; break; // Stay here
                                 case PX_WSEQ_END_LOOP: v->seq_step_idx = v->seq_loop_start_idx; v->seq_cycles_counter = 0; break;
                                 case PX_WSEQ_END_PINGPONG: v->seq_direction *= -1; v->seq_step_idx += v->seq_direction; v->seq_cycles_counter = 0; break;
