@@ -70,56 +70,55 @@ like UI, input handling, and audio device management.
 
 ## CPU vs GPU Backends
 
-Polysonix offers two distinct backends for waveform generation, allowing developers to choose the best fit for their application's performance profile and platform constraints. By default, the CPU backend is used. To enable the GPU backend, define `POLYSONIX_USE_GPU_WAVE` before including `polysonix.h`.
+Polysonix utilizes a unified backend architecture defined in `polysonix_wave.h`. By default, the highly optimized CPU virtual machine is used. To enable the GPU backend, simply define `POLYSONIX_USE_GPU` before including `polysonix.h`.
 
 ```mermaid
 flowchart TD
     %% Common Frontend
-    App[User Application] -->|Define Waveform| Expr["Expression String (e.g. 'sin(x)')"]
+    App[User Application] -->|Define Waveform| Expr["Expression String\n(e.g. 'sin(x) + sigma(...)')"]
     Expr -->|Compile| Compiler[Polysonix Compiler]
     Compiler -->|Generate| Bytecode["Bytecode (Reverse Polish Notation)"]
 
-    %% Split
-    Bytecode --> Decision{Backend?}
+    %% Backend Selection
+    Bytecode --> Mode{Backend Defined?}
 
     %% CPU Path
-    Decision -->|"CPU (Default)"| CPU_Mem[Host Memory]
-    CPU_Mem -->|Read| CPU_VM["CPU VM\n(Recursive, Computed Gotos)"]
-    subgraph CPU_Execution [CPU Audio Thread]
-        CPU_VM -->|Synthesize| CPU_Out[Float Audio Buffer]
+    Mode -->|Default| CPU_Exec[CPU Execution]
+    subgraph CPU_Exec [CPU Backend (polysonix_wave.h)]
+        direction TB
+        CPU_VM["CPU VM\n(Recursive, Computed Gotos)"] -->|Synthesize| CPU_Out[Float Audio Buffer]
     end
 
     %% GPU Path
-    Decision -->|"GPU (Optional)"| Serializer["Serializer\n(Packs structs for std430)"]
-    Serializer -->|Upload| SSBO[GPU SSBO Buffer]
-    SSBO -->|Bindless Access| GPU_VM["GPU VM\n(Iterative, Explicit Stack)"]
-    subgraph GPU_Execution [OpenGL Compute Shader]
-        GPU_VM -->|Synthesize| GPU_Out[Float Buffer / Texture]
+    Mode -->|POLYSONIX_USE_GPU| GPU_Exec[GPU Execution]
+    subgraph GPU_Exec [GPU Backend (polysonix_wave.comp)]
+        direction TB
+        Serializer["Serializer\n(Packs structs for std430)"] -->|Upload| SSBO[GPU SSBO Buffer]
+        SSBO -->|Bindless Access| Shader["Compute Shader VM\n(Iterative, Explicit Stack)"]
+        Shader -->|Parallel Dispatch| GPU_Out[Float Buffer / Texture]
     end
 
     %% Comparison styling
     classDef cpu fill:#3f0f3f,stroke:#6f1f6f,stroke-width:2px;
     classDef gpu fill:#0f3f3f,stroke:#1f6f6f,stroke-width:2px;
-    class CPU_VM,CPU_Execution,CPU_Out cpu;
-    class GPU_VM,GPU_Execution,GPU_Out,SSBO gpu;
+    class CPU_Exec,CPU_VM,CPU_Out cpu;
+    class GPU_Exec,Serializer,SSBO,Shader,GPU_Out gpu;
 ```
 
-### CPU Backend (`polysonix_wave_cpu.h`)
-The default engine. It is a highly optimized, single-header C library designed for real-time audio generation on the CPU.
+### CPU Backend
+The default engine, fully implemented in `polysonix_wave.h`.
 
-*   **Zero Dependencies:** Pure C99, compiles anywhere.
-*   **Low Latency:** Instant response to parameter changes, ideal for real-time playing.
-*   **Optimized VM:** Uses "Computed Gotos" (on GCC/Clang) and register caching to minimize overhead.
+*   **Zero Dependencies:** Pure C99.
+*   **Low Latency:** Instant response, ideal for real-time playing.
+*   **Optimized VM:** Uses "Computed Gotos" and register caching.
 *   **Recursive:** Natural handling of complex nested expressions.
 
-### GPU Backend (`polysonix_wave_gpu.h` + `polysonix_wave.comp`)
-An optional backend that offloads synthesis to the graphics card using Compute Shaders. It leverages modern OpenGL 4.6 features for maximum efficiency.
+### GPU Backend (`POLYSONIX_USE_GPU`)
+Enables the OpenGL 4.6 Compute Shader path.
 
-*   **Technology Stack:** Built on **OpenGL 4.6** Compute Shaders.
-*   **Bindless Architecture:** Uses **Bindless Descriptors** (via `GL_EXT_buffer_reference2`) to access memory directly, avoiding the overhead of traditional binding slots.
-*   **SSBO Storage:** All bytecode, constants, and parameters are managed in **Shader Storage Buffer Objects (SSBOs)** using `GL_EXT_scalar_block_layout` for seamless C-struct compatibility.
-*   **Massive Parallelism:** Capable of generating thousands of samples simultaneously.
-*   **Feature Parity:** The GLSL shader implements the exact same VM logic (via a non-recursive state machine) as the CPU version.
+*   **Technology:** OpenGL 4.6, Bindless Descriptors (`GL_EXT_buffer_reference2`), SSBOs.
+*   **Throughput:** Massive parallelism for texture generation or additive synthesis.
+*   **Iterative VM:** The shader (`polysonix_wave.comp`) uses an explicit stack to handle complex logic without recursion.
 
 ### Comparative Performance Analysis
 
@@ -224,11 +223,8 @@ int main() {
     SituationInitInfo info = { .window_width = 800, .window_height = 600, .window_title = "Synth" };
     SituationInit(0, NULL, &info);
 
-    // Initialize Polysonix Waveform Engine
-    init_polysonix_lfsr_tables();
-    initialize_bytecode_cache();
-
     // 2. Configure and create the synth
+    // PX_Create automatically initializes the waveform engine and cache
     PxConfig config = { .num_voices=8, .sample_rate=48000 };
     synth = PX_Create(&config);
 
@@ -260,8 +256,7 @@ int main() {
 ```
 
 ## Dependencies
-- **Required:** `polysonix_wave_cpu.h` (or `polysonix_wave_gpu.h`) and its implementation must be available and linked. The host application must call `init_polysonix_lfsr_tables()` and `initialize_bytecode_cache()`
-  before creating a synth instance and is responsible for compiling the waveform expressions used by the synth.
+- **Required:** `polysonix_wave.h` is automatically included by `polysonix.h`. `PX_Create()` automatically handles the initialization of LFSR tables and the bytecode cache.
 
 ## Core API Functions
 
