@@ -2375,6 +2375,7 @@ typedef struct {
 
 // Global LFSR Tables
 LfsrPrecomputedTable precomputed_lfsrs[NUM_LFSR_TYPES];
+static bool lfsr_tables_initialized = false;
 
 typedef struct {
     LfsrType type_enum;
@@ -2409,6 +2410,7 @@ static const LfsrConfigEntry lfsr_configs[NUM_LFSR_TYPES] = {
 
 // Initialize LFSR tables
 void init_polysonix_lfsr_tables(void) {
+    if (lfsr_tables_initialized) return;
     printf("Initializing LFSR tables...\n");
 
     for (int i = 0; i < NUM_LFSR_TYPES; i++) {
@@ -2512,6 +2514,7 @@ void init_polysonix_lfsr_tables(void) {
 
 
     }
+    lfsr_tables_initialized = true;
     printf("LFSR tables initialized.\n");
 }
 
@@ -2527,6 +2530,7 @@ void free_polysonix_lfsr_tables(void) {
         }
         table->initialized = false;
     }
+    lfsr_tables_initialized = false;
     printf("LFSR tables freed.\n");
 }
 
