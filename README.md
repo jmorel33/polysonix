@@ -1,5 +1,5 @@
 # Polysonix
-**Version 1.4.6** | **Author:** Jacques Morel
+**Version 1.5.0** | **Author:** Jacques Morel
 
 A single-header polyphonic synthesizer engine.
 
@@ -53,6 +53,11 @@ like UI, input handling, and audio device management.
 - **Stereo Signal Path:** Full stereo output with per-voice panning and LFO pan modulation.
 - **Built-in Dynamics:** Includes a per-voice soft-clipper to prevent harsh transients and a master bus lookahead limiter to prevent final output clipping.
 - **Oscillator Quality Modes**: Choose between per-sample calculation for quality or interpolated modes for performance.
+- **Wave Sequencing (New in v1.5):** A powerful, bytecode-driven sequencer integrated directly into the voice engine.
+    *   **Per-Cycle Precision:** Logic updates exactly at waveform cycle boundaries for phase-perfect transitions.
+    *   **Generative Features:** Probability-based Mute and Skip steps, Random Octave, and Random Wave selection.
+    *   **Per-Step FX:** Non-destructive Bitcrush, Ring Modulation, and Cross-Modulation (XMod) sequencing.
+    *   **Zero-Allocation:** Runs entirely on a static 64KB ROM, suitable for embedded environments.
 - **Decoupled Design:** The engine is completely independent of any graphics or windowing library. The host application is responsible for the audio
   callback, making the engine portable to any backend (e.g., Situation, PortAudio, SDL, MiniAudio).
 
@@ -267,6 +272,8 @@ The API is designed to be simple and thread-safe.
 - `PX_Process(PxSynth* s, float* stereo_buffer, int num_frames)`: Processes a block of audio.
 - `PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id)`: Triggers a new note.
 - `PX_NoteOff(PxSynth* s, int key_id)`: Releases a note.
+- `PX_SetSequenceID(PxSynth* s, int seq_id)`: Activates a wave sequence (0-127) or disables it (-1).
+- `PX_GetSequenceID(PxSynth* s)`: Returns the currently active sequence ID.
 
 The library also provides a comprehensive set of `PX_Set...` and `PX_Get...` functions for controlling all aspects of the synthesizer, including:
 
@@ -292,6 +299,33 @@ Enums are used extensively in `polysonix.h` to define modes, targets, and parame
 *   `PxModSource`: `PX_MOD_SRC_VELOCITY`, `PX_MOD_SRC_AFTERTOUCH`, `PX_MOD_SRC_MODWHEEL` (CC #1), `PX_MOD_SRC_PITCHBEND`, `PX_MOD_SRC_POLY_AFTERTOUCH`, `PX_MOD_SRC_KEY_TRACK`.
 *   `PxCurveType`: `PX_CURVE_LINEAR` (default), `PX_CURVE_EXP`, `PX_CURVE_LOG`, `PX_CURVE_S`.
 *   `PxOscillatorUpdateMode`: `PX_OSC_UPDATE_MODE_PER_SAMPLE`, `PX_OSC_UPDATE_MODE_FIXED_RATE`, `PX_OSC_UPDATE_MODE_NYQUIST`.
+*   `PxWSeqEndAction`: `PX_WSEQ_END_STOP`, `PX_WSEQ_END_HOLD`, `PX_WSEQ_END_LOOP`, `PX_WSEQ_END_PINGPONG`, `PX_WSEQ_END_REVERSE`.
+*   `PxWSeqGlideMode`: `PX_WSEQ_GLIDE_OFF`, `PX_WSEQ_GLIDE_STEP`, `PX_WSEQ_GLIDE_SMOOTH`.
+
+### Wave Sequencing Structures (v1.5)
+
+**`PxWaveSeqStep`**
+Defines a single step in a wave sequence (packed into 8 bytes).
+```c
+typedef struct {
+    uint16_t wave_idx;        // The waveform index (0-65535)
+    uint16_t duration_cycles; // Duration of the step in oscillator cycles
+    int16_t  pitch_offset;    // Pitch offset in cents (-32768 to +32767)
+    uint16_t flags;           // Bitwise logic flags (PX_WSEQ_*)
+} PxWaveSeqStep;
+```
+
+**`PxWaveSequence`**
+Defines a complete Wave Sequence, including global settings and step data.
+```c
+typedef struct {
+    uint8_t  end_action;          // PxWSeqEndAction
+    uint8_t  glide_mode;          // PxWSeqGlideMode
+    uint8_t  bitcrush_bits;       // 1-8
+    // ... modulation and probability settings ...
+    PxWaveSeqStep steps[PX_MAX_WSEQ_STEPS];
+} PxWaveSequence;
+```
 
 ### Core Structures
 
