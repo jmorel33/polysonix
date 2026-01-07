@@ -47,5 +47,30 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.wave_idx = 0, .duration_cycles = 500, .pitch_offset = 1200, .flags = PX_WSEQ_RING_MOD},
             {.wave_idx = 0, .duration_cycles = 0,   .pitch_offset = 0,    .flags = PX_WSEQ_END}
         }
+    },
+    // Seq 4
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .bitcrush_bits = 0,
+        .steps = {
+            { .wave_idx = 0, .duration_cycles = 100, .pitch_offset = 0, .flags = 0 },
+            { .wave_idx = 1, .duration_cycles = 100, .pitch_offset = 0, .flags = 0 },
+            { .wave_idx = 2, .duration_cycles = 100, .pitch_offset = 0, .flags = 0 },
+            { .wave_idx = 3, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_LOOP_POINT }
+        }
+    },
+    // Seq 5: "Ham Crazy" Glitch
+    {
+        .end_action = PX_WSEQ_END_PINGPONG,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .bitcrush_bits = 4,
+        .ring_mod_depth = 0.5f,
+        .steps = {
+            { .wave_idx = 5, .duration_cycles = 20, .pitch_offset = 0,    .flags = PX_WSEQ_BITCRUSH },
+            { .wave_idx = 5, .duration_cycles = 20, .pitch_offset = 1200, .flags = PX_WSEQ_RING_MOD },
+            { .wave_idx = 5, .duration_cycles = 20, .pitch_offset = 0,    .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY },
+            { .wave_idx = 5, .duration_cycles = 20, .pitch_offset = -1200,.flags = PX_WSEQ_RING_MOD }
+        }
     }
 };

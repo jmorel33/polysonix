@@ -1237,6 +1237,7 @@ struct PxSynth {
     uint64_t global_trigger_counter; // Used for voice stealing priority.
     int lfo_update_countdown;        // Countdown for the slower LFO update tick.
     float time_per_sample;           // Pre-calculated time delta for one audio sample.
+    float glide_coeff;               // Pre-calculated coefficient for smooth glide.
 
     LFOInstance* template_lfo_instances;    // Internal state for the template LFOs (used for UI display).
 
@@ -2034,6 +2035,7 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     // 3. Copy the configuration and calculate initial timing values.
     s->config = *config;
     s->time_per_sample = 1.0f / config->sample_rate;
+    s->glide_coeff = 1.0f - expf(-1.0f / (0.05f * s->config.sample_rate));
     s->lfo_update_countdown = 1;
 
     s->cmd_queue.capacity = CMD_QUEUE_SIZE;
@@ -2583,8 +2585,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         // Smooth glide: interpolate target_pitch_ratio
                         // We use a simple 1-pole lowpass for glide (portamento)
                         // Time constant ~50ms (or use unilegato_slide_duration_s if we wanted)
-                        float glide_coeff = 1.0f - expf(-1.0f / (0.05f * s->config.sample_rate));
-                        v->target_pitch_ratio += (v->step_pitch_ratio - v->target_pitch_ratio) * glide_coeff;
+                        v->target_pitch_ratio += (v->step_pitch_ratio - v->target_pitch_ratio) * s->glide_coeff;
                         v->frequency *= v->target_pitch_ratio;
                     } else if (v->current_sequence->glide_mode == PX_WSEQ_GLIDE_STEP) {
                         // Linear glide over step duration
