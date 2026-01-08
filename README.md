@@ -1,5 +1,5 @@
 # Polysonix
-**Version 1.5.0** | **Author:** Jacques Morel
+**Version 1.6.0** | **Author:** Jacques Morel
 
 A single-header polyphonic synthesizer engine.
 
@@ -36,6 +36,7 @@ like UI, input handling, and audio device management.
   evolving timbres that go far beyond simple wavetables.
 - **Rich Synthesis Architecture:**
   - **Polyphony:** Configurable number of voices (up to 16) with intelligent voice stealing.
+  - **Triple Oscillator Architecture:** Each voice features **3 independent oscillators**, each with its own Waveform, Mix Level, Pan, Coarse Tuning (±24 semitones), Fine Tuning (±100 cents), and Wave Sequencer state. This enables massive stacked sounds, chords, and complex multi-timbral textures within a single voice.
   - **ADSR Envelopes**: Up to 3 independent ADSR envelopes per voice for modulating various parameters.
   - **LFOs**: Up to 3 independent Low-Frequency Oscillators (LFOs) with their own ADSRs and flexible routing.
   - **Advanced Multi-Mode Filter:** A highly flexible state-variable filter per voice with key tracking, drive, and extensive modulation.
@@ -45,15 +46,16 @@ like UI, input handling, and audio device management.
         *   **12 dB/oct (2-pole):** Aggressive, Oberheim-style (SVF topology).
         *   **18 dB/oct (3-pole):** Balanced, Roland-style.
         *   **24 dB/oct (4-pole):** Smooth, Moog-style.
-  - **Per-Oscillator Tuning:** Independent **Coarse** (±24 semitones) and **Fine** (±100 cents) tuning per waveform, enabling interval layering (fifths, octaves), detuned supersaws, and sub-bass reinforcement.
-  - **Unified Modulation Matrix:** A comprehensive 16-slot modulation matrix allowing standard controllers (Velocity, Aftertouch, Mod Wheel, Pitch Bend, **Key Track**) to modulate nearly any synthesis parameter (Oscillators, Filters, LFOs, ADSRs).
+  - **Global Post-Filter:** A dedicated stereo master filter (LP/HP/BP/etc.) placed after voice mixing for final tone shaping of the entire mix.
+  - **Unified Modulation Matrix:** A comprehensive 16-slot modulation matrix allowing standard controllers to modulate nearly any synthesis parameter (Oscillators, Filters, LFOs, ADSRs).
+    *   **Sources:** Velocity, Channel Aftertouch, **Polyphonic Aftertouch**, Mod Wheel, Pitch Bend, **Key Track**.
     *   **Response Curves:** Velocity and Aftertouch inputs can be shaped using **Linear, Exponential, Logarithmic, or S-Curve** mappings for expressive control.
   - **Unilegato Mode**: Smooth, monophonic legato with pitch sliding between notes.
-  - **Global Post-Filter**: A stereo master filter (LP/HP/BP/etc.) placed after voice mixing for final tone shaping.
-- **Stereo Signal Path:** Full stereo output with per-voice panning and LFO pan modulation.
+- **Stereo Signal Path:** Full stereo output with per-oscillator panning, per-voice panning, and LFO pan modulation.
 - **Built-in Dynamics:** Includes a per-voice soft-clipper to prevent harsh transients and a master bus lookahead limiter to prevent final output clipping.
 - **Oscillator Quality Modes**: Choose between per-sample calculation for quality or interpolated modes for performance.
-- **Wave Sequencing (New in v1.5):** A powerful, bytecode-driven sequencer integrated directly into the voice engine.
+- **Wave Sequencing (v1.5+):** A powerful, bytecode-driven sequencer integrated directly into the voice engine.
+    *   **Independent Sequencing:** Each of the 3 oscillators has its own sequence state, allowing for polyrhythms and complex layering.
     *   **Per-Cycle Precision:** Logic updates exactly at waveform cycle boundaries for phase-perfect transitions.
     *   **Generative Features:** Probability-based Mute and Skip steps, Random Octave, and Random Wave selection.
     *   **Per-Step FX:** Non-destructive Bitcrush, Ring Modulation, and Cross-Modulation (XMod) sequencing.
@@ -228,6 +230,9 @@ int main() {
     PxConfig config = { .num_voices=8, .sample_rate=48000 };
     synth = PX_Create(&config);
 
+    // Optional: Configure Oscillator 1 (enabled by default)
+    PX_SetOscWave(synth, 0, 5); // Set Osc 0 to wave index 5
+
     // 3. Start Audio Stream
     SituationAudioFormat fmt = { .sample_rate = 48000, .channels = 2, .bit_depth = 32 };
     SituationSound stream;
@@ -265,10 +270,21 @@ The API is designed to be simple and thread-safe.
 - `PX_Create(const PxConfig* config)`: Creates and initializes a synthesizer instance.
 - `PX_Destroy(PxSynth* s)`: Destroys a synthesizer instance and frees all associated memory.
 - `PX_Process(PxSynth* s, float* stereo_buffer, int num_frames)`: Processes a block of audio.
-- `PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id)`: Triggers a new note.
+- `PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id, float velocity)`: Triggers a new note.
 - `PX_NoteOff(PxSynth* s, int key_id)`: Releases a note.
-- `PX_SetSequenceID(PxSynth* s, int seq_id)`: Activates a wave sequence (0-127) or disables it (-1).
-- `PX_GetSequenceID(PxSynth* s)`: Returns the currently active sequence ID.
+- `PX_PolyAftertouch(PxSynth* s, int key_id, float pressure)`: Sets polyphonic aftertouch pressure for a note.
+
+### Oscillator Control (v1.6)
+Polysonix features a Triple Oscillator architecture. Functions take an `osc_idx` (0-2).
+
+- `PX_SetOscEnabled(s, osc_idx, enabled)` / `PX_GetOscEnabled`
+- `PX_SetOscWave(s, osc_idx, wave_idx)` / `PX_GetOscWave`
+- `PX_SetOscCoarseTune(s, osc_idx, semitones)` / `PX_GetOscCoarseTune`
+- `PX_SetOscFineTune(s, osc_idx, cents)` / `PX_GetOscFineTune`
+- `PX_SetOscMix(s, osc_idx, level)` / `PX_GetOscMix`
+- `PX_SetOscPan(s, osc_idx, pan)` / `PX_GetOscPan`
+- `PX_SetOscSequence(s, osc_idx, seq_id)`: Assigns a wave sequence to an oscillator.
+- `PX_GetOscSequence(s, osc_idx)`
 
 The library also provides a comprehensive set of `PX_Set...` and `PX_Get...` functions for controlling all aspects of the synthesizer, including:
 
@@ -286,43 +302,40 @@ Additionally, there are several `PX_Get...Info()` functions that provide read-on
 ### Enums
 Enums are used extensively in `polysonix.h` to define modes, targets, and parameters.
 
+*   `PxOscillatorType`: `PX_OSC_TYPE_BYTECODE`, `PX_OSC_TYPE_SAMPLE`, `PX_OSC_TYPE_GENERATED`, `PX_OSC_TYPE_FM4OP`.
+*   `PxOscillatorUpdateMode`: `PX_OSC_UPDATE_MODE_PER_SAMPLE`, `PX_OSC_UPDATE_MODE_FIXED_RATE`, `PX_OSC_UPDATE_MODE_NYQUIST`.
+*   `PxADSRState`: `PX_ADSR_STATE_IDLE`, `PX_ADSR_STATE_ATTACK`, `PX_ADSR_STATE_DECAY`, `PX_ADSR_STATE_SUSTAIN`, `PX_ADSR_STATE_RELEASE`.
 *   `PxFilterMode`: `PX_FILTER_MODE_OFF`, `PX_FILTER_MODE_LP`, `PX_FILTER_MODE_BP`, `PX_FILTER_MODE_HP`, `PX_FILTER_MODE_LP_BP`, `PX_FILTER_MODE_LP_HP`, `PX_FILTER_MODE_BP_HP`, `PX_FILTER_MODE_NOTCH`, `PX_FILTER_MODE_ALLPASS`.
+*   `PxCurveType`: `PX_CURVE_LINEAR` (default), `PX_CURVE_EXP`, `PX_CURVE_LOG`, `PX_CURVE_S`.
 *   `PxADSRDestination`: `PX_ADSR_DEST_NONE`, `PX_ADSR_DEST_PARAM1` (Mod A), `PX_ADSR_DEST_PARAM2` (Mod B), `PX_ADSR_DEST_PARAM3` (Mod C), `PX_ADSR_DEST_AMP`, `PX_ADSR_DEST_FREQUENCY`, `PX_ADSR_DEST_LFO0_OUTPUT_LEVEL`, `PX_ADSR_DEST_LFO1_OUTPUT_LEVEL`, `PX_ADSR_DEST_LFO2_OUTPUT_LEVEL`, `PX_ADSR_DEST_FILTER_CUTOFF`, `PX_ADSR_DEST_FILTER_ENV_INPUT`, `PX_ADSR_DEST_FILTER_RESONANCE`.
 *   `PxLFODestination`: `PX_LFO_DEST_NONE`, `PX_LFO_DEST_PARAM1`, `PX_LFO_DEST_PARAM2`, `PX_LFO_DEST_PARAM3`, `PX_LFO_DEST_FILTER_CUTOFF`, `PX_LFO_DEST_AMP`, `PX_LFO_DEST_PITCH`, `PX_LFO_DEST_PAN`.
 *   `PxADSRParamType`: `PX_ADSR_PARAM_ATTACK`, `PX_ADSR_PARAM_DECAY`, `PX_ADSR_PARAM_SUSTAIN`, `PX_ADSR_PARAM_RELEASE`.
 *   `PxFilterParamType`: `PX_FILTER_PARAM_CUTOFF`, `PX_FILTER_PARAM_RESONANCE`, `PX_FILTER_PARAM_ENV_AMOUNT`, `PX_FILTER_PARAM_DRIVE`, `PX_FILTER_PARAM_KEYTRACK`, `PX_FILTER_PARAM_POLES`.
-*   `PxModSource`: `PX_MOD_SRC_VELOCITY`, `PX_MOD_SRC_AFTERTOUCH`, `PX_MOD_SRC_MODWHEEL` (CC #1), `PX_MOD_SRC_PITCHBEND`, `PX_MOD_SRC_POLY_AFTERTOUCH`, `PX_MOD_SRC_KEY_TRACK`.
-*   `PxCurveType`: `PX_CURVE_LINEAR` (default), `PX_CURVE_EXP`, `PX_CURVE_LOG`, `PX_CURVE_S`.
-*   `PxOscillatorUpdateMode`: `PX_OSC_UPDATE_MODE_PER_SAMPLE`, `PX_OSC_UPDATE_MODE_FIXED_RATE`, `PX_OSC_UPDATE_MODE_NYQUIST`.
+*   `PxLFOParamType`: `PX_LFO_PARAM_FREQUENCY`.
 *   `PxWSeqEndAction`: `PX_WSEQ_END_STOP`, `PX_WSEQ_END_HOLD`, `PX_WSEQ_END_LOOP`, `PX_WSEQ_END_PINGPONG`, `PX_WSEQ_END_REVERSE`.
 *   `PxWSeqGlideMode`: `PX_WSEQ_GLIDE_OFF`, `PX_WSEQ_GLIDE_STEP`, `PX_WSEQ_GLIDE_SMOOTH`.
-
-### Wave Sequencing Structures (v1.5)
-
-**`PxWaveSeqStep`**
-Defines a single step in a wave sequence (packed into 8 bytes).
-```c
-typedef struct {
-    uint16_t wave_idx;        // The waveform index (0-65535)
-    uint16_t duration_cycles; // Duration of the step in oscillator cycles
-    int16_t  pitch_offset;    // Pitch offset in cents (-32768 to +32767)
-    uint16_t flags;           // Bitwise logic flags (PX_WSEQ_*)
-} PxWaveSeqStep;
-```
-
-**`PxWaveSequence`**
-Defines a complete Wave Sequence, including global settings and step data.
-```c
-typedef struct {
-    uint8_t  end_action;          // PxWSeqEndAction
-    uint8_t  glide_mode;          // PxWSeqGlideMode
-    uint8_t  bitcrush_bits;       // 1-8
-    // ... modulation and probability settings ...
-    PxWaveSeqStep steps[PX_MAX_WSEQ_STEPS];
-} PxWaveSequence;
-```
+*   `PxModSource`: `PX_MOD_SRC_VELOCITY`, `PX_MOD_SRC_AFTERTOUCH`, `PX_MOD_SRC_MODWHEEL` (CC #1), `PX_MOD_SRC_PITCHBEND`, `PX_MOD_SRC_POLY_AFTERTOUCH`, `PX_MOD_SRC_KEY_TRACK`.
+*   `PxModDestination`:
+    *   **ADSR:** `PX_MOD_DEST_ADSR1_ATTACK` to `PX_MOD_DEST_ADSR3_RELEASE` (3 ADSRs * 4 Params).
+    *   **LFO:** `PX_MOD_DEST_LFO1_FREQ`, `PX_MOD_DEST_LFO1_DEPTH` (Up to LFO3).
+    *   **Oscillator:** `PX_MOD_DEST_OSC1_PITCH`, `PX_MOD_DEST_OSC1_MIX`, `PX_MOD_DEST_OSC1_PAN`, `PX_MOD_DEST_OSC1_MODA`... (Up to OSC3).
+    *   **Legacy/Global:** `PX_MOD_DEST_OSC_MODA`, `PX_MOD_DEST_OSC_MODB`, `PX_MOD_DEST_OSC_MODC`, `PX_MOD_DEST_FILTER_CUTOFF`.
 
 ### Core Structures
+
+**`PxOscillator`**
+Configuration for a single oscillator in the triple-oscillator voice architecture.
+```c
+typedef struct {
+    bool  enabled;
+    int   wave_idx;         // Bytecode waveform index
+    float coarse_semitones; // Tuning offset (-24 to +24)
+    float fine_cents;       // Fine tuning (-100 to +100)
+    float mix_level;        // Output mix level (0.0 to 1.0)
+    float pan;              // Stereo pan position (-1.0 to 1.0)
+    int   sequence_id;      // Active Wave Sequence ID (-1 = Disabled)
+} PxOscillator;
+```
 
 **`PxConfig`**
 Configuration settings passed to `PX_Create`.
@@ -353,7 +366,33 @@ typedef struct PxVoiceInfo {
     PxADSRState adsr_states[3]; // Current state (IDLE, ATTACK, etc.) of ADSRs
     float adsr_levels[3];       // Current output level of ADSRs
     float lfo_outputs[3];       // Current output value of LFOs
+    int active_wave_indices[3]; // Current waveform index of each oscillator
 } PxVoiceInfo;
+```
+
+### Wave Sequencing Structures
+
+**`PxWaveSeqStep`**
+Defines a single step in a wave sequence (packed into 8 bytes).
+```c
+typedef struct {
+    uint16_t wave_idx;        // The waveform index (0-65535)
+    uint16_t duration_cycles; // Duration of the step in oscillator cycles
+    int16_t  pitch_offset;    // Pitch offset in cents (-32768 to +32767)
+    uint16_t flags;           // Bitwise logic flags (PX_WSEQ_*)
+} PxWaveSeqStep;
+```
+
+**`PxWaveSequence`**
+Defines a complete Wave Sequence, including global settings and step data.
+```c
+typedef struct {
+    uint8_t  end_action;          // PxWSeqEndAction
+    uint8_t  glide_mode;          // PxWSeqGlideMode
+    uint8_t  bitcrush_bits;       // 1-8
+    // ... modulation and probability settings ...
+    PxWaveSeqStep steps[PX_MAX_WSEQ_STEPS];
+} PxWaveSequence;
 ```
 
 **`PxLFOInfo`**
