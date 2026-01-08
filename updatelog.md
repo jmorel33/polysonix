@@ -1,3 +1,33 @@
+# Update Log
+
+## v1.6.0 (2026-01-XX)
+**Major Feature Update: Triple Oscillator Architecture**
+
+*   **Architecture:**
+    *   Transitioned from single-oscillator voices to a **Triple Oscillator** architecture (`PX_MAX_OSC_PER_VOICE = 3`).
+    *   Each oscillator has independent controls for Waveform, Coarse Tuning (-24 to +24 semitones), Fine Tuning (-100 to +100 cents), Mix Level, Stereo Pan, and Enable state.
+    *   Updated `PxPatch` and `Voice` structures to accommodate the new oscillator arrays.
+
+*   **Wave Sequencing:**
+    *   **Independent Sequencing:** Each of the 3 oscillators now has its own independent Wave Sequencer state (`PxSeqState`), allowing complex polyrhythmic and multi-timbral layering within a single voice.
+    *   **Feature Preservation:** All v1.5 Wave Sequencer features (Glitch effects, Probability, Glide modes, Phase Locking) are preserved and function independently per oscillator.
+    *   New API: `PX_SetOscSequence(synth, osc_idx, seq_id)` allows assigning different sequences to different oscillators.
+
+*   **Audio Engine:**
+    *   Refactored `PX_Process` to iterate through the 3 oscillators, summing their output into a stereo mix before the filter stage.
+    *   **Unilegato Fix:** Separated base frequency calculation from modulation to prevent "double modulation" artifacts during slides. Global pitch modulation (LFO, ADSR) is now applied to the interpolated frequency, ensuring smooth and stable portamento.
+    *   **Stereo Filtering:** Added `filter_instance_r` to the voice structure to support true stereo processing (e.g., for panned oscillators).
+
+*   **API Updates:**
+    *   Added `PX_SetOscEnabled`, `PX_SetOscWave`, `PX_SetOscMix`, `PX_SetOscPan`.
+    *   Updated `PX_SetOscCoarseTune` and `PX_SetOscFineTune` to take an `osc_idx` parameter.
+    *   Added `PX_GetOscSequence`.
+    *   Legacy `PX_NoteOn` maps the `wave_idx` argument to Oscillator 0.
+    *   Legacy `PX_SetSequenceID` maps to Oscillator 0.
+
+*   **Diagnostics:**
+    *   Updated `PxVoiceInfo` to include `active_wave_indices[3]`, enabling real-time monitoring of which waveform each oscillator is currently playing (useful for visualizing Wave Sequence progress).
+
 ## v1.5.0 (2026/01/06)
 
 This major release introduces the **Wave Sequencer**, a powerful per-voice sequencing engine for rhythmic, glitch, and generative sound design.
@@ -30,6 +60,7 @@ This major release introduces the **Wave Sequencer**, a powerful per-voice seque
 
 ### Backward Compatibility
 *   **Default State:** Sequence ID defaults to -1 (Off). Existing patches behave identically to previous versions.
+
 ## v1.4.6 (2026/01/05)
 
 This update completes the core analog voicing section by introducing **Per-Oscillator Coarse & Fine Tuning**.
@@ -55,6 +86,7 @@ This update completes the core analog voicing section by introducing **Per-Oscil
 
 ### Backward Compatibility
 *   **Defaults:** All tuning offsets default to `0.0`, ensuring that existing patches play at standard pitch and sound identical to previous versions.
+
 ## v1.4.5 (2026/01/05)
 
 This update refines the modulation system with **Non-Linear Response Curves** for velocity and aftertouch, plus a new **Keyboard Tracking** modulation source.
@@ -258,4 +290,4 @@ This release seals the current codebase as **Version 1.0Alpha1**, marking a sign
 *   Stable audio generation with full parity to original monolithic version. ADSRs, LFOs, Filter, and Limiter are functional.
 
 ## v1.0.0
-*   Initial port from monolithic application.
+*   Initial port from monolithic version.

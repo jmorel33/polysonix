@@ -1,5 +1,7 @@
 # Polysonix v1.5: Wave Sequencing Implementation Plan
 
+> **Note:** This plan has been fully implemented in v1.5 and subsequently integrated into the v1.6 Triple Oscillator Architecture. All features described below are preserved in the v1.6 engine.
+
 ## Objective
 Implement a per-voice, bytecode-driven Wave Sequencer with 8-byte steps, microtonal precision, and comprehensive global sequence settings. The implementation must be zero-allocation at runtime and fit within a 64KB static ROM budget.
 
@@ -207,4 +209,4 @@ typedef struct Voice {
 
 **Actionables:**
 - [x] **Compile Check.**
-- [ ] **Manual Test Harness:** `test_seq.c`
+- [x] **Manual Test Harness:** `test_seq.c`
