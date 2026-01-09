@@ -1,5 +1,5 @@
 # Polysonix
-**Version 1.6.0** | **Author:** Jacques Morel
+**Version 1.6.0** | **Author:** Jacques Morel | **Copyright (c) 2025**
 
 A single-header polyphonic synthesizer engine.
 
@@ -230,7 +230,7 @@ int main() {
     PxConfig config = { .num_voices=8, .sample_rate=48000 };
     synth = PX_Create(&config);
 
-    // Optional: Configure Oscillator 1 (enabled by default)
+    // Optional: Configure Oscillator 0 (enabled by default in Triple Oscillator architecture)
     PX_SetOscWave(synth, 0, 5); // Set Osc 0 to wave index 5
 
     // 3. Start Audio Stream
