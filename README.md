@@ -1,5 +1,5 @@
 # Polysonix
-**Version 1.6.0** | **Author:** Jacques Morel | **Copyright (c) 2025**
+**Version 1.7.0** | **Author:** Jacques Morel | **Copyright (c) 2025**
 
 A single-header polyphonic synthesizer engine.
 
@@ -37,6 +37,11 @@ like UI, input handling, and audio device management.
 - **Rich Synthesis Architecture:**
   - **Polyphony:** Configurable number of voices (up to 16) with intelligent voice stealing.
   - **Triple Oscillator Architecture:** Each voice features **3 independent oscillators**, each with its own Waveform, Mix Level, Pan, Coarse Tuning (±24 semitones), Fine Tuning (±100 cents), and Wave Sequencer state. This enables massive stacked sounds, chords, and complex multi-timbral textures within a single voice.
+  - **Oscillator Interactions (v1.7):** Advanced inter-oscillator modulation features for analog/digital hybrid sounds:
+    *   **Cross-Modulation (FM/PM):** Oscillator N modulates the phase of Oscillator N-1, creating metallic, bell-like FM textures.
+    *   **Phase Distortion (PD):** Casio-style phase warping per oscillator for resonant, sharp timbres without filters.
+    *   **Oscillator Sync:** Hard/Soft synchronization where Oscillator N resets to Oscillator N-1's cycle, enabling classic "tearing" leads.
+    *   **Ring Modulation:** Oscillator N amplitude modulates Oscillator N-1 (or vice versa depending on routing), creating sum/difference frequencies for sci-fi and robotic effects.
   - **ADSR Envelopes**: Up to 3 independent ADSR envelopes per voice for modulating various parameters.
   - **LFOs**: Up to 3 independent Low-Frequency Oscillators (LFOs) with their own ADSRs and flexible routing.
   - **Advanced Multi-Mode Filter:** A highly flexible state-variable filter per voice with key tracking, drive, and extensive modulation.
@@ -274,7 +279,7 @@ The API is designed to be simple and thread-safe.
 - `PX_NoteOff(PxSynth* s, int key_id)`: Releases a note.
 - `PX_PolyAftertouch(PxSynth* s, int key_id, float pressure)`: Sets polyphonic aftertouch pressure for a note.
 
-### Oscillator Control (v1.6)
+### Oscillator Control (v1.6 - v1.7)
 Polysonix features a Triple Oscillator architecture. Functions take an `osc_idx` (0-2).
 
 - `PX_SetOscEnabled(s, osc_idx, enabled)` / `PX_GetOscEnabled`
@@ -285,6 +290,12 @@ Polysonix features a Triple Oscillator architecture. Functions take an `osc_idx`
 - `PX_SetOscPan(s, osc_idx, pan)` / `PX_GetOscPan`
 - `PX_SetOscSequence(s, osc_idx, seq_id)`: Assigns a wave sequence to an oscillator.
 - `PX_GetOscSequence(s, osc_idx)`
+
+**v1.7 Interaction Features:**
+- `PX_SetOscCrossMod(s, osc_idx, enabled, depth)` / `PX_GetOscCrossMod` / `PX_GetOscCrossModEnabled`
+- `PX_SetOscPhaseDist(s, osc_idx, enabled, amount)` / `PX_GetOscPhaseDist` / `PX_GetOscPhaseDistEnabled`
+- `PX_SetOscSync(s, osc_idx, enabled, softness)` / `PX_GetOscSync` / `PX_GetOscSyncEnabled`
+- `PX_SetOscRingMod(s, osc_idx, enabled, depth)` / `PX_GetOscRingMod` / `PX_GetOscRingModEnabled`
 
 The library also provides a comprehensive set of `PX_Set...` and `PX_Get...` functions for controlling all aspects of the synthesizer, including:
 
