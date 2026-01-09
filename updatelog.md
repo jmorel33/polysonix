@@ -1,5 +1,30 @@
 # Update Log
 
+## v1.7.0 (2026-01-XX)
+**Major Feature Update: Advanced Oscillator Interactions**
+
+This release unlocks deep analog-style sound design by introducing direct interaction between the three oscillators.
+
+*   **Oscillator Interactions:**
+    *   **Cross-Modulation (FM):** Oscillator N modulates the phase of Oscillator N-1. This allows for classic DX-style FM textures, metallic bells, and complex inharmonic spectra.
+    *   **Phase Distortion (PD):** Implemented Casio-style phase warping per oscillator. A sine-based transfer function is applied to the phase accumulator before waveform lookup, allowing for resonant, sharp, and squelchy timbres without using the filter.
+    *   **Oscillator Sync:**
+        *   **Hard/Soft Sync:** Oscillator N resets its phase whenever Oscillator N-1 completes a cycle.
+        *   **Adjustable Softness:** The sync effect can be blended from hard reset (classic "tearing" leads) to soft sync (gentler harmonic locking) via the `softness` parameter.
+    *   **Ring Modulation:** Oscillator N amplitude modulates Oscillator N-1 (or vice versa depending on routing). This creates sum and difference frequencies, ideal for sci-fi sounds, robotics, and clangorous bells.
+
+*   **Core Engine Updates:**
+    *   **DSP Refactor:** The oscillator processing loop has been redesigned to support inter-oscillator dependencies with zero latency within the sample frame.
+    *   **Output Caching:** Added caching for oscillator outputs and cycle completion status to facilitate modulation between oscillators (N interacting with N-1).
+    *   **Modulation Matrix:** Expanded the modulation matrix to support 10 parameters per oscillator (Pitch, Mix, Pan, ModA, ModB, ModC, Cross-Mod, PD, Sync, Ring Mod).
+
+*   **API Updates:**
+    *   Added `PX_SetOscCrossMod` / `PX_GetOscCrossMod`.
+    *   Added `PX_SetOscPhaseDist` / `PX_GetOscPhaseDist`.
+    *   Added `PX_SetOscSync` / `PX_GetOscSync`.
+    *   Added `PX_SetOscRingMod` / `PX_GetOscRingMod`.
+    *   Corresponding `Enabled` getters for all new features.
+
 ## v1.6.0 (2026-01-XX)
 **Major Feature Update: Triple Oscillator Architecture**
 

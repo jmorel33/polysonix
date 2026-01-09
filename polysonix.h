@@ -59,6 +59,16 @@ typedef struct {
     float mix_level;        /**< Output mix level (0.0 to 1.0). */
     float pan;              /**< Stereo pan position (-1.0 to 1.0). */
     int   sequence_id;      /**< Wave Sequence ID (-1 = Disabled/Static, 0-127 = Active). */
+
+    // v1.7 Features
+    bool  cross_mod_enabled;    /**< Osc n modulates n-1 */
+    float cross_mod_depth;      /**< 0.0–1.0 (matrix modulatable) */
+    bool  phase_dist_enabled;   /**< Phase Distortion on/off */
+    float phase_dist_amount;    /**< 0.0–1.0 (warp factor) */
+    bool  osc_sync_enabled;     /**< Sync to previous osc */
+    float osc_sync_softness;    /**< 0.0 (hard) to 1.0 (soft) */
+    bool  ring_mod_enabled;     /**< Ring mod with previous osc */
+    float ring_mod_depth;       /**< 0.0–1.0 */
 } PxOscillator;
 
 /**
@@ -460,6 +470,23 @@ PX_API float       PX_GetOscPan(PxSynth* s, int osc_idx);
  */
 PX_API void        PX_SetOscSequence(PxSynth* s, int osc_idx, int seq_id);
 PX_API int         PX_GetOscSequence(PxSynth* s, int osc_idx);
+
+// --- v1.7 Oscillator Features ---
+PX_API void        PX_SetOscCrossMod(PxSynth* s, int osc_idx, bool enabled, float depth);
+PX_API float       PX_GetOscCrossMod(PxSynth* s, int osc_idx);
+PX_API bool        PX_GetOscCrossModEnabled(PxSynth* s, int osc_idx);
+
+PX_API void        PX_SetOscPhaseDist(PxSynth* s, int osc_idx, bool enabled, float amount);
+PX_API float       PX_GetOscPhaseDist(PxSynth* s, int osc_idx);
+PX_API bool        PX_GetOscPhaseDistEnabled(PxSynth* s, int osc_idx);
+
+PX_API void        PX_SetOscSync(PxSynth* s, int osc_idx, bool enabled, float softness);
+PX_API float       PX_GetOscSync(PxSynth* s, int osc_idx);
+PX_API bool        PX_GetOscSyncEnabled(PxSynth* s, int osc_idx);
+
+PX_API void        PX_SetOscRingMod(PxSynth* s, int osc_idx, bool enabled, float depth);
+PX_API float       PX_GetOscRingMod(PxSynth* s, int osc_idx);
+PX_API bool        PX_GetOscRingModEnabled(PxSynth* s, int osc_idx);
 
 PX_API void        PX_SetVelocityToAmp(PxSynth* s, float amount);
 PX_API void        PX_SetVelocityToFilterCutoff(PxSynth* s, float hz_amount);
@@ -1008,6 +1035,10 @@ typedef struct {
     float osc_phase[PX_MAX_OSC_PER_VOICE];
     int   osc_wave_indices[PX_MAX_OSC_PER_VOICE];
 
+    // v1.7: Per-oscillator output cache & Sync
+    float osc_output[PX_MAX_OSC_PER_VOICE];
+    bool  osc_cycle_completed[PX_MAX_OSC_PER_VOICE]; // Track reset for sync
+
     // NOTE: frequency and original_frequency track the "Base Note" pitch.
     // Per-oscillator frequency is calculated on the fly: base * tuning_ratio.
 
@@ -1122,12 +1153,15 @@ typedef enum {
     // v1.6: Specific Oscillator Targets
     PX_MOD_DEST_OSC1_PITCH, PX_MOD_DEST_OSC1_MIX, PX_MOD_DEST_OSC1_PAN,
     PX_MOD_DEST_OSC1_MODA,  PX_MOD_DEST_OSC1_MODB, PX_MOD_DEST_OSC1_MODC,
+    PX_MOD_DEST_OSC1_CROSS_MOD_DEPTH, PX_MOD_DEST_OSC1_PHASE_DIST, PX_MOD_DEST_OSC1_SYNC_SOFTNESS, PX_MOD_DEST_OSC1_RING_MOD_DEPTH,
 
     PX_MOD_DEST_OSC2_PITCH, PX_MOD_DEST_OSC2_MIX, PX_MOD_DEST_OSC2_PAN,
     PX_MOD_DEST_OSC2_MODA,  PX_MOD_DEST_OSC2_MODB, PX_MOD_DEST_OSC2_MODC,
+    PX_MOD_DEST_OSC2_CROSS_MOD_DEPTH, PX_MOD_DEST_OSC2_PHASE_DIST, PX_MOD_DEST_OSC2_SYNC_SOFTNESS, PX_MOD_DEST_OSC2_RING_MOD_DEPTH,
 
     PX_MOD_DEST_OSC3_PITCH, PX_MOD_DEST_OSC3_MIX, PX_MOD_DEST_OSC3_PAN,
     PX_MOD_DEST_OSC3_MODA,  PX_MOD_DEST_OSC3_MODB, PX_MOD_DEST_OSC3_MODC,
+    PX_MOD_DEST_OSC3_CROSS_MOD_DEPTH, PX_MOD_DEST_OSC3_PHASE_DIST, PX_MOD_DEST_OSC3_SYNC_SOFTNESS, PX_MOD_DEST_OSC3_RING_MOD_DEPTH,
 
     // Legacy / Global mappings (mapped to Osc 1 internally for compatibility)
     PX_MOD_DEST_OSC_MODA,
@@ -1244,7 +1278,12 @@ typedef enum {
     PX_CMD_SET_OSC_MIX,
     PX_CMD_SET_OSC_PAN,
     PX_CMD_SET_SEQUENCE_ID, // v1.5 Legacy
-    PX_CMD_SET_OSC_SEQUENCE // v1.6
+    PX_CMD_SET_OSC_SEQUENCE, // v1.6
+    // v1.7 Features
+    PX_CMD_SET_OSC_CROSS_MOD,
+    PX_CMD_SET_OSC_PHASE_DIST,
+    PX_CMD_SET_OSC_SYNC,
+    PX_CMD_SET_OSC_RING_MOD
 } PxCommandType;
 
 typedef union {
@@ -1273,6 +1312,7 @@ typedef union {
     struct { int osc_idx; bool enabled; } osc_bool; // For Enabled
     struct { int seq_id; } sequence;
     struct { int osc_idx; int seq_id; } osc_sequence;
+    struct { int osc_idx; bool enabled; float value; } osc_feat; // v1.7: enabled + depth/amount
 } PxCommandData;
 
 typedef struct {
@@ -2075,6 +2115,30 @@ static void PX_ProcessCommands(PxSynth* s) {
                     s->patch.osc[cmd.data.osc_sequence.osc_idx].sequence_id = fmaxf(-1, fminf(PX_NUM_WSEQ_BANKS - 1, cmd.data.osc_sequence.seq_id));
                 }
                 break;
+            case PX_CMD_SET_OSC_CROSS_MOD:
+                if (cmd.data.osc_feat.osc_idx >= 0 && cmd.data.osc_feat.osc_idx < PX_MAX_OSC_PER_VOICE) {
+                    s->patch.osc[cmd.data.osc_feat.osc_idx].cross_mod_enabled = cmd.data.osc_feat.enabled;
+                    s->patch.osc[cmd.data.osc_feat.osc_idx].cross_mod_depth = fmaxf(0.0f, fminf(1.0f, cmd.data.osc_feat.value));
+                }
+                break;
+            case PX_CMD_SET_OSC_PHASE_DIST:
+                if (cmd.data.osc_feat.osc_idx >= 0 && cmd.data.osc_feat.osc_idx < PX_MAX_OSC_PER_VOICE) {
+                    s->patch.osc[cmd.data.osc_feat.osc_idx].phase_dist_enabled = cmd.data.osc_feat.enabled;
+                    s->patch.osc[cmd.data.osc_feat.osc_idx].phase_dist_amount = fmaxf(0.0f, fminf(1.0f, cmd.data.osc_feat.value));
+                }
+                break;
+            case PX_CMD_SET_OSC_SYNC:
+                if (cmd.data.osc_feat.osc_idx >= 0 && cmd.data.osc_feat.osc_idx < PX_MAX_OSC_PER_VOICE) {
+                    s->patch.osc[cmd.data.osc_feat.osc_idx].osc_sync_enabled = cmd.data.osc_feat.enabled;
+                    s->patch.osc[cmd.data.osc_feat.osc_idx].osc_sync_softness = fmaxf(0.0f, fminf(1.0f, cmd.data.osc_feat.value));
+                }
+                break;
+            case PX_CMD_SET_OSC_RING_MOD:
+                if (cmd.data.osc_feat.osc_idx >= 0 && cmd.data.osc_feat.osc_idx < PX_MAX_OSC_PER_VOICE) {
+                    s->patch.osc[cmd.data.osc_feat.osc_idx].ring_mod_enabled = cmd.data.osc_feat.enabled;
+                    s->patch.osc[cmd.data.osc_feat.osc_idx].ring_mod_depth = fmaxf(0.0f, fminf(1.0f, cmd.data.osc_feat.value));
+                }
+                break;
         }
     }
 }
@@ -2300,6 +2364,14 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
         s->patch.osc[i].mix_level = (i == 0) ? 1.0f : 0.0f;
         s->patch.osc[i].pan = 0.0f;
         s->patch.osc[i].sequence_id = -1;
+        s->patch.osc[i].cross_mod_enabled = false;
+        s->patch.osc[i].cross_mod_depth = 0.0f;
+        s->patch.osc[i].phase_dist_enabled = false;
+        s->patch.osc[i].phase_dist_amount = 0.0f;
+        s->patch.osc[i].osc_sync_enabled = false;
+        s->patch.osc[i].osc_sync_softness = 0.0f;
+        s->patch.osc[i].ring_mod_enabled = false;
+        s->patch.osc[i].ring_mod_depth = 0.0f;
     }
 
     PX_UpdateUISnapshot(s);
@@ -2682,7 +2754,11 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
             // 5.3 Oscillator Loop (Independent Sequencing)
             for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
-                if (!s->patch.osc[o].enabled) continue;
+                if (!s->patch.osc[o].enabled) {
+                    v->osc_output[o] = 0.0f; // Cache silence
+                    v->osc_cycle_completed[o] = false;
+                    continue;
+                }
                 PxSeqState* sq = &v->seq_states[o];
 
                 // A. Calculate Seq Pitch & Glide
@@ -2709,16 +2785,49 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 }
 
                 // B. Final Freq
-                float osc_pitch_mod = dest_mod[PX_MOD_DEST_OSC1_PITCH + o * 6];
+
+                // v1.7: Sync Check (Hard Sync)
+                // If Sync enabled and o > 0, check if o-1 reset.
+                bool do_sync = false;
+                if (o > 0 && s->patch.osc[o].osc_sync_enabled) {
+                    if (v->osc_cycle_completed[o-1]) do_sync = true;
+                }
+                if (do_sync) {
+                    float softness = s->patch.osc[o].osc_sync_softness;
+                    if (softness < 0.01f) {
+                        v->osc_phase[o] = 0.0f; // Hard Sync
+                    } else {
+                        // Soft Sync / BLEP-ish blending (Approximation)
+                        // Simple cross-fade or just reduced reset
+                        v->osc_phase[o] *= softness;
+                    }
+                }
+
+                // Standard Pitch Calc
+                float osc_pitch_mod = dest_mod[PX_MOD_DEST_OSC1_PITCH + o * 10];
                 float tuning_st = v->current_osc_coarse_semitones[o] + (v->current_osc_fine_cents[o] / 100.0f) + osc_pitch_mod * 12.0f;
                 float osc_freq = effective_voice_freq * powf(2.0f, tuning_st / 12.0f) * seq_pitch_mult;
                 v->osc_vm_params[o].frequency = osc_freq;
 
-                int base_dest = PX_MOD_DEST_OSC1_MODA + o * 6;
+                int base_dest = PX_MOD_DEST_OSC1_MODA + o * 10;
                 v->osc_vm_params[o].modA = lfo_bytecode_mod_a + adsr_total_param1_mod + dest_mod[PX_MOD_DEST_OSC_MODA] * 10.0f + dest_mod[base_dest] * 10.0f;
                 v->osc_vm_params[o].modB = lfo_bytecode_mod_b + adsr_total_param2_mod + dest_mod[PX_MOD_DEST_OSC_MODB] * 10.0f + dest_mod[base_dest + 1] * 10.0f;
                 v->osc_vm_params[o].modC = lfo_bytecode_mod_c + adsr_total_param3_mod + dest_mod[PX_MOD_DEST_OSC_MODC] * 10.0f + dest_mod[base_dest + 2] * 10.0f;
-                v->osc_vm_params[o].x = v->osc_phase[o] * 2.f * PI;
+
+                // v1.7: Phase Distortion
+                float pd_amount = s->patch.osc[o].phase_dist_amount;
+                if (s->patch.osc[o].phase_dist_enabled) {
+                    pd_amount += dest_mod[PX_MOD_DEST_OSC1_PHASE_DIST + o * 10];
+                    pd_amount = fmaxf(0.0f, fminf(1.0f, pd_amount));
+                }
+                float effective_phase = v->osc_phase[o];
+                if (pd_amount > 0.001f) {
+                    // Simple PD: phase + sin(phase) * amount
+                    // Casio-style often uses piecewise lines, but sin is smoother and "analog".
+                    effective_phase += sinf(effective_phase * 2.0f * PI) * pd_amount * 0.5f;
+                    // Wrap if needed, though sin is periodic so it might just warp safely.
+                }
+                v->osc_vm_params[o].x = effective_phase * 2.f * PI;
 
                 BytecodeChunk* chunk = default_waves[v->osc_wave_indices[o]].compiled_bytecode;
                 float raw_sample = 0.0f;
@@ -2770,10 +2879,37 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     }
                 }
 
+                // v1.7: Apply Cross Mod (Modulate Previous Osc Phase)
+                if (o > 0 && s->patch.osc[o].cross_mod_enabled) {
+                    float xm_depth = s->patch.osc[o].cross_mod_depth + dest_mod[PX_MOD_DEST_OSC1_CROSS_MOD_DEPTH + o * 10];
+                    xm_depth = fmaxf(0.0f, fminf(1.0f, xm_depth));
+                    if (xm_depth > 0.001f) {
+                        // Modulate previous oscillator's phase for NEXT cycle (Feedback FM)
+                        // Scaling: raw_sample is +/-1.
+                        v->osc_phase[o-1] += raw_sample * xm_depth * 0.5f;
+                        // Wrap
+                        if (v->osc_phase[o-1] >= 1.0f) v->osc_phase[o-1] -= 1.0f;
+                        else if (v->osc_phase[o-1] < 0.0f) v->osc_phase[o-1] += 1.0f;
+                    }
+                }
+
+                // v1.7: Apply Ring Mod (Modulate Previous Osc Output)
+                if (o > 0 && s->patch.osc[o].ring_mod_enabled) {
+                    float rm_depth = s->patch.osc[o].ring_mod_depth + dest_mod[PX_MOD_DEST_OSC1_RING_MOD_DEPTH + o * 10];
+                    rm_depth = fmaxf(0.0f, fminf(1.0f, rm_depth));
+                    if (rm_depth > 0.001f) {
+                        float wet = raw_sample * v->osc_output[o-1];
+                        raw_sample = raw_sample * (1.0f - rm_depth) + wet * rm_depth;
+                    }
+                }
+
+                // Cache Output for Next Osc
+                v->osc_output[o] = raw_sample;
+
                 // E. Mix
-                float level = s->patch.osc[o].mix_level + dest_mod[PX_MOD_DEST_OSC1_MIX + o * 6];
+                float level = s->patch.osc[o].mix_level + dest_mod[PX_MOD_DEST_OSC1_MIX + o * 10];
                 level = fmaxf(0.0f, fminf(1.0f, level));
-                float pan = s->patch.osc[o].pan + dest_mod[PX_MOD_DEST_OSC1_PAN + o * 6];
+                float pan = s->patch.osc[o].pan + dest_mod[PX_MOD_DEST_OSC1_PAN + o * 10];
                 pan = fmaxf(-1.0f, fminf(1.0f, pan));
                 float osc_l = raw_sample * level * (1.0f - fmaxf(0.0f, pan));
                 float osc_r = raw_sample * level * (1.0f + fminf(0.0f, pan));
@@ -2797,6 +2933,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         cycle_completed = true;
                     }
                 }
+                v->osc_cycle_completed[o] = cycle_completed; // Cache for next osc sync check
 
                 if (sq->current_sequence && !sq->finished && cycle_completed) {
                     sq->cycles_counter++;
@@ -3141,6 +3278,64 @@ PX_API void PX_SetSequenceID(PxSynth* s, int seq_id) {
 
 PX_API int PX_GetSequenceID(PxSynth* s) {
     return s ? s->ui_snapshot.patch_copy.osc[0].sequence_id : -1;
+}
+
+// --- v1.7 Oscillator Features Implementation ---
+
+PX_API void PX_SetOscCrossMod(PxSynth* s, int osc_idx, bool enabled, float depth) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return;
+    depth = fmaxf(0.0f, fminf(1.0f, depth));
+    PUSH_CMD_VOID(PX_CMD_SET_OSC_CROSS_MOD, .osc_feat = {osc_idx, enabled, depth});
+}
+PX_API float PX_GetOscCrossMod(PxSynth* s, int osc_idx) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return 0.0f;
+    return s->ui_snapshot.patch_copy.osc[osc_idx].cross_mod_depth;
+}
+PX_API bool PX_GetOscCrossModEnabled(PxSynth* s, int osc_idx) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return false;
+    return s->ui_snapshot.patch_copy.osc[osc_idx].cross_mod_enabled;
+}
+
+PX_API void PX_SetOscPhaseDist(PxSynth* s, int osc_idx, bool enabled, float amount) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return;
+    amount = fmaxf(0.0f, fminf(1.0f, amount));
+    PUSH_CMD_VOID(PX_CMD_SET_OSC_PHASE_DIST, .osc_feat = {osc_idx, enabled, amount});
+}
+PX_API float PX_GetOscPhaseDist(PxSynth* s, int osc_idx) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return 0.0f;
+    return s->ui_snapshot.patch_copy.osc[osc_idx].phase_dist_amount;
+}
+PX_API bool PX_GetOscPhaseDistEnabled(PxSynth* s, int osc_idx) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return false;
+    return s->ui_snapshot.patch_copy.osc[osc_idx].phase_dist_enabled;
+}
+
+PX_API void PX_SetOscSync(PxSynth* s, int osc_idx, bool enabled, float softness) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return;
+    softness = fmaxf(0.0f, fminf(1.0f, softness));
+    PUSH_CMD_VOID(PX_CMD_SET_OSC_SYNC, .osc_feat = {osc_idx, enabled, softness});
+}
+PX_API float PX_GetOscSync(PxSynth* s, int osc_idx) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return 0.0f;
+    return s->ui_snapshot.patch_copy.osc[osc_idx].osc_sync_softness;
+}
+PX_API bool PX_GetOscSyncEnabled(PxSynth* s, int osc_idx) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return false;
+    return s->ui_snapshot.patch_copy.osc[osc_idx].osc_sync_enabled;
+}
+
+PX_API void PX_SetOscRingMod(PxSynth* s, int osc_idx, bool enabled, float depth) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return;
+    depth = fmaxf(0.0f, fminf(1.0f, depth));
+    PUSH_CMD_VOID(PX_CMD_SET_OSC_RING_MOD, .osc_feat = {osc_idx, enabled, depth});
+}
+PX_API float PX_GetOscRingMod(PxSynth* s, int osc_idx) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return 0.0f;
+    return s->ui_snapshot.patch_copy.osc[osc_idx].ring_mod_depth;
+}
+PX_API bool PX_GetOscRingModEnabled(PxSynth* s, int osc_idx) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return false;
+    return s->ui_snapshot.patch_copy.osc[osc_idx].ring_mod_enabled;
 }
 
 // --- THREAD-SAFE GET API ---
