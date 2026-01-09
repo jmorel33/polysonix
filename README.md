@@ -192,41 +192,41 @@ The following diagram illustrates the signal processing pipeline executed within
 
 ```mermaid
 flowchart TD
-    Start([PX_Process Start]) --> Cmds[Process Command Queue]
+    Start(["PX_Process Start"]) --> Cmds["Process Command Queue"]
     Cmds --> Globals["Update Global State\n(Limiter, Global Filter Coeffs)"]
     Globals --> SampleLoop{"Sample Loop\n(0 to num_frames)"}
 
-    SampleLoop -->|Next Sample| LFO_Check{LFO Update Tick?}
+    SampleLoop -->|Next Sample| LFO_Check{"LFO Update Tick?"}
     LFO_Check -- Yes --> LFO_Update["Update LFOs\n(Template & Per-Voice)"]
-    LFO_Check -- No --> VoiceLoop
-    LFO_Update --> VoiceLoop
+    LFO_Check -- No --> V_Start
+    LFO_Update --> V_Start
 
     subgraph VoiceLoop [Per-Voice Processing]
         direction TB
-        V_Start(Voice Start) --> V_Mods["Calculate Mod Matrix\n(Vel, AT, Wheel -> Dests)"]
-        V_Mods --> V_ADSR[Update ADSRs]
-        V_ADSR --> V_Pitch[Calc Pitch & Filter Coeffs]
+        V_Start("Voice Start") --> V_Mods["Calculate Mod Matrix\n(Vel, AT, Wheel -> Dests)"]
+        V_Mods --> V_ADSR["Update ADSRs"]
+        V_ADSR --> V_Pitch["Calc Pitch & Filter Coeffs"]
         V_Pitch --> OscLoop{"Oscillator Loop\n(0..2)"}
 
-        OscLoop -->|Osc N| WSeq[Wave Sequencer Logic]
+        OscLoop -->|Osc N| WSeq["Wave Sequencer Logic"]
         WSeq --> InterMod["Inter-Osc Mod\n(Sync, XMod, RingMod, PD)"]
         InterMod --> VM["VM Execution\n(Generate Sample)"]
-        VM --> PostFX[Per-Osc FX & Pan]
-        PostFX --> OscMix(Sum to Voice Mix)
+        VM --> PostFX["Per-Osc FX & Pan"]
+        PostFX --> OscMix("Sum to Voice Mix")
         OscMix --> OscLoop
 
-        OscLoop -- Done --> V_Filter[Voice Filter]
-        V_Filter --> V_Clip[Soft Clip]
-        V_Clip --> V_Pan[Voice Pan & Sum]
+        OscLoop -- Done --> V_Filter["Voice Filter"]
+        V_Filter --> V_Clip["Soft Clip"]
+        V_Clip --> V_Pan["Voice Pan & Sum"]
     end
 
-    VoiceLoop --> GlobalFilter[Global Post-Filter]
-    GlobalFilter --> Limiter[Master Limiter]
-    Limiter --> OutputBuffer[Write to Stereo Buffer]
+    V_Pan --> GlobalFilter["Global Post-Filter"]
+    GlobalFilter --> Limiter["Master Limiter"]
+    Limiter --> OutputBuffer["Write to Stereo Buffer"]
     OutputBuffer --> SampleLoop
 
-    SampleLoop -- Finished --> Snapshot[Update UI Snapshot]
-    Snapshot --> Stop([PX_Process End])
+    SampleLoop -- Finished --> Snapshot["Update UI Snapshot"]
+    Snapshot --> Stop(["PX_Process End"])
 ```
 
 ## Usage
