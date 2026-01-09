@@ -11,6 +11,7 @@ A single-header polyphonic synthesizer engine.
 - [Design Principles](#design-principles)
 - [CPU vs GPU Backends](#cpu-vs-gpu-backends)
 - [Concurrency Model](#concurrency-model)
+- [Audio Signal Flow](#audio-signal-flow)
 - [Usage](#usage)
 - [Quick Start Example](#quick-start-example)
 - [Dependencies](#dependencies)
@@ -184,6 +185,49 @@ This library is **THREAD-SAFE**. It uses a lock-free producer/consumer model.
     for the entire duration of the audio block processing.
 - **UI Data:** `Get` functions read from a snapshot of the synth's state, which is safely updated by the audio thread after it finishes processing a block.
     This prevents data races and ensures the UI displays a stable, coherent view of the synthesizer's actual sounding parameters.
+
+## Audio Signal Flow
+
+The following diagram illustrates the signal processing pipeline executed within `PX_Process` for every audio block:
+
+```mermaid
+flowchart TD
+    Start([PX_Process Start]) --> Cmds[Process Command Queue]
+    Cmds --> Globals[Update Global State\n(Limiter, Global Filter Coeffs)]
+    Globals --> SampleLoop{Sample Loop\n(0 to num_frames)}
+
+    SampleLoop -->|Next Sample| LFO_Check{LFO Update Tick?}
+    LFO_Check -- Yes --> LFO_Update[Update LFOs\n(Template & Per-Voice)]
+    LFO_Check -- No --> VoiceLoop
+    LFO_Update --> VoiceLoop
+
+    subgraph VoiceLoop [Per-Voice Processing]
+        direction TB
+        V_Start(Voice Start) --> V_Mods[Calculate Mod Matrix\n(Vel, AT, Wheel -> Dests)]
+        V_Mods --> V_ADSR[Update ADSRs]
+        V_ADSR --> V_Pitch[Calc Pitch & Filter Coeffs]
+        V_Pitch --> OscLoop{Oscillator Loop\n(0..2)}
+
+        OscLoop -->|Osc N| WSeq[Wave Sequencer Logic]
+        WSeq --> InterMod[Inter-Osc Mod\n(Sync, XMod, RingMod, PD)]
+        InterMod --> VM[VM Execution\n(Generate Sample)]
+        VM --> PostFX[Per-Osc FX & Pan]
+        PostFX --> OscMix(Sum to Voice Mix)
+        OscMix --> OscLoop
+
+        OscLoop -- Done --> V_Filter[Voice Filter]
+        V_Filter --> V_Clip[Soft Clip]
+        V_Clip --> V_Pan[Voice Pan & Sum]
+    end
+
+    VoiceLoop --> GlobalFilter[Global Post-Filter]
+    GlobalFilter --> Limiter[Master Limiter]
+    Limiter --> OutputBuffer[Write to Stereo Buffer]
+    OutputBuffer --> SampleLoop
+
+    SampleLoop -- Finished --> Snapshot[Update UI Snapshot]
+    Snapshot --> Stop([PX_Process End])
+```
 
 ## Usage
 To use this library, do this in **one** C or C++ file:
