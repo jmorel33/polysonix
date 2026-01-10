@@ -4,6 +4,7 @@
 static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
 
     // --- Bank 0: Lead (0-7) ---
+    // Leads are focused on melodic playback, often with glide or expressive articulation.
     // 0: Classic Saw Lead (Glide enabled, slight detune feeling via sequence)
     {
         .end_action = PX_WSEQ_END_LOOP,
@@ -59,12 +60,13 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.flags = PX_WSEQ_END}
         }
     },
-    // 5: Fast Arp Lead (Major Triad)
+    // 5: Fast Arp Lead (Generative Octave Jumps)
     {
         .end_action = PX_WSEQ_END_LOOP,
+        .rnd_octave_range = 30,
         .steps = {
             {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 400, .flags = 0},
+            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 400, .flags = PX_WSEQ_USE_RND_OCTAVE}, // Random Octave Jump
             {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 700, .flags = 0},
             {.flags = PX_WSEQ_END}
         }
@@ -88,6 +90,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 1: Pad (8-15) ---
+    // Pads are slow-attack, evolving textures suitable for chords and atmosphere.
     // 8: PWM Pad (Slow evolution)
     {
         .end_action = PX_WSEQ_END_PINGPONG,
@@ -123,17 +126,21 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .steps = {
             {.wave_idx = 107, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
             {.wave_idx = 108, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
-            {.wave_idx = 109, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 109, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD}, // Added Ring Mod
             {.flags = PX_WSEQ_END}
-        }
+        },
+        .ring_mod_depth = 0.2f,
+        .ring_mod_mod_src = -1
     },
-    // 12: Dark Drone
+    // 12: Self-Xmod Drone
     {
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
-            {.wave_idx = 81, .duration_cycles = 2000, .pitch_offset = -1200, .flags = 0}, // FM Hollow Drone
+            {.wave_idx = 81, .duration_cycles = 2000, .pitch_offset = -1200, .flags = PX_WSEQ_XMOD}, // FM Hollow Drone with Self-FM
             {.flags = PX_WSEQ_END}
-        }
+        },
+        .xmod_depth = 0.5f,
+        .xmod_mod_src = -1
     },
     // 13: Space Pad
     {
@@ -164,6 +171,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 2: Strings (16-23) ---
+    // Orchestral and synthesized string emulations.
     // 16: Bowed String
     {
         .end_action = PX_WSEQ_END_LOOP,
@@ -218,12 +226,13 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.flags = PX_WSEQ_END}
         }
     },
-    // 22: Synth Strings
+    // 22: Crushed Strings
     {
         .end_action = PX_WSEQ_END_LOOP,
+        .bitcrush_bits = 6,
         .steps = {
-            {.wave_idx = 6, .duration_cycles = 200, .pitch_offset = -5, .flags = 0}, // Saw Rising
-            {.wave_idx = 7, .duration_cycles = 200, .pitch_offset = 5, .flags = 0},  // Saw Falling
+            {.wave_idx = 147, .duration_cycles = 200, .pitch_offset = -5, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 147, .duration_cycles = 200, .pitch_offset = 5, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -237,6 +246,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 3: Choir (24-31) ---
+    // Vocal-like formants and choir textures.
     // 24: Ooh Choir
     {
         .end_action = PX_WSEQ_END_LOOP,
@@ -297,6 +307,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 4: Ensemble (32-39) ---
+    // Brass, Wind, and full orchestra hits.
     // 32: Brass Section
     {
         .end_action = PX_WSEQ_END_LOOP,
@@ -363,6 +374,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 5: Pluck (40-47) ---
+    // Short, percussive tonal sounds mimicking plucked instruments.
     // 40: Nylon Guitar
     {
         .end_action = PX_WSEQ_END_STOP,
@@ -421,6 +433,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 6: Percussive (48-55) ---
+    // Drums and hits.
     // 48: Kick
     {
         .end_action = PX_WSEQ_END_STOP,
@@ -444,7 +457,11 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // 52: Glitch Perc
     {
         .end_action = PX_WSEQ_END_STOP,
-        .steps = { {.wave_idx = 143, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
+        .steps = {
+            {.wave_idx = 143, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_RETRIG_ADSR}, // Added Reset/Retrig
+            {.flags = PX_WSEQ_END}
+        },
+        .adsr_retrig_phase = 1 // Retrigger Attack
     },
     // 53: Industrial Hit
     {
@@ -463,6 +480,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 7: Oldskool (56-63) ---
+    // Retro game and chiptune sounds.
     // 56: Basic Arp
     {
         .end_action = PX_WSEQ_END_PINGPONG,
@@ -547,6 +565,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 8: Arcade (64-71) ---
+    // Classic arcade SFX and aggressive digital sounds.
     // 64: Pac-Man
     {
         .end_action = PX_WSEQ_END_LOOP,
@@ -580,7 +599,11 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // 70: Enemy
     {
         .end_action = PX_WSEQ_END_LOOP,
-        .steps = { {.wave_idx = 218, .duration_cycles = 300, .pitch_offset = -1200, .flags = 0}, {.flags = PX_WSEQ_END} }
+        .steps = {
+            {.wave_idx = 218, .duration_cycles = 300, .pitch_offset = -1200, .flags = PX_WSEQ_XMOD}, // Added growl
+            {.flags = PX_WSEQ_END}
+        },
+        .xmod_depth = 0.3f
     },
     // 71: Level Up
     {
@@ -589,6 +612,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 9: Fun (72-79) ---
+    // Novelty and cartoon effects.
     // 72: Bubble
     {
         .end_action = PX_WSEQ_END_STOP,
@@ -659,6 +683,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 10: Natural (80-87) ---
+    // Environmental and organic simulations.
     // 80: Wind
     {
         .end_action = PX_WSEQ_END_LOOP,
@@ -708,11 +733,11 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 11: Enhanced (88-95) ---
+    // Modern complex patches using advanced features.
     // 88: Super Saw
     {
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 6, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
-        // Ideally needs multi-osc detune setup via patch
     },
     // 89: Hyper Square
     {
@@ -727,7 +752,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.wave_idx = 6, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE}, // Gate effect
             {.flags = PX_WSEQ_END}
         },
-        .prob_mute_score = 100 // Always mute step 2? Or use 0 volume? flags mute?
+        .prob_mute_score = 100 // Always mute step 2
     },
     // 91: Complex Arp
     {
@@ -754,21 +779,24 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
-            {.wave_idx = 6, .duration_cycles = 20, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 6, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP}, // Added skip probability
             {.wave_idx = 6, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
             {.flags = PX_WSEQ_END}
         },
-        .prob_mute_score = 30
+        .prob_mute_score = 30,
+        .prob_skip_score = 40
     },
     // 94: Glitch Hop
     {
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
-            {.wave_idx = 143, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 143, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RING_MOD}, // Added Ring Mod
             {.wave_idx = 143, .duration_cycles = 50, .pitch_offset = 1200, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
         },
-        .bitcrush_bits = 4
+        .bitcrush_bits = 4,
+        .ring_mod_depth = 0.2f,
+        .ring_mod_mod_src = -1
     },
     // 95: Chaos Theory
     {
@@ -783,6 +811,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 12: Deep (96-103) ---
+    // Sub-bass and heavy low-end textures.
     // 96: Sub Bass
     {
         .end_action = PX_WSEQ_END_LOOP,
@@ -793,10 +822,17 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 106, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Minor Triad
     },
-    // 98: Deep Drone
+    // 98: Chaos Drone
     {
         .end_action = PX_WSEQ_END_LOOP,
-        .steps = { {.wave_idx = 93, .duration_cycles = 1000, .pitch_offset = -1200, .flags = 0}, {.flags = PX_WSEQ_END} } // Sci-Fi Drone
+        .steps = {
+            {.wave_idx = 93, .duration_cycles = 1000, .pitch_offset = -1200, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_XMOD}, // Heavy texture
+            {.flags = PX_WSEQ_END}
+        },
+        .ring_mod_depth = 0.3f,
+        .xmod_depth = 0.4f,
+        .ring_mod_mod_src = -1,
+        .xmod_mod_src = -1
     },
     // 99: 808 Kick
     {
@@ -829,6 +865,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 13: Futuristic (104-111) ---
+    // Sci-fi, cyber, and technological sounds.
     // 104: Robot Talk
     {
         .end_action = PX_WSEQ_END_LOOP,
@@ -896,6 +933,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 14: Emulation (112-119) ---
+    // Approximations of acoustic instruments using simple waveforms.
     // 112: Organ
     {
         .end_action = PX_WSEQ_END_LOOP,
@@ -938,6 +976,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 15: Strange (120-127) ---
+    // Generative, chaotic, and experimental sequences.
     // 120: Fibonacci
     {
         .end_action = PX_WSEQ_END_LOOP,
@@ -965,7 +1004,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .prob_skip_score = 30,
         .steps = {
             {.wave_idx = 78, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
-            {.wave_idx = 78, .duration_cycles = 50, .pitch_offset = 300, .flags = PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 78, .duration_cycles = 50, .pitch_offset = 300, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_REVERSE_PLAY}, // Added Reverse
             {.flags = PX_WSEQ_END}
         }
     },
@@ -973,19 +1012,22 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
-            {.wave_idx = 0, .duration_cycles = 10, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 0, .duration_cycles = 10, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE | PX_WSEQ_USE_RND_OCTAVE}, // Added Random Octave
             {.flags = PX_WSEQ_END}
         },
         .rnd_wave_low = 0,
-        .rnd_wave_high = 255
+        .rnd_wave_high = 255,
+        .rnd_octave_range = 60
     },
     // 126: Reverse Tape
     {
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
-            {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_RING_MOD}, // Added Ring Mod
             {.flags = PX_WSEQ_END}
-        }
+        },
+        .ring_mod_depth = 0.25f,
+        .ring_mod_mod_src = -1
     },
     // 127: The End
     {
