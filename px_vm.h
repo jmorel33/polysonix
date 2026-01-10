@@ -12,7 +12,7 @@ Overview:
 
 The Polysonix Waveform Scripting Language is a domain-specific language for defining mathematical expressions that generate audio waveforms in the Polysonix synthesizer.
 Expressions are stored as strings in WaveDefinition structures, tokenized, parsed into an abstract syntax tree (AST), compiled into bytecode, and executed by a virtual
-machine (VM) for real-time audio synthesis. This comment details the language's structure, operand symbols, and components, as used in polysonix_wave.h.
+This comment details the language's structure, operand symbols, and components, as used in px_vm.h.
 
 Language Structure:
 
@@ -204,8 +204,8 @@ Example WaveDefinition (C struct storing the script string):
 
 */
 
-#ifndef POLYSONIX_WAVE_H
-#define POLYSONIX_WAVE_H
+#ifndef PX_VM_H
+#define PX_VM_H
 
 #ifdef POLYSONIX_USE_GPU
 #include "situation.h"
@@ -305,7 +305,7 @@ typedef enum {
  * defined feedback polynomials. Failure to call this function will result in
  * undefined behavior for LFSR-related script functions.
  */
-void init_polysonix_lfsr_tables(void);
+void px_vm_init_lfsr_tables(void);
 
 /**
  * @brief Frees all memory allocated for the pre-computed LFSR bit tables.
@@ -313,7 +313,7 @@ void init_polysonix_lfsr_tables(void);
  * This function should be called once at application shutdown to release the
  * memory used by the LFSR system and prevent memory leaks.
  */
-void free_polysonix_lfsr_tables(void);
+void px_vm_free_lfsr_tables(void);
 
 /**
  * @brief Retrieves a single bit from a pre-computed LFSR table.
@@ -2409,7 +2409,7 @@ static const LfsrConfigEntry lfsr_configs[NUM_LFSR_TYPES] = {
 
 
 // Initialize LFSR tables
-void init_polysonix_lfsr_tables(void) {
+void px_vm_init_lfsr_tables(void) {
     if (lfsr_tables_initialized) return;
     printf("Initializing LFSR tables...\n");
 
@@ -2520,7 +2520,7 @@ void init_polysonix_lfsr_tables(void) {
 
 
 // Free LFSR tables
-void free_polysonix_lfsr_tables(void) {
+void px_vm_free_lfsr_tables(void) {
     printf("Freeing LFSR tables...\n");
     for (int type = 0; type < NUM_LFSR_TYPES; type++) {
         LfsrPrecomputedTable* table = &precomputed_lfsrs[type];
@@ -4298,15 +4298,15 @@ static bool gpu_resources_initialized = false;
 
 // --- GPU Helper Functions ---
 
-void init_polysonix_gpu_resources(void) {
+void px_vm_init_gpu_resources(void) {
     if (gpu_resources_initialized) return;
 
-    if (SituationCreateComputePipeline("polysonix_wave.comp", SITUATION_COMPUTE_LAYOUT_SCALAR, &wave_compute_pipeline) != SITUATION_SUCCESS) {
-        fprintf(stderr, "Failed to create compute pipeline for polysonix_wave.comp\n");
+    if (SituationCreateComputePipeline("px_vm.comp", SITUATION_COMPUTE_LAYOUT_SCALAR, &wave_compute_pipeline) != SITUATION_SUCCESS) {
+        fprintf(stderr, "Failed to create compute pipeline for px_vm.comp\n");
         return;
     }
 
-    if (!precomputed_lfsrs[0].initialized) init_polysonix_lfsr_tables();
+    if (!precomputed_lfsrs[0].initialized) px_vm_init_lfsr_tables();
 
     size_t total_lfsr_bytes = 0;
     for (int i = 0; i < NUM_LFSR_TYPES; ++i) {
@@ -4331,7 +4331,7 @@ void init_polysonix_gpu_resources(void) {
     printf("Polysonix GPU resources initialized.\n");
 }
 
-void cleanup_polysonix_gpu_resources(void) {
+void px_vm_cleanup_gpu_resources(void) {
     if (lfsr_tables_buffer.id != 0) SituationDestroyBuffer(&lfsr_tables_buffer);
     gpu_resources_initialized = false;
 }
@@ -4400,7 +4400,7 @@ GpuWaveBuffers upload_wave_to_gpu(BytecodeChunk* chunk) {
 
 // Dispatch compute for a wave (Records command to cmd buffer)
 void dispatch_wave_gpu(SituationCommandBuffer cmd, GpuWaveBuffers bufs, VmParams* params, uint32_t wave_length, SituationBuffer output_buf, SituationBuffer lfsr_state_buf, SituationBuffer* out_params_buf) {
-    if (!gpu_resources_initialized) init_polysonix_gpu_resources();
+    if (!gpu_resources_initialized) px_vm_init_gpu_resources();
 
     VmParamsBuffer pb = {
         .x = params->x, .frequency = params->frequency, .rand_offset = params->rand_offset,
@@ -4433,4 +4433,4 @@ void dispatch_wave_gpu(SituationCommandBuffer cmd, GpuWaveBuffers bufs, VmParams
 }
 #endif
 
-#endif // POLYSONIX_WAVE_H
+#endif // PX_VM_H

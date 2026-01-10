@@ -9,7 +9,7 @@
 
 #define POLYSONIX_IMPLEMENTATION
 #include "polysonix.h"
-#include "polysonix_wave_bank.h"
+#include "../px_vm_bank.h"
 
 // --- Global Application State (Not Synth State) ---
 static bool enable_drawing = true;
@@ -121,7 +121,7 @@ static bool InitializeApplication() {
         return false;
     }
 
-    if (!polysonix_wave_init()) {
+    if (!px_vm_init()) {
         fprintf(stderr, "Failed to initialize Polysonix wave system!\n");
         return false;
     }
@@ -155,7 +155,7 @@ static bool InitializeApplication() {
     if (!synth) {
         // This is the correct cleanup path if the synth fails to be created.
         printf("Critical: Failed to create PxSynth instance.\n");
-        polysonix_wave_deinit(); // Clean up the wave system
+        px_vm_deinit(); // Clean up the wave system
         if (IsAudioDeviceReady()) {
             CloseAudioDevice(); // Clean up the audio device
         }
@@ -166,7 +166,7 @@ static bool InitializeApplication() {
     if (!compile_all_waves()) {
         printf("Critical: Wave compilation resulted in zero successful waveforms. Exiting.\n");
         PX_Destroy(synth);
-        polysonix_wave_deinit();
+        px_vm_deinit();
         CloseAudioDevice();
         CloseWindow();
         return false;
@@ -182,9 +182,9 @@ static void CleanupApplication() {
     // <<< NEW: Destroy the synth instance
     if (synth) PX_Destroy(synth);
 
-    polysonix_wave_print_stats();
-    polysonix_wave_deinit();
-    
+    px_vm_print_stats();
+    px_vm_deinit();
+
     // Free bytecode (this part is external to the synth library)
     for (int i = 0; i < PX_GetNumWaveforms(); ++i) {
         if (default_waves[i].compiled_bytecode != NULL) {
@@ -194,7 +194,7 @@ static void CleanupApplication() {
         }
     }
     printf("Freed bytecode for %d waveforms.\n", PX_GetNumWaveforms());
-    
+
     if (IsAudioDeviceReady()) {
         StopAudioStream(audio_stream);
         UnloadAudioStream(audio_stream);
@@ -232,7 +232,7 @@ static void ProcessInput() {
     if (IsKeyPressed(KEY_KP_ENTER)) {
         current_edit_target = (EditTarget)((current_edit_target + 1) % EDIT_TARGET_COUNT);
     }
-    
+
     // Parameter Editing (all calls now go through the PX_... API)
     // <<< NEW: All direct variable manipulation is replaced with API calls
     float adsr_time_step_small = 0.01f, adsr_time_step_large = 0.05f, adsr_level_step = 0.05f;
@@ -460,7 +460,7 @@ static void DrawFrame() {
     y_offset += small_line_height;
     DrawText(TextFormat("Unilegato (F10): %s", PX_GetUnilegatoEnabled(synth) ? "ON" : "OFF"), 10, y_offset, small_line_height, DARKGRAY);
     y_offset += small_line_height;
-    
+
     // --- Template LFO Display ---
     for (int lfo_idx = 0; lfo_idx < NUM_LFOS; ++lfo_idx) {
         PxLFOInfo lfo_info = PX_GetLFOInfo(synth, lfo_idx);
@@ -537,7 +537,7 @@ static void DrawFrame() {
             snprintf(temp_summary, sizeof(temp_summary), " A%d(%s:%.1f)", k, PX_GetADSRStateName(v_info.adsr_states[k]), v_info.adsr_levels[k]);
             strncat(adsr_summary, temp_summary, sizeof(adsr_summary) - strlen(adsr_summary) - 1);
         }
-        
+
         char lfo_outputs_str[NUM_LFOS * 10 + 5] = "";
         for (int k = 0; k < NUM_LFOS; ++k) {
             char temp_lfo_out[15];
@@ -548,7 +548,7 @@ static void DrawFrame() {
         snprintf(voice_status_text, sizeof(voice_status_text), "V%d:%s N:%02d F:%.0f EAmp:%.1f P:%.1f %s%s",
                  i, v_info.active ? "On" : "Off", v_info.midi_note, v_info.frequency,
                  v_info.effective_amplitude, v_info.pan_position, adsr_summary, lfo_outputs_str);
-        
+
         DrawText(voice_status_text, 10, voice_display_y_start + i * voice_line_h, voice_line_h, v_info.active ? DARKGREEN : GRAY);
     }
     y_offset = voice_display_y_start + NUM_VOICES * voice_line_h + 5;
@@ -558,7 +558,7 @@ static void DrawFrame() {
     if (SCREEN_HEIGHT - (waveform_draw_y + DRAW_WAVEFORM_HEIGHT + 100) < 0) {
         waveform_draw_y = SCREEN_HEIGHT - (DRAW_WAVEFORM_HEIGHT + 100 + 5);
     }
-    if (waveform_draw_y < voice_display_y_start + NUM_VOICES * voice_line_h + 10) { 
+    if (waveform_draw_y < voice_display_y_start + NUM_VOICES * voice_line_h + 10) {
         waveform_draw_y = voice_display_y_start + NUM_VOICES * voice_line_h + 10;
     }
 

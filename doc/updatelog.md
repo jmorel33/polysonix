@@ -1,5 +1,17 @@
 # Update Log
 
+## v1.7.5 (2026-01-12)
+**Codebase Restructure: Rename to px_vm**
+
+This maintenance release focuses on consistency and codebase hygiene by renaming the core waveform library.
+
+*   **Renaming:**
+    *   Renamed `polysonix_wave.h` to `px_vm.h`.
+    *   Renamed `polysonix_wave.comp` to `px_vm.comp`.
+    *   Renamed `examples/polysonix_wave_bank.h` to `px_vm_bank.h` and moved to root.
+    *   Updated all internal API functions and macros to use the `px_vm_` prefix (e.g., `init_polysonix_lfsr_tables` -> `px_vm_init_lfsr_tables`).
+    *   Updated all documentation and comments to reflect the new naming convention.
+
 ## v1.7.4 (2026-01-11)
 **Feature Update: Patch Bank System & Robust IO**
 
@@ -359,7 +371,7 @@ This release seals the current codebase as **Version 1.0Alpha1**, marking a sign
 ## v1.1.7 (2026/01/03)
 
 ### Fixes
-*   **Waveform Generation Precision:** In `polysonix_wave`, fixed an issue where CPU rendering of waveforms was previously quantized to 16-bit integers. This has been updated to use 32-bit floating-point precision, eliminating quantization artifacts and significantly improving audio fidelity.
+*   **Waveform Generation Precision:** In `px_vm` (formerly `polysonix_wave`), fixed an issue where CPU rendering of waveforms was previously quantized to 16-bit integers. This has been updated to use 32-bit floating-point precision, eliminating quantization artifacts and significantly improving audio fidelity.
 
 ## v1.1.6 (2025/11/29)
 *   **Performance optimization:** Implemented Direct Threaded Code (computed gotos) for VM dispatch.

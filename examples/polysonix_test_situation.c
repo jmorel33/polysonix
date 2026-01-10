@@ -36,7 +36,7 @@ typedef struct Rectangle { float x, y, width, height; } Rectangle;
 
 #define POLYSONIX_IMPLEMENTATION
 #include "../polysonix.h"
-#include "polysonix_wave_bank.h"
+#include "../px_vm_bank.h"
 
 // --- Global Application State (Not Synth State) ---
 static bool enable_drawing = true;
@@ -317,7 +317,7 @@ static bool InitializeApplication() {
     SituationSetTargetFPS(TARGET_FPS);
 
     // Initialize Polysonix tables explicitly
-    init_polysonix_lfsr_tables();
+    px_vm_init_lfsr_tables();
     initialize_bytecode_cache();
 
     float actual_sample_rate = REQUESTED_SAMPLE_RATE;
@@ -341,7 +341,7 @@ static bool InitializeApplication() {
     if (!synth) {
         printf("Critical: Failed to create PxSynth instance.\n");
         free_bytecode_cache();
-        free_polysonix_lfsr_tables();
+        px_vm_free_lfsr_tables();
         SituationShutdown();
         return false;
     }
@@ -350,7 +350,7 @@ static bool InitializeApplication() {
         printf("Critical: Wave compilation resulted in zero successful waveforms. Exiting.\n");
         PX_Destroy(synth);
         free_bytecode_cache();
-        free_polysonix_lfsr_tables();
+        px_vm_free_lfsr_tables();
         SituationShutdown();
         return false;
     }
@@ -426,7 +426,7 @@ static void CleanupApplication() {
 
     // Free bytecode caches
     free_bytecode_cache();
-    free_polysonix_lfsr_tables();
+    px_vm_free_lfsr_tables();
 
     SituationShutdown();
 }

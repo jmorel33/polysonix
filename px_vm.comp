@@ -15,7 +15,7 @@
 // --- Workgroup Layout ---
 layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
-// --- Constants (must match polysonix_wave.h) ---
+// --- Constants (must match px_vm.h) ---
 #define MAX_VM_STACK 512
 #define MAX_CALL_STACK 8 // For OP_SIGMA_EXEC sub-calls
 #define MAX_CONSTANTS 256
@@ -23,7 +23,7 @@ layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define NUM_LFSR_TYPES 16
 #define EPSILON 1e-6
 
-// --- Opcodes (must match polysonix_wave.h OpCode enum) ---
+// --- Opcodes (must match px_vm.h OpCode enum) ---
 #define OP_PUSH_CONST     0x00
 #define OP_PUSH_VAR_X     0x01
 #define OP_PUSH_VAR_FREQ  0x02
@@ -53,7 +53,7 @@ layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define OP_SIGMA_EXEC     0x1A
 #define OP_HALT           0x1B
 
-// --- Function IDs (must match polysonix_wave.h FunctionID enum) ---
+// --- Function IDs (must match px_vm.h FunctionID enum) ---
 #define FUNC_ID_SIN         0
 #define FUNC_ID_COS         1
 #define FUNC_ID_TAN         2

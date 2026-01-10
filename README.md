@@ -24,7 +24,7 @@ A single-header polyphonic synthesizer engine.
 </details>
 
 ## Overview
-polysonix.h is a flexible, stereo polyphonic synthesizer engine designed to be easily embedded into applications. It is built upon the 'polysonix_wave'
+polysonix.h is a flexible, stereo polyphonic synthesizer engine designed to be easily embedded into applications. It is built upon the 'px_vm'
 expression engine, allowing for dynamically generated waveforms and complex modulation possibilities via a powerful virtual machine.
 
 This library encapsulates all audio processing and state management, deliberately separating the synthesis core from application-specific logic
@@ -33,7 +33,7 @@ like UI, input handling, and audio device management.
 ## Key Features
 - **Thread-Safe by Design:** The library is 100% lock-free. Control functions (like `PX_NoteOn`, `PX_SetFilterParam`) can be safely called from any
   UI or main thread, while the `PX_Process` function runs on the dedicated real-time audio thread.
-- **Dynamic Waveform Generation:** Leverages the `polysonix_wave` library to execute bytecode expressions for oscillators and LFOs, enabling complex,
+- **Dynamic Waveform Generation:** Leverages the `px_vm` library to execute bytecode expressions for oscillators and LFOs, enabling complex,
   evolving timbres that go far beyond simple wavetables.
 - **Rich Synthesis Architecture:**
   - **Polyphony:** Configurable number of voices (up to 16) with intelligent voice stealing.
@@ -80,7 +80,7 @@ like UI, input handling, and audio device management.
 
 ## CPU vs GPU Backends
 
-Polysonix utilizes a unified backend architecture defined in `polysonix_wave.h`. By default, the highly optimized CPU virtual machine is used. To enable the GPU backend, simply define `POLYSONIX_USE_GPU` before including `polysonix.h`.
+Polysonix utilizes a unified backend architecture defined in `px_vm.h`. By default, the highly optimized CPU virtual machine is used. To enable the GPU backend, simply define `POLYSONIX_USE_GPU` before including `polysonix.h`.
 
 ```mermaid
 flowchart TD
@@ -94,14 +94,14 @@ flowchart TD
 
     %% CPU Path
     Mode -->|Default| CPU_Exec[CPU Execution]
-    subgraph CPU_Exec ["CPU Backend (polysonix_wave.h)"]
+    subgraph CPU_Exec ["CPU Backend (px_vm.h)"]
         direction TB
         CPU_VM["CPU VM\n(Recursive, Computed Gotos)"] -->|Synthesize| CPU_Out[Float Audio Buffer]
     end
 
     %% GPU Path
     Mode -->|POLYSONIX_USE_GPU| GPU_Exec[GPU Execution]
-    subgraph GPU_Exec ["GPU Backend (polysonix_wave.comp)"]
+    subgraph GPU_Exec ["GPU Backend (px_vm.comp)"]
         direction TB
         Serializer["Serializer\n(Packs structs for std430)"] -->|Upload| SSBO[GPU SSBO Buffer]
         SSBO -->|Bindless Access| Shader["Compute Shader VM\n(Iterative, Explicit Stack)"]
@@ -116,7 +116,7 @@ flowchart TD
 ```
 
 ### CPU Backend
-The default engine, fully implemented in `polysonix_wave.h`.
+The default engine, fully implemented in `px_vm.h`.
 
 *   **Zero Dependencies:** Pure C99.
 *   **Low Latency:** Instant response, ideal for real-time playing.
@@ -128,7 +128,7 @@ Enables the OpenGL 4.6 Compute Shader path.
 
 *   **Technology:** OpenGL 4.6, Bindless Descriptors (`GL_EXT_buffer_reference2`), SSBOs.
 *   **Throughput:** Massive parallelism for texture generation or additive synthesis.
-*   **Iterative VM:** The shader (`polysonix_wave.comp`) uses an explicit stack to handle complex logic without recursion.
+*   **Iterative VM:** The shader (`px_vm.comp`) uses an explicit stack to handle complex logic without recursion.
 
 ### Comparative Performance Analysis
 
@@ -306,13 +306,13 @@ int main() {
     SituationUnloadSound(&stream);
     PX_Destroy(synth);
     free_bytecode_cache();
-    free_polysonix_lfsr_tables();
+    px_vm_free_lfsr_tables();
     SituationShutdown();
 }
 ```
 
 ## Dependencies
-- **Required:** `polysonix_wave.h` is automatically included by `polysonix.h`. `PX_Create()` automatically handles the initialization of LFSR tables and the bytecode cache.
+- **Required:** `px_vm.h` is automatically included by `polysonix.h`. `PX_Create()` automatically handles the initialization of LFSR tables and the bytecode cache.
 
 ## Core API Functions
 
