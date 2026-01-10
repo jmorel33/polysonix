@@ -323,7 +323,8 @@ typedef struct {
 } PxLFOParams;
 
 #ifndef NUM_WAVEFORMS
-    #define NUM_WAVEFORMS 212
+    #define NUM_WAVEFORMS 256
+    #define NUM_WAVEFORMS 256
 #endif
 
 // --- Configuration and Patch Structures ---
