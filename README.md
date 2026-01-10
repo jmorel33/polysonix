@@ -355,6 +355,82 @@ The library also provides a comprehensive set of `PX_Set...` and `PX_Get...` fun
 
 Additionally, there are several `PX_Get...Info()` functions that provide read-only snapshots of the internal state for UI display.
 
+## Triple Oscillator & Cross-Modulation Examples
+
+Polysonix allows for complex voice architectures by combining three independent oscillators per voice with cross-modulation capabilities.
+
+### Example: Massive Detuned Supersaw
+Stack 3 sawtooth waves with detuning and panning.
+
+```c
+// Enable all 3 oscillators
+PX_SetOscEnabled(synth, 0, true);
+PX_SetOscEnabled(synth, 1, true);
+PX_SetOscEnabled(synth, 2, true);
+
+// Set all to Sawtooth (assuming index 1 is Saw)
+PX_SetOscWave(synth, 0, 1);
+PX_SetOscWave(synth, 1, 1);
+PX_SetOscWave(synth, 2, 1);
+
+// Detune Osc 1 and 2
+PX_SetOscFineTune(synth, 1, -15.0f); // -15 cents
+PX_SetOscFineTune(synth, 2, +15.0f); // +15 cents
+
+// Spread stereo field
+PX_SetOscPan(synth, 1, -0.5f); // Left
+PX_SetOscPan(synth, 2, +0.5f); // Right
+
+// Balance mix
+PX_SetOscMix(synth, 0, 1.0f); // Center is loud
+PX_SetOscMix(synth, 1, 0.7f); // Sides slightly quieter
+PX_SetOscMix(synth, 2, 0.7f);
+```
+
+### Example: Metallic FM Bell
+Use Oscillator 1 to modulate the phase of Oscillator 0 (Cross-Mod).
+
+```c
+// Enable Osc 0 (Carrier) and Osc 1 (Modulator)
+PX_SetOscEnabled(synth, 0, true);
+PX_SetOscEnabled(synth, 1, true); // Must be enabled to run, even if mix is 0
+
+// Carrier: Sine wave
+PX_SetOscWave(synth, 0, 0);
+
+// Modulator: Sine wave, tuned up 2 octaves + 7 semitones (ratio 3:1 approx)
+PX_SetOscWave(synth, 1, 0);
+PX_SetOscCoarseTune(synth, 1, 31.0f);
+
+// Set modulation depth on Carrier (Osc 1 modulates Osc 0)
+// Note: In Polysonix, Osc N modulates Osc N-1.
+// So enable CrossMod on Osc 1 to have it modulate Osc 0.
+PX_SetOscCrossMod(synth, 1, true, 0.7f); // 70% FM depth
+
+// Hide the modulator's direct output
+PX_SetOscMix(synth, 1, 0.0f);
+```
+
+### Example: Ring Modulated Bass
+Combine a sub-oscillator with a ring-modulated upper harmonic.
+
+```c
+// Osc 0: Sub Bass (Sine)
+PX_SetOscWave(synth, 0, 0);
+PX_SetOscCoarseTune(synth, 0, -12.0f);
+
+// Osc 1: Harmonic (Triangle), tuned a fifth up
+PX_SetOscWave(synth, 1, 2); // Assuming 2 is Triangle
+PX_SetOscCoarseTune(synth, 1, 7.0f);
+
+// Enable Ring Mod on Osc 1 (Multiplies Osc 1 output with Osc 0 output)
+PX_SetOscRingMod(synth, 1, true, 1.0f); // Full Ring Mod
+
+// Mix result
+PX_SetOscMix(synth, 0, 0.8f); // Strong sub
+PX_SetOscMix(synth, 1, 0.6f); // Ring mod texture
+```
+
 ## Data Structures & Enums
 
 ### Enums
