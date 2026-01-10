@@ -1,5 +1,25 @@
 # Update Log
 
+## v1.7.3 (2026-01-10)
+**Feature Update: Binary Preset System & IO Abstraction**
+
+This release introduces a robust, binary preset management system designed for production use, along with a flexible I/O abstraction layer.
+
+*   **Preset System (.syx):**
+    *   **Compact Binary Format:** Implemented a new `.syx` file format that serializes the entire `PxPatch` state (including dynamic arrays like ADSRs and LFOs) into a compact binary blob.
+    *   **Production Ready:** The format includes a 32-byte header with magic bytes ("POLY"), rigorous versioning, and a checksum footer to ensure data integrity during load.
+    *   **Full State Capture:** Saves all patch parameters: Oscillators, Modulation Matrix, Global Filter, Envelopes, LFOs, and performance curves.
+
+*   **IO Abstraction:**
+    *   **Batched I/O:** Introduced `PxIOWriteFn` and `PxIOReadFn` abstractions in `px_patching.h`. The system serializes the entire patch to a memory buffer before performing a single "batch write" operation.
+    *   **Transport Agnostic:** While convenient file wrappers (`PX_SavePreset`/`PX_LoadPreset`) are provided for disk operations, the core logic (`PX_SavePresetToBus`) supports any transport mechanism. This enables direct preset dumps over MIDI Sysex, network packets, or memory streams without modification.
+
+*   **API Updates:**
+    *   Added `px_patching.h` extension library.
+    *   Added `PX_SavePreset` / `PX_LoadPreset` (File helpers).
+    *   Added `PX_SavePresetToBus` / `PX_LoadPresetFromBus` (Abstract IO).
+    *   Added `PX_CalculatePresetSize`.
+
 ## v1.7.2 (2026-01-09)
 **Fixes: Command Queue, Filter Accuracy, Soft Sync**
 
