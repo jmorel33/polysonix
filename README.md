@@ -171,7 +171,7 @@ Aggressively optimized using computed gotos and register caching.
 - **Average Execution Time:** ~100 ns per sample (Apple Silicon M3).
 - **Standard Waves:** ~85 ns.
 - **Complex/Sigma:** ~200 ns.
-- *See [PERFORMANCE_REPORT.md](PERFORMANCE_REPORT.md) for full details.*
+- *See [PERFORMANCE_REPORT.md](doc/PERFORMANCE_REPORT.md) for full details.*
 
 **GPU Backend:**
 - **Execution Time:** Variable, but effectively "free" for the main CPU thread.
@@ -577,7 +577,7 @@ typedef struct PxLimiterInfo {
 *   `PxLFOParams`: Configuration for an LFO (waveform, frequency, etc.).
 
 ## Changelog
-For the full history of changes, please see [updatelog.md](updatelog.md).
+For the full history of changes, please see [updatelog.md](doc/updatelog.md).
 
 ## Polysonix Waveform Scripting Language
 The Polysonix Waveform Scripting Language is a domain-specific language for defining mathematical expressions that generate audio waveforms in the Polysonix synthesizer. Expressions are stored as strings, tokenized, parsed into an abstract syntax tree (AST), compiled into bytecode, and executed by a virtual machine (VM) for real-time audio synthesis.
