@@ -10,7 +10,7 @@
 *
 ****************************************************************************************************/
 #ifndef NUM_DEFAULT_WAVES
-#define NUM_DEFAULT_WAVES 212
+#define NUM_DEFAULT_WAVES 256
 #endif
 
 // --- Waveform Expressions ---
@@ -313,6 +313,62 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
               // MOD_A: Slowly sweeps the main modulation index. MOD_B: Introduces a high-frequency, chaotic modulator. MOD_C: Modulates the pitch of the carrier for vibrato/instability.
     /*211*/ { "FM: Glitchy Noise (A=Index B=Bit C=Rate)", "sin(x + sin(x * (1.0 + 15.0*MOD_C) + floor(sin(x*27.0)* (8.0*MOD_B))/8.0) * (5.0*MOD_A))" }, // Uses FM to create harsh, digital noise effects.
               // MOD_A: The overall intensity of the FM effect. MOD_B: Simulates bitcrushing by using floor() on a modulator. MOD_C: Controls the frequency of the noisy modulator.
+
+    // --- Group 1: Digital/Bitwise (8) ---
+    /*212*/ { "Bitwise Staircase", "floor(x * (2.0 + MOD_A*14.0)) / (2.0 + MOD_A*14.0)" }, // Creates a stepped version of a sawtooth.
+    /*213*/ { "Bitwise XOR Wave", "( (floor(x*32.0/TWO_PI) + floor(x*MOD_A*32.0/TWO_PI)) % 2.0 ) * 2.0 - 1.0" }, // Simulates XOR parity noise.
+    /*214*/ { "Hard Quantize Sine", "floor(sin(x) * (2.0 + MOD_A*6.0)) / (2.0 + MOD_A*6.0)" }, // A sine wave quantized to low bit depth.
+    /*215*/ { "Comparator Fuzz", "sin(x) > sin(x * (2.0 + MOD_A)) ? 1.0 : -1.0" }, // 1-bit comparator fuzz effect.
+    /*216*/ { "Logic: PWM Hash", "(sin(x) > 0.0) ^ (sin(x * (1.0+MOD_A)) > 0.0) ? 1.0 : -1.0" }, // PWM-like effect using XOR logic.
+    /*217*/ { "Sample & Hold Sine", "sin(floor(x / (PI/8.0)) * (PI/8.0))" }, // Sampled and held sine wave.
+    /*218*/ { "Digital Saw", "floor(x/PI*8.0)/8.0 - 1.0" }, // Low-resolution sawtooth.
+    /*219*/ { "Glitch Step", "(x < PI ? 1.0 : -1.0) * floor(x * MOD_A)" }, // Square wave amplitude modulated by a stepper.
+
+    // --- Group 2: Phase Manipulation (8) ---
+    /*220*/ { "PD: Resonant", "sin(x + sin(x) * MOD_A * 3.0)" }, // Classic phase distortion resonance.
+    /*221*/ { "PD: Wrap", "sin(x * (1.0 + MOD_A * sin(x)))" }, // Frequency warping phase distortion.
+    /*222*/ { "PD: Spike", "sin(x + (x>PI?1.0:-1.0)*MOD_A)" }, // Discontinuous phase spike.
+    /*223*/ { "PD: Windowed", "sin(x) * sin(x * (1.0 + MOD_A * 10.0))" }, // AM windowing creating formant-like effects.
+    /*224*/ { "Fractal Sine", "sin(x + sin(x*3.0 + sin(x*9.0)*MOD_A)*MOD_B)" }, // Nested sine modulations.
+    /*225*/ { "Sync Soft", "sin(x * (1.0 + MOD_A * 3.0)) * (1.0 - x/TWO_PI)" }, // Windowed sync effect.
+    /*226*/ { "Pulse Sweep", "(x < PI*(1.0-MOD_A) ? 1.0 : -1.0)" }, // Classic PWM via phase comparison.
+    /*227*/ { "Triangle Fold", "abs(sin(x + MOD_A*sin(x))) * 2.0 - 1.0" }, // Folded triangle wave.
+
+    // --- Group 3: FM / Complex (8) ---
+    /*228*/ { "FM: Deep Sub", "sin(x) + 0.5 * sin(x * 0.5 + MOD_A)" }, // Sub-oscillator FM.
+    /*229*/ { "FM: Metallic 1", "sin(x + sin(x * 1.414) * MOD_A * 5.0)" }, // Inharmonic metallic FM.
+    /*230*/ { "FM: Metallic 2", "sin(x + sin(x * 2.718) * MOD_A * 5.0)" }, // Another flavor of metallic FM.
+    /*231*/ { "FM: Talker", "sin(x * (1.0 + sin(x*5.0)*MOD_A))" }, // Vowel-like FM modulation.
+    /*232*/ { "FM: Noise", "sin(x + lfsr_noise(LFSR_4BIT, 10.0) * MOD_A)" }, // Noise modulation FM.
+    /*233*/ { "FM: Feedback Sim", "sin(x + sin(x)*MOD_A + sin(x)*sin(x)*MOD_B)" }, // Simulated feedback path.
+    /*234*/ { "FM: Cascaded", "sin(x + sin(x*2.0 + sin(x*4.0)*MOD_B)*MOD_A)" }, // 3-operator cascade.
+    /*235*/ { "FM: Vowel-ish", "sin(x * (1.0 + MOD_A)) * sin(x * (3.0 + MOD_B))" }, // Formant-ish AM/FM.
+
+    // --- Group 4: Additive / Spectral (8) ---
+    /*236*/ { "Add: Spec 1", "sin(x) + 0.5*sin(x*2.0) + 0.25*sin(x*3.0) + 0.125*sin(x*4.0)" }, // Basic harmonic series.
+    /*237*/ { "Add: Spec 2", "sin(x) + 0.3*sin(x*3.0) + 0.2*sin(x*5.0) + 0.1*sin(x*7.0)" }, // Odd harmonics.
+    /*238*/ { "Add: Bell", "sin(x) + 0.5*sin(x*2.5) + 0.3*sin(x*4.2)" }, // Inharmonic bell spectrum.
+    /*239*/ { "Add: Organ", "sin(x) + 0.5*sin(x*2.0) + 0.2*sin(x*4.0) + 0.1*sin(x*8.0)" }, // Octave stacking.
+    /*240*/ { "Add: Saw 8", "sigma(k, 1, 8, 1, sin(x*k)/k)" }, // 8-harmonic sawtooth approximation.
+    /*241*/ { "Add: Square 8", "sigma(k, 1, 15, 2, sin(x*k)/k)" }, // 8-harmonic square approximation.
+    /*242*/ { "Add: Random Phase", "sin(x) + sin(x*2.0 + MOD_A) + sin(x*3.0 + MOD_B)" }, // Harmonics with phase control.
+    /*243*/ { "Add: Shepard Cycle", "sin(x * (1.0 + MOD_A)) + sin(x * (2.0 + MOD_A)) * 0.5" }, // Shepard tone component.
+
+    // --- Group 5: Mathematical / Weird (8) ---
+    /*244*/ { "Math: Tanh Drive", "tanh(sin(x) * (1.0 + MOD_A * 10.0))" }, // Soft-clipped sine.
+    /*245*/ { "Math: Cubic", "pow((x/PI-1.0), 3.0)" }, // Cubic function.
+    /*246*/ { "Math: Rectified", "abs(sin(x)) * 2.0 - 1.0" }, // Full-wave rectification.
+    /*247*/ { "Math: Sinc", "sin(x*MOD_A*10.0)/(x*MOD_A*10.0 + 0.01)" }, // Sinc function approximation.
+    /*248*/ { "Weird: Chirp", "sin(x * x / PI)" }, // Quadratic phase chirp.
+    /*249*/ { "Weird: AM Chaos", "sin(x) * sin(x * (1.0 + MOD_A * 100.0))" }, // High-frequency AM sidebands.
+    /*250*/ { "Weird: Gap", "(x > MOD_A * PI) ? sin(x) : 0.0" }, // Gated sine wave.
+    /*251*/ { "Weird: Step-Slope", "(x < PI) ? 1.0 : (1.0 - (x-PI)/PI * 2.0)" }, // Half-square, half-saw.
+
+    // --- Group 6: Final Fillers (4) ---
+    /*252*/ { "Noise: White-ish", "rand() * 2.0 - 1.0" }, // White noise generator.
+    /*253*/ { "Noise: S&H", "lfsr_val(LFSR_16BIT, floor(x/PI*MOD_A), 0.0) * 2.0 - 1.0" }, // Sample & Hold noise.
+    /*254*/ { "DC Offset", "MOD_A" }, // DC offset utility.
+    /*255*/ { "Silence", "0.0" } // Silence placeholder.
     };
 
 

@@ -261,7 +261,7 @@ extern "C" {
 #define MAX_STRINGS 32 // Max unique string literals (variable names, etc.) per chunk
 
 #ifndef NUM_DEFAULT_WAVES
-#define NUM_DEFAULT_WAVES 212
+#define NUM_DEFAULT_WAVES 256
 #endif
 
 // --- LFSR Definitions ---
