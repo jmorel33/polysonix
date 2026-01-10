@@ -1,6 +1,6 @@
 # Update Log
 
-## v1.7.2 (2026-01-XX)
+## v1.7.2 (2026-01-09)
 **Fixes: Command Queue, Filter Accuracy, Soft Sync**
 
 This release focuses on stability and audio fidelity improvements based on stress testing and rigorous analysis.
@@ -17,7 +17,7 @@ This release focuses on stability and audio fidelity improvements based on stres
 *   **Limiter Safety:**
     *   **Dynamic Lookahead Buffer:** Changed the master limiter to use dynamic memory allocation for its lookahead buffer. The buffer size is now calculated at creation time based on the sample rate (`rate * 2ms`), ensuring safe and consistent 1ms lookahead behavior at any sample rate (including >192kHz) while optimizing memory usage for lower rates.
 
-## v1.7.1 (2026-01-XX)
+## v1.7.1 (2026-01-09)
 **Feature Update: Wave Sequencer & Timbre Refinements**
 
 This release polishes the Wave Sequencer with analog-style glide and enhanced randomization, and introduces per-oscillator bitcrushing.
@@ -35,7 +35,7 @@ This release polishes the Wave Sequencer with analog-style glide and enhanced ra
     *   Added `PX_SetOscBitcrush`, `PX_GetOscBitcrush`, `PX_GetOscBitcrushEnabled`.
     *   Added `PX_MOD_DEST_OSC[1-3]_BITCRUSH_DEPTH`.
 
-## v1.7.0 (2026-01-XX)
+## v1.7.0 (2026-01-08)
 **Major Feature Update: Advanced Oscillator Interactions**
 
 This release unlocks deep analog-style sound design by introducing direct interaction between the three oscillators.
@@ -60,7 +60,7 @@ This release unlocks deep analog-style sound design by introducing direct intera
     *   Added `PX_SetOscRingMod` / `PX_GetOscRingMod`.
     *   Corresponding `Enabled` getters for all new features.
 
-## v1.6.0 (2026-01-XX)
+## v1.6.0 (2026-01-07)
 **Major Feature Update: Triple Oscillator Architecture**
 
 *   **Architecture:**
