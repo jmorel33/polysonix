@@ -2985,6 +2985,13 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         if (bits < 1.0f) bits = 1.0f;
 
                         float levels = powf(2.0f, bits);
+
+                        // Optional: Dither for low bit depths
+                        if (bits < 8.0f) {
+                            float dither = ((float)(px_rand(&v->rng_state) % 1000) / 1000.0f) * 2.0f - 1.0f;
+                            dither *= (1.0f / levels);
+                            raw_sample += dither;
+                        }
                         raw_sample = roundf(raw_sample * levels) / levels;
                     }
                     if (sq->step_flags & PX_WSEQ_RING_MOD) {
