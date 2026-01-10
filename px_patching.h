@@ -29,10 +29,6 @@ typedef size_t (*PxIOWriteFn)(void* token, const void* data, size_t size);
  */
 typedef size_t (*PxIOReadFn)(void* token, void* data, size_t size);
 
-// "Obfuscated" IO Macros as requested
-#define PX_IO_BATCH_WRITE(fn, token, data, size) ((fn)(token, data, size))
-#define PX_IO_BATCH_READ(fn, token, data, size)  ((fn)(token, data, size))
-
 // --- Core API ---
 
 /**
@@ -82,6 +78,60 @@ PX_API bool PX_SavePreset(PxSynth* s, const char* filename, const char* patch_na
  */
 PX_API bool PX_LoadPreset(PxSynth* s, const char* filename);
 
+// --- Patch Bank API ---
+
+#define PX_PATCH_BANK_SIZE 128
+
+/**
+ * @struct PxPatchBank
+ * @brief A container for multiple patches, matching a specific configuration.
+ */
+typedef struct PxPatchBank {
+    PxConfig config;
+    PxPatch* patches; // Array of size PX_PATCH_BANK_SIZE
+} PxPatchBank;
+
+/**
+ * @brief Creates a new patch bank initialized with the given configuration.
+ * @details Allocates memory for the bank and all internal structures (ADSRs, LFOs) for each patch slot.
+ * @param config The configuration to use for allocating patch memory.
+ * @return A pointer to the new bank, or NULL on failure.
+ */
+PX_API PxPatchBank* PX_CreatePatchBank(const PxConfig* config);
+
+/**
+ * @brief Destroys a patch bank and frees all associated memory.
+ * @param bank The bank to destroy.
+ */
+PX_API void PX_DestroyPatchBank(PxPatchBank* bank);
+
+/**
+ * @brief Saves the current state of the synth to a specific slot in the bank.
+ * @param bank The destination bank.
+ * @param slot_idx The slot index (0 to PX_PATCH_BANK_SIZE - 1).
+ * @param s The source synthesizer.
+ * @return true on success, false if invalid index or bank/synth is NULL.
+ */
+PX_API bool PX_Bank_SaveToSlot(PxPatchBank* bank, int slot_idx, PxSynth* s);
+
+/**
+ * @brief Loads a patch from a specific slot in the bank to the synth.
+ * @param bank The source bank.
+ * @param slot_idx The slot index (0 to PX_PATCH_BANK_SIZE - 1).
+ * @param s The destination synthesizer.
+ * @return true on success, false if invalid index or bank/synth is NULL.
+ */
+PX_API bool PX_Bank_LoadFromSlot(PxPatchBank* bank, int slot_idx, PxSynth* s);
+
+/**
+ * @brief Copies a patch from one slot to another within the same bank.
+ * @param bank The bank.
+ * @param src_idx Source slot index.
+ * @param dest_idx Destination slot index.
+ * @return true on success.
+ */
+PX_API bool PX_Bank_CopySlot(PxPatchBank* bank, int src_idx, int dest_idx);
+
 #ifdef __cplusplus
 }
 #endif
@@ -109,56 +159,117 @@ static uint32_t read_be32_from_buf(const uint8_t* buf) {
 
 // --- Serialization Core ---
 
-// Internal macro to handle both size calculation and buffer writing/reading
-// ACTION_BUF(pointer, size)
-// ACTION_SCALAR(pointer, type)
-#define PX_SERIALIZE_BODY(S, ACTION_BUF, ACTION_SCALAR) \
-    do { \
-        if ((S)->patch.template_voice_adsrs) \
-            ACTION_BUF((S)->patch.template_voice_adsrs, sizeof(PxADSRParams) * (S)->config.num_voice_adsrs); \
-        if ((S)->patch.template_voice_adsr_mod_amounts) \
-            ACTION_BUF((S)->patch.template_voice_adsr_mod_amounts, sizeof(float) * (S)->config.num_voice_adsrs * PX_ADSR_DEST_COUNT); \
-        if ((S)->patch.template_lfos) \
-            ACTION_BUF((S)->patch.template_lfos, sizeof(PxLFOParams) * (S)->config.num_lfos); \
-        ACTION_SCALAR(&(S)->patch.filter_cutoff_hz, float); \
-        ACTION_SCALAR(&(S)->patch.filter_resonance_q, float); \
-        ACTION_SCALAR(&(S)->patch.filter_env_amount_hz, float); \
-        ACTION_SCALAR(&(S)->patch.filter_drive, float); \
-        ACTION_SCALAR(&(S)->patch.filter_key_track, float); \
-        ACTION_SCALAR(&(S)->patch.filter_poles, int); \
-        ACTION_SCALAR(&(S)->patch.filter_mode, PxFilterMode); \
-        ACTION_SCALAR(&(S)->patch.voice_pan_setting, float); \
-        ACTION_SCALAR(&(S)->patch.default_note_amp, float); \
-        ACTION_SCALAR(&(S)->patch.limiter_threshold, float); \
-        ACTION_SCALAR(&(S)->patch.limiter_release_ms, float); \
-        ACTION_SCALAR(&(S)->patch.unilegato_enabled, bool); \
-        ACTION_SCALAR(&(S)->patch.unilegato_slide_duration_s, float); \
-        ACTION_BUF((S)->patch.mod_matrix, sizeof(PxModSlot) * PX_MOD_MATRIX_SLOTS); \
-        ACTION_SCALAR(&(S)->patch.pitchbend_range_semitones, float); \
-        ACTION_SCALAR(&(S)->patch.global_filter_enabled, bool); \
-        ACTION_SCALAR(&(S)->patch.global_filter_cutoff_hz, float); \
-        ACTION_SCALAR(&(S)->patch.global_filter_resonance_q, float); \
-        ACTION_SCALAR(&(S)->patch.global_filter_env_amount_hz, float); \
-        ACTION_SCALAR(&(S)->patch.global_filter_drive, float); \
-        ACTION_SCALAR(&(S)->patch.global_filter_key_track, float); \
-        ACTION_SCALAR(&(S)->patch.global_filter_poles, int); \
-        ACTION_SCALAR(&(S)->patch.global_filter_mode, PxFilterMode); \
-        ACTION_SCALAR(&(S)->patch.velocity_curve, PxCurveType); \
-        ACTION_SCALAR(&(S)->patch.aftertouch_curve, PxCurveType); \
-        ACTION_BUF((S)->patch.osc, sizeof(PxOscillator) * PX_MAX_OSC_PER_VOICE); \
-    } while(0)
+static void px_serialize_patch_impl(const PxPatch* p, const PxConfig* c, uint8_t** ptr_ref, size_t* size_ref, bool calculate_only) {
+    uint8_t* ptr = ptr_ref ? *ptr_ref : NULL;
+    size_t size = 0;
+
+    #define SER_BUF(data, data_size) \
+        do { \
+            if (!calculate_only) { if(ptr) memcpy(ptr, data, data_size); ptr += data_size; } \
+            size += data_size; \
+        } while(0)
+
+    #define SER_SCALAR(val, type) SER_BUF(&val, sizeof(type))
+
+    if (p->template_voice_adsrs)
+        SER_BUF(p->template_voice_adsrs, sizeof(PxADSRParams) * c->num_voice_adsrs);
+    if (p->template_voice_adsr_mod_amounts)
+        SER_BUF(p->template_voice_adsr_mod_amounts, sizeof(float) * c->num_voice_adsrs * PX_ADSR_DEST_COUNT);
+    if (p->template_lfos)
+        SER_BUF(p->template_lfos, sizeof(PxLFOParams) * c->num_lfos);
+
+    SER_SCALAR(p->filter_cutoff_hz, float);
+    SER_SCALAR(p->filter_resonance_q, float);
+    SER_SCALAR(p->filter_env_amount_hz, float);
+    SER_SCALAR(p->filter_drive, float);
+    SER_SCALAR(p->filter_key_track, float);
+    SER_SCALAR(p->filter_poles, int);
+    SER_SCALAR(p->filter_mode, PxFilterMode);
+    SER_SCALAR(p->voice_pan_setting, float);
+    SER_SCALAR(p->default_note_amp, float);
+    SER_SCALAR(p->limiter_threshold, float);
+    SER_SCALAR(p->limiter_release_ms, float);
+    SER_SCALAR(p->unilegato_enabled, bool);
+    SER_SCALAR(p->unilegato_slide_duration_s, float);
+    SER_BUF(p->mod_matrix, sizeof(PxModSlot) * PX_MOD_MATRIX_SLOTS);
+    SER_SCALAR(p->pitchbend_range_semitones, float);
+    SER_SCALAR(p->global_filter_enabled, bool);
+    SER_SCALAR(p->global_filter_cutoff_hz, float);
+    SER_SCALAR(p->global_filter_resonance_q, float);
+    SER_SCALAR(p->global_filter_env_amount_hz, float);
+    SER_SCALAR(p->global_filter_drive, float);
+    SER_SCALAR(p->global_filter_key_track, float);
+    SER_SCALAR(p->global_filter_poles, int);
+    SER_SCALAR(p->global_filter_mode, PxFilterMode);
+    SER_SCALAR(p->velocity_curve, PxCurveType);
+    SER_SCALAR(p->aftertouch_curve, PxCurveType);
+    SER_BUF(p->osc, sizeof(PxOscillator) * PX_MAX_OSC_PER_VOICE);
+
+    #undef SER_BUF
+    #undef SER_SCALAR
+
+    if (ptr_ref && !calculate_only) *ptr_ref = ptr;
+    if (size_ref) *size_ref = size;
+}
+
+static bool px_deserialize_patch_impl(PxPatch* p, const PxConfig* c, const uint8_t** ptr_ref, const uint8_t* end) {
+    const uint8_t* ptr = *ptr_ref;
+
+    #define DESER_BUF(data, data_size) \
+        do { \
+            if (ptr + data_size > end) return false; \
+            memcpy(data, ptr, data_size); \
+            ptr += data_size; \
+        } while(0)
+
+    #define DESER_SCALAR(val, type) DESER_BUF(&val, sizeof(type))
+
+    if (p->template_voice_adsrs)
+        DESER_BUF(p->template_voice_adsrs, sizeof(PxADSRParams) * c->num_voice_adsrs);
+    if (p->template_voice_adsr_mod_amounts)
+        DESER_BUF(p->template_voice_adsr_mod_amounts, sizeof(float) * c->num_voice_adsrs * PX_ADSR_DEST_COUNT);
+    if (p->template_lfos)
+        DESER_BUF(p->template_lfos, sizeof(PxLFOParams) * c->num_lfos);
+
+    DESER_SCALAR(p->filter_cutoff_hz, float);
+    DESER_SCALAR(p->filter_resonance_q, float);
+    DESER_SCALAR(p->filter_env_amount_hz, float);
+    DESER_SCALAR(p->filter_drive, float);
+    DESER_SCALAR(p->filter_key_track, float);
+    DESER_SCALAR(p->filter_poles, int);
+    DESER_SCALAR(p->filter_mode, PxFilterMode);
+    DESER_SCALAR(p->voice_pan_setting, float);
+    DESER_SCALAR(p->default_note_amp, float);
+    DESER_SCALAR(p->limiter_threshold, float);
+    DESER_SCALAR(p->limiter_release_ms, float);
+    DESER_SCALAR(p->unilegato_enabled, bool);
+    DESER_SCALAR(p->unilegato_slide_duration_s, float);
+    DESER_BUF(p->mod_matrix, sizeof(PxModSlot) * PX_MOD_MATRIX_SLOTS);
+    DESER_SCALAR(p->pitchbend_range_semitones, float);
+    DESER_SCALAR(p->global_filter_enabled, bool);
+    DESER_SCALAR(p->global_filter_cutoff_hz, float);
+    DESER_SCALAR(p->global_filter_resonance_q, float);
+    DESER_SCALAR(p->global_filter_env_amount_hz, float);
+    DESER_SCALAR(p->global_filter_drive, float);
+    DESER_SCALAR(p->global_filter_key_track, float);
+    DESER_SCALAR(p->global_filter_poles, int);
+    DESER_SCALAR(p->global_filter_mode, PxFilterMode);
+    DESER_SCALAR(p->velocity_curve, PxCurveType);
+    DESER_SCALAR(p->aftertouch_curve, PxCurveType);
+    DESER_BUF(p->osc, sizeof(PxOscillator) * PX_MAX_OSC_PER_VOICE);
+
+    #undef DESER_BUF
+    #undef DESER_SCALAR
+
+    *ptr_ref = ptr;
+    return true;
+}
 
 PX_API size_t PX_CalculatePresetSize(PxSynth* s) {
     size_t size = 32; // Header
-
-    #define COUNT_BUF(ptr, sz) size += (sz)
-    #define COUNT_SCALAR(ptr, type) size += sizeof(type)
-
-    PX_SERIALIZE_BODY(s, COUNT_BUF, COUNT_SCALAR);
-
-    #undef COUNT_BUF
-    #undef COUNT_SCALAR
-
+    size_t body_size = 0;
+    px_serialize_patch_impl(&s->patch, &s->config, NULL, &body_size, true);
+    size += body_size;
     size += 4; // Footer Checksum
     return size;
 }
@@ -195,14 +306,7 @@ PX_API bool PX_SavePresetToBus(PxSynth* s, PxIOWriteFn write_fn, void* token, co
 
     // --- Data Block ---
     uint8_t* data_start = ptr;
-
-    #define WRITE_BUF(p, sz) do { memcpy(ptr, p, sz); ptr += sz; } while(0)
-    #define WRITE_SCALAR(p, type) do { memcpy(ptr, p, sizeof(type)); ptr += sizeof(type); } while(0)
-
-    PX_SERIALIZE_BODY(s, WRITE_BUF, WRITE_SCALAR);
-
-    #undef WRITE_BUF
-    #undef WRITE_SCALAR
+    px_serialize_patch_impl(&s->patch, &s->config, &ptr, NULL, false);
 
     // --- Checksum ---
     uint32_t checksum = 0;
@@ -214,7 +318,7 @@ PX_API bool PX_SavePresetToBus(PxSynth* s, PxIOWriteFn write_fn, void* token, co
     write_be32_to_buf(ptr, checksum); ptr += 4;
 
     // --- Batch Write ---
-    size_t written = PX_IO_BATCH_WRITE(write_fn, token, buffer, total_size);
+    size_t written = write_fn(token, buffer, total_size);
 
     free(buffer);
     return (written == total_size);
@@ -225,7 +329,7 @@ PX_API bool PX_LoadPresetFromBus(PxSynth* s, PxIOReadFn read_fn, void* token) {
 
     // 1. Read Header
     uint8_t header[32];
-    if (PX_IO_BATCH_READ(read_fn, token, header, 32) != 32) return false;
+    if (read_fn(token, header, 32) != 32) return false;
 
     if (strncmp((char*)header, "POLY", 4) != 0) return false;
     // Version check (strict major/minor)
@@ -239,7 +343,7 @@ PX_API bool PX_LoadPresetFromBus(PxSynth* s, PxIOReadFn read_fn, void* token) {
     if (!buffer) return false;
 
     // 3. Read Body + Checksum
-    if (PX_IO_BATCH_READ(read_fn, token, buffer, payload_size) != payload_size) {
+    if (read_fn(token, buffer, payload_size) != payload_size) {
         free(buffer); return false;
     }
 
@@ -256,23 +360,10 @@ PX_API bool PX_LoadPresetFromBus(PxSynth* s, PxIOReadFn read_fn, void* token) {
     const uint8_t* ptr = buffer;
     const uint8_t* end = buffer + data_len;
 
-    #define READ_BUF(p, sz) do { \
-        if (ptr + (sz) > end) { free(buffer); return false; } \
-        memcpy(p, ptr, sz); ptr += sz; \
-    } while(0)
-
-    #define READ_SCALAR(p, type) do { \
-        if (ptr + sizeof(type) > end) { free(buffer); return false; } \
-        memcpy(p, ptr, sizeof(type)); ptr += sizeof(type); \
-    } while(0)
-
-    PX_SERIALIZE_BODY(s, READ_BUF, READ_SCALAR);
-
-    #undef READ_BUF
-    #undef READ_SCALAR
+    bool result = px_deserialize_patch_impl(&s->patch, &s->config, &ptr, end);
 
     free(buffer);
-    return true;
+    return result;
 }
 
 // --- Wrappers for File IO ---
@@ -299,6 +390,142 @@ PX_API bool PX_LoadPreset(PxSynth* s, const char* filename) {
     bool res = PX_LoadPresetFromBus(s, file_read_wrapper, f);
     fclose(f);
     return res;
+}
+
+// --- Patch Bank Implementation ---
+
+// Helper: Deep copy a single patch
+static bool px_copy_patch_deep(PxPatch* dest, const PxPatch* src, const PxConfig* config) {
+    // Debug
+    // printf("Copying Deep: ADSR Count: %d\n", config->num_voice_adsrs);
+    // if (dest->template_voice_adsrs) printf("Dest ADSR Ptr Before: %p\n", dest->template_voice_adsrs);
+    // if (src->template_voice_adsrs) printf("Src ADSR Ptr: %p\n", src->template_voice_adsrs);
+
+    // Save dest pointers (preservation of allocated memory)
+    PxADSRParams* dest_adsrs = dest->template_voice_adsrs;
+    float* dest_mod_amounts = dest->template_voice_adsr_mod_amounts;
+    PxLFOParams* dest_lfos = dest->template_lfos;
+
+    // Apply shallow copy (copies all scalars and embedded arrays)
+    *dest = *src;
+
+    // Restore dest pointers (so we don't leak memory or lose our buffers)
+    dest->template_voice_adsrs = dest_adsrs;
+    dest->template_voice_adsr_mod_amounts = dest_mod_amounts;
+    dest->template_lfos = dest_lfos;
+
+    // Perform deep copy into buffers
+    if (dest->template_voice_adsrs && src->template_voice_adsrs)
+        memcpy(dest->template_voice_adsrs, src->template_voice_adsrs, sizeof(PxADSRParams) * config->num_voice_adsrs);
+
+    if (dest->template_voice_adsr_mod_amounts && src->template_voice_adsr_mod_amounts)
+        memcpy(dest->template_voice_adsr_mod_amounts, src->template_voice_adsr_mod_amounts, sizeof(float) * config->num_voice_adsrs * PX_ADSR_DEST_COUNT);
+
+    if (dest->template_lfos && src->template_lfos)
+        memcpy(dest->template_lfos, src->template_lfos, sizeof(PxLFOParams) * config->num_lfos);
+
+    return true;
+}
+
+// Helper: Allocate patch memory
+static bool px_allocate_patch_memory(PxPatch* p, const PxConfig* config) {
+    p->template_voice_adsrs = (PxADSRParams*)calloc(config->num_voice_adsrs, sizeof(PxADSRParams));
+    p->template_voice_adsr_mod_amounts = (float*)calloc(config->num_voice_adsrs * PX_ADSR_DEST_COUNT, sizeof(float));
+    p->template_lfos = (PxLFOParams*)calloc(config->num_lfos, sizeof(PxLFOParams));
+
+    if (!p->template_voice_adsrs || !p->template_voice_adsr_mod_amounts || !p->template_lfos) {
+        if (p->template_voice_adsrs) free(p->template_voice_adsrs);
+        if (p->template_voice_adsr_mod_amounts) free(p->template_voice_adsr_mod_amounts);
+        if (p->template_lfos) free(p->template_lfos);
+        return false;
+    }
+    return true;
+}
+
+static void px_free_patch_memory(PxPatch* p) {
+    if (p->template_voice_adsrs) free(p->template_voice_adsrs);
+    if (p->template_voice_adsr_mod_amounts) free(p->template_voice_adsr_mod_amounts);
+    if (p->template_lfos) free(p->template_lfos);
+}
+
+PX_API PxPatchBank* PX_CreatePatchBank(const PxConfig* config) {
+    if (!config) return NULL;
+
+    PxPatchBank* bank = (PxPatchBank*)calloc(1, sizeof(PxPatchBank));
+    if (!bank) return NULL;
+
+    bank->config = *config;
+    bank->patches = (PxPatch*)calloc(PX_PATCH_BANK_SIZE, sizeof(PxPatch));
+    if (!bank->patches) {
+        free(bank);
+        return NULL;
+    }
+
+    // Allocate deep memory for each patch
+    for (int i = 0; i < PX_PATCH_BANK_SIZE; i++) {
+        if (!px_allocate_patch_memory(&bank->patches[i], config)) {
+            // Unwind
+            for (int j = 0; j < i; j++) px_free_patch_memory(&bank->patches[j]);
+            free(bank->patches);
+            free(bank);
+            return NULL;
+        }
+        // Initialize with default values just in case? Or zero is fine.
+        // It's calloc'd, so it's zero.
+    }
+
+    return bank;
+}
+
+PX_API void PX_DestroyPatchBank(PxPatchBank* bank) {
+    if (!bank) return;
+    if (bank->patches) {
+        for (int i = 0; i < PX_PATCH_BANK_SIZE; i++) {
+            px_free_patch_memory(&bank->patches[i]);
+        }
+        free(bank->patches);
+    }
+    free(bank);
+}
+
+PX_API bool PX_Bank_SaveToSlot(PxPatchBank* bank, int slot_idx, PxSynth* s) {
+    if (!bank || !s || slot_idx < 0 || slot_idx >= PX_PATCH_BANK_SIZE) return false;
+
+    // Safety Check: Ensure bank configuration is sufficient to hold synth data
+    if (bank->config.num_voice_adsrs < s->config.num_voice_adsrs ||
+        bank->config.num_lfos < s->config.num_lfos) {
+        // fprintf(stderr, "PX_Bank_SaveToSlot: Configuration mismatch (Bank smaller than Synth)\n");
+        return false;
+    }
+
+    // We use the synth's config for the copy size to avoid copying garbage if bank is larger,
+    // but since we checked capacity, it fits.
+    // However, deep copy uses the *passed* config for sizes.
+    // If we use s->config, we copy only valid data.
+    return px_copy_patch_deep(&bank->patches[slot_idx], &s->patch, &s->config);
+}
+
+PX_API bool PX_Bank_LoadFromSlot(PxPatchBank* bank, int slot_idx, PxSynth* s) {
+    if (!bank || !s || slot_idx < 0 || slot_idx >= PX_PATCH_BANK_SIZE) return false;
+
+    // Safety Check: Ensure synth configuration is sufficient to hold bank data
+    // If bank has MORE items than synth, we can only copy what fits, or fail.
+    // Failing is safer to prevent data loss or confusion.
+    if (s->config.num_voice_adsrs < bank->config.num_voice_adsrs ||
+        s->config.num_lfos < bank->config.num_lfos) {
+        // fprintf(stderr, "PX_Bank_LoadFromSlot: Configuration mismatch (Synth smaller than Bank)\n");
+        return false;
+    }
+
+    // Use bank's config to determine how much valid data to copy.
+    // Since s has capacity >= bank, this is safe.
+    return px_copy_patch_deep(&s->patch, &bank->patches[slot_idx], &bank->config);
+}
+
+PX_API bool PX_Bank_CopySlot(PxPatchBank* bank, int src_idx, int dest_idx) {
+    if (!bank || src_idx < 0 || src_idx >= PX_PATCH_BANK_SIZE || dest_idx < 0 || dest_idx >= PX_PATCH_BANK_SIZE) return false;
+    if (src_idx == dest_idx) return true;
+    return px_copy_patch_deep(&bank->patches[dest_idx], &bank->patches[src_idx], &bank->config);
 }
 
 #endif // POLYSONIX_PATCHING_IMPLEMENTATION

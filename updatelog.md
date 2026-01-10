@@ -1,5 +1,21 @@
 # Update Log
 
+## v1.7.4 (2026-01-11)
+**Feature Update: Patch Bank System & Robust IO**
+
+This release adds a comprehensive patch bank management system and significantly hardens the serialization logic.
+
+*   **Patch Bank System:**
+    *   **New Architecture:** Introduced `PxPatchBank` in `px_patching.h`, a container holding `PX_PATCH_BANK_SIZE` (128) patches.
+    *   **Memory Management:** Implemented `PX_CreatePatchBank` and `PX_DestroyPatchBank` which automatically handle the deep memory allocation (and deallocation) required for dynamic patch components like ADSRs and LFOs.
+    *   **Safe Patch Transfer:** Added `PX_Bank_SaveToSlot`, `PX_Bank_LoadFromSlot`, and `PX_Bank_CopySlot`. These functions perform **deep copies** of patch data, ensuring that pointers to internal arrays are correctly preserved and preventing memory corruption or leaks when moving patches between the live synth and storage slots.
+    *   **Safety Checks:** The transfer functions include rigorous configuration compatibility checks. They will reject operations where the source patch configuration (e.g., number of envelopes or LFOs) exceeds the capacity of the destination, preventing buffer overruns.
+
+*   **IO & Serialization Refactor:**
+    *   **Removed Macros:** The fragile `PX_SERIALIZE_BODY` macro system has been replaced with explicit, maintainable C functions `px_serialize_patch_impl` and `px_deserialize_patch_impl`.
+    *   **Robustness:** The new serialization logic includes improved bounds checking and error handling during read/write operations.
+    *   **Cleanup:** Removed obfuscating `PX_IO_BATCH_WRITE`/`READ` macros in favor of clear function pointer usage.
+
 ## v1.7.3 (2026-01-10)
 **Feature Update: Binary Preset System & IO Abstraction**
 
