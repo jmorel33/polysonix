@@ -1,5 +1,5 @@
 # Polysonix
-**Version 1.7.0** | **Author:** Jacques Morel | **Copyright (c) 2025**
+**Version 1.7.1** | **Author:** Jacques Morel | **Copyright (c) 2025**
 
 A single-header polyphonic synthesizer engine.
 
@@ -43,6 +43,7 @@ like UI, input handling, and audio device management.
     *   **Phase Distortion (PD):** Casio-style phase warping per oscillator for resonant, sharp timbres without filters.
     *   **Oscillator Sync:** Hard/Soft synchronization where Oscillator N resets to Oscillator N-1's cycle, enabling classic "tearing" leads.
     *   **Ring Modulation:** Oscillator N amplitude modulates Oscillator N-1 (or vice versa depending on routing), creating sum/difference frequencies for sci-fi and robotic effects.
+    *   **Bitcrush (v1.7.1):** Per-oscillator bit-reduction for "clean/dirty" layering, with fully modulatable depth.
   - **ADSR Envelopes**: Up to 3 independent ADSR envelopes per voice for modulating various parameters.
   - **LFOs**: Up to 3 independent Low-Frequency Oscillators (LFOs) with their own ADSRs and flexible routing.
   - **Advanced Multi-Mode Filter:** A highly flexible state-variable filter per voice with key tracking, drive, and extensive modulation.
@@ -63,8 +64,9 @@ like UI, input handling, and audio device management.
 - **Wave Sequencing (v1.5+):** A powerful, bytecode-driven sequencer integrated directly into the voice engine.
     *   **Independent Sequencing:** Each of the 3 oscillators has its own sequence state, allowing for polyrhythms and complex layering.
     *   **Per-Cycle Precision:** Logic updates exactly at waveform cycle boundaries for phase-perfect transitions.
-    *   **Generative Features:** Probability-based Mute and Skip steps, Random Octave, and Random Wave selection.
+    *   **Generative Features:** Probability-based Mute and Skip steps, Random Octave, and Random Wave selection, with **Polyphonic RNG** seeding.
     *   **Per-Step FX:** Non-destructive Bitcrush, Ring Modulation, and Cross-Modulation (XMod) sequencing.
+    *   **Glide Modes:** Supports standard stepped glide and analog-style **Exponential Glide** per step.
     *   **Zero-Allocation:** Runs entirely on a static 64KB ROM, suitable for embedded environments.
 - **Decoupled Design:** The engine is completely independent of any graphics or windowing library. The host application is responsible for the audio
   callback, making the engine portable to any backend (e.g., Situation, PortAudio, SDL, MiniAudio).
@@ -340,6 +342,7 @@ Polysonix features a Triple Oscillator architecture. Functions take an `osc_idx`
 - `PX_SetOscPhaseDist(s, osc_idx, enabled, amount)` / `PX_GetOscPhaseDist` / `PX_GetOscPhaseDistEnabled`
 - `PX_SetOscSync(s, osc_idx, enabled, softness)` / `PX_GetOscSync` / `PX_GetOscSyncEnabled`
 - `PX_SetOscRingMod(s, osc_idx, enabled, depth)` / `PX_GetOscRingMod` / `PX_GetOscRingModEnabled`
+- `PX_SetOscBitcrush(s, osc_idx, enabled, depth)` / `PX_GetOscBitcrush` / `PX_GetOscBitcrushEnabled`
 
 The library also provides a comprehensive set of `PX_Set...` and `PX_Get...` functions for controlling all aspects of the synthesizer, including:
 
@@ -374,6 +377,7 @@ Enums are used extensively in `polysonix.h` to define modes, targets, and parame
     *   **ADSR:** `PX_MOD_DEST_ADSR1_ATTACK` to `PX_MOD_DEST_ADSR3_RELEASE` (3 ADSRs * 4 Params).
     *   **LFO:** `PX_MOD_DEST_LFO1_FREQ`, `PX_MOD_DEST_LFO1_DEPTH` (Up to LFO3).
     *   **Oscillator:** `PX_MOD_DEST_OSC1_PITCH`, `PX_MOD_DEST_OSC1_MIX`, `PX_MOD_DEST_OSC1_PAN`, `PX_MOD_DEST_OSC1_MODA`... (Up to OSC3).
+    *   **Oscillator FX (v1.7+):** `PX_MOD_DEST_OSC1_CROSS_MOD_DEPTH`, `PX_MOD_DEST_OSC1_PHASE_DIST`, `PX_MOD_DEST_OSC1_RING_MOD_DEPTH`, `PX_MOD_DEST_OSC1_BITCRUSH_DEPTH`... (Up to OSC3).
     *   **Legacy/Global:** `PX_MOD_DEST_OSC_MODA`, `PX_MOD_DEST_OSC_MODB`, `PX_MOD_DEST_OSC_MODC`, `PX_MOD_DEST_FILTER_CUTOFF`.
 
 ### Core Structures
@@ -389,6 +393,20 @@ typedef struct {
     float mix_level;        // Output mix level (0.0 to 1.0)
     float pan;              // Stereo pan position (-1.0 to 1.0)
     int   sequence_id;      // Active Wave Sequence ID (-1 = Disabled)
+
+    // v1.7 Features
+    bool  cross_mod_enabled;    // Osc n modulates n-1
+    float cross_mod_depth;      // 0.0–1.0 (matrix modulatable)
+    bool  phase_dist_enabled;   // Phase Distortion on/off
+    float phase_dist_amount;    // 0.0–1.0 (warp factor)
+    bool  osc_sync_enabled;     // Sync to previous osc
+    float osc_sync_softness;    // 0.0 (hard) to 1.0 (soft)
+    bool  ring_mod_enabled;     // Ring mod with previous osc
+    float ring_mod_depth;       // 0.0–1.0
+
+    // v1.7.1 Features
+    bool  bitcrush_enabled;
+    float bitcrush_depth;       // 0.0–1.0 (matrix modulatable)
 } PxOscillator;
 ```
 
