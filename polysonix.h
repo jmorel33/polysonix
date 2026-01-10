@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 7
-#define POLYSONIX_VERSION_PATCH 1
+#define POLYSONIX_VERSION_PATCH 2
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1001,7 +1001,7 @@ PX_API const char* PX_GetADSRStateName(PxADSRState state);
 // --- Internal Constants & Data ---
 #define MAX_VOICES 16
 #define MAX_LFOS 3 // For snapshot array sizing
-#define CMD_QUEUE_SIZE 512
+#define CMD_QUEUE_SIZE 1024
 #define MIN_ADSR_TIME 0.001f
 #define EXP_DECAY_TARGET 0.001f
 #define INAUDIBLE_AMPLITUDE_THRESHOLD 0.001f
@@ -1048,10 +1048,11 @@ typedef struct {
     float release_coeff;
     float makeup_gain;
     float envelope;
-    float delay_line_l[64];
-    float delay_line_r[64];
+    float* delay_line_l;
+    float* delay_line_r;
     int delay_write_pos;
     int delay_samples;
+    int buffer_capacity;
     float smooth_gain;
     float target_gain;
     float peak_hold;
@@ -1618,11 +1619,19 @@ static void InitializeEnhancedLimiter(EnhancedLimiter* limiter, float sample_rat
     limiter->attack_coeff = expf(-1.0f / (attack_time_ms * 0.001f * sample_rate));
     limiter->release_coeff = expf(-1.0f / (release_ms * 0.001f * sample_rate));
     limiter->delay_samples = (int)(sample_rate * 0.001f);
-    if (limiter->delay_samples > 63) limiter->delay_samples = 63;
+
+    // Safety clamp against buffer size (should be allocated correctly in PX_Create)
+    // We strictly need delay_samples < buffer_capacity to have any lookahead effect in a circular buffer?
+    // Actually, capacity just needs to be >= delay_samples + 1.
+    if (limiter->buffer_capacity > 0) {
+        if (limiter->delay_samples >= limiter->buffer_capacity) limiter->delay_samples = limiter->buffer_capacity - 1;
+    }
     if (limiter->delay_samples < 1) limiter->delay_samples = 1;
 
-    memset(limiter->delay_line_l, 0, sizeof(limiter->delay_line_l));
-    memset(limiter->delay_line_r, 0, sizeof(limiter->delay_line_r));
+    // Zero out the buffer using the known capacity. Pointers must be valid (allocated in PX_Create).
+    if (limiter->delay_line_l) memset(limiter->delay_line_l, 0, limiter->buffer_capacity * sizeof(float));
+    if (limiter->delay_line_r) memset(limiter->delay_line_r, 0, limiter->buffer_capacity * sizeof(float));
+
     limiter->delay_write_pos = 0;
     limiter->envelope = 0.0f;
     limiter->smooth_gain = 1.0f;
@@ -1641,12 +1650,13 @@ static void ProcessEnhancedLimiter(EnhancedLimiter* limiter, float *input_l, flo
     limiter->delay_line_r[limiter->delay_write_pos] = *input_r;
 
     // Calculate read position for lookahead
-    int read_pos = (limiter->delay_write_pos - limiter->delay_samples + 64) % 64;
+    int cap = limiter->buffer_capacity;
+    int read_pos = (limiter->delay_write_pos - limiter->delay_samples + cap) % cap;
     float delayed_l = limiter->delay_line_l[read_pos];
     float delayed_r = limiter->delay_line_r[read_pos];
 
     // Advance write position
-    limiter->delay_write_pos = (limiter->delay_write_pos + 1) % 64;
+    limiter->delay_write_pos = (limiter->delay_write_pos + 1) % cap;
 
     // Peak detection on current (non-delayed) input
     float input_peak = fmaxf(fabsf(*input_l), fabsf(*input_r));
@@ -1709,13 +1719,7 @@ static void Filter_Init(Filter* filter) {
 static void Filter_SetCoefficients(Filter* filter, float cutoff_hz, float resonance_q, PxFilterMode mode, int poles, float sample_rate) {
     if (sample_rate <= 0) return;
 
-    // Apply a cutoff pre-compensation factor for multi-pole modes to retain brightness.
-    if (poles == 3) {
-        cutoff_hz *= 1.35f; // Tuned factor for 18dB
-    } else if (poles == 4) {
-        cutoff_hz *= 1.18f; // Tuned factor for 24dB
-    }
-
+    // Option B: Disable Compensation (Pure & Accurate) - Remove magic numbers.
     float max_safe_cutoff = sample_rate * 0.45f;
     cutoff_hz = fmaxf(20.0f, fminf(cutoff_hz, max_safe_cutoff));
 
@@ -2374,6 +2378,19 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
 #endif
     }
 
+    // 9.5 Allocate Limiter Buffers
+    // Allocate 2ms worth of buffer to safely hold 1ms lookahead + margin, even at high sample rates.
+    int limiter_buf_size = (int)(config->sample_rate * 0.002f);
+    if (limiter_buf_size < 16) limiter_buf_size = 16; // Minimum safe size
+    s->limiter.buffer_capacity = limiter_buf_size;
+    s->limiter.delay_line_l = (float*)calloc(limiter_buf_size, sizeof(float));
+    s->limiter.delay_line_r = (float*)calloc(limiter_buf_size, sizeof(float));
+
+    if (!s->limiter.delay_line_l || !s->limiter.delay_line_r) {
+        PX_Destroy(s);
+        return NULL;
+    }
+
     // 10. Set up the default patch parameters.
     s->patch.default_note_amp = 0.5f;
     s->patch.voice_pan_setting = 0.0f;
@@ -2493,6 +2510,8 @@ PX_API void PX_Destroy(PxSynth* s) {
     if (s->ui_snapshot.patch_copy.template_voice_adsr_mod_amounts) free(s->ui_snapshot.patch_copy.template_voice_adsr_mod_amounts);
     if (s->ui_snapshot.patch_copy.template_lfos) free(s->ui_snapshot.patch_copy.template_lfos);
     if (s->cmd_queue.buffer) free(s->cmd_queue.buffer);
+    if (s->limiter.delay_line_l) free(s->limiter.delay_line_l);
+    if (s->limiter.delay_line_r) free(s->limiter.delay_line_r);
     free(s);
 }
 
@@ -2915,9 +2934,10 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     if (softness < 0.01f) {
                         v->osc_phase[o] = 0.0f; // Hard Sync
                     } else {
-                        // Soft Sync / BLEP-ish blending (Approximation)
-                        // Simple cross-fade or just reduced reset
-                        v->osc_phase[o] *= softness;
+                        // Soft pull to master reset (Exponential pull)
+                        // softness: 0.0 (Hard) -> 1.0 (Soft/No Sync)
+                        // strength = 1.0 - softness
+                        v->osc_phase[o] += (1.0f - softness) * (0.0f - v->osc_phase[o]);
                     }
                 }
 
