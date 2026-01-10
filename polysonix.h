@@ -17,13 +17,13 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 7
-#define POLYSONIX_VERSION_PATCH 4
+#define POLYSONIX_VERSION_PATCH 5
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
 #define POLYSONIX_H
 
-#include "polysonix_wave.h"
+#include "px_vm.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdatomic.h>
@@ -80,7 +80,7 @@ typedef struct {
  * @brief Defines the type of oscillator used for sound generation.
  */
 typedef enum {
-    PX_OSC_TYPE_BYTECODE,  /**< Oscillator waveform is generated from a `polysonix_wave` bytecode script. */
+    PX_OSC_TYPE_BYTECODE,  /**< Oscillator waveform is generated from a `px_vm` bytecode script. */
     PX_OSC_TYPE_SAMPLE,    /**< Oscillator uses a pre-recorded sample (future implementation). */
     PX_OSC_TYPE_GENERATED, /**< Oscillator uses a classic generated waveform (e.g., sine, square) (future implementation). */
     PX_OSC_TYPE_FM4OP      /**< A 4-operator FM synthesis oscillator (future implementation). */
@@ -2337,10 +2337,10 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     // Always initialize LFSR tables and cache, as CPU execution might be needed even in GPU mode (fallback/validation)
     // or simply for the CPU mode itself.
     // The functions are safe to call multiple times if they have internal guards (checked below).
-    // init_polysonix_lfsr_tables() usually re-initializes, so checking first is better if we want to avoid re-work.
-    // However, the current implementation in polysonix_wave.h re-calculates tables.
+    // px_vm_init_lfsr_tables() usually re-initializes, so checking first is better if we want to avoid re-work.
+    // However, the current implementation in px_vm.h re-calculates tables.
     // Since this is PX_Create (one time setup), it is acceptable.
-    init_polysonix_lfsr_tables();
+    px_vm_init_lfsr_tables();
     initialize_bytecode_cache();
 
     // 7. Allocate and initialize all per-voice internal arrays and structs.
@@ -2371,7 +2371,7 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     // 9. Initialize GPU resources if requested and enabled
     if (s->config.use_gpu) {
 #ifdef POLYSONIX_USE_GPU
-        init_polysonix_gpu_resources();
+        px_vm_init_gpu_resources();
 #else
         fprintf(stderr, "Warning: use_gpu set to true in PxConfig, but POLYSONIX_USE_GPU not defined. Falling back to CPU.\n");
         s->config.use_gpu = false;

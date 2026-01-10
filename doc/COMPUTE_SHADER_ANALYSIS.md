@@ -1,10 +1,10 @@
 # Polysonix Wave Bytecode Compute Shader Analysis
 
-This document provides a comprehensive analysis of the `polysonix_wave.comp` GLSL compute shader, designed to execute the Polysonix waveform scripting language bytecode on the GPU.
+This document provides a comprehensive analysis of the `px_vm.comp` GLSL compute shader, designed to execute the Polysonix waveform scripting language bytecode on the GPU.
 
 ## 1. Overview
 
-The `polysonix_wave.comp` shader is a single-workgroup compute shader that functions as a stack-based virtual machine (VM). It interprets a custom bytecode format, defined in `polysonix_wave.h`, to generate a single floating-point audio sample. This allows for offloading the computationally intensive part of audio synthesis from the CPU to the GPU.
+The `px_vm.comp` shader is a single-workgroup compute shader that functions as a stack-based virtual machine (VM). It interprets a custom bytecode format, defined in `px_vm.h`, to generate a single floating-point audio sample. This allows for offloading the computationally intensive part of audio synthesis from the CPU to the GPU.
 
 The shader is designed to be dispatched once per required audio sample, with all necessary data (bytecode, constants, parameters) provided via Shader Storage Buffer Objects (SSBOs) and uniforms.
 
@@ -117,7 +117,7 @@ This state machine effectively "hijacks" the VM's control flow to manage the seq
 
 ## 6. Feature Parity Analysis (C VM vs. GLSL Shader)
 
-As of the latest updates, the GLSL compute shader VM **fully implements all features and opcodes** present in the C-based VM defined in `polysonix_wave.h`. The shader is now considered feature-complete.
+As of the latest updates, the GLSL compute shader VM **fully implements all features and opcodes** present in the C-based VM defined in `px_vm.h`. The shader is now considered feature-complete.
 
 The following table provides a detailed breakdown of the language features and their implementation status in the GLSL shader.
 
@@ -140,7 +140,7 @@ The following table provides a detailed breakdown of the language features and t
 
 ## 7. Integration Steps for C Host
 
-1.  **Load and Compile Shader**: Load `polysonix_wave.comp` and compile it into a compute shader program.
+1.  **Load and Compile Shader**: Load `px_vm.comp` and compile it into a compute shader program.
 2.  **Prepare Buffers**:
     -   For each `WaveDefinition` that needs to be run on the GPU:
         -   Compile it to a `BytecodeChunk`.
@@ -154,7 +154,7 @@ The following table provides a detailed breakdown of the language features and t
 
 ## 8. Execution Environment Comparison: C VM vs. GLSL Shader
 
-While both the C-based VM (in `polysonix_wave.h`) and the GLSL compute shader VM (`polysonix_wave.comp`) are designed to achieve feature parity, their underlying architectures and execution models differ significantly due to the constraints and strengths of their respective environments (CPU vs. GPU).
+While both the C-based VM (in `px_vm.h`) and the GLSL compute shader VM (`px_vm.comp`) are designed to achieve feature parity, their underlying architectures and execution models differ significantly due to the constraints and strengths of their respective environments (CPU vs. GPU).
 
 This section provides a head-to-head comparison of their core design aspects.
 

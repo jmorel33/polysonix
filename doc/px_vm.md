@@ -431,7 +431,7 @@ When the VM executes instructions like `OP_PUSH_VAR_X` or `OP_PUSH_VAR_MOD_A`, i
 Waveforms are defined in C as simple string literals within a `WaveDefinition` struct. This is typically done in a global array.
 
 ```c
-#include "polysonix_wave.h"
+#include "px_vm.h"
 
 // An array to hold all the synth's waveform definitions.
 WaveDefinition default_waves[] = {

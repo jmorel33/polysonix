@@ -4,7 +4,7 @@ This report details the performance improvements achieved by optimizing the Poly
 
 ## Optimization Strategy
 
-The following "surgical" changes were applied to the VM core in `polysonix_wave.h`, specifically targeting the GCC/Clang compiler as requested.
+The following "surgical" changes were applied to the VM core in `px_vm.h`, specifically targeting the GCC/Clang compiler as requested.
 
 1.  **Computed Gotos (Threaded Code):**
     -   Replaced the standard `switch (opcode)` dispatch loop with a "computed goto" dispatch table (e.g., `static const void* table[] = { &&LABEL_... }; goto *table[instr];`).
@@ -27,7 +27,7 @@ The following "surgical" changes were applied to the VM core in `polysonix_wave.
 
 To ensure **100% backward compatibility and accuracy**, the following verification steps were performed:
 
-1.  **Compilation Check:** All 212 default patches in `polysonix_wave_bank.h` were compiled successfully.
+1.  **Compilation Check:** All 212 default patches in `px_vm_bank.h` were compiled successfully.
 2.  **Deterministic Output Verification:** A test harness generated 10,000 samples for a representative subset of waveforms (Simple, Sigma, LFSR). The sum of these samples was compared between the original and optimized codebases.
     -   **Result:** The outputs were **bit-exact** (floating-point sums matched to >9 decimal places).
 
