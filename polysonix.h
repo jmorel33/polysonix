@@ -449,22 +449,101 @@ PX_API void        PX_PolyAftertouch(PxSynth* s, int key_id, float pressure); //
 PX_API void        PX_ChannelAftertouch(PxSynth* s, float pressure); // 0.0 to 1.0
 
 // --- Oscillator Parameters (v1.6) ---
+
+/**
+ * @brief Enables or disables a specific oscillator.
+ * @param s Synth instance
+ * @param osc_idx Oscillator index (0-2)
+ * @param enabled True to enable, false to disable
+ */
 PX_API void        PX_SetOscEnabled(PxSynth* s, int osc_idx, bool enabled);
+
+/**
+ * @brief Checks if a specific oscillator is enabled.
+ * @param s Synth instance
+ * @param osc_idx Oscillator index (0-2)
+ * @return True if enabled, false otherwise
+ */
 PX_API bool        PX_GetOscEnabled(PxSynth* s, int osc_idx);
 
+/**
+ * @brief Sets the waveform for a specific oscillator.
+ * @param s Synth instance
+ * @param osc_idx Oscillator index (0-2)
+ * @param wave_idx Index of the waveform (0 to NUM_WAVEFORMS-1)
+ */
 PX_API void        PX_SetOscWave(PxSynth* s, int osc_idx, int wave_idx);
+
+/**
+ * @brief Gets the current waveform index for a specific oscillator.
+ * @param s Synth instance
+ * @param osc_idx Oscillator index (0-2)
+ * @return Waveform index
+ */
 PX_API int         PX_GetOscWave(PxSynth* s, int osc_idx);
 
+/**
+ * @brief Sets coarse tuning for an oscillator in semitones.
+ * @param s Synth instance
+ * @param osc_idx Oscillator index (0-2)
+ * @param semitones Tuning offset (-24.0 to +24.0)
+ */
 PX_API void        PX_SetOscCoarseTune(PxSynth* s, int osc_idx, float semitones);
+
+/**
+ * @brief Gets coarse tuning for an oscillator in semitones.
+ * @param s Synth instance
+ * @param osc_idx Oscillator index (0-2)
+ * @return Tuning offset in semitones
+ */
 PX_API float       PX_GetOscCoarseTune(PxSynth* s, int osc_idx);
 
+/**
+ * @brief Sets fine tuning for an oscillator in cents.
+ * @param s Synth instance
+ * @param osc_idx Oscillator index (0-2)
+ * @param cents Fine tuning offset (-100.0 to +100.0)
+ */
 PX_API void        PX_SetOscFineTune(PxSynth* s, int osc_idx, float cents);
+
+/**
+ * @brief Gets fine tuning for an oscillator in cents.
+ * @param s Synth instance
+ * @param osc_idx Oscillator index (0-2)
+ * @return Fine tuning offset in cents
+ */
 PX_API float       PX_GetOscFineTune(PxSynth* s, int osc_idx);
 
+/**
+ * @brief Sets the output mix level for an oscillator.
+ * @param s Synth instance
+ * @param osc_idx Oscillator index (0-2)
+ * @param level Mix level (0.0 to 1.0)
+ */
 PX_API void        PX_SetOscMix(PxSynth* s, int osc_idx, float level);
+
+/**
+ * @brief Gets the output mix level for an oscillator.
+ * @param s Synth instance
+ * @param osc_idx Oscillator index (0-2)
+ * @return Mix level (0.0 to 1.0)
+ */
 PX_API float       PX_GetOscMix(PxSynth* s, int osc_idx);
 
+/**
+ * @brief Sets the stereo pan position for an oscillator.
+ * @param s Synth instance
+ * @param osc_idx Oscillator index (0-2)
+ * @param pan Pan position (-1.0 Left to +1.0 Right)
+ */
 PX_API void        PX_SetOscPan(PxSynth* s, int osc_idx, float pan);
+
+/**
+ * @brief Gets the stereo pan position for an oscillator.
+ * @param s Synth instance
+ * @param osc_idx Oscillator index (0-2)
+ * @return Pan position (-1.0 to +1.0)
+ */
 PX_API float       PX_GetOscPan(PxSynth* s, int osc_idx);
 
 /**
@@ -906,6 +985,7 @@ PX_API const char* PX_GetADSRStateName(PxADSRState state);
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 
 #ifndef PI
 #define PI 3.14159265358979323846f
@@ -2212,6 +2292,8 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
 
     // 3. Copy the configuration and calculate initial timing values.
     s->config = *config;
+    // Seed global trigger counter with time for per-run variation
+    s->global_trigger_counter = (uint64_t)time(NULL);
     s->time_per_sample = 1.0f / config->sample_rate;
     s->glide_coeff = 1.0f - expf(-1.0f / (0.05f * s->config.sample_rate));
     s->lfo_update_countdown = 1;
@@ -2892,8 +2974,17 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 // D. FX
                 if (sq->current_sequence) {
                     if (sq->step_mute_state) raw_sample = 0.0f;
-                    if ((sq->step_flags & PX_WSEQ_BITCRUSH) && sq->current_sequence->bitcrush_bits > 0) {
-                        float levels = sq->step_bitcrush_scale;
+                    if (sq->step_flags & PX_WSEQ_BITCRUSH) {
+                        float bits = (sq->current_sequence->bitcrush_bits > 0) ? (float)sq->current_sequence->bitcrush_bits : 4.0f;
+                        // Modulate: depth 0-1 reduces bits.
+                        // We map depth (0-1) to a reduction of up to 'bits - 1' (keeping at least 1 bit).
+                        float bc_mod = dest_mod[PX_MOD_DEST_OSC1_BITCRUSH_DEPTH + o * PX_OSC_MOD_PARAM_COUNT];
+                        bc_mod = fmaxf(0.0f, fminf(1.0f, bc_mod)); // Clamp modulation to 0-1
+
+                        bits = bits - (bc_mod * (bits - 1.0f));
+                        if (bits < 1.0f) bits = 1.0f;
+
+                        float levels = powf(2.0f, bits);
                         raw_sample = roundf(raw_sample * levels) / levels;
                     }
                     if (sq->step_flags & PX_WSEQ_RING_MOD) {
@@ -3645,6 +3736,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
 
     // Seed PRNG deterministically using the global trigger counter to avoid rand() in audio thread
     // v1.7.1: Mix midi_note for polyphonic independence
+    // Global trigger counter is seeded with time(NULL) in PX_Create for per-run variation
     v->rng_state = (uint32_t)(s->global_trigger_counter * 1664525 + 1013904223 + midi_note * 2246822507U);
 
     for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
