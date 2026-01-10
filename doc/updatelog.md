@@ -1,6 +1,6 @@
 # Update Log
 
-## v1.7.5 (2026-01-12)
+## v1.7.5 (2026-01-10)
 **Codebase Restructure: Rename to px_vm**
 
 This maintenance release focuses on consistency and codebase hygiene by renaming the core waveform library.
@@ -12,7 +12,7 @@ This maintenance release focuses on consistency and codebase hygiene by renaming
     *   Updated all internal API functions and macros to use the `px_vm_` prefix (e.g., `init_polysonix_lfsr_tables` -> `px_vm_init_lfsr_tables`).
     *   Updated all documentation and comments to reflect the new naming convention.
 
-## v1.7.4 (2026-01-11)
+## v1.7.4 (2026-01-10)
 **Feature Update: Patch Bank System & Robust IO**
 
 This release adds a comprehensive patch bank management system and significantly hardens the serialization logic.
