@@ -1,5 +1,22 @@
 # Update Log
 
+## v1.7.2 (2026-01-XX)
+**Fixes: Command Queue, Filter Accuracy, Soft Sync**
+
+This release focuses on stability and audio fidelity improvements based on stress testing and rigorous analysis.
+
+*   **Thread Safety:**
+    *   **Increased Command Queue:** The internal command queue size (`CMD_QUEUE_SIZE`) has been doubled from 512 to 1024. This ensures robust handling of large preset dumps (e.g., loading a patch with hundreds of parameter changes) without dropping commands, even if the audio thread is momentarily preempted.
+
+*   **Filter Accuracy:**
+    *   **Linear Pole Response:** Removed the heuristic cutoff compensation ("magic numbers") that was previously applied to 18dB and 24dB slopes. The filter cutoff frequency now strictly adheres to the requested value across all pole settings, providing a mathematically accurate and predictable response. Users can now manually compensate for brightness if needed using key tracking or modulation.
+
+*   **Oscillator Sync:**
+    *   **Improved Soft Sync:** Updated the Soft Sync algorithm to use a precise "exponential pull" formula (`phase += (1.0 - softness) * (0.0 - phase)`). This ensures a smooth, musical transition from Hard Sync (0.0) to No Sync (1.0), eliminating discontinuities and providing an authentic analog feel.
+
+*   **Limiter Safety:**
+    *   **Dynamic Lookahead Buffer:** Changed the master limiter to use dynamic memory allocation for its lookahead buffer. The buffer size is now calculated at creation time based on the sample rate (`rate * 2ms`), ensuring safe and consistent 1ms lookahead behavior at any sample rate (including >192kHz) while optimizing memory usage for lower rates.
+
 ## v1.7.1 (2026-01-XX)
 **Feature Update: Wave Sequencer & Timbre Refinements**
 
