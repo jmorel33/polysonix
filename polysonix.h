@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 7
-#define POLYSONIX_VERSION_PATCH 0
+#define POLYSONIX_VERSION_PATCH 1
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -69,6 +69,10 @@ typedef struct {
     float osc_sync_softness;    /**< 0.0 (hard) to 1.0 (soft) */
     bool  ring_mod_enabled;     /**< Ring mod with previous osc */
     float ring_mod_depth;       /**< 0.0–1.0 */
+
+    // v1.7.1 Features
+    bool  bitcrush_enabled;
+    float bitcrush_depth;       /**< 0.0–1.0 (matrix modulatable) */
 } PxOscillator;
 
 /**
@@ -231,7 +235,7 @@ typedef enum {
 #define PX_WSEQ_RESET_LFO       (1 << 4)  /**< Reset LFO phases to 0. */
 #define PX_WSEQ_RETRIG_ADSR     (1 << 5)  /**< Retrigger ADSR envelopes to the phase specified in global settings. */
 #define PX_WSEQ_LOCK_PHASE      (1 << 6)  /**< Hard Sync the oscillator phase to 0. */
-// Bit 7 Reserved
+#define PX_WSEQ_GLIDE           (1 << 7)  /**< Enable per-step exponential glide (v1.7.1). */
 
 // --- GENERATIVE (Bits 8-11) ---
 #define PX_WSEQ_USE_PROB_MUTE   (1 << 8)  /**< Use the global 'prob_mute_score' to randomly mute this step (rolled once per step load). */
@@ -259,6 +263,7 @@ typedef struct {
 
 #define PX_MAX_WSEQ_STEPS 64
 #define PX_NUM_WSEQ_BANKS 128
+#define PX_OSC_MOD_PARAM_COUNT 11
 
 /**
  * @struct PxWaveSequence
@@ -1153,15 +1158,15 @@ typedef enum {
     // v1.6: Specific Oscillator Targets
     PX_MOD_DEST_OSC1_PITCH, PX_MOD_DEST_OSC1_MIX, PX_MOD_DEST_OSC1_PAN,
     PX_MOD_DEST_OSC1_MODA,  PX_MOD_DEST_OSC1_MODB, PX_MOD_DEST_OSC1_MODC,
-    PX_MOD_DEST_OSC1_CROSS_MOD_DEPTH, PX_MOD_DEST_OSC1_PHASE_DIST, PX_MOD_DEST_OSC1_SYNC_SOFTNESS, PX_MOD_DEST_OSC1_RING_MOD_DEPTH,
+    PX_MOD_DEST_OSC1_CROSS_MOD_DEPTH, PX_MOD_DEST_OSC1_PHASE_DIST, PX_MOD_DEST_OSC1_SYNC_SOFTNESS, PX_MOD_DEST_OSC1_RING_MOD_DEPTH, PX_MOD_DEST_OSC1_BITCRUSH_DEPTH,
 
     PX_MOD_DEST_OSC2_PITCH, PX_MOD_DEST_OSC2_MIX, PX_MOD_DEST_OSC2_PAN,
     PX_MOD_DEST_OSC2_MODA,  PX_MOD_DEST_OSC2_MODB, PX_MOD_DEST_OSC2_MODC,
-    PX_MOD_DEST_OSC2_CROSS_MOD_DEPTH, PX_MOD_DEST_OSC2_PHASE_DIST, PX_MOD_DEST_OSC2_SYNC_SOFTNESS, PX_MOD_DEST_OSC2_RING_MOD_DEPTH,
+    PX_MOD_DEST_OSC2_CROSS_MOD_DEPTH, PX_MOD_DEST_OSC2_PHASE_DIST, PX_MOD_DEST_OSC2_SYNC_SOFTNESS, PX_MOD_DEST_OSC2_RING_MOD_DEPTH, PX_MOD_DEST_OSC2_BITCRUSH_DEPTH,
 
     PX_MOD_DEST_OSC3_PITCH, PX_MOD_DEST_OSC3_MIX, PX_MOD_DEST_OSC3_PAN,
     PX_MOD_DEST_OSC3_MODA,  PX_MOD_DEST_OSC3_MODB, PX_MOD_DEST_OSC3_MODC,
-    PX_MOD_DEST_OSC3_CROSS_MOD_DEPTH, PX_MOD_DEST_OSC3_PHASE_DIST, PX_MOD_DEST_OSC3_SYNC_SOFTNESS, PX_MOD_DEST_OSC3_RING_MOD_DEPTH,
+    PX_MOD_DEST_OSC3_CROSS_MOD_DEPTH, PX_MOD_DEST_OSC3_PHASE_DIST, PX_MOD_DEST_OSC3_SYNC_SOFTNESS, PX_MOD_DEST_OSC3_RING_MOD_DEPTH, PX_MOD_DEST_OSC3_BITCRUSH_DEPTH,
 
     // Legacy / Global mappings (mapped to Osc 1 internally for compatibility)
     PX_MOD_DEST_OSC_MODA,
@@ -1283,7 +1288,8 @@ typedef enum {
     PX_CMD_SET_OSC_CROSS_MOD,
     PX_CMD_SET_OSC_PHASE_DIST,
     PX_CMD_SET_OSC_SYNC,
-    PX_CMD_SET_OSC_RING_MOD
+    PX_CMD_SET_OSC_RING_MOD,
+    PX_CMD_SET_OSC_BITCRUSH
 } PxCommandType;
 
 typedef union {
@@ -2139,6 +2145,12 @@ static void PX_ProcessCommands(PxSynth* s) {
                     s->patch.osc[cmd.data.osc_feat.osc_idx].ring_mod_depth = fmaxf(0.0f, fminf(1.0f, cmd.data.osc_feat.value));
                 }
                 break;
+            case PX_CMD_SET_OSC_BITCRUSH:
+                if (cmd.data.osc_feat.osc_idx >= 0 && cmd.data.osc_feat.osc_idx < PX_MAX_OSC_PER_VOICE) {
+                    s->patch.osc[cmd.data.osc_feat.osc_idx].bitcrush_enabled = cmd.data.osc_feat.enabled;
+                    s->patch.osc[cmd.data.osc_feat.osc_idx].bitcrush_depth = fmaxf(0.0f, fminf(1.0f, cmd.data.osc_feat.value));
+                }
+                break;
         }
     }
 }
@@ -2372,6 +2384,8 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
         s->patch.osc[i].osc_sync_softness = 0.0f;
         s->patch.osc[i].ring_mod_enabled = false;
         s->patch.osc[i].ring_mod_depth = 0.0f;
+        s->patch.osc[i].bitcrush_enabled = false;
+        s->patch.osc[i].bitcrush_depth = 0.0f;
     }
 
     PX_UpdateUISnapshot(s);
@@ -2764,20 +2778,42 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 // A. Calculate Seq Pitch & Glide
                 float seq_pitch_mult = 1.0f;
                 if (sq->current_sequence) {
+                    bool do_step_glide = (sq->current_sequence->glide_mode == PX_WSEQ_GLIDE_STEP) || (sq->step_flags & PX_WSEQ_GLIDE);
+
                     if (sq->current_sequence->glide_mode == PX_WSEQ_GLIDE_SMOOTH) {
                         sq->target_pitch_ratio += (sq->step_pitch_ratio - sq->target_pitch_ratio) * s->glide_coeff;
                         seq_pitch_mult = sq->target_pitch_ratio;
-                    } else if (sq->current_sequence->glide_mode == PX_WSEQ_GLIDE_STEP) {
+                    } else if (do_step_glide) {
                         const PxWaveSeqStep* current_step = &sq->current_sequence->steps[sq->step_idx];
-                        if (current_step->duration_cycles > 0) {
-                            float t = ((float)sq->cycles_counter + v->osc_phase[o]) / (float)current_step->duration_cycles;
+
+                        // v1.7.1 Refinement: Safety for zero/short steps
+                        float effective_duration = (float)current_step->duration_cycles;
+                        if (effective_duration < 0.5f) effective_duration = 4.0f;
+
+                        // v1.7.1: Clamp glide time (min 10ms to avoid smearing, max 1000 cycles to avoid extreme glides)
+                        float est_freq = effective_voice_freq;
+                        if (est_freq < 20.0f) est_freq = 20.0f;
+                        float min_dur_cycles = 0.01f * est_freq; // 10ms * freq
+                        effective_duration = fminf(fmaxf(effective_duration, min_dur_cycles), 1000.0f);
+
+                        if (effective_duration > 0.5f) {
+                            float t = ((float)sq->cycles_counter + v->osc_phase[o]) / effective_duration;
                             t = fmaxf(0.0f, fminf(1.0f, t));
+
+                            // v1.7.1: Curve Selection
+                            if (sq->step_flags & PX_WSEQ_GLIDE) {
+                                // Exponential/RC-like interpolation (Optimized: 1 - (1-t)^3)
+                                float one_minus_t = 1.0f - t;
+                                t = 1.0f - (one_minus_t * one_minus_t * one_minus_t);
+                            }
+                            // Else: Linear (Legacy PX_WSEQ_GLIDE_STEP behavior)
+
                             float current_ratio = sq->prev_step_pitch_ratio + (sq->step_pitch_ratio - sq->prev_step_pitch_ratio) * t;
                             seq_pitch_mult = current_ratio;
                         } else {
                             seq_pitch_mult = sq->step_pitch_ratio;
                         }
-                        sq->target_pitch_ratio = sq->step_pitch_ratio;
+                        sq->target_pitch_ratio = sq->step_pitch_ratio; // Sync for smooth glide switching
                     } else {
                         seq_pitch_mult = sq->step_pitch_ratio;
                         sq->target_pitch_ratio = sq->step_pitch_ratio;
@@ -2804,12 +2840,12 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 }
 
                 // Standard Pitch Calc
-                float osc_pitch_mod = dest_mod[PX_MOD_DEST_OSC1_PITCH + o * 10];
+                float osc_pitch_mod = dest_mod[PX_MOD_DEST_OSC1_PITCH + o * PX_OSC_MOD_PARAM_COUNT];
                 float tuning_st = v->current_osc_coarse_semitones[o] + (v->current_osc_fine_cents[o] / 100.0f) + osc_pitch_mod * 12.0f;
                 float osc_freq = effective_voice_freq * powf(2.0f, tuning_st / 12.0f) * seq_pitch_mult;
                 v->osc_vm_params[o].frequency = osc_freq;
 
-                int base_dest = PX_MOD_DEST_OSC1_MODA + o * 10;
+                int base_dest = PX_MOD_DEST_OSC1_MODA + o * PX_OSC_MOD_PARAM_COUNT;
                 v->osc_vm_params[o].modA = lfo_bytecode_mod_a + adsr_total_param1_mod + dest_mod[PX_MOD_DEST_OSC_MODA] * 10.0f + dest_mod[base_dest] * 10.0f;
                 v->osc_vm_params[o].modB = lfo_bytecode_mod_b + adsr_total_param2_mod + dest_mod[PX_MOD_DEST_OSC_MODB] * 10.0f + dest_mod[base_dest + 1] * 10.0f;
                 v->osc_vm_params[o].modC = lfo_bytecode_mod_c + adsr_total_param3_mod + dest_mod[PX_MOD_DEST_OSC_MODC] * 10.0f + dest_mod[base_dest + 2] * 10.0f;
@@ -2817,7 +2853,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 // v1.7: Phase Distortion
                 float pd_amount = s->patch.osc[o].phase_dist_amount;
                 if (s->patch.osc[o].phase_dist_enabled) {
-                    pd_amount += dest_mod[PX_MOD_DEST_OSC1_PHASE_DIST + o * 10];
+                    pd_amount += dest_mod[PX_MOD_DEST_OSC1_PHASE_DIST + o * PX_OSC_MOD_PARAM_COUNT];
                     pd_amount = fmaxf(0.0f, fminf(1.0f, pd_amount));
                 }
                 float effective_phase = v->osc_phase[o];
@@ -2881,7 +2917,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
                 // v1.7: Apply Cross Mod (Modulate Previous Osc Phase)
                 if (o > 0 && s->patch.osc[o].cross_mod_enabled) {
-                    float xm_depth = s->patch.osc[o].cross_mod_depth + dest_mod[PX_MOD_DEST_OSC1_CROSS_MOD_DEPTH + o * 10];
+                    float xm_depth = s->patch.osc[o].cross_mod_depth + dest_mod[PX_MOD_DEST_OSC1_CROSS_MOD_DEPTH + o * PX_OSC_MOD_PARAM_COUNT];
                     xm_depth = fmaxf(0.0f, fminf(1.0f, xm_depth));
                     if (xm_depth > 0.001f) {
                         // Modulate previous oscillator's phase for NEXT cycle (Feedback FM)
@@ -2895,7 +2931,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
                 // v1.7: Apply Ring Mod (Modulate Previous Osc Output)
                 if (o > 0 && s->patch.osc[o].ring_mod_enabled) {
-                    float rm_depth = s->patch.osc[o].ring_mod_depth + dest_mod[PX_MOD_DEST_OSC1_RING_MOD_DEPTH + o * 10];
+                    float rm_depth = s->patch.osc[o].ring_mod_depth + dest_mod[PX_MOD_DEST_OSC1_RING_MOD_DEPTH + o * PX_OSC_MOD_PARAM_COUNT];
                     rm_depth = fmaxf(0.0f, fminf(1.0f, rm_depth));
                     if (rm_depth > 0.001f) {
                         float wet = raw_sample * v->osc_output[o-1];
@@ -2903,13 +2939,24 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     }
                 }
 
+                // v1.7.1: Per-Oscillator Bitcrush
+                if (s->patch.osc[o].bitcrush_enabled) {
+                    float bc_depth = s->patch.osc[o].bitcrush_depth + dest_mod[PX_MOD_DEST_OSC1_BITCRUSH_DEPTH + o * PX_OSC_MOD_PARAM_COUNT];
+                    bc_depth = fmaxf(0.0f, fminf(1.0f, bc_depth));
+                    // Map 0.0-1.0 to 16-1 bits.
+                    float bits = 16.0f - (bc_depth * 15.0f);
+                    if (bits < 1.0f) bits = 1.0f;
+                    float levels = powf(2.0f, bits);
+                    raw_sample = roundf(raw_sample * levels) / levels;
+                }
+
                 // Cache Output for Next Osc
                 v->osc_output[o] = raw_sample;
 
                 // E. Mix
-                float level = s->patch.osc[o].mix_level + dest_mod[PX_MOD_DEST_OSC1_MIX + o * 10];
+                float level = s->patch.osc[o].mix_level + dest_mod[PX_MOD_DEST_OSC1_MIX + o * PX_OSC_MOD_PARAM_COUNT];
                 level = fmaxf(0.0f, fminf(1.0f, level));
-                float pan = s->patch.osc[o].pan + dest_mod[PX_MOD_DEST_OSC1_PAN + o * 10];
+                float pan = s->patch.osc[o].pan + dest_mod[PX_MOD_DEST_OSC1_PAN + o * PX_OSC_MOD_PARAM_COUNT];
                 pan = fmaxf(-1.0f, fminf(1.0f, pan));
                 float osc_l = raw_sample * level * (1.0f - fmaxf(0.0f, pan));
                 float osc_r = raw_sample * level * (1.0f + fminf(0.0f, pan));
@@ -3338,6 +3385,20 @@ PX_API bool PX_GetOscRingModEnabled(PxSynth* s, int osc_idx) {
     return s->ui_snapshot.patch_copy.osc[osc_idx].ring_mod_enabled;
 }
 
+PX_API void PX_SetOscBitcrush(PxSynth* s, int osc_idx, bool enabled, float depth) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return;
+    depth = fmaxf(0.0f, fminf(1.0f, depth));
+    PUSH_CMD_VOID(PX_CMD_SET_OSC_BITCRUSH, .osc_feat = {osc_idx, enabled, depth});
+}
+PX_API float PX_GetOscBitcrush(PxSynth* s, int osc_idx) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return 0.0f;
+    return s->ui_snapshot.patch_copy.osc[osc_idx].bitcrush_depth;
+}
+PX_API bool PX_GetOscBitcrushEnabled(PxSynth* s, int osc_idx) {
+    if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return false;
+    return s->ui_snapshot.patch_copy.osc[osc_idx].bitcrush_enabled;
+}
+
 // --- THREAD-SAFE GET API ---
 PX_API float PX_GetVoiceADSRParam(PxSynth* s, int idx, PxADSRParamType p) {
     if (!s || idx < 0 || idx >= s->config.num_voice_adsrs) return 0.0f;
@@ -3583,7 +3644,8 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     if (v->samples_per_update < 1.0f) v->samples_per_update = 1.0f;
 
     // Seed PRNG deterministically using the global trigger counter to avoid rand() in audio thread
-    v->rng_state = (uint32_t)(s->global_trigger_counter * 1664525 + 1013904223);
+    // v1.7.1: Mix midi_note for polyphonic independence
+    v->rng_state = (uint32_t)(s->global_trigger_counter * 1664525 + 1013904223 + midi_note * 2246822507U);
 
     for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
         v->osc_vm_params[o].x = 0.0f;

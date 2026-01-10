@@ -1,5 +1,23 @@
 # Update Log
 
+## v1.7.1 (2026-01-XX)
+**Feature Update: Wave Sequencer & Timbre Refinements**
+
+This release polishes the Wave Sequencer with analog-style glide and enhanced randomization, and introduces per-oscillator bitcrushing.
+
+*   **Wave Sequencer Updates:**
+    *   **Exponential Glide (`PX_WSEQ_GLIDE`):** Added a new per-step flag `PX_WSEQ_GLIDE` (Bit 7). When enabled, pitch transitions use an exponential curve (`powf`) that mimics the charging capacitor behavior of analog synthesizer portamento.
+    *   **Glide Refinements:** Implemented minimum glide duration clamping (10ms) to prevent "smearing" artifacts on very short steps.
+    *   **Polyphonic RNG:** Improved the `PX_WSEQ_USE_PROB_SKIP` and `PX_WSEQ_USE_RND_OCTAVE` logic by seeding the per-voice RNG with the note's pitch (`midi_note`). This ensures that voices playing the same chord don't all skip or shift in unison, creating more organic, independent variation.
+
+*   **Timbre Features:**
+    *   **Per-Oscillator Bitcrush:** Bitcrush is now a per-oscillator effect (`PX_SetOscBitcrush`), allowing for "clean/dirty" layering (e.g., a pristine sub-bass with a crushed lead).
+    *   **Modulation:** Bitcrush depth is fully modulatable via the Matrix (`PX_MOD_DEST_OSC_BITCRUSH_DEPTH`), mapping a 0.0-1.0 signal to a bit depth range of 16 down to 1.
+
+*   **API Updates:**
+    *   Added `PX_SetOscBitcrush`, `PX_GetOscBitcrush`, `PX_GetOscBitcrushEnabled`.
+    *   Added `PX_MOD_DEST_OSC[1-3]_BITCRUSH_DEPTH`.
+
 ## v1.7.0 (2026-01-XX)
 **Major Feature Update: Advanced Oscillator Interactions**
 
