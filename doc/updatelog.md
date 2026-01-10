@@ -1,5 +1,20 @@
 # Update Log
 
+## v1.7.6 (2026-01-11)
+**Codebase Restructure: Organized Wave Bank & New Complex Waves**
+
+This update significantly improves the organization of the waveform library and replaces wasteful placeholder slots with advanced new waveforms.
+
+*   **Wave Bank Reorganization:**
+    *   **Thematic Organization:** The `px_vm_bank.h` file has been completely reorganized into 16 thematic banks of 16 waves each (e.g., "Analog & Basic", "FM Synthesis", "Chiptune Tones"). This makes browsing and selecting waveforms much more intuitive.
+    *   **Similarity Tagging:** Added `[SIMILAR TO ORIGINAL #...]` tags in comments to help identify variations of standard waves while maintaining a rich selection.
+    *   **Comment Preservation:** All original mathematical explanations and parameter descriptions have been preserved and moved with their respective waves.
+
+*   **New Complex Waveforms:**
+    *   Replaced previously wasteful placeholder slots (Index 247 "DC Offset" and 248 "Silence") with new, mathematically rich waveforms:
+        *   **#247 "Fibonacci Series":** An additive synthesis wave using the Golden Ratio for harmonic series, creating unique non-harmonic, bell-like timbres.
+        *   **#248 "Logistic Chaos":** A complex AM/FM hybrid wave simulating chaotic behavior, useful for generative textures and noise.
+
 ## v1.7.5 (2026-01-10)
 **Codebase Restructure: Rename to px_vm**
 
