@@ -1,5 +1,8 @@
 // --- v1.5 ROM (Populated) ---
 // 128 Sequences organized into 16 themed banks of 8.
+//
+// "Ham Crazy" Edition - Enhanced with complex flag combinations,
+// generative probability, and math-based waveforms.
 
 static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
 
@@ -60,13 +63,14 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.flags = PX_WSEQ_END}
         }
     },
-    // 5: Fast Arp Lead (Generative Octave Jumps)
+    // 5: Glitch Arp (Generative Octave Jumps with Bitcrush)
     {
         .end_action = PX_WSEQ_END_LOOP,
-        .rnd_octave_range = 30,
+        .rnd_octave_range = 40,
+        .bitcrush_bits = 6,
         .steps = {
-            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 400, .flags = PX_WSEQ_USE_RND_OCTAVE}, // Random Octave Jump
+            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 400, .flags = PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE}, // Stuttering Morph
             {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 700, .flags = 0},
             {.flags = PX_WSEQ_END}
         }
@@ -119,14 +123,14 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.flags = PX_WSEQ_END}
         }
     },
-    // 11: Additive Morph
+    // 11: Ring Mod Morph
     {
         .end_action = PX_WSEQ_END_PINGPONG,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
             {.wave_idx = 107, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
-            {.wave_idx = 108, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
-            {.wave_idx = 109, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD}, // Added Ring Mod
+            {.wave_idx = 108, .duration_cycles = 600, .pitch_offset = 5, .flags = PX_WSEQ_GLIDE}, // Micro detune
+            {.wave_idx = 109, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD}, // Added Ring Mod + Glide
             {.flags = PX_WSEQ_END}
         },
         .ring_mod_depth = 0.2f,
@@ -165,7 +169,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
             {.wave_idx = 8, .duration_cycles = 300, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Saw/Sine
-            {.wave_idx = 9, .duration_cycles = 300, .pitch_offset = 2, .flags = PX_WSEQ_GLIDE}, // Sine/Saw
+            {.wave_idx = 9, .duration_cycles = 300, .pitch_offset = 5, .flags = PX_WSEQ_GLIDE}, // Beating Detune (+5 cents)
             {.flags = PX_WSEQ_END}
         }
     },
@@ -454,11 +458,13 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 131, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
-    // 52: Glitch Perc
+    // 52: Evolving Glitch Perc
     {
         .end_action = PX_WSEQ_END_STOP,
+        .bitcrush_bits = 5,
+        .prob_skip_score = 40,
         .steps = {
-            {.wave_idx = 143, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_RETRIG_ADSR}, // Added Reset/Retrig
+            {.wave_idx = 143, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_RETRIG_ADSR | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_BITCRUSH}, // Multi-flag crazy
             {.flags = PX_WSEQ_END}
         },
         .adsr_retrig_phase = 1 // Retrigger Attack
@@ -798,16 +804,17 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .ring_mod_depth = 0.2f,
         .ring_mod_mod_src = -1
     },
-    // 95: Chaos Theory
+    // 95: Total Chaos Theory
     {
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
-            {.wave_idx = 248, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_USE_RND_WAVE}, // Logistic Chaos
+            {.wave_idx = 248, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_USE_RND_WAVE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_RING_MOD}, // Logistic Chaos + Flag Overflow
             {.flags = PX_WSEQ_END}
         },
-        .rnd_octave_range = 50,
+        .rnd_octave_range = 75,
         .rnd_wave_low = 0,
-        .rnd_wave_high = 255
+        .rnd_wave_high = 255,
+        .ring_mod_depth = 0.4f
     },
 
     // --- Bank 12: Deep (96-103) ---
@@ -976,54 +983,76 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
     // --- Bank 15: Strange (120-127) ---
-    // Generative, chaotic, and experimental sequences.
-    // 120: Fibonacci
+    // Generative, chaotic, and experimental "Ham Crazy" sequences.
+    // 120: Fibonacci Spiral
     {
         .end_action = PX_WSEQ_END_LOOP,
-        .steps = { {.wave_idx = 247, .duration_cycles = 200, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
+        .steps = {
+            {.wave_idx = 247, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD}, // Fibonacci with smooth ring mod
+            {.wave_idx = 247, .duration_cycles = 200, .pitch_offset = 700, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD},
+            {.flags = PX_WSEQ_END}
+        },
+        .ring_mod_depth = 0.3f
     },
-    // 121: Logistic
+    // 121: Logistic Glitch
     {
         .end_action = PX_WSEQ_END_LOOP,
-        .steps = { {.wave_idx = 248, .duration_cycles = 200, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
+        .bitcrush_bits = 4,
+        .steps = {
+            {.wave_idx = 248, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE}, // Chaos map + Bitcrush
+            {.flags = PX_WSEQ_END}
+        },
+        .rnd_octave_range = 60
     },
-    // 122: Noise Wall
+    // 122: Bitcrush Storm
     {
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 2,
-        .steps = { {.wave_idx = 245, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, {.flags = PX_WSEQ_END} }
-    },
-    // 123: Alien Comm
-    {
-        .end_action = PX_WSEQ_END_LOOP,
-        .steps = { {.wave_idx = 95, .duration_cycles = 300, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
-    },
-    // 124: Broken Toy
-    {
-        .end_action = PX_WSEQ_END_LOOP,
-        .prob_skip_score = 30,
+        .prob_skip_score = 25,
         .steps = {
-            {.wave_idx = 78, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
-            {.wave_idx = 78, .duration_cycles = 50, .pitch_offset = 300, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_REVERSE_PLAY}, // Added Reverse
+            {.wave_idx = 245, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_USE_PROB_SKIP}, // Reverse noise crush
             {.flags = PX_WSEQ_END}
         }
     },
-    // 125: Glitch Storm
+    // 123: Self-Mod Glitch
     {
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
-            {.wave_idx = 0, .duration_cycles = 10, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE | PX_WSEQ_USE_RND_OCTAVE}, // Added Random Octave
+            {.wave_idx = 95, .duration_cycles = 300, .pitch_offset = 0, .flags = PX_WSEQ_XMOD | PX_WSEQ_GLIDE}, // Alien Comm with FM
+            {.wave_idx = 95, .duration_cycles = 100, .pitch_offset = 1200, .flags = PX_WSEQ_XMOD | PX_WSEQ_GLIDE},
             {.flags = PX_WSEQ_END}
         },
-        .rnd_wave_low = 0,
-        .rnd_wave_high = 255,
-        .rnd_octave_range = 60
+        .xmod_depth = 0.6f
     },
-    // 126: Reverse Tape
+    // 124: Stutter Morph
     {
         .end_action = PX_WSEQ_END_LOOP,
+        .prob_mute_score = 30,
         .steps = {
-            {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_RING_MOD}, // Added Ring Mod
+            {.wave_idx = 78, .duration_cycles = 40, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 78, .duration_cycles = 40, .pitch_offset = 300, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 125: Total Chaos
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .rnd_wave_low = 0,
+        .rnd_wave_high = 255,
+        .rnd_octave_range = 80,
+        .steps = {
+            {.wave_idx = 0, .duration_cycles = 10, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_RING_MOD}, // Max flags
+            {.flags = PX_WSEQ_END}
+        },
+        .ring_mod_depth = 0.5f
+    },
+    // 126: Reverse Tape (Enhanced)
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_RING_MOD | PX_WSEQ_GLIDE},
+            {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = -500, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_RING_MOD | PX_WSEQ_GLIDE},
             {.flags = PX_WSEQ_END}
         },
         .ring_mod_depth = 0.25f,
