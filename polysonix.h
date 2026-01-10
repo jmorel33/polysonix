@@ -2868,7 +2868,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     } else if (do_step_glide) {
                         const PxWaveSeqStep* current_step = &sq->current_sequence->steps[sq->step_idx];
 
-                        // v1.7.1 Refinement: Safety for zero/short steps
+                        // v1.7.1: Safety for zero/short steps
                         float effective_duration = (float)current_step->duration_cycles;
                         if (effective_duration < 0.5f) effective_duration = 4.0f;
 
@@ -3134,7 +3134,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                             }
 
                             // Load Pitch
-                            sq->prev_step_pitch_ratio = sq->step_pitch_ratio;
+                            // v1.7.1: Start next glide from CURRENT ratio to avoid jumps if previous glide was clamped/interrupted
+                            sq->prev_step_pitch_ratio = seq_pitch_mult;
                             sq->step_pitch_ratio = powf(2.0f, next_step->pitch_offset / 1200.0f);
                             if (next_step->flags & PX_WSEQ_USE_RND_OCTAVE) {
                                 if ((px_rand(&v->rng_state) % 100) < sq->current_sequence->rnd_octave_range) {
