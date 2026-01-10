@@ -1,5 +1,30 @@
 # Update Log
 
+## v1.7.7 (2026-01-11)
+**Content Update: Full Wave Sequencer ROM**
+
+This update unlocks the full potential of the Wave Sequencer by populating the ROM with a diverse library of 128 production-ready sequences.
+
+*   **Expanded ROM:**
+    *   **Full Capacity:** The `wseq_rom.h` file now contains 128 unique wave sequences (Indices 0-127), replacing the previous sparse set of examples.
+    *   **Thematic Banks:** Sequences are organized into 16 thematic banks of 8 entries each, providing instant access to a wide range of rhythmic and textural behaviors:
+        *   **Bank 0: Lead** (Classic sync, PWM, and FM leads)
+        *   **Bank 1: Pad** (Evolving, glassy, and choir textures)
+        *   **Bank 2: Strings** (Ensembles, tremolos, and pizzicato)
+        *   **Bank 3: Choir** (Vowel morphs and robotic voices)
+        *   **Bank 4: Ensemble** (Brass, orchestra hits, and big band stacks)
+        *   **Bank 5: Pluck** (Guitars, harps, and ethnic instruments)
+        *   **Bank 6: Percussive** (Drums, glitches, and industrial hits)
+        *   **Bank 7: Oldskool** (Chiptune arps and retro game effects)
+        *   **Bank 8: Arcade** (Classic SFX like jumps, lasers, and power-ups)
+        *   **Bank 9: Fun** (Cartoonish and novelty sounds)
+        *   **Bank 10: Natural** (Environmental textures like wind, rain, and fire)
+        *   **Bank 11: Enhanced** (Complex modern synth techniques: supersaws, trance gates)
+        *   **Bank 12: Deep** (Sub-bass, dub chords, and dark drones)
+        *   **Bank 13: Futuristic** (Sci-fi textures, teleport sounds, and data streams)
+        *   **Bank 14: Emulation** (Traditional instrument approximations)
+        *   **Bank 15: Strange** (Experimental math-based and chaotic sequences)
+
 ## v1.7.6 (2026-01-11)
 **Codebase Restructure: Organized Wave Bank & New Complex Waves**
 
