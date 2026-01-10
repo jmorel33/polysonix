@@ -1,5 +1,5 @@
 # Polysonix
-**Version 1.7.2** | **Author:** Jacques Morel | **Copyright (c) 2025**
+**Version 1.7.5** | **Author:** Jacques Morel | **Copyright (c) 2025**
 
 A single-header polyphonic synthesizer engine.
 
@@ -318,9 +318,18 @@ int main() {
 
 The API is designed to be simple and thread-safe.
 
+**Core**
 - `PX_Create(const PxConfig* config)`: Creates and initializes a synthesizer instance.
 - `PX_Destroy(PxSynth* s)`: Destroys a synthesizer instance and frees all associated memory.
 - `PX_Process(PxSynth* s, float* stereo_buffer, int num_frames)`: Processes a block of audio.
+
+**Patch Management (v1.7.3+)**
+- `PX_SavePreset(s, filename, name)` / `PX_LoadPreset(s, filename)`: Saves/loads the current patch to a binary `.syx` file.
+- `PX_SavePresetToBus(...)` / `PX_LoadPresetFromBus(...)`: Abstract IO for saving/loading patches to memory or custom streams.
+- `PX_CreatePatchBank(config)` / `PX_DestroyPatchBank(bank)`: Manages a bank of 128 patches in memory.
+- `PX_Bank_SaveToSlot(bank, idx, s)` / `PX_Bank_LoadFromSlot(bank, idx, s)`: Transfers patches between the live synth and a bank slot.
+
+**Note Control**
 - `PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id, float velocity)`: Triggers a new note.
 - `PX_NoteOff(PxSynth* s, int key_id)`: Releases a note.
 - `PX_PolyAftertouch(PxSynth* s, int key_id, float pressure)`: Sets polyphonic aftertouch pressure for a note.
