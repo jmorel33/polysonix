@@ -345,12 +345,18 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 113, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
-    // 26: Vowel Morph
+    // 26: Realistic Voice (Vowels+Breath)
     {
-        .end_action = PX_WSEQ_END_PINGPONG,
+        .end_action = PX_WSEQ_END_STOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
-            {.wave_idx = 122, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
-            {.wave_idx = 115, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 113, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Ah
+            {.wave_idx = 115, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Ee
+            {.wave_idx = 112, .duration_cycles = 180, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Ih
+            {.wave_idx = 121, .duration_cycles = 220, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Oh
+            {.wave_idx = 121, .duration_cycles = 250, .pitch_offset = -5, .flags = PX_WSEQ_GLIDE}, // Oo (Detuned)
+            {.wave_idx = 113, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Ah Return
+            {.wave_idx = 245, .duration_cycles = 80,  .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE}, // Breath Release (Noise)
             {.flags = PX_WSEQ_END}
         }
     },
