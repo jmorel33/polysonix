@@ -76,4 +76,4 @@ To support `PX_WSEQ_AMP_RANDOM` correctly, the `PxSeqState` struct may need a ne
 - [ ] Add `PX_WSEQ_AMP_MOD` flag definition.
 - [ ] Update `PxSeqState` in `polysonix.h` to include `float step_random_amp` (if needed for Random type).
 - [ ] Implement amplitude scaling logic in `PX_Process`.
-- [ ] (Optional) Add a new bank (Bank 32? or extend Bank 31) to `px_wseq_rom.h` demonstrating these features.
+- [ ] (Optional) edit existing wseq entries who require this like percussives or pads and others that would benefit `px_wseq_rom.h` demonstrating these features.
