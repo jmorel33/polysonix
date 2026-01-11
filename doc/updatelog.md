@@ -1,5 +1,36 @@
 # Update Log
 
+## v1.7.8 (2026-01-12)
+**Content Update: Wave Sequencer ROM Completion**
+
+This update puts the "crazy" in "Ham Crazy" by finalizing the Wave Sequencer ROM with a massive injection of experimental, digital, and aggressive sequences.
+
+*   **ROM Finalization:**
+    *   **Complete Library:** The `px_wseq_rom.h` file is now fully populated with 256 unique wave sequences (Indices 0-255), unlocking the full potential of the engine's wavetable capabilities.
+    *   **Thematic Banks (128-255):** The second half of the ROM explores experimental, digital, and aggressive territories, specifically designed for modern IDM, Glitch, and Sci-Fi sound design:
+        *   **Bank 16: Wavestation** (Vector synthesis textures & rhythmic loops)
+        *   **Bank 17: VS Trickery** (Fast scanning & digital artifacts)
+        *   **Bank 18: Glitch IDM** (Fast, chaotic, & generative patterns)
+        *   **Bank 19: Trap** (Deep sub-bass & sharp, rolling hats)
+        *   **Bank 20: Industrial** (Distorted, metallic, and mechanical textures)
+        *   **Bank 21: Abyss** (Dark ambient drones & space atmospheres)
+        *   **Bank 22: Experimental A** (Math-based complexity & prime number sequences)
+        *   **Bank 23: Experimental B** (Pure glitch, data-mosh, & digital mayhem)
+        *   **Bank 24: Metallic Textures** (Ring modulation & inharmonic clangor)
+        *   **Bank 25: Percussive Hits** (Short, punchy drum patterns with retriggering)
+        *   **Bank 26: Evolving Pads** (Long, slowly morphing textures using glide)
+        *   **Bank 27: Glitch Effects** (Bitcrushed artifacts, random skipping & reverse playback)
+        *   **Bank 28: Noise Sculptures** (Abstract noise art using variable-rate bitcrushing)
+        *   **Bank 29: Evolving Pads II** (Extended variations of complex pad textures)
+        *   **Bank 30: Screaming Edges** (Wild, funky, push-the-limit textures like "Glitch Funk" & "Neuro Tear")
+        *   **Bank 31: Total Meltdown** (Pure chaos & noise destruction features "System Meltdown")
+
+*   **Design Philosophy:**
+    *   These new banks heavily utilize the engine's advanced features:
+        *   **Extreme Modulation:** High-depth Ring Modulation and Cross-Modulation (FM) for inharmonic clangor.
+        *   **Destructive FX:** Aggressive Bitcrushing (down to 2 bits) combined with reverse playback.
+        *   **Generative Chaos:** Extensive use of Probability Skips, Random Octaves, and Random Wave selection to create non-repetitive, living textures.
+
 ## v1.7.7 (2026-01-11)
 **Content Update: Full Wave Sequencer ROM**
 
@@ -174,7 +205,7 @@ This release unlocks deep analog-style sound design by introducing direct intera
     *   Legacy `PX_SetSequenceID` maps to Oscillator 0.
 
 *   **Diagnostics:**
-    *   Updated `PxVoiceInfo` to include `active_wave_indices[3]`, enabling real-time monitoring of which waveform each oscillator is currently playing (useful for visualizing Wave Sequence progress).
+    *   Updated `PxVoiceInfo` to include `active_wave_indices[3]`, enabling real-time monitoring of the current waveform index driven by the Wave Sequencer for each oscillator.
 
 ## v1.5.0 (2026/01/06)
 
@@ -438,4 +469,4 @@ This release seals the current codebase as **Version 1.0Alpha1**, marking a sign
 *   Stable audio generation with full parity to original monolithic version. ADSRs, LFOs, Filter, and Limiter are functional.
 
 ## v1.0.0
-*   Initial port from monolithic version.
+*   Initial port from original monolithic version.
