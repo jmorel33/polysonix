@@ -41,6 +41,15 @@
  *
  *  int8_t   [x]_mod_src        : Mod Source (-1 = None/Internal, 0-6 = PxModSource enum).
  *  float    [x]_depth          : Base effect depth (0.0 - 1.0).
+ *  int8_t   amp_mod_type       : PxWseqAmpModType (0-7). Shape of amplitude envelope.
+ *                                - PX_WSEQ_AMP_RAMP_DOWN (0): Linear fade out (Pluck).
+ *                                - PX_WSEQ_AMP_RAMP_UP   (1): Linear fade in (Reverse).
+ *                                - PX_WSEQ_AMP_TRIANGLE  (2): Triangle (Swell/Fade).
+ *                                - PX_WSEQ_AMP_SINE      (3): Sine Hump.
+ *                                - PX_WSEQ_AMP_SQUARE    (4): 50% Gate (Chopper).
+ *                                - PX_WSEQ_AMP_PULSE_25  (5): 25% Gate (Short blip).
+ *                                - PX_WSEQ_AMP_EXP_DOWN  (6): Exponential Pluck (Percussive).
+ *                                - PX_WSEQ_AMP_RANDOM    (7): Random Level (S&H), latched per step.
  *
  *
  *  STRUCT: PxWaveSeqStep (Per-Step Data)
@@ -58,6 +67,7 @@
  *  (1<<0) PX_WSEQ_END             : Force sequence end action here.
  *  (1<<1) PX_WSEQ_LOOP_POINT      : Mark this step as the start point for LOOP mode.
  *  (1<<2) PX_WSEQ_JUMP_RANDOM     : Jump to a random step index (0-63).
+ *  (1<<3) PX_WSEQ_AMP_MOD         : Enable per-step Amplitude Modulation.
  *
  *  [Reset/Mod]
  *  (1<<4) PX_WSEQ_RESET_LFO       : Reset LFO phase to 0.
@@ -89,8 +99,9 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .name = "Classic Saw Lead",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .amp_mod_type = PX_WSEQ_AMP_RAMP_DOWN,
         .steps = {
-            {.wave_idx = 6, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Saw Rising
+            {.wave_idx = 6, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_AMP_MOD}, // Saw Rising (Pluck)
             {.wave_idx = 7, .duration_cycles = 100, .pitch_offset = 5, .flags = PX_WSEQ_GLIDE}, // Saw Falling (detune)
             {.wave_idx = 6, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
             {.wave_idx = 7, .duration_cycles = 100, .pitch_offset = -5, .flags = PX_WSEQ_GLIDE},
@@ -155,10 +166,11 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .bitcrush_bits = 6,
         .ring_mod_depth = 0.3f,
         .ring_mod_mod_src = -1,
+        .amp_mod_type = PX_WSEQ_AMP_RANDOM,
         .steps = {
-            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD},
-            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 400, .flags = PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE}, // Stuttering Morph
-            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 700, .flags = PX_WSEQ_RING_MOD},
+            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 400, .flags = PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE | PX_WSEQ_AMP_MOD}, // Stuttering Morph
+            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 700, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_AMP_MOD},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -878,7 +890,8 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Wind",
         .end_action = PX_WSEQ_END_LOOP,
-        .steps = { {.wave_idx = 159, .duration_cycles = 500, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Wind AM
+        .amp_mod_type = PX_WSEQ_AMP_SINE,
+        .steps = { {.wave_idx = 159, .duration_cycles = 500, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD}, {.flags = PX_WSEQ_END} } // Wind AM
     },
     // 81: Rain
     {
@@ -948,12 +961,11 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Trance Gate",
         .end_action = PX_WSEQ_END_LOOP,
+        .amp_mod_type = PX_WSEQ_AMP_SQUARE,
         .steps = {
-            {.wave_idx = 6, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 6, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE}, // Gate effect
+            {.wave_idx = 6, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD}, // Gate effect (50% PWM)
             {.flags = PX_WSEQ_END}
-        },
-        .prob_mute_score = 100 // Always mute step 2
+        }
     },
     // 91: Complex Arp
     {
