@@ -71,9 +71,9 @@ To support `PX_WSEQ_AMP_RANDOM` correctly, the `PxSeqState` struct may need a ne
     *   Since the effect is only applied if the **Flag** is set, existing sequences will remain unaffected regardless of the Type value (0).
 
 ## Work Checklist
-- [ ] Modify `PxWaveSequence` struct in `polysonix.h` to rename `_padding` to `amp_mod_type`.
-- [ ] Add `PxWseqAmpModType` enum/defines in `polysonix.h`.
-- [ ] Add `PX_WSEQ_AMP_MOD` flag definition.
-- [ ] Update `PxSeqState` in `polysonix.h` to include `float step_random_amp` (if needed for Random type).
-- [ ] Implement amplitude scaling logic in `PX_Process`.
-- [ ] (Optional) edit existing wseq entries who require this like percussives or pads and others that would benefit `px_wseq_rom.h` demonstrating these features.
+- [x] Modify `PxWaveSequence` struct in `polysonix.h` to rename `_padding` to `amp_mod_type`.
+- [x] Add `PxWseqAmpModType` enum/defines in `polysonix.h`.
+- [x] Add `PX_WSEQ_AMP_MOD` flag definition.
+- [x] Update `PxSeqState` in `polysonix.h` to include `float step_random_amp` (if needed for Random type).
+- [x] Implement amplitude scaling logic in `PX_Process`.
+- [x] (Optional) edit existing wseq entries who require this like percussives or pads and others that would benefit `px_wseq_rom.h` demonstrating these features.
