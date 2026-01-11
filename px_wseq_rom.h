@@ -11,6 +11,7 @@
  *
  *  STRUCT: PxWaveSequence (Global Settings)
  *  ----------------------------------------
+ *  const char* name            : Descriptive name of the sequence.
  *  uint8_t  end_action         : Action when sequence finishes (or PX_WSEQ_END flag hit).
  *                                - PX_WSEQ_END_STOP     (0): Stop voice (Release phase).
  *                                - PX_WSEQ_END_HOLD     (1): Hold last step indefinitely.
@@ -85,6 +86,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Leads are focused on melodic playback, often with glide or expressive articulation.
     // 0: Classic Saw Lead (Glide enabled, slight detune feeling via sequence)
     {
+        .name = "Classic Saw Lead",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -97,6 +99,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 1: Pulse Width Modulation (Simulated by switching Pulse waves)
     {
+        .name = "Pulse Width Modulation",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -109,6 +112,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 2: FM Solo (Expressive with XMod)
     {
+        .name = "FM Solo",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_STEP,
         .xmod_depth = 0.3f,
@@ -123,6 +127,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 3: Sync Lead (Hard Sync effect)
     {
+        .name = "Sync Lead",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 116, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_LOCK_PHASE}, // Sync Sweep
@@ -133,6 +138,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 4: Bitcrushed Lead
     {
+        .name = "Bitcrushed Lead",
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 4,
         .steps = {
@@ -143,6 +149,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 5: Glitch Arp (Generative Octave Jumps with Bitcrush & Ring Mod)
     {
+        .name = "Glitch Arp",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_octave_range = 40,
         .bitcrush_bits = 6,
@@ -157,6 +164,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 6: Phase Dist Lead
     {
+        .name = "Phase Dist Lead",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 56, .duration_cycles = 300, .pitch_offset = 0, .flags = 0}, // Phase Distortion
@@ -166,6 +174,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 7: Resonant Lead
     {
+        .name = "Resonant Lead",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 114, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, // Reso Filter Sweep
@@ -177,6 +186,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Pads are slow-attack, evolving textures suitable for chords and atmosphere.
     // 8: PWM Pad (Slow evolution)
     {
+        .name = "PWM Pad",
         .end_action = PX_WSEQ_END_PINGPONG,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -188,6 +198,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 9: Generative Ambient (Replaced Glassy Pad)
     {
+        .name = "Generative Ambient",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_wave_low = 80,
         .rnd_wave_high = 100,
@@ -200,6 +211,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 10: Choir Pad
     {
+        .name = "Choir Pad",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 121, .duration_cycles = 800, .pitch_offset = 0, .flags = 0}, // Oooh Choir
@@ -209,6 +221,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 11: Ring Mod Morph (Updated)
     {
+        .name = "Ring Mod Morph",
         .end_action = PX_WSEQ_END_PINGPONG,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_skip_score = 30,
@@ -223,6 +236,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 12: Self-Xmod Drone
     {
+        .name = "Self-Xmod Drone",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 81, .duration_cycles = 2000, .pitch_offset = -1200, .flags = PX_WSEQ_XMOD}, // FM Hollow Drone with Self-FM
@@ -233,6 +247,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 13: Space Pad
     {
+        .name = "Space Pad",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 79, .duration_cycles = 1500, .pitch_offset = 0, .flags = 0}, // FM Sci-Fi Drone
@@ -241,6 +256,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 14: Shimmer Pad
     {
+        .name = "Shimmer Pad",
         .end_action = PX_WSEQ_END_PINGPONG,
         .steps = {
             {.wave_idx = 102, .duration_cycles = 400, .pitch_offset = 0, .flags = 0}, // Classic Pad
@@ -250,6 +266,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 15: Vintage Strings
     {
+        .name = "Vintage Strings",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -263,6 +280,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Orchestral and synthesized string emulations.
     // 16: Bowed String
     {
+        .name = "Bowed String",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 99, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, // Bowed String
@@ -271,6 +289,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 17: String Ensemble
     {
+        .name = "String Ensemble",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 147, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, // Rich String Ensemble
@@ -279,6 +298,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 18: Tremolo Strings
     {
+        .name = "Tremolo Strings",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 147, .duration_cycles = 1500, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD}, // Use Ring Mod as Tremolo
@@ -289,6 +309,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 19: Pizzicato
     {
+        .name = "Pizzicato",
         .end_action = PX_WSEQ_END_STOP,
         .steps = {
             {.wave_idx = 144, .duration_cycles = 200, .pitch_offset = 0, .flags = 0}, // Plucked String
@@ -297,6 +318,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 20: Slow Strings
     {
+        .name = "Slow Strings",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -309,6 +331,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 21: Octave Strings
     {
+        .name = "Octave Strings",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 147, .duration_cycles = 300, .pitch_offset = 0, .flags = 0},
@@ -318,6 +341,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 22: Crushed Bow (Updated from Crushed Strings)
     {
+        .name = "Crushed Bow",
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 6,
         .prob_skip_score = 40,
@@ -329,6 +353,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 23: Reverse Swell Strings (Replaced Evolving Strings)
     {
+        .name = "Reverse Swell Strings",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -342,16 +367,19 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Vocal-like formants and choir textures.
     // 24: Ooh Choir
     {
+        .name = "Ooh Choir",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 121, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 25: Aah Choir
     {
+        .name = "Aah Choir",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 113, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 26: Realistic Voice (Vowels+Breath)
     {
+        .name = "Realistic Voice",
         .end_action = PX_WSEQ_END_STOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -367,6 +395,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 27: Robot Voice
     {
+        .name = "Robot Voice",
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 6,
         .steps = {
@@ -376,11 +405,13 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 28: Alien Choir
     {
+        .name = "Alien Choir",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 218, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Alien Voice
     },
     // 29: Whispers
     {
+        .name = "Whispers",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 113, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
@@ -390,6 +421,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 30: Angelic
     {
+        .name = "Angelic",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 121, .duration_cycles = 200, .pitch_offset = 1200, .flags = 0},
@@ -398,6 +430,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 31: Monks
     {
+        .name = "Monks",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 113, .duration_cycles = 200, .pitch_offset = -1200, .flags = 0},
@@ -409,16 +442,19 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Brass, Wind, and full orchestra hits.
     // 32: Brass Section
     {
+        .name = "Brass Section",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 148, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 33: Synth Brass
     {
+        .name = "Synth Brass",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 98, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 34: Orchestra Hit
     {
+        .name = "Orchestra Hit",
         .end_action = PX_WSEQ_END_STOP,
         .steps = {
             {.wave_idx = 148, .duration_cycles = 20, .pitch_offset = 0, .flags = 0},
@@ -429,11 +465,13 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 35: Wind Section
     {
+        .name = "Wind Section",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 125, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Breathy Flute
     },
     // 36: Fanfare
     {
+        .name = "Fanfare",
         .end_action = PX_WSEQ_END_STOP,
         .steps = {
             {.wave_idx = 98, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
@@ -445,6 +483,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 37: Big Band
     {
+        .name = "Big Band",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 148, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
@@ -454,6 +493,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 38: Epic Hit
     {
+        .name = "Epic Hit",
         .end_action = PX_WSEQ_END_STOP,
         .steps = {
             {.wave_idx = 128, .duration_cycles = 10, .pitch_offset = -2400, .flags = 0}, // Kick
@@ -463,6 +503,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 39: Detuned Saw Stack
     {
+        .name = "Detuned Saw Stack",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 6, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
@@ -476,11 +517,13 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Short, percussive tonal sounds mimicking plucked instruments.
     // 40: Nylon Guitar
     {
+        .name = "Nylon Guitar",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 144, .duration_cycles = 300, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 41: Harp Arp
     {
+        .name = "Harp Arp",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 144, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
@@ -492,6 +535,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 42: Koto
     {
+        .name = "Koto",
         .end_action = PX_WSEQ_END_STOP,
         .steps = {
             {.wave_idx = 68, .duration_cycles = 10, .pitch_offset = 200, .flags = 0}, // FM Pluck bend
@@ -501,28 +545,33 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 43: Banjo
     {
+        .name = "Banjo",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 6, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, {.flags = PX_WSEQ_END} },
         .bitcrush_bits = 7
     },
     // 44: Muted Guitar
     {
+        .name = "Muted Guitar",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 144, .duration_cycles = 50, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Short duration
     },
     // 45: Electric Pluck
     {
+        .name = "Electric Pluck",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 6, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, {.flags = PX_WSEQ_END} },
         .bitcrush_bits = 4
     },
     // 46: Bass Pluck
     {
+        .name = "Bass Pluck",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 144, .duration_cycles = 300, .pitch_offset = -1200, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 47: Random Pluck
     {
+        .name = "Random Pluck",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_octave_range = 50,
         .steps = {
@@ -535,16 +584,19 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Drums and hits.
     // 48: Kick
     {
+        .name = "Kick",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 128, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 49: Snare
     {
+        .name = "Snare",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 129, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 50: Math Hat (Replaced HiHat)
     {
+        .name = "Math Hat",
         .end_action = PX_WSEQ_END_STOP,
         .bitcrush_bits = 3,
         .prob_skip_score = 30,
@@ -556,11 +608,13 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 51: Tom
     {
+        .name = "Tom",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 131, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 52: Evolving Glitch Perc (Updated)
     {
+        .name = "Evolving Glitch Perc",
         .end_action = PX_WSEQ_END_STOP,
         .bitcrush_bits = 5,
         .prob_skip_score = 40,
@@ -573,16 +627,19 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 53: Industrial Hit
     {
+        .name = "Industrial Hit",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 136, .duration_cycles = 150, .pitch_offset = -1200, .flags = 0}, {.flags = PX_WSEQ_END} } // Metallic Perc low
     },
     // 54: Zap
     {
+        .name = "Zap",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 211, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Laser Zap
     },
     // 55: Clave
     {
+        .name = "Clave",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 142, .duration_cycles = 50, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Wooden Perc
     },
@@ -591,6 +648,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Retro game and chiptune sounds.
     // 56: Basic Arp
     {
+        .name = "Basic Arp",
         .end_action = PX_WSEQ_END_PINGPONG,
         .steps = {
             {.wave_idx = 4, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
@@ -601,6 +659,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 57: 8-bit Run
     {
+        .name = "8-bit Run",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 5, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
@@ -613,6 +672,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 58: C64 Arp
     {
+        .name = "C64 Arp",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 4, .duration_cycles = 20, .pitch_offset = 0, .flags = 0}, // Very fast
@@ -623,6 +683,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 59: Mario Jump
     {
+        .name = "Mario Jump",
         .end_action = PX_WSEQ_END_STOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -633,6 +694,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 60: Coin
     {
+        .name = "Coin",
         .end_action = PX_WSEQ_END_STOP,
         .steps = {
             {.wave_idx = 32, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
@@ -642,6 +704,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 61: Power Up
     {
+        .name = "Power Up",
         .end_action = PX_WSEQ_END_STOP,
         .steps = {
             {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
@@ -654,6 +717,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 62: Game Over
     {
+        .name = "Game Over",
         .end_action = PX_WSEQ_END_STOP,
         .steps = {
             {.wave_idx = 6, .duration_cycles = 300, .pitch_offset = 0, .flags = 0},
@@ -664,6 +728,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 63: Chiptune Lead
     {
+        .name = "Chiptune Lead",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 32, .duration_cycles = 200, .pitch_offset = 0, .flags = 0}, // Pulse 25
@@ -676,36 +741,43 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Classic arcade SFX and aggressive digital sounds.
     // 64: Pac-Man
     {
+        .name = "Pac-Man",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 176, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 65: Invader
     {
+        .name = "Invader",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 181, .duration_cycles = 200, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 66: Explosion
     {
+        .name = "Explosion",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 183, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 67: Laser
     {
+        .name = "Laser",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 190, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 68: Jump
     {
+        .name = "Jump",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 197, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 69: Collect
     {
+        .name = "Collect",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 215, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 70: Enemy
     {
+        .name = "Enemy",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 218, .duration_cycles = 300, .pitch_offset = -1200, .flags = PX_WSEQ_XMOD}, // Added growl
@@ -716,6 +788,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 71: Level Up
     {
+        .name = "Level Up",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 219, .duration_cycles = 200, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
@@ -724,6 +797,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Novelty and cartoon effects.
     // 72: Bubble
     {
+        .name = "Bubble",
         .end_action = PX_WSEQ_END_STOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -734,11 +808,13 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 73: Squeak
     {
+        .name = "Squeak",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 2, .duration_cycles = 50, .pitch_offset = 2400, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 74: Wobble
     {
+        .name = "Wobble",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 2, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
@@ -749,6 +825,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 75: Boing
     {
+        .name = "Boing",
         .end_action = PX_WSEQ_END_STOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -758,6 +835,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 76: Slide Whistle
     {
+        .name = "Slide Whistle",
         .end_action = PX_WSEQ_END_PINGPONG,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -768,6 +846,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 77: Cartoon Fall
     {
+        .name = "Cartoon Fall",
         .end_action = PX_WSEQ_END_STOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -778,11 +857,13 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 78: Toy Piano
     {
+        .name = "Toy Piano",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 217, .duration_cycles = 200, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 79: Kazoo
     {
+        .name = "Kazoo",
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 3,
         .steps = {
@@ -795,43 +876,51 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Environmental and organic simulations.
     // 80: Wind
     {
+        .name = "Wind",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 159, .duration_cycles = 500, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Wind AM
     },
     // 81: Rain
     {
+        .name = "Rain",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 156, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP}, {.flags = PX_WSEQ_END} }, // Water Droplet
         .prob_skip_score = 50
     },
     // 82: Thunder
     {
+        .name = "Thunder",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 140, .duration_cycles = 500, .pitch_offset = -2400, .flags = 0}, {.flags = PX_WSEQ_END} } // Rumble Noise
     },
     // 83: Bird
     {
+        .name = "Bird",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 55, .duration_cycles = 200, .pitch_offset = 2400, .flags = 0}, {.flags = PX_WSEQ_END} } // Bird Call AM
     },
     // 84: Insect
     {
+        .name = "Insect",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 3600, .flags = 0}, {.flags = PX_WSEQ_END} } // High saw
     },
     // 85: Water
     {
+        .name = "Water",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 156, .duration_cycles = 200, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 86: Fire
     {
+        .name = "Fire",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 143, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_OCTAVE}, {.flags = PX_WSEQ_END} },
         .rnd_octave_range = 80
     },
     // 87: Ocean
     {
+        .name = "Ocean",
         .end_action = PX_WSEQ_END_PINGPONG,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -845,16 +934,19 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Modern complex patches using advanced features.
     // 88: Super Saw
     {
+        .name = "Super Saw",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 6, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 89: Hyper Square
     {
+        .name = "Hyper Square",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 4, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 90: Trance Gate
     {
+        .name = "Trance Gate",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 6, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
@@ -865,6 +957,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 91: Complex Arp
     {
+        .name = "Complex Arp",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 6, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
@@ -876,6 +969,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 92: Hyper Stutter (Replaced Morphing Lead)
     {
+        .name = "Hyper Stutter",
         .end_action = PX_WSEQ_END_PINGPONG,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .bitcrush_bits = 5,
@@ -888,6 +982,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 93: Generative Glitch (Replaced Stutter)
     {
+        .name = "Generative Glitch",
         .end_action = PX_WSEQ_END_LOOP,
         .prob_mute_score = 30,
         .rnd_wave_low = 0,
@@ -902,6 +997,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 94: Glitch Hop
     {
+        .name = "Glitch Hop",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 143, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RING_MOD}, // Added Ring Mod
@@ -914,6 +1010,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 95: Total Chaos Theory
     {
+        .name = "Total Chaos Theory",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 248, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_USE_RND_WAVE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_RING_MOD}, // Logistic Chaos + Flag Overflow
@@ -930,16 +1027,19 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Sub-bass and heavy low-end textures.
     // 96: Sub Bass
     {
+        .name = "Sub Bass",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 74, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // FM Deep Sub
     },
     // 97: Dub Chord
     {
+        .name = "Dub Chord",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 106, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Minor Triad
     },
     // 98: FM Math Drone (Replaced Chaos Drone)
     {
+        .name = "FM Math Drone",
         .end_action = PX_WSEQ_END_LOOP,
         .xmod_depth = 0.6f,
         .xmod_mod_src = -1,
@@ -951,21 +1051,25 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 99: 808 Kick
     {
+        .name = "808 Kick",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 128, .duration_cycles = 300, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 100: Dark Ambient
     {
+        .name = "Dark Ambient",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 153, .duration_cycles = 800, .pitch_offset = -1200, .flags = 0}, {.flags = PX_WSEQ_END} } // Chaotic Osc
     },
     // 101: Underwater
     {
+        .name = "Underwater",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 156, .duration_cycles = 500, .pitch_offset = -1200, .flags = 0}, {.flags = PX_WSEQ_END} } // Water Droplet
     },
     // 102: Heartbeat
     {
+        .name = "Heartbeat",
         .end_action = PX_WSEQ_END_STOP,
         .steps = {
             {.wave_idx = 128, .duration_cycles = 50, .pitch_offset = -2400, .flags = 0},
@@ -975,6 +1079,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 103: Rumble
     {
+        .name = "Rumble",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 140, .duration_cycles = 500, .pitch_offset = -2400, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
@@ -983,6 +1088,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Sci-fi, cyber, and technological sounds.
     // 104: Robot Talk
     {
+        .name = "Robot Talk",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 157, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_OCTAVE}, // Alien Chatter
@@ -992,6 +1098,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 105: Data Stream
     {
+        .name = "Data Stream",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 160, .duration_cycles = 10, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_OCTAVE}, // LFSR Rhythm Gate
@@ -1001,11 +1108,13 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 106: Cyberpunk Bass
     {
+        .name = "Cyberpunk Bass",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 210, .duration_cycles = 100, .pitch_offset = -1200, .flags = 0}, {.flags = PX_WSEQ_END} } // POKEY Distorted
     },
     // 107: Math Laser (Replaced Laser Harp)
     {
+        .name = "Math Laser",
         .end_action = PX_WSEQ_END_LOOP,
         .xmod_depth = 0.4f,
         .xmod_mod_src = -1,
@@ -1017,6 +1126,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 108: Teleport
     {
+        .name = "Teleport",
         .end_action = PX_WSEQ_END_STOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -1027,6 +1137,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 109: Scanner
     {
+        .name = "Scanner",
         .end_action = PX_WSEQ_END_PINGPONG,
         .steps = {
             {.wave_idx = 221, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, // Sweep Down
@@ -1036,6 +1147,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 110: Matrix
     {
+        .name = "Matrix",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 175, .duration_cycles = 50, .pitch_offset = 0, .flags = 0}, // LFSR Glitch Matrix
@@ -1044,6 +1156,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 111: Warp Drive
     {
+        .name = "Warp Drive",
         .end_action = PX_WSEQ_END_STOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -1057,41 +1170,49 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Approximations of acoustic instruments using simple waveforms.
     // 112: Organ
     {
+        .name = "Organ",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 110, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 113: Flute
     {
+        .name = "Flute",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 125, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 114: Clarinet
     {
+        .name = "Clarinet",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 4, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Square
     },
     // 115: Trumpet
     {
+        .name = "Trumpet",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 98, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 116: Violin
     {
+        .name = "Violin",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 99, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 117: Cello
     {
+        .name = "Cello",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 99, .duration_cycles = 100, .pitch_offset = -1200, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
     // 118: Bell
     {
+        .name = "Bell",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 88, .duration_cycles = 400, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Metallic Bell
     },
     // 119: Steel Drum
     {
+        .name = "Steel Drum",
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 136, .duration_cycles = 200, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
@@ -1100,6 +1221,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Generative, chaotic, and experimental "Ham Crazy" sequences.
     // 120: Fractal Spiral (Replaced Fibonacci Spiral)
     {
+        .name = "Fractal Spiral",
         .end_action = PX_WSEQ_END_LOOP,
         .ring_mod_depth = 0.3f,
         .ring_mod_mod_src = -1,
@@ -1113,6 +1235,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 121: Chaos Theory (Replaced Logistic Glitch)
     {
+        .name = "Chaos Theory",
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 4,
         .rnd_octave_range = 50,
@@ -1124,6 +1247,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 122: Digital Hurricane (Replaced Bitcrush Storm)
     {
+        .name = "Digital Hurricane",
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 2,
         .prob_skip_score = 25,
@@ -1135,6 +1259,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 123: Neural Net (Replaced Self-Mod Glitch)
     {
+        .name = "Neural Net",
         .end_action = PX_WSEQ_END_LOOP,
         .xmod_depth = 0.7f,
         .xmod_mod_src = -1,
@@ -1148,6 +1273,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 124: Quantum Leaps (Replaced Stutter Morph)
     {
+        .name = "Quantum Leaps",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_wave_low = 50,
         .rnd_wave_high = 60,
@@ -1160,6 +1286,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 125: Singularity (Replaced Total Chaos)
     {
+        .name = "Singularity",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_wave_low = 0,
         .rnd_wave_high = 255,
@@ -1175,6 +1302,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 126: Time Travel (Replaced Reverse Tape)
     {
+        .name = "Time Travel",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_skip_score = 30,
@@ -1188,6 +1316,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 127: Heat Death (Replaced The End)
     {
+        .name = "Heat Death",
         .end_action = PX_WSEQ_END_STOP,
         .bitcrush_bits = 8,
         .steps = {
@@ -1201,6 +1330,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Evolving vector synthesis textures and rhythmic loops.
     // 128: Vector Pad
     {
+        .name = "Vector Pad",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -1213,6 +1343,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 129: Ski Jam
     {
+        .name = "Ski Jam",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 128, .duration_cycles = 50, .pitch_offset = 0, .flags = 0}, // Kick
@@ -1224,6 +1355,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 130: Wave Sweep
     {
+        .name = "Wave Sweep",
         .end_action = PX_WSEQ_END_PINGPONG,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -1236,6 +1368,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 131: Ethereal
     {
+        .name = "Ethereal",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -1246,6 +1379,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 132: Motion Texture
     {
+        .name = "Motion Texture",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 151, .duration_cycles = 500, .pitch_offset = 0, .flags = 0},
@@ -1255,6 +1389,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 133: Resonant Sweep
     {
+        .name = "Resonant Sweep",
         .end_action = PX_WSEQ_END_PINGPONG,
         .steps = {
             {.wave_idx = 114, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
@@ -1264,6 +1399,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 134: Glass Morph
     {
+        .name = "Glass Morph",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -1274,6 +1410,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 135: Vector Pluck
     {
+        .name = "Vector Pluck",
         .end_action = PX_WSEQ_END_STOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -1287,6 +1424,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Fast scanning and digital artifacts.
     // 136: Prophet Scan
     {
+        .name = "Prophet Scan",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 32, .duration_cycles = 10, .pitch_offset = 0, .flags = 0},
@@ -1298,6 +1436,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 137: Digital Choir
     {
+        .name = "Digital Choir",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 113, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
@@ -1308,6 +1447,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 138: Bell Sweep
     {
+        .name = "Bell Sweep",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 88, .duration_cycles = 300, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
@@ -1317,6 +1457,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 139: Horror Scan
     {
+        .name = "Horror Scan",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 49, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
@@ -1326,6 +1467,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 140: PPG Sweep
     {
+        .name = "PPG Sweep",
         .end_action = PX_WSEQ_END_PINGPONG,
         .steps = {
             {.wave_idx = 16, .duration_cycles = 20, .pitch_offset = 0, .flags = 0},
@@ -1337,6 +1479,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 141: Hard Sync Sweep
     {
+        .name = "Hard Sync Sweep",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 116, .duration_cycles = 500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
@@ -1346,6 +1489,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 142: Metal Morph
     {
+        .name = "Metal Morph",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -1356,6 +1500,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 143: VS Strings
     {
+        .name = "VS Strings",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 147, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
@@ -1368,6 +1513,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Fast, chaotic, and generative sounds.
     // 144: AFX Acid
     {
+        .name = "AFX Acid",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_octave_range = 60,
         .bitcrush_bits = 4,
@@ -1379,6 +1525,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 145: Drill n Bass
     {
+        .name = "Drill n Bass",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_wave_low = 160,
         .rnd_wave_high = 175,
@@ -1389,6 +1536,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 146: Glitch Pad
     {
+        .name = "Glitch Pad",
         .end_action = PX_WSEQ_END_LOOP,
         .prob_skip_score = 40,
         .steps = {
@@ -1399,6 +1547,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 147: Brain Dance
     {
+        .name = "Brain Dance",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_octave_range = 80,
         .steps = {
@@ -1408,6 +1557,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 148: Stutter Lead
     {
+        .name = "Stutter Lead",
         .end_action = PX_WSEQ_END_LOOP,
         .prob_mute_score = 30,
         .steps = {
@@ -1418,6 +1568,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 149: Granular Cloud
     {
+        .name = "Granular Cloud",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_wave_low = 144,
         .rnd_wave_high = 159,
@@ -1428,6 +1579,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 150: Chaos Arp
     {
+        .name = "Chaos Arp",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_wave_low = 0,
         .rnd_wave_high = 64,
@@ -1439,6 +1591,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 151: Bitrot
     {
+        .name = "Bitrot",
         .end_action = PX_WSEQ_END_STOP,
         .bitcrush_bits = 8,
         .steps = {
@@ -1452,6 +1605,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Deep bass, sharp hats, and plucks.
     // 152: 808 Sub Glides
     {
+        .name = "808 Sub Glides",
         .end_action = PX_WSEQ_END_STOP,
         .glide_mode = PX_WSEQ_GLIDE_STEP,
         .steps = {
@@ -1462,6 +1616,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 153: HiHat Rolls
     {
+        .name = "HiHat Rolls",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 50, .duration_cycles = 8, .pitch_offset = 0, .flags = 0},
@@ -1471,6 +1626,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 154: Trap Pluck
     {
+        .name = "Trap Pluck",
         .end_action = PX_WSEQ_END_STOP,
         .steps = {
             {.wave_idx = 68, .duration_cycles = 5, .pitch_offset = 1200, .flags = 0}, // Transient
@@ -1480,6 +1636,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 155: Dark Bell
     {
+        .name = "Dark Bell",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 135, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
@@ -1490,6 +1647,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 156: Snare Rush
     {
+        .name = "Snare Rush",
         .end_action = PX_WSEQ_END_STOP,
         .steps = {
             {.wave_idx = 49, .duration_cycles = 20, .pitch_offset = 0, .flags = 0},
@@ -1501,6 +1659,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 157: Tape Stop FX
     {
+        .name = "Tape Stop FX",
         .end_action = PX_WSEQ_END_STOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -1511,6 +1670,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 158: Vocal Chop
     {
+        .name = "Vocal Chop",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 115, .duration_cycles = 30, .pitch_offset = 0, .flags = 0},
@@ -1521,6 +1681,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 159: Dirty Brass
     {
+        .name = "Dirty Brass",
         .end_action = PX_WSEQ_END_STOP,
         .bitcrush_bits = 6,
         .steps = {
@@ -1533,6 +1694,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Distorted, metallic, and mechanical.
     // 160: Reznor Bass
     {
+        .name = "Reznor Bass",
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 4,
         .steps = {
@@ -1542,6 +1704,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 161: Rusty Metal
     {
+        .name = "Rusty Metal",
         .end_action = PX_WSEQ_END_LOOP,
         .ring_mod_depth = 0.5f,
         .ring_mod_mod_src = -1,
@@ -1552,6 +1715,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 162: Machine Beat
     {
+        .name = "Machine Beat",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 138, .duration_cycles = 50, .pitch_offset = -1200, .flags = 0},
@@ -1561,6 +1725,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 163: Distortion Lead
     {
+        .name = "Distortion Lead",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 16, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
@@ -1569,6 +1734,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 164: Broken Circuit
     {
+        .name = "Broken Circuit",
         .end_action = PX_WSEQ_END_LOOP,
         .prob_skip_score = 30,
         .steps = {
@@ -1578,6 +1744,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 165: Power Noise
     {
+        .name = "Power Noise",
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 2,
         .steps = {
@@ -1587,6 +1754,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 166: Alarm
     {
+        .name = "Alarm",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 206, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
@@ -1596,6 +1764,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 167: Grinder
     {
+        .name = "Grinder",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -1609,6 +1778,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Dark ambient and space drones.
     // 168: Deep Drone
     {
+        .name = "Deep Drone",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 79, .duration_cycles = 2000, .pitch_offset = -2400, .flags = 0},
@@ -1617,6 +1787,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 169: Void Calls
     {
+        .name = "Void Calls",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 49, .duration_cycles = 800, .pitch_offset = 0, .flags = 0},
@@ -1626,6 +1797,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 170: Submarine
     {
+        .name = "Submarine",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 156, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
@@ -1635,6 +1807,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 171: Dark Matter
     {
+        .name = "Dark Matter",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 100, .duration_cycles = 1000, .pitch_offset = -1200, .flags = 0},
@@ -1643,6 +1816,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 172: Event Horizon
     {
+        .name = "Event Horizon",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -1653,6 +1827,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 173: Cthulhu
     {
+        .name = "Cthulhu",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 157, .duration_cycles = 500, .pitch_offset = -2400, .flags = PX_WSEQ_BITCRUSH},
@@ -1662,6 +1837,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 174: Space Wind
     {
+        .name = "Space Wind",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 159, .duration_cycles = 1500, .pitch_offset = 0, .flags = 0},
@@ -1670,6 +1846,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 175: Black Hole
     {
+        .name = "Black Hole",
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 4,
         .steps = {
@@ -1682,6 +1859,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Math and complexity.
     // 176: Math Noise
     {
+        .name = "Math Noise",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 24, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
@@ -1690,6 +1868,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 177: Fibonacci Spiral
     {
+        .name = "Fibonacci Spiral",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 247, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
@@ -1698,6 +1877,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 178: Prime Arp
     {
+        .name = "Prime Arp",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 0, .flags = 0},
@@ -1711,6 +1891,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 179: Chaos Theory II
     {
+        .name = "Chaos Theory II",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 21, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
@@ -1719,6 +1900,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 180: Cellular Automata
     {
+        .name = "Cellular Automata",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 160, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
@@ -1727,6 +1909,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 181: Random Walk
     {
+        .name = "Random Walk",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_octave_range = 50,
         .steps = {
@@ -1736,6 +1919,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 182: Fractal Noise
     {
+        .name = "Fractal Noise",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 124, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
@@ -1744,6 +1928,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 183: Quantum Foam
     {
+        .name = "Quantum Foam",
         .end_action = PX_WSEQ_END_LOOP,
         .prob_skip_score = 50,
         .steps = {
@@ -1756,6 +1941,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Pure glitch and mayhem.
     // 184: Data Mosh
     {
+        .name = "Data Mosh",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 35, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
@@ -1764,6 +1950,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 185: Spectrum Cycle
     {
+        .name = "Spectrum Cycle",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 167, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
@@ -1772,6 +1959,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 186: Phase Smasher
     {
+        .name = "Phase Smasher",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 56, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
@@ -1780,6 +1968,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 187: FM Matrix
     {
+        .name = "FM Matrix",
         .end_action = PX_WSEQ_END_LOOP,
         .xmod_depth = 0.8f,
         .xmod_mod_src = -1,
@@ -1790,6 +1979,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 188: Ring Mod Hell
     {
+        .name = "Ring Mod Hell",
         .end_action = PX_WSEQ_END_LOOP,
         .ring_mod_depth = 0.9f,
         .ring_mod_mod_src = -1,
@@ -1800,6 +1990,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 189: Bitwise Logic
     {
+        .name = "Bitwise Logic",
         .end_action = PX_WSEQ_END_LOOP,
         .steps = {
             {.wave_idx = 45, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
@@ -1808,6 +1999,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 190: The Glitch
     {
+        .name = "The Glitch",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_wave_low = 0,
         .rnd_wave_high = 255,
@@ -1819,6 +2011,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 191: System Crash
     {
+        .name = "System Crash",
         .end_action = PX_WSEQ_END_STOP,
         .bitcrush_bits = 4,
         .steps = {
@@ -1833,6 +2026,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Metallic textures use ring mod, bitcrush, and random octave for clangorous, inharmonic sounds.
     // 192: Metallic 1
     {
+        .name = "Metallic 1",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 10,
@@ -1850,6 +2044,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 193: Metallic 2
     {
+        .name = "Metallic 2",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 10,
@@ -1867,6 +2062,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 194: Metallic 3
     {
+        .name = "Metallic 3",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 10,
@@ -1884,6 +2080,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 195: Metallic 4
     {
+        .name = "Metallic 4",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 10,
@@ -1901,6 +2098,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 196: Metallic 5
     {
+        .name = "Metallic 5",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 10,
@@ -1918,6 +2116,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 197: Metallic 6
     {
+        .name = "Metallic 6",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 10,
@@ -1935,6 +2134,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 198: Metallic 7
     {
+        .name = "Metallic 7",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 10,
@@ -1952,6 +2152,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 199: Metallic 8
     {
+        .name = "Metallic 8",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 10,
@@ -1972,6 +2173,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Percussive hits use short durations, retrigger, and random skip for drum-like patterns.
     // 200: Percussive 1
     {
+        .name = "Percussive 1",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
@@ -1988,6 +2190,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 201: Percussive 2
     {
+        .name = "Percussive 2",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
@@ -2004,6 +2207,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 202: Percussive 3
     {
+        .name = "Percussive 3",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
@@ -2020,6 +2224,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 203: Percussive 4
     {
+        .name = "Percussive 4",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
@@ -2036,6 +2241,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 204: Percussive 5
     {
+        .name = "Percussive 5",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
@@ -2052,6 +2258,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 205: Percussive 6
     {
+        .name = "Percussive 6",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
@@ -2068,6 +2275,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 206: Percussive 7
     {
+        .name = "Percussive 7",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
@@ -2084,6 +2292,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 207: Percussive 8
     {
+        .name = "Percussive 8",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
@@ -2103,6 +2312,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Evolving pads use long durations, blending, and random octave for slowly changing textures.
     // 208: Pad 1
     {
+        .name = "Pad 1",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2121,6 +2331,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 209: Pad 2
     {
+        .name = "Pad 2",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2139,6 +2350,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 210: Pad 3
     {
+        .name = "Pad 3",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2157,6 +2369,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 211: Pad 4
     {
+        .name = "Pad 4",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2175,6 +2388,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 212: Pad 5
     {
+        .name = "Pad 5",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2193,6 +2407,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 213: Pad 6
     {
+        .name = "Pad 6",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2211,6 +2426,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 214: Pad 7
     {
+        .name = "Pad 7",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2229,6 +2445,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 215: Pad 8
     {
+        .name = "Pad 8",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2250,6 +2467,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Glitch effects use bitcrush, random skip, and reverse for broken, chaotic sounds.
     // 216: Glitch 1
     {
+        .name = "Glitch 1",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_STEP,
         .prob_mute_score = 20,
@@ -2268,6 +2486,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 217: Glitch 2
     {
+        .name = "Glitch 2",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_STEP,
         .prob_mute_score = 20,
@@ -2286,6 +2505,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 218: Glitch 3
     {
+        .name = "Glitch 3",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_STEP,
         .prob_mute_score = 20,
@@ -2304,6 +2524,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 219: Glitch 4
     {
+        .name = "Glitch 4",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_STEP,
         .prob_mute_score = 20,
@@ -2322,6 +2543,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 220: Glitch 5
     {
+        .name = "Glitch 5",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_STEP,
         .prob_mute_score = 20,
@@ -2340,6 +2562,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 221: Glitch 6
     {
+        .name = "Glitch 6",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_STEP,
         .prob_mute_score = 20,
@@ -2358,6 +2581,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 222: Glitch 7
     {
+        .name = "Glitch 7",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_STEP,
         .prob_mute_score = 20,
@@ -2376,6 +2600,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 223: Glitch 8
     {
+        .name = "Glitch 8",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_STEP,
         .prob_mute_score = 20,
@@ -2397,6 +2622,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Noise sculptures use noise waves with bitcrush, random octave, and mute for abstract, noisy art.
     // 224: Noise 1
     {
+        .name = "Noise 1",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_mute_score = 30,
@@ -2415,6 +2641,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 225: Noise 2
     {
+        .name = "Noise 2",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_mute_score = 30,
@@ -2433,6 +2660,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 226: Noise 3
     {
+        .name = "Noise 3",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_mute_score = 30,
@@ -2451,6 +2679,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 227: Noise 4
     {
+        .name = "Noise 4",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_mute_score = 30,
@@ -2469,6 +2698,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 228: Noise 5
     {
+        .name = "Noise 5",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_mute_score = 30,
@@ -2487,6 +2717,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 229: Noise 6
     {
+        .name = "Noise 6",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_mute_score = 30,
@@ -2505,6 +2736,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 230: Noise 7
     {
+        .name = "Noise 7",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_mute_score = 30,
@@ -2523,6 +2755,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 231: Noise 8
     {
+        .name = "Noise 8",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_mute_score = 30,
@@ -2544,6 +2777,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Evolving pads use long durations, blending, and random octave for slowly changing textures.
     // 232: Pad II 1
     {
+        .name = "Pad II 1",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2562,6 +2796,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 233: Pad II 2
     {
+        .name = "Pad II 2",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2580,6 +2815,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 234: Pad II 3
     {
+        .name = "Pad II 3",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2598,6 +2834,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 235: Pad II 4
     {
+        .name = "Pad II 4",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2616,6 +2853,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 236: Pad II 5
     {
+        .name = "Pad II 5",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2634,6 +2872,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 237: Pad II 6
     {
+        .name = "Pad II 6",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2652,6 +2891,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 238: Pad II 7
     {
+        .name = "Pad II 7",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2670,6 +2910,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 239: Pad II 8
     {
+        .name = "Pad II 8",
         .end_action = PX_WSEQ_END_HOLD,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .prob_mute_score = 5,
@@ -2691,6 +2932,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Wild, funky, and glitchy textures that push the limits.
     // 240: Glitch Funk
     {
+        .name = "Glitch Funk",
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 4,
         .prob_skip_score = 40,
@@ -2704,6 +2946,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 241: Neuro Tear
     {
+        .name = "Neuro Tear",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .xmod_depth = 0.6f,
@@ -2717,6 +2960,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 242: Jazz Bot
     {
+        .name = "Jazz Bot",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_octave_range = 40,
         .prob_skip_score = 20,
@@ -2730,6 +2974,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 243: Screaming Sync
     {
+        .name = "Screaming Sync",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -2741,6 +2986,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 244: Tape Chew
     {
+        .name = "Tape Chew",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -2753,6 +2999,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 245: Machine Gun
     {
+        .name = "Machine Gun",
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 4,
         .steps = {
@@ -2764,6 +3011,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 246: Ring Mod City
     {
+        .name = "Ring Mod City",
         .end_action = PX_WSEQ_END_LOOP,
         .ring_mod_depth = 1.0f,
         .ring_mod_mod_src = -1,
@@ -2777,6 +3025,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 247: Hyper Zip
     {
+        .name = "Hyper Zip",
         .end_action = PX_WSEQ_END_PINGPONG,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -2790,6 +3039,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     // Pure chaos, noise, and experimental destruction.
     // 248: Feedback Fry
     {
+        .name = "Feedback Fry",
         .end_action = PX_WSEQ_END_LOOP,
         .xmod_depth = 0.8f,
         .xmod_mod_src = -1,
@@ -2802,6 +3052,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 249: Mosh Pit
     {
+        .name = "Mosh Pit",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_wave_low = 176,
         .rnd_wave_high = 239,
@@ -2813,6 +3064,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 250: Pulsar
     {
+        .name = "Pulsar",
         .end_action = PX_WSEQ_END_LOOP,
         .ring_mod_depth = 0.5f,
         .ring_mod_mod_src = -1,
@@ -2824,6 +3076,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 251: Noise Scrape
     {
+        .name = "Noise Scrape",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
@@ -2834,6 +3087,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 252: Static Burst
     {
+        .name = "Static Burst",
         .end_action = PX_WSEQ_END_LOOP,
         .prob_mute_score = 60,
         .steps = {
@@ -2844,6 +3098,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 253: Logic Fail
     {
+        .name = "Logic Fail",
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 4,
         .xmod_depth = 0.5f,
@@ -2857,6 +3112,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 254: Cyber Jazz Solo
     {
+        .name = "Cyber Jazz Solo",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_STEP,
         .steps = {
@@ -2871,6 +3127,7 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
     // 255: System Meltdown
     {
+        .name = "System Meltdown",
         .end_action = PX_WSEQ_END_STOP,
         .bitcrush_bits = 2,
         .steps = {
