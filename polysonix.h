@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 7
-#define POLYSONIX_VERSION_PATCH 8
+#define POLYSONIX_VERSION_PATCH 9
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -271,6 +271,7 @@ typedef struct {
  */
 typedef struct {
     // --- Global Settings Header ---
+    const char* name;             /**< Descriptive name of the sequence. */
     uint8_t  end_action;          /**< PxWSeqEndAction: What to do when the sequence ends. (0-4) */
     uint8_t  glide_mode;          /**< PxWSeqGlideMode: Pitch glide behavior. (0-2) */
     uint8_t  bitcrush_bits;       /**< Bit depth for bitcrush effect (1-16). 0 defaults to 4. */

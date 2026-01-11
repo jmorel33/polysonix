@@ -1,5 +1,10 @@
 # Update Log
 
+## v1.7.9 (2025-02-17)
+- **Feature**: Added a `name` field to the `PxWaveSequence` struct in `polysonix.h`, mirroring the structure of wave definitions.
+- **Update**: Populated the `name` field for all 256 Wave Sequencer entries in `px_wseq_rom.h` with descriptive names derived from their comments.
+- **Documentation**: Updated the reference documentation in `px_wseq_rom.h` to include the new `name` field.
+
 ## v1.7.8 (2026-01-12)
 **Content Update: Wave Sequencer ROM Completion**
 
