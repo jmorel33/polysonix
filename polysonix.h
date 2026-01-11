@@ -256,13 +256,13 @@ typedef enum {
  */
 typedef struct {
     uint16_t wave_idx;        /**< The waveform index (0-65535). */
-    uint16_t duration_cycles; /**< Duration of the step in oscillator cycles. */
-    int16_t  pitch_offset;    /**< Pitch offset in cents (-32768 to +32767). */
+    uint16_t duration_cycles; /**< Duration of the step in oscillator cycles (1-65535). Values < 1 clamped to 1. */
+    int16_t  pitch_offset;    /**< Pitch offset in cents (-32768 to +32767). 1200 = 1 Octave. */
     uint16_t flags;           /**< Bitwise logic flags (PX_WSEQ_*). */
 } PxWaveSeqStep;
 
 #define PX_MAX_WSEQ_STEPS 64
-#define PX_NUM_WSEQ_BANKS 128
+#define PX_NUM_WSEQ_BANKS 192
 #define PX_OSC_MOD_PARAM_COUNT 11
 
 /**
@@ -271,27 +271,27 @@ typedef struct {
  */
 typedef struct {
     // --- Global Settings Header ---
-    uint8_t  end_action;          /**< PxWSeqEndAction: What to do when the sequence ends. */
-    uint8_t  glide_mode;          /**< PxWSeqGlideMode: Pitch glide behavior. */
-    uint8_t  bitcrush_bits;       /**< Bit depth for bitcrush effect (1-8). */
-    uint8_t  adsr_retrig_phase;   /**< PxADSRState: Which phase to jump to on retrigger (e.g., ATTACK). */
+    uint8_t  end_action;          /**< PxWSeqEndAction: What to do when the sequence ends. (0-4) */
+    uint8_t  glide_mode;          /**< PxWSeqGlideMode: Pitch glide behavior. (0-2) */
+    uint8_t  bitcrush_bits;       /**< Bit depth for bitcrush effect (1-16). 0 defaults to 4. */
+    uint8_t  adsr_retrig_phase;   /**< PxADSRState: Target phase on retrigger (1=ATTACK, etc). */
 
-    uint8_t  prob_mute_score;     /**< 0-100%: Probability of muting a step if PX_WSEQ_USE_PROB_MUTE is set. */
-    uint8_t  prob_skip_score;     /**< 0-100%: Probability of skipping a step if PX_WSEQ_USE_PROB_SKIP is set. */
-    uint8_t  rnd_octave_range;    /**< 0-100%: Probability of octave shift if PX_WSEQ_USE_RND_OCTAVE is set. */
-    uint8_t  reset_lfo_pos;       /**< Boolean (1=Yes): Reset LFOs when sequence starts. */
+    uint8_t  prob_mute_score;     /**< 0-100%: Probability of muting step. 0 defaults to 50%. */
+    uint8_t  prob_skip_score;     /**< 0-100%: Probability of skipping step. 0 defaults to 50%. */
+    uint8_t  rnd_octave_range;    /**< 0-100%: Probability of octave shift. */
+    uint8_t  reset_lfo_pos;       /**< Boolean (1=Yes, 0=No): Reset LFOs when sequence starts. */
 
-    uint16_t rnd_wave_low;        /**< Low index for random wave selection. */
-    uint16_t rnd_wave_high;       /**< High index for random wave selection. */
+    uint16_t rnd_wave_low;        /**< Low index for random wave selection (0-65535). */
+    uint16_t rnd_wave_high;       /**< High index for random wave selection (0-65535). */
 
     // Modulation Sources (PxModSource cast to int8_t, -1 for None)
-    int8_t   lock_phase_mod_src;  /**< Mod Source for Phase Lock (0=No Mod in user request, but we use -1 for None internally usually, let's assume valid index or -1). */
-    int8_t   xmod_mod_src;        /**< Mod Source for XMod (FM). */
-    int8_t   ring_mod_mod_src;    /**< Mod Source for Ring Mod. */
+    int8_t   lock_phase_mod_src;  /**< Mod Source for Phase Lock (-1 to 6). */
+    int8_t   xmod_mod_src;        /**< Mod Source for XMod (FM) (-1 to 6). */
+    int8_t   ring_mod_mod_src;    /**< Mod Source for Ring Mod (-1 to 6). */
     int8_t   _padding;
 
-    float    xmod_depth;          /**< Base amount for XMod. */
-    float    ring_mod_depth;      /**< Base amount for Ring Mod. */
+    float    xmod_depth;          /**< Base amount for XMod (0.0 to 1.0). */
+    float    ring_mod_depth;      /**< Base amount for Ring Mod (0.0 to 1.0). */
 
     // --- Steps ---
     PxWaveSeqStep steps[PX_MAX_WSEQ_STEPS];

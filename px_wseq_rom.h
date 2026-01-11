@@ -23,26 +23,31 @@
  *                                - PX_WSEQ_GLIDE_STEP   (1): Linear glide within step duration.
  *                                - PX_WSEQ_GLIDE_SMOOTH (2): Continuous RC filter glide (ignores step bounds).
  *
- *  uint8_t  bitcrush_bits      : Base bit depth for PX_WSEQ_BITCRUSH (1-16, typically 4-8).
- *  uint8_t  adsr_retrig_phase  : Target ADSR state on PX_WSEQ_RETRIG_ADSR (1=Attack, 2=Decay, etc).
+ *  uint8_t  bitcrush_bits      : Base bit depth for PX_WSEQ_BITCRUSH. (1-16). 0 defaults to 4.
+ *  uint8_t  adsr_retrig_phase  : Target ADSR state on PX_WSEQ_RETRIG_ADSR.
+ *                                - 1: Attack, 2: Decay, 3: Sustain, 4: Release.
  *
- *  uint8_t  prob_mute_score    : % Chance (0-100) to mute step if PX_WSEQ_USE_PROB_MUTE is set.
- *  uint8_t  prob_skip_score    : % Chance (0-100) to skip step if PX_WSEQ_USE_PROB_SKIP is set.
- *  uint8_t  rnd_octave_range   : % Chance (0-100) to shift +/- 1 octave if PX_WSEQ_USE_RND_OCTAVE is set.
- *  uint8_t  reset_lfo_pos      : Boolean (1=Yes) to reset LFOs on sequence start.
+ *  uint8_t  prob_mute_score    : % Chance to mute step if PX_WSEQ_USE_PROB_MUTE is set.
+ *                                - Range: 1-100. Value of 0 defaults to 50%.
+ *  uint8_t  prob_skip_score    : % Chance to skip step if PX_WSEQ_USE_PROB_SKIP is set.
+ *                                - Range: 1-100. Value of 0 defaults to 50%.
+ *  uint8_t  rnd_octave_range   : % Chance to shift +/- 1 octave if PX_WSEQ_USE_RND_OCTAVE is set.
+ *                                - Range: 0-100.
+ *  uint8_t  reset_lfo_pos      : Boolean (1=Yes, 0=No) to reset LFOs on sequence start.
  *
- *  uint16_t rnd_wave_low       : Start index for random wave range (PX_WSEQ_USE_RND_WAVE).
- *  uint16_t rnd_wave_high      : End index for random wave range.
+ *  uint16_t rnd_wave_low       : Start index for random wave range (PX_WSEQ_USE_RND_WAVE). Range: 0-65535.
+ *  uint16_t rnd_wave_high      : End index for random wave range. Range: 0-65535.
  *
- *  int8_t   [x]_mod_src        : Mod Source (-1 = None/Internal, 0 = Velocity, 1 = ModWheel, etc).
+ *  int8_t   [x]_mod_src        : Mod Source (-1 = None/Internal, 0-6 = PxModSource enum).
  *  float    [x]_depth          : Base effect depth (0.0 - 1.0).
  *
  *
  *  STRUCT: PxWaveSeqStep (Per-Step Data)
  *  -------------------------------------
- *  uint16_t wave_idx           : Waveform Index (0-255+).
- *  uint16_t duration_cycles    : Duration in oscillator cycles (e.g., 100).
- *  int16_t  pitch_offset       : Tuning in cents (+/-). 1200 = 1 Octave.
+ *  uint16_t wave_idx           : Waveform Index (0-65535).
+ *  uint16_t duration_cycles    : Duration in oscillator cycles (1-65535).
+ *                                - Values < 1 clamped to 1.
+ *  int16_t  pitch_offset       : Tuning in cents. 1200 = 1 Octave. Range: -32768 to +32767.
  *  uint16_t flags              : Bitwise logic flags.
  *
  *
@@ -1189,6 +1194,638 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // Degrading
             {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // ...
             {.wave_idx = 0, .duration_cycles = 0, .pitch_offset = 0, .flags = PX_WSEQ_END} // Silence
+        }
+    },
+
+    // --- Bank 16: Wavestation (128-135) ---
+    // Evolving vector synthesis textures and rhythmic loops.
+    // 128: Vector Pad
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 102, .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Pad
+            {.wave_idx = 8,   .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Saw/Sine
+            {.wave_idx = 115, .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Vowel
+            {.wave_idx = 9,   .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Sine/Saw
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 129: Ski Jam
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 128, .duration_cycles = 50, .pitch_offset = 0, .flags = 0}, // Kick
+            {.wave_idx = 132, .duration_cycles = 25, .pitch_offset = 0, .flags = 0}, // Cymbal
+            {.wave_idx = 129, .duration_cycles = 50, .pitch_offset = 0, .flags = 0}, // Snare
+            {.wave_idx = 132, .duration_cycles = 25, .pitch_offset = 0, .flags = 0}, // Cymbal
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 130: Wave Sweep
+    {
+        .end_action = PX_WSEQ_END_PINGPONG,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 0,  .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 4,  .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 8,  .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 12, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 131: Ethereal
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 121, .duration_cycles = 1000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Choir
+            {.wave_idx = 152, .duration_cycles = 1000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Breathing
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 132: Motion Texture
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 151, .duration_cycles = 500, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 151, .duration_cycles = 500, .pitch_offset = 10, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 133: Resonant Sweep
+    {
+        .end_action = PX_WSEQ_END_PINGPONG,
+        .steps = {
+            {.wave_idx = 114, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 114, .duration_cycles = 600, .pitch_offset = 1200, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 134: Glass Morph
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 71, .duration_cycles = 400, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 88, .duration_cycles = 400, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 135: Vector Pluck
+    {
+        .end_action = PX_WSEQ_END_STOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 144, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 102, .duration_cycles = 500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+
+    // --- Bank 17: VS Trickery (136-143) ---
+    // Fast scanning and digital artifacts.
+    // 136: Prophet Scan
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 32, .duration_cycles = 10, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 33, .duration_cycles = 10, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 34, .duration_cycles = 10, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 35, .duration_cycles = 10, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 137: Digital Choir
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 113, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 115, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 121, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 138: Bell Sweep
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 88, .duration_cycles = 300, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 88, .duration_cycles = 300, .pitch_offset = 700, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 139: Horror Scan
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 49, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 49, .duration_cycles = 200, .pitch_offset = -600, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 140: PPG Sweep
+    {
+        .end_action = PX_WSEQ_END_PINGPONG,
+        .steps = {
+            {.wave_idx = 16, .duration_cycles = 20, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 18, .duration_cycles = 20, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 20, .duration_cycles = 20, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 22, .duration_cycles = 20, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 141: Hard Sync Sweep
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 116, .duration_cycles = 500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 116, .duration_cycles = 500, .pitch_offset = 2400, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 142: Metal Morph
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 136, .duration_cycles = 400, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 137, .duration_cycles = 400, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 143: VS Strings
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 147, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 147, .duration_cycles = 100, .pitch_offset = 1200, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+
+    // --- Bank 18: Glitch IDM (144-151) ---
+    // Fast, chaotic, and generative sounds.
+    // 144: AFX Acid
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .rnd_octave_range = 60,
+        .bitcrush_bits = 4,
+        .steps = {
+            {.wave_idx = 29, .duration_cycles = 30, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 29, .duration_cycles = 30, .pitch_offset = 1200, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 145: Drill n Bass
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .rnd_wave_low = 160,
+        .rnd_wave_high = 175,
+        .steps = {
+            {.wave_idx = 160, .duration_cycles = 10, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 146: Glitch Pad
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .prob_skip_score = 40,
+        .steps = {
+            {.wave_idx = 146, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 146, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 147: Brain Dance
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .rnd_octave_range = 80,
+        .steps = {
+            {.wave_idx = 153, .duration_cycles = 40, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_OCTAVE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 148: Stutter Lead
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .prob_mute_score = 30,
+        .steps = {
+            {.wave_idx = 52, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 52, .duration_cycles = 20, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 149: Granular Cloud
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .rnd_wave_low = 144,
+        .rnd_wave_high = 159,
+        .steps = {
+            {.wave_idx = 165, .duration_cycles = 5, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 150: Chaos Arp
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .rnd_wave_low = 0,
+        .rnd_wave_high = 64,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 150, .duration_cycles = 15, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE | PX_WSEQ_USE_RND_OCTAVE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 151: Bitrot
+    {
+        .end_action = PX_WSEQ_END_STOP,
+        .bitcrush_bits = 8,
+        .steps = {
+            {.wave_idx = 249, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 249, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+
+    // --- Bank 19: Trap (152-159) ---
+    // Deep bass, sharp hats, and plucks.
+    // 152: 808 Sub Glides
+    {
+        .end_action = PX_WSEQ_END_STOP,
+        .glide_mode = PX_WSEQ_GLIDE_STEP,
+        .steps = {
+            {.wave_idx = 96, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 96, .duration_cycles = 300, .pitch_offset = -2400, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 153: HiHat Rolls
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 50, .duration_cycles = 8, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 0,  .duration_cycles = 8, .pitch_offset = 0, .flags = 0}, // Gap
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 154: Trap Pluck
+    {
+        .end_action = PX_WSEQ_END_STOP,
+        .steps = {
+            {.wave_idx = 68, .duration_cycles = 5, .pitch_offset = 1200, .flags = 0}, // Transient
+            {.wave_idx = 68, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 155: Dark Bell
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 135, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 135, .duration_cycles = 50, .pitch_offset = 300, .flags = 0}, // Minor 3rd
+            {.wave_idx = 135, .duration_cycles = 50, .pitch_offset = 700, .flags = 0}, // 5th
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 156: Snare Rush
+    {
+        .end_action = PX_WSEQ_END_STOP,
+        .steps = {
+            {.wave_idx = 49, .duration_cycles = 20, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 49, .duration_cycles = 15, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 49, .duration_cycles = 10, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 49, .duration_cycles = 5, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 157: Tape Stop FX
+    {
+        .end_action = PX_WSEQ_END_STOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 6, .duration_cycles = 300, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 6, .duration_cycles = 300, .pitch_offset = -2400, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 158: Vocal Chop
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 115, .duration_cycles = 30, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 0,   .duration_cycles = 10, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 115, .duration_cycles = 30, .pitch_offset = 500, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 159: Dirty Brass
+    {
+        .end_action = PX_WSEQ_END_STOP,
+        .bitcrush_bits = 6,
+        .steps = {
+            {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+
+    // --- Bank 20: Industrial (160-167) ---
+    // Distorted, metallic, and mechanical.
+    // 160: Reznor Bass
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .bitcrush_bits = 4,
+        .steps = {
+            {.wave_idx = 65, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 161: Rusty Metal
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .ring_mod_depth = 0.5f,
+        .ring_mod_mod_src = -1,
+        .steps = {
+            {.wave_idx = 136, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 162: Machine Beat
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 138, .duration_cycles = 50, .pitch_offset = -1200, .flags = 0},
+            {.wave_idx = 0,   .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 163: Distortion Lead
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 16, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 164: Broken Circuit
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .prob_skip_score = 30,
+        .steps = {
+            {.wave_idx = 210, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 165: Power Noise
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .bitcrush_bits = 2,
+        .steps = {
+            {.wave_idx = 140, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 166: Alarm
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 206, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 206, .duration_cycles = 100, .pitch_offset = 600, .flags = 0}, // Tritone
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 167: Grinder
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 139, .duration_cycles = 500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 139, .duration_cycles = 500, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+
+    // --- Bank 21: Abyss (168-175) ---
+    // Dark ambient and space drones.
+    // 168: Deep Drone
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 79, .duration_cycles = 2000, .pitch_offset = -2400, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 169: Void Calls
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 49, .duration_cycles = 800, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 0,  .duration_cycles = 1600, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 170: Submarine
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 156, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 0,   .duration_cycles = 2000, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 171: Dark Matter
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 100, .duration_cycles = 1000, .pitch_offset = -1200, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 172: Event Horizon
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 48, .duration_cycles = 2000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 48, .duration_cycles = 2000, .pitch_offset = -3600, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 173: Cthulhu
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 157, .duration_cycles = 500, .pitch_offset = -2400, .flags = PX_WSEQ_BITCRUSH},
+            {.flags = PX_WSEQ_END}
+        },
+        .bitcrush_bits = 6
+    },
+    // 174: Space Wind
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 159, .duration_cycles = 1500, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 175: Black Hole
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .bitcrush_bits = 4,
+        .steps = {
+            {.wave_idx = 248, .duration_cycles = 1000, .pitch_offset = -2400, .flags = PX_WSEQ_BITCRUSH},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+
+    // --- Bank 22: Experimental A (176-183) ---
+    // Math and complexity.
+    // 176: Math Noise
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 24, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 177: Fibonacci Spiral
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 247, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 178: Prime Arp
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 200, .flags = 0},
+            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 300, .flags = 0},
+            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 500, .flags = 0},
+            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 700, .flags = 0},
+            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 1100, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 179: Chaos Theory II
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 21, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 180: Cellular Automata
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 160, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 181: Random Walk
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 245, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_OCTAVE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 182: Fractal Noise
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 124, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 183: Quantum Foam
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .prob_skip_score = 50,
+        .steps = {
+            {.wave_idx = 150, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+
+    // --- Bank 23: Experimental B (184-191) ---
+    // Pure glitch and mayhem.
+    // 184: Data Mosh
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 35, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 185: Spectrum Cycle
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 167, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 186: Phase Smasher
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 56, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 187: FM Matrix
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .xmod_depth = 0.8f,
+        .xmod_mod_src = -1,
+        .steps = {
+            {.wave_idx = 67, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_XMOD},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 188: Ring Mod Hell
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .ring_mod_depth = 0.9f,
+        .ring_mod_mod_src = -1,
+        .steps = {
+            {.wave_idx = 188, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 189: Bitwise Logic
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .steps = {
+            {.wave_idx = 45, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 190: The Glitch
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .rnd_wave_low = 0,
+        .rnd_wave_high = 255,
+        .prob_skip_score = 20,
+        .steps = {
+            {.wave_idx = 53, .duration_cycles = 10, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE | PX_WSEQ_USE_PROB_SKIP},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 191: System Crash
+    {
+        .end_action = PX_WSEQ_END_STOP,
+        .bitcrush_bits = 4,
+        .steps = {
+            {.wave_idx = 238, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 238, .duration_cycles = 100, .pitch_offset = -1200, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 238, .duration_cycles = 200, .pitch_offset = -2400, .flags = PX_WSEQ_BITCRUSH},
+            {.flags = PX_WSEQ_END}
         }
     }
 };
