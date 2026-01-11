@@ -1,5 +1,5 @@
 # Polysonix
-**Version 1.7.8** | **Author:** Jacques Morel | **Copyright (c) 2025**
+**Version 1.7.9** | **Author:** Jacques Morel | **Copyright (c) 2025**
 
 A single-header polyphonic synthesizer engine.
 
