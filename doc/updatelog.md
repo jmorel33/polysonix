@@ -1,5 +1,21 @@
 # Update Log
 
+## v1.7.11 (2026/01/15)
+**Feature Update: Wave Sequencer Amplitude Modulation**
+
+This release adds per-step Amplitude Modulation to the Wave Sequencer, allowing for intricate rhythmic gating and envelope shaping directly within the sequence.
+
+*   **Amplitude Modulation:**
+    *   **New Feature:** Each step in a Wave Sequence can now apply an amplitude envelope or static level modulation.
+    *   **Per-Step Flag:** Added `PX_WSEQ_AMP_MOD` flag (Bit 3) to enable this feature on a per-step basis.
+    *   **Envelope Shapes:** The global `amp_mod_type` setting defines the shape used when the flag is active:
+        *   **Ramp Down/Up:** Classic pluck or reverse effects.
+        *   **Triangle/Sine:** Smooth pulsing or tremolo.
+        *   **Square/Pulse:** Hard rhythmic gating (50% or 25% duty cycle).
+        *   **Exp Down:** Percussive exponential pluck.
+        *   **Random:** Sample-and-Hold random level (latched per step).
+    *   **Implementation:** Replaced the unused `_padding` byte in `PxWaveSequence` with `amp_mod_type`, preserving binary compatibility.
+
 ## v1.7.10 (2026/01/05)
 
 This critical update fixes four significant issues identified in the codebase related to stability, thread safety, and resource management.

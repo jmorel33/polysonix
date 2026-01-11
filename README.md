@@ -1,5 +1,5 @@
 # Polysonix
-**Version 1.7.10** | **Author:** Jacques Morel | **Copyright (c) 2025**
+**Version 1.7.11** | **Author:** Jacques Morel | **Copyright (c) 2025**
 
 A single-header polyphonic synthesizer engine.
 
@@ -66,6 +66,7 @@ like UI, input handling, and audio device management.
     *   **Per-Cycle Precision:** Logic updates exactly at waveform cycle boundaries for phase-perfect transitions.
     *   **Generative Features:** Probability-based Mute and Skip steps, Random Octave, and Random Wave selection, with **Polyphonic RNG** seeding.
     *   **Per-Step FX:** Non-destructive Bitcrush, Ring Modulation, and Cross-Modulation (XMod) sequencing.
+    *   **Amplitude Modulation (v1.7.11):** Per-step envelope shaping (Ramp, Triangle, Sine, Gate, Exp) or Random S&H level modulation for rhythmic gating.
     *   **Glide Modes:** Supports standard stepped glide and analog-style **Exponential Glide** per step.
     *   **Zero-Allocation:** Runs entirely on a static 64KB ROM, suitable for embedded environments.
 - **Decoupled Design:** The engine is completely independent of any graphics or windowing library. The host application is responsible for the audio
@@ -455,6 +456,7 @@ Enums are used extensively in `polysonix.h` to define modes, targets, and parame
 *   `PxADSRParamType`: `PX_ADSR_PARAM_ATTACK`, `PX_ADSR_PARAM_DECAY`, `PX_ADSR_PARAM_SUSTAIN`, `PX_ADSR_PARAM_RELEASE`.
 *   `PxFilterParamType`: `PX_FILTER_PARAM_CUTOFF`, `PX_FILTER_PARAM_RESONANCE`, `PX_FILTER_PARAM_ENV_AMOUNT`, `PX_FILTER_PARAM_DRIVE`, `PX_FILTER_PARAM_KEYTRACK`, `PX_FILTER_PARAM_POLES`.
 *   `PxLFOParamType`: `PX_LFO_PARAM_FREQUENCY`.
+*   `PxWseqAmpModType` (v1.7.11): `PX_WSEQ_AMP_RAMP_DOWN` (Pluck), `PX_WSEQ_AMP_RAMP_UP` (Reverse), `PX_WSEQ_AMP_TRIANGLE`, `PX_WSEQ_AMP_SINE`, `PX_WSEQ_AMP_SQUARE` (Gate 50%), `PX_WSEQ_AMP_PULSE_25` (Gate 25%), `PX_WSEQ_AMP_EXP_DOWN` (Percussive), `PX_WSEQ_AMP_RANDOM` (S&H).
 *   `PxWSeqEndAction`: `PX_WSEQ_END_STOP`, `PX_WSEQ_END_HOLD`, `PX_WSEQ_END_LOOP`, `PX_WSEQ_END_PINGPONG`, `PX_WSEQ_END_REVERSE`.
 *   `PxWSeqGlideMode`: `PX_WSEQ_GLIDE_OFF`, `PX_WSEQ_GLIDE_STEP`, `PX_WSEQ_GLIDE_SMOOTH`.
 *   `PxModSource`: `PX_MOD_SRC_VELOCITY`, `PX_MOD_SRC_AFTERTOUCH`, `PX_MOD_SRC_MODWHEEL` (CC #1), `PX_MOD_SRC_PITCHBEND`, `PX_MOD_SRC_POLY_AFTERTOUCH`, `PX_MOD_SRC_KEY_TRACK`.

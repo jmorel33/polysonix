@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 7
-#define POLYSONIX_VERSION_PATCH 10
+#define POLYSONIX_VERSION_PATCH 11
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -204,6 +204,21 @@ typedef enum {
 // --- v1.5 Wave Sequencing Definitions ---
 
 /**
+ * @enum PxWseqAmpModType
+ * @brief Defines the shape of the amplitude envelope applied during a Wave Sequence step.
+ */
+typedef enum {
+    PX_WSEQ_AMP_RAMP_DOWN = 0, /**< Linear fade out (Pluck). */
+    PX_WSEQ_AMP_RAMP_UP,       /**< Linear fade in (Reverse). */
+    PX_WSEQ_AMP_TRIANGLE,      /**< Triangle (Swell/Fade). */
+    PX_WSEQ_AMP_SINE,          /**< Sine Hump. */
+    PX_WSEQ_AMP_SQUARE,        /**< 50% Gate (Chopper). */
+    PX_WSEQ_AMP_PULSE_25,      /**< 25% Gate (Short blip). */
+    PX_WSEQ_AMP_EXP_DOWN,      /**< Exponential Pluck (Percussive). */
+    PX_WSEQ_AMP_RANDOM         /**< Random Level (S&H), latched once per step. */
+} PxWseqAmpModType;
+
+/**
  * @enum PxWSeqEndAction
  * @brief Determines the behavior when a wave sequence reaches its end or an explicit END flag.
  */
@@ -230,6 +245,7 @@ typedef enum {
 #define PX_WSEQ_END             (1 << 0)  /**< Force Sequence End Action at this step. */
 #define PX_WSEQ_LOOP_POINT      (1 << 1)  /**< Marker for Loop Start (if supported by loop logic). */
 #define PX_WSEQ_JUMP_RANDOM     (1 << 2)  /**< Jump to a random step in the sequence. */
+#define PX_WSEQ_AMP_MOD         (1 << 3)  /**< Enable per-step Amplitude Modulation (Type defined in global settings). */
 
 // --- MODULATION / RESET (Bits 4-7) ---
 #define PX_WSEQ_RESET_LFO       (1 << 4)  /**< Reset LFO phases to 0. */
@@ -289,7 +305,7 @@ typedef struct {
     int8_t   lock_phase_mod_src;  /**< Mod Source for Phase Lock (-1 to 6). */
     int8_t   xmod_mod_src;        /**< Mod Source for XMod (FM) (-1 to 6). */
     int8_t   ring_mod_mod_src;    /**< Mod Source for Ring Mod (-1 to 6). */
-    int8_t   _padding;
+    int8_t   amp_mod_type;        /**< PxWseqAmpModType: Shape of amplitude envelope (0-7). */
 
     float    xmod_depth;          /**< Base amount for XMod (0.0 to 1.0). */
     float    ring_mod_depth;      /**< Base amount for Ring Mod (0.0 to 1.0). */
@@ -1111,6 +1127,7 @@ typedef struct {
     float    target_pitch_ratio;
     float    prev_step_pitch_ratio;
     float    step_bitcrush_scale;
+    float    step_amp_mod_val;
     bool     step_mute_state;
 } PxSeqState;
 
@@ -3041,6 +3058,30 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 // D. FX
                 if (sq->current_sequence) {
                     if (sq->step_mute_state) raw_sample = 0.0f;
+
+                    // v1.7.10: Amplitude Modulation
+                    if (sq->step_flags & PX_WSEQ_AMP_MOD) {
+                        float t = 0.0f;
+                        const PxWaveSeqStep* cur_step = &sq->current_sequence->steps[sq->step_idx];
+                        float dur = (float)cur_step->duration_cycles;
+                        if (dur < 1.0f) dur = 1.0f;
+                        t = (float)sq->cycles_counter / dur;
+                        t = fmaxf(0.0f, fminf(1.0f, t));
+
+                        float amp_scalar = 1.0f;
+                        switch (sq->current_sequence->amp_mod_type) {
+                            case PX_WSEQ_AMP_RAMP_DOWN: amp_scalar = 1.0f - t; break;
+                            case PX_WSEQ_AMP_RAMP_UP:   amp_scalar = t; break;
+                            case PX_WSEQ_AMP_TRIANGLE:  amp_scalar = 1.0f - fabsf(2.0f * t - 1.0f); break;
+                            case PX_WSEQ_AMP_SINE:      amp_scalar = sinf(t * PI); break;
+                            case PX_WSEQ_AMP_SQUARE:    amp_scalar = (t < 0.5f) ? 1.0f : 0.0f; break;
+                            case PX_WSEQ_AMP_PULSE_25:  amp_scalar = (t < 0.25f) ? 1.0f : 0.0f; break;
+                            case PX_WSEQ_AMP_EXP_DOWN:  amp_scalar = powf(1.0f - t, 4.0f); break;
+                            case PX_WSEQ_AMP_RANDOM:    amp_scalar = sq->step_amp_mod_val; break;
+                        }
+                        raw_sample *= amp_scalar;
+                    }
+
                     if (sq->step_flags & PX_WSEQ_BITCRUSH) {
                         float bits = (sq->current_sequence->bitcrush_bits > 0) ? (float)sq->current_sequence->bitcrush_bits : 4.0f;
                         // Modulate: depth 0-1 reduces bits.
@@ -3228,6 +3269,15 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
                             sq->step_flags = next_step->flags;
                             sq->step_mute_state = false;
+
+                            // Latch Random Amp Mod Value
+                            sq->step_amp_mod_val = 1.0f;
+                            if (sq->step_flags & PX_WSEQ_AMP_MOD) {
+                                if (sq->current_sequence->amp_mod_type == PX_WSEQ_AMP_RANDOM) {
+                                    sq->step_amp_mod_val = (float)px_rand(&v->rng_state) / UINT32_MAX;
+                                }
+                            }
+
                             if (sq->step_flags & PX_WSEQ_USE_PROB_MUTE) {
                                 uint8_t score = sq->current_sequence->prob_mute_score;
                                 if ((px_rand(&v->rng_state) % 100) < (score==0?50:score)) sq->step_mute_state = true;
@@ -3920,6 +3970,12 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
             }
 
             sq->step_bitcrush_scale = (sq->current_sequence->bitcrush_bits > 0) ? powf(2.0f, sq->current_sequence->bitcrush_bits) : 1.0f;
+
+            // Initialize Random Amp Mod
+            sq->step_amp_mod_val = 1.0f;
+            if (sq->current_sequence->amp_mod_type == PX_WSEQ_AMP_RANDOM) {
+                sq->step_amp_mod_val = (float)px_rand(&v->rng_state) / UINT32_MAX;
+            }
 
             // Reset LFOs
             if (sq->current_sequence->reset_lfo_pos) {
