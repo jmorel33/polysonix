@@ -2687,106 +2687,199 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         }
     },
 
-    // --- Bank 30: Reserved User Bank (240-247) ---
-    // Reserved for user custom sequences — all empty (zeros).
-    // 240
+    // --- Bank 30: Screaming Edges (240-247) ---
+    // Wild, funky, and glitchy textures that push the limits.
+    // 240: Glitch Funk
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .bitcrush_bits = 4,
+        .prob_skip_score = 40,
+        .steps = {
+            {.wave_idx = 35, .duration_cycles = 25, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP}, // Bit Crush Bomb
+            {.wave_idx = 35, .duration_cycles = 25, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 35, .duration_cycles = 25, .pitch_offset = -1200, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 35, .duration_cycles = 25, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.flags = PX_WSEQ_END}
+        }
     },
-    // 241
+    // 241: Neuro Tear
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .xmod_depth = 0.6f,
+        .xmod_mod_src = -1,
+        .steps = {
+            {.wave_idx = 65, .duration_cycles = 300, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD}, // FM Bass Growl
+            {.wave_idx = 65, .duration_cycles = 100, .pitch_offset = 500, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD},
+            {.wave_idx = 65, .duration_cycles = 400, .pitch_offset = -2400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD},
+            {.flags = PX_WSEQ_END}
+        }
     },
-    // 242
+    // 242: Jazz Bot
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .rnd_octave_range = 40,
+        .prob_skip_score = 20,
+        .steps = {
+            {.wave_idx = 110, .duration_cycles = 40, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_OCTAVE}, // Organ
+            {.wave_idx = 110, .duration_cycles = 40, .pitch_offset = 300, .flags = PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 110, .duration_cycles = 40, .pitch_offset = 700, .flags = PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 110, .duration_cycles = 40, .pitch_offset = 500, .flags = PX_WSEQ_USE_RND_OCTAVE},
+            {.flags = PX_WSEQ_END}
+        }
     },
-    // 243
+    // 243: Screaming Sync
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 116, .duration_cycles = 200, .pitch_offset = 2400, .flags = PX_WSEQ_LOCK_PHASE | PX_WSEQ_GLIDE}, // Sync Sweep
+            {.wave_idx = 116, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        },
+        .lock_phase_mod_src = -1
     },
-    // 244
+    // 244: Tape Chew
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 58, .duration_cycles = 350, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_GLIDE}, // Phase Glitch
+            {.wave_idx = 58, .duration_cycles = 50, .pitch_offset = -50, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_GLIDE},
+            {.wave_idx = 58, .duration_cycles = 350, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_GLIDE},
+            {.wave_idx = 58, .duration_cycles = 50, .pitch_offset = 1200, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
     },
-    // 245
+    // 245: Machine Gun
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .bitcrush_bits = 4,
+        .steps = {
+            {.wave_idx = 228, .duration_cycles = 8, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_BITCRUSH}, // POKEY Filtered
+            {.wave_idx = 228, .duration_cycles = 8, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.flags = PX_WSEQ_END}
+        },
+        .adsr_retrig_phase = 1
     },
-    // 246
+    // 246: Ring Mod City
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .ring_mod_depth = 1.0f,
+        .ring_mod_mod_src = -1,
+        .rnd_wave_low = 192,
+        .rnd_wave_high = 200,
+        .steps = {
+            {.wave_idx = 195, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_USE_RND_WAVE}, // Metallic
+            {.wave_idx = 195, .duration_cycles = 100, .pitch_offset = 1200, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_USE_RND_WAVE},
+            {.flags = PX_WSEQ_END}
+        }
     },
-    // 247
+    // 247: Hyper Zip
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_PINGPONG,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 4, .duration_cycles = 10, .pitch_offset = -2400, .flags = PX_WSEQ_GLIDE}, // Square
+            {.wave_idx = 4, .duration_cycles = 10, .pitch_offset = 2400, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
     },
 
-    // --- Bank 31: Reserved User Bank (248-255) ---
-    // Reserved for user custom sequences — all empty (zeros).
-    // 248
+    // --- Bank 31: Total Meltdown (248-255) ---
+    // Pure chaos, noise, and experimental destruction.
+    // 248: Feedback Fry
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .xmod_depth = 0.8f,
+        .xmod_mod_src = -1,
+        .bitcrush_bits = 6,
+        .steps = {
+            {.wave_idx = 53, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_XMOD | PX_WSEQ_BITCRUSH}, // Glitch Sine
+            {.wave_idx = 53, .duration_cycles = 150, .pitch_offset = 1200, .flags = PX_WSEQ_XMOD | PX_WSEQ_BITCRUSH},
+            {.flags = PX_WSEQ_END}
+        }
     },
-    // 249
+    // 249: Mosh Pit
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .rnd_wave_low = 176,
+        .rnd_wave_high = 239,
+        .rnd_octave_range = 60,
+        .steps = {
+            {.wave_idx = 0, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE | PX_WSEQ_USE_RND_OCTAVE}, // Arcade/POKEY random
+            {.flags = PX_WSEQ_END}
+        }
     },
-    // 250
+    // 250: Pulsar
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .ring_mod_depth = 0.5f,
+        .ring_mod_mod_src = -1,
+        .steps = {
+            {.wave_idx = 56, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_RING_MOD}, // Phase Distortion
+            {.wave_idx = 56, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD},
+            {.flags = PX_WSEQ_END}
+        }
     },
-    // 251
+    // 251: Noise Scrape
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .steps = {
+            {.wave_idx = 167, .duration_cycles = 600, .pitch_offset = -1200, .flags = PX_WSEQ_GLIDE}, // LFSR Spectral Shift
+            {.wave_idx = 167, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
     },
-    // 252
+    // 252: Static Burst
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .prob_mute_score = 60,
+        .steps = {
+            {.wave_idx = 236, .duration_cycles = 10, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE}, // POKEY 15kHz Noise
+            {.wave_idx = 0,   .duration_cycles = 30, .pitch_offset = 0, .flags = 0},
+            {.flags = PX_WSEQ_END}
+        }
     },
-    // 253
+    // 253: Logic Fail
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .bitcrush_bits = 4,
+        .xmod_depth = 0.5f,
+        .xmod_mod_src = -1,
+        .ring_mod_depth = 0.5f,
+        .ring_mod_mod_src = -1,
+        .steps = {
+            {.wave_idx = 240, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD}, // PWM Hash
+            {.flags = PX_WSEQ_END}
+        }
     },
-    // 254
+    // 254: Cyber Jazz Solo
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_STEP,
+        .steps = {
+            {.wave_idx = 69, .duration_cycles = 40, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // FM Pitched Grit
+            {.wave_idx = 69, .duration_cycles = 40, .pitch_offset = 300, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 69, .duration_cycles = 40, .pitch_offset = 500, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 69, .duration_cycles = 40, .pitch_offset = 700, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 69, .duration_cycles = 40, .pitch_offset = 1000, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 69, .duration_cycles = 40, .pitch_offset = 1200, .flags = PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
     },
-    // 255
+    // 255: System Meltdown
     {
-        .end_action = 0,
-        .glide_mode = 0,
-        .steps = {{0}},
+        .end_action = PX_WSEQ_END_STOP,
+        .bitcrush_bits = 2,
+        .steps = {
+            {.wave_idx = 251, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // POKEY T+N
+            {.wave_idx = 251, .duration_cycles = 50, .pitch_offset = -500, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 251, .duration_cycles = 100, .pitch_offset = -1200, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 251, .duration_cycles = 200, .pitch_offset = -2400, .flags = PX_WSEQ_BITCRUSH},
+            {.flags = PX_WSEQ_END}
+        }
     },
 
 };
