@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 7
-#define POLYSONIX_VERSION_PATCH 9
+#define POLYSONIX_VERSION_PATCH 10
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1414,6 +1414,7 @@ typedef struct {
     int capacity;
     _Atomic int write;
     _Atomic int read;
+    atomic_flag lock;
 } CommandQueue;
 
 typedef struct {
@@ -1973,15 +1974,53 @@ static float cubic_interpolate(float y0, float y1, float y2, float y3, float t) 
 }
 
 // --- COMMAND QUEUE HELPERS ---
+
+// Add CPU pause/yield for spinlocks to reduce power consumption and bus contention
+#if defined(__SSE2__) || defined(_M_X64) || defined(_M_IX86)
+    #include <emmintrin.h>
+    #define PX_CPU_PAUSE() _mm_pause()
+#elif defined(__aarch64__) || defined(__arm__)
+    #define PX_CPU_PAUSE() __asm__ __volatile__("yield") // ARM yield
+#else
+    #define PX_CPU_PAUSE() ((void)0)
+#endif
+
 static bool cmd_push(CommandQueue* q, PxCommand cmd) {
+    // 1. Spinlock Acquire
+    // "memory_order_acquire" prevents memory reordering of the buffer write
+    // to before the lock is taken.
+    while (atomic_flag_test_and_set_explicit(&q->lock, memory_order_acquire)) {
+        PX_CPU_PAUSE(); // Hint to CPU that we are in a spin-wait loop
+    }
+
+    // --- Critical Section Start ---
+
+    // Load 'write' index (Relaxed is fine because we hold the lock)
     int w = atomic_load_explicit(&q->write, memory_order_relaxed);
     int next_w = (w + 1) % q->capacity;
-    if (next_w == atomic_load_explicit(&q->read, memory_order_acquire)) {
-        return false; // Queue is full, command is dropped.
+    bool success = false;
+
+    // Load 'read' index
+    // Using 'acquire' ensures we see the most up-to-date 'read' value from the
+    // audio thread (Consumer). If we used relaxed, we might think the queue
+    // is full when it actually has space.
+    int r = atomic_load_explicit(&q->read, memory_order_acquire);
+
+    // Check full condition
+    if (next_w != r) {
+        q->buffer[w] = cmd;
+        // Store 'write' (Release ensures the Consumer sees the data
+        // before seeing the index update)
+        atomic_store_explicit(&q->write, next_w, memory_order_release);
+        success = true;
     }
-    q->buffer[w] = cmd;
-    atomic_store_explicit(&q->write, next_w, memory_order_release);
-    return true;
+
+    // --- Critical Section End ---
+
+    // 2. Spinlock Release
+    atomic_flag_clear_explicit(&q->lock, memory_order_release);
+
+    return success;
 }
 
 static bool cmd_pop(CommandQueue* q, PxCommand* out_cmd) {
@@ -2309,6 +2348,7 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     if (!s->cmd_queue.buffer) { free(s); return NULL; }
     atomic_init(&s->cmd_queue.write, 0);
     atomic_init(&s->cmd_queue.read, 0);
+    atomic_flag_clear(&s->cmd_queue.lock);
 
     // 4. Allocate memory for all dynamic arrays within the patch.
     s->patch.template_voice_adsrs = (PxADSRParams*)calloc(config->num_voice_adsrs, sizeof(PxADSRParams));
@@ -2514,6 +2554,11 @@ PX_API void PX_Destroy(PxSynth* s) {
     if (s->cmd_queue.buffer) free(s->cmd_queue.buffer);
     if (s->limiter.delay_line_l) free(s->limiter.delay_line_l);
     if (s->limiter.delay_line_r) free(s->limiter.delay_line_r);
+    if (s->config.use_gpu) {
+#ifdef POLYSONIX_USE_GPU
+        px_vm_cleanup_gpu_resources();
+#endif
+    }
     free(s);
 }
 
@@ -3126,7 +3171,22 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                             }
                         } else {
                             if (current_step->flags & PX_WSEQ_JUMP_RANDOM) {
-                                sq->step_idx = px_rand(&v->rng_state) % PX_MAX_WSEQ_STEPS;
+                                // Scan for valid length
+                                int valid_len = 0;
+                                for (int k=0; k<PX_MAX_WSEQ_STEPS; k++) {
+                                    if (sq->current_sequence->steps[k].flags & PX_WSEQ_END) {
+                                        valid_len = k + 1;
+                                        break;
+                                    }
+                                    if (sq->current_sequence->steps[k].duration_cycles == 0 && sq->current_sequence->steps[k].flags == 0 && sq->current_sequence->steps[k].wave_idx == 0) {
+                                         // Assume implicit end of data
+                                         valid_len = k;
+                                         break;
+                                    }
+                                    valid_len = k + 1;
+                                }
+                                if (valid_len < 1) valid_len = 1;
+                                sq->step_idx = px_rand(&v->rng_state) % valid_len;
                             } else {
                                 sq->step_idx += sq->direction;
                             }
