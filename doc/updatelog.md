@@ -1,5 +1,23 @@
 # Update Log
 
+## v1.8.0 (2026/01/22)
+**Major Feature: Time-Locked Wave Sequencing & Engine Fixes**
+
+This release introduces the "Time-Locked" Wave Sequencing mode, which ensures consistent step duration across different pitches, crucial for rhythmic sequences and bass lines. It also includes critical fixes for the LFSR system and sequencer logic.
+
+*   **Time-Locked Wave Sequencing:**
+    *   **New Feature:** Added `wseq_fixed_time` global setting. When enabled, the duration of wave sequence steps is dynamically scaled based on the oscillator's pitch relative to a reference frequency (`wseq_ref_freq`, default 440 Hz).
+    *   **Benefit:** This allows sequences to maintain their rhythmic timing (e.g., 16th notes) regardless of the note played, avoiding the "speed up/slow down" effect of traditional cycle-based sequencing, while preserving phase integrity.
+    *   **Integration:**
+        *   Added `PX_SetWSeqFixedTime` and `PX_SetWSeqRefFreq` APIs.
+        *   Updated serialization to include these new fields.
+        *   Optimized `PX_Process` to cache target cycle counts, ensuring zero per-sample overhead.
+
+*   **Bug Fixes & Improvements:**
+    *   **LFSR 14-bit Fix:** Corrected the tap mask and re-enabled the 14-bit LFSR generator in `px_vm.h`, which was previously disabled due to instability. It now uses a standard primitive polynomial.
+    *   **Cycle Counting Logic:** Fixed a logic error in `PX_Process` where the cycle target for the *next* step was incorrectly calculated using the *current* step's properties.
+    *   **Verification:** Verified timing logic correctness across octaves using a custom `mprotect`-based test harness.
+
 ## v1.7.11 (2026/01/15)
 **Feature Update: Wave Sequencer Amplitude Modulation**
 

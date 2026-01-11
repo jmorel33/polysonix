@@ -205,6 +205,9 @@ static void px_serialize_patch_impl(const PxPatch* p, const PxConfig* c, uint8_t
     SER_SCALAR(p->aftertouch_curve, PxCurveType);
     SER_BUF(p->osc, sizeof(PxOscillator) * PX_MAX_OSC_PER_VOICE);
 
+    SER_SCALAR(p->wseq_fixed_time, bool);
+    SER_SCALAR(p->wseq_ref_freq, float);
+
     #undef SER_BUF
     #undef SER_SCALAR
 
@@ -257,6 +260,9 @@ static bool px_deserialize_patch_impl(PxPatch* p, const PxConfig* c, const uint8
     DESER_SCALAR(p->velocity_curve, PxCurveType);
     DESER_SCALAR(p->aftertouch_curve, PxCurveType);
     DESER_BUF(p->osc, sizeof(PxOscillator) * PX_MAX_OSC_PER_VOICE);
+
+    DESER_SCALAR(p->wseq_fixed_time, bool);
+    DESER_SCALAR(p->wseq_ref_freq, float);
 
     #undef DESER_BUF
     #undef DESER_SCALAR
