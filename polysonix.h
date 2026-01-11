@@ -1025,7 +1025,7 @@ static const float HB[5] = {
 };
 
 // --- v1.5 ROM (Populated) ---
-#include "wseq_rom.h"
+#include "px_wseq_rom.h"
 
 static const char* PX_FILTER_MODE_NAMES[] = {"OFF", "LP", "BP", "HP", "LP+BP", "LP+HP", "BP+HP", "NOTCH", "ALLPASS"};
 static const char* PX_ADSR_DEST_NAMES[] = { "NONE", "PARAM1", "PARAM2", "PARAM3", "AMP", "FREQ(ST)", "LFO0 LVL", "LFO1 LVL", "LFO2 LVL", "FREQ.CUT(HZ)", "FREQ.ENV IN", "FREQ.RES(Q)"};

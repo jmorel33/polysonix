@@ -6,7 +6,7 @@
 This update unlocks the full potential of the Wave Sequencer by populating the ROM with a diverse library of 128 production-ready sequences.
 
 *   **Expanded ROM:**
-    *   **Full Capacity:** The `wseq_rom.h` file now contains 128 unique wave sequences (Indices 0-127), replacing the previous sparse set of examples.
+    *   **Full Capacity:** The `px_wseq_rom.h` file now contains 128 unique wave sequences (Indices 0-127), replacing the previous sparse set of examples.
     *   **Thematic Banks:** Sequences are organized into 16 thematic banks of 8 entries each, providing instant access to a wide range of rhythmic and textural behaviors:
         *   **Bank 0: Lead** (Classic sync, PWM, and FM leads)
         *   **Bank 1: Pad** (Evolving, glassy, and choir textures)

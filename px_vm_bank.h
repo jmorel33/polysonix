@@ -294,7 +294,7 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /*121*/ { "Oooh Choir Formant", "sigma(k, 1.0, 8.0 + 4.0*abs(MOD_B), 1.0, ( sin(x*k + RAND_OFFSET*0.1*k) * ( (1.0 / (1.0 + pow( (k - (2.5 + MOD_A*1.5)) / (0.8 + abs(MOD_A*0.3)) , 2.0))) + (0.7 / (1.0 + pow( (k - ( ((MOD_A > 0) ^ (MOD_B > 0.3)) ? (6.0 - MOD_A*2.0) : (5.0 + MOD_A*1.0) ) ) / 1.2 , 2.0))) ) ) / pow(k, 0.7 + 0.2*abs(MOD_B)) ) * 0.25 * (1.0 + 0.15*sin(x*6.0 + RAND_OFFSET*PI))" },
 
-/*122*/ { "Vocal Formant Morph", "sigma(k, 1.0, 16.0, 1.0, sin(x*k) * ((1.0/(1.0 + pow((k - (2.5 + MOD_A*4.0))/0.8, 2.0))) + (0.6/(1.0 + pow((k - (6.0 + MOD_B*6.0))/1.2, 2.0))) + (0.4/(1.0 + pow((k - 14.0)/2.0, 2.0)))) / sqrt(k)) * 0.2" },
+/*122*/ { "PD Vocal Formant", "sin(x + sin(x * MOD_A * 8.0))" }, // Simple PD Formant
 
 /*123*/ { "Sync Soft", "sin(x * (1.0 + MOD_A * 3.0)) * (1.0 - x/TWO_PI)" }, // Windowed sync effect.
 
