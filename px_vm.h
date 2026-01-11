@@ -2398,7 +2398,7 @@ static const LfsrConfigEntry lfsr_configs[NUM_LFSR_TYPES] = {
     {LFSR_11BIT, 11, (1 << 0) | (1 << 2),       2047, 1},
     {LFSR_12BIT, 12, (1<<0)|(1<<1)|(1<<4)|(1<<6),4095,1},
     {LFSR_13BIT, 13, (1<<0)|(1<<1)|(1<<3)|(1<<4),8191,1},
-    {LFSR_14BIT, 14, (1<<0)|(1<<1)|(1<<5)|(1<<6),16383,1},
+    {LFSR_14BIT, 14, (1<<0)|(1<<1)|(1<<2)|(1<<12),16383,1},
     {LFSR_15BIT, 15, (1 << 0) | (1 << 1),      32767, 1},
     {LFSR_16BIT, 16, (1<<0)|(1<<2)|(1<<3)|(1<<5),65535,1},
     {LFSR_17BIT, 17, (1 << 0) | (1 << 14),    131071, 1}, // For x^17 + x^3 + 1 (standard is x^17+x^14+1 or x^17+x^5+1, using x^14 from user comment for consistency with original)

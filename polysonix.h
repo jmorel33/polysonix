@@ -16,8 +16,8 @@
  */
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
-#define POLYSONIX_VERSION_MINOR 7
-#define POLYSONIX_VERSION_PATCH 11
+#define POLYSONIX_VERSION_MINOR 8
+#define POLYSONIX_VERSION_PATCH 0
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -605,6 +605,12 @@ PX_API float       PX_GetVelocityToParam1(PxSynth* s);
 PX_API float       PX_GetAftertouchToFilterCutoff(PxSynth* s);
 PX_API float       PX_GetAftertouchToVibrato(PxSynth* s);
 
+// --- v1.8 Time-Locked Wave Sequencing ---
+PX_API void        PX_SetWSeqFixedTime(PxSynth* s, bool enabled);
+PX_API bool        PX_GetWSeqFixedTime(PxSynth* s);
+PX_API void        PX_SetWSeqRefFreq(PxSynth* s, float freq);
+PX_API float       PX_GetWSeqRefFreq(PxSynth* s);
+
 /**
  * @brief Releases a note that was previously triggered.
  * @details This function is thread-safe and sends a command to the audio thread to begin the release phase of the note's envelopes.
@@ -1118,6 +1124,7 @@ typedef struct {
     int  step_idx;
     int  direction;
     int  cycles_counter;
+    uint32_t current_step_target_cycles; // v1.8: Cached target
     bool finished;
     int  loop_start_idx;
     const PxWaveSequence* current_sequence;
@@ -1330,6 +1337,10 @@ typedef struct PxPatch {
 
     // v1.6: Triple Oscillator Architecture
     PxOscillator osc[PX_MAX_OSC_PER_VOICE];
+
+    // v1.8: Time-Locked Wave Sequencing
+    bool  wseq_fixed_time;      // Enable Time-Locked mode
+    float wseq_ref_freq;        // Reference frequency (default 440.0 Hz)
 } PxPatch;
 
 // --- THREAD-SAFE COMMUNICATION STRUCTURES ---
@@ -1389,7 +1400,10 @@ typedef enum {
     PX_CMD_SET_OSC_PHASE_DIST,
     PX_CMD_SET_OSC_SYNC,
     PX_CMD_SET_OSC_RING_MOD,
-    PX_CMD_SET_OSC_BITCRUSH
+    PX_CMD_SET_OSC_BITCRUSH,
+    // v1.8
+    PX_CMD_SET_WSEQ_FIXED_TIME,
+    PX_CMD_SET_WSEQ_REF_FREQ
 } PxCommandType;
 
 typedef union {
@@ -1419,6 +1433,8 @@ typedef union {
     struct { int seq_id; } sequence;
     struct { int osc_idx; int seq_id; } osc_sequence;
     struct { int osc_idx; bool enabled; float value; } osc_feat; // v1.7: enabled + depth/amount
+    struct { bool enabled; } wseq_fixed_time;
+    struct { float freq; } wseq_ref_freq;
 } PxCommandData;
 
 typedef struct {
@@ -2293,6 +2309,12 @@ static void PX_ProcessCommands(PxSynth* s) {
                     s->patch.osc[cmd.data.osc_feat.osc_idx].bitcrush_depth = fmaxf(0.0f, fminf(1.0f, cmd.data.osc_feat.value));
                 }
                 break;
+            case PX_CMD_SET_WSEQ_FIXED_TIME:
+                s->patch.wseq_fixed_time = cmd.data.wseq_fixed_time.enabled;
+                break;
+            case PX_CMD_SET_WSEQ_REF_FREQ:
+                s->patch.wseq_ref_freq = fmaxf(1.0f, cmd.data.wseq_ref_freq.freq);
+                break;
         }
     }
 }
@@ -2334,6 +2356,9 @@ static void PX_UpdateUISnapshot(PxSynth* s) {
 
     s->ui_snapshot.patch_copy.pitchbend_range_semitones = s->patch.pitchbend_range_semitones;
     s->ui_snapshot.lfo_update_interval_ms = s->config.lfo_update_interval_ms;
+
+    s->ui_snapshot.patch_copy.wseq_fixed_time = s->patch.wseq_fixed_time;
+    s->ui_snapshot.patch_copy.wseq_ref_freq = s->patch.wseq_ref_freq;
 
     for (int i = 0; i < s->config.num_voices; ++i) { s->ui_snapshot.voices[i] = PX_GetVoiceInfo_internal(s, i); }
     for (int i = 0; i < s->config.num_lfos; ++i) { s->ui_snapshot.lfos[i] = PX_GetLFOInfo_internal(s, i); }
@@ -2545,6 +2570,10 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
         s->patch.osc[i].bitcrush_enabled = false;
         s->patch.osc[i].bitcrush_depth = 0.0f;
     }
+
+    // v1.8 Defaults
+    s->patch.wseq_fixed_time = false;
+    s->patch.wseq_ref_freq = 440.0f;
 
     PX_UpdateUISnapshot(s);
     return s;
@@ -2951,15 +2980,22 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     } else if (do_step_glide) {
                         const PxWaveSeqStep* current_step = &sq->current_sequence->steps[sq->step_idx];
 
-                        // v1.7.1: Safety for zero/short steps
-                        float effective_duration = (float)current_step->duration_cycles;
-                        if (effective_duration < 0.5f) effective_duration = 4.0f;
+                        // v1.8: Use Cached Target Cycles
+                        float effective_duration = (float)sq->current_step_target_cycles;
+
+                        // v1.7.1: Safety for zero/short steps (retained but simplified as target is already >= 1)
+                        if (effective_duration < 1.0f) effective_duration = 1.0f;
 
                         // v1.7.1: Clamp glide time (min 10ms to avoid smearing, max 1000 cycles to avoid extreme glides)
-                        float est_freq = effective_voice_freq;
-                        if (est_freq < 20.0f) est_freq = 20.0f;
-                        float min_dur_cycles = 0.01f * est_freq; // 10ms * freq
-                        effective_duration = fminf(fmaxf(effective_duration, min_dur_cycles), 1000.0f);
+                        // Note: For Time-Locked mode, clamping might interfere with intent, but we keep safety limits.
+                        // However, dynamic target cycles already handles the "time" aspect.
+                        // We will trust current_step_target_cycles for Time-Locked unless it's extremely short.
+                        if (!s->patch.wseq_fixed_time) {
+                             float est_freq = effective_voice_freq;
+                             if (est_freq < 20.0f) est_freq = 20.0f;
+                             float min_dur_cycles = 0.01f * est_freq; // 10ms * freq
+                             effective_duration = fminf(fmaxf(effective_duration, min_dur_cycles), 1000.0f);
+                        }
 
                         if (effective_duration > 0.5f) {
                             float t = ((float)sq->cycles_counter + v->osc_phase[o]) / effective_duration;
@@ -3062,8 +3098,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     // v1.7.10: Amplitude Modulation
                     if (sq->step_flags & PX_WSEQ_AMP_MOD) {
                         float t = 0.0f;
-                        const PxWaveSeqStep* cur_step = &sq->current_sequence->steps[sq->step_idx];
-                        float dur = (float)cur_step->duration_cycles;
+                        // v1.8: Use Cached Target Cycles
+                        float dur = (float)sq->current_step_target_cycles;
                         if (dur < 1.0f) dur = 1.0f;
                         t = (float)sq->cycles_counter / dur;
                         t = fmaxf(0.0f, fminf(1.0f, t));
@@ -3191,7 +3227,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 if (sq->current_sequence && !sq->finished && cycle_completed) {
                     sq->cycles_counter++;
                     const PxWaveSeqStep* current_step = &sq->current_sequence->steps[sq->step_idx];
-                    int target_cycles = current_step->duration_cycles;
+                    // v1.8: Use Cached Target
+                    uint32_t target_cycles = sq->current_step_target_cycles;
                     if (target_cycles < 1) target_cycles = 1;
 
                     if (sq->cycles_counter >= target_cycles) {
@@ -3260,6 +3297,17 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                             // v1.7.1: Start next glide from CURRENT ratio to avoid jumps if previous glide was clamped/interrupted
                             sq->prev_step_pitch_ratio = seq_pitch_mult;
                             sq->step_pitch_ratio = powf(2.0f, next_step->pitch_offset / 1200.0f);
+
+                            // v1.8: Calculate Cycle Target for Next Step
+                            float step_freq = v->original_frequency * sq->step_pitch_ratio;
+                            if (s->patch.wseq_fixed_time && s->patch.wseq_ref_freq > 0.0f) {
+                                float time_scaling = step_freq / s->patch.wseq_ref_freq;
+                                sq->current_step_target_cycles = (uint32_t)(next_step->duration_cycles * time_scaling);
+                            } else {
+                                sq->current_step_target_cycles = next_step->duration_cycles;
+                            }
+                            if (sq->current_step_target_cycles < 1) sq->current_step_target_cycles = 1;
+
                             if (next_step->flags & PX_WSEQ_USE_RND_OCTAVE) {
                                 if ((px_rand(&v->rng_state) % 100) < sq->current_sequence->rnd_octave_range) {
                                     float shift = (px_rand(&v->rng_state) % 2 == 0) ? 2.0f : 0.5f;
@@ -3284,7 +3332,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                             }
                             if (sq->step_flags & PX_WSEQ_USE_PROB_SKIP) {
                                 uint8_t score = sq->current_sequence->prob_skip_score;
-                                if ((px_rand(&v->rng_state) % 100) < (score==0?50:score)) sq->cycles_counter = next_step->duration_cycles;
+                                if ((px_rand(&v->rng_state) % 100) < (score==0?50:score)) sq->cycles_counter = sq->current_step_target_cycles;
                             }
 
                             if (sq->step_flags & PX_WSEQ_RETRIG_ADSR) {
@@ -3628,6 +3676,24 @@ PX_API float PX_GetOscBitcrush(PxSynth* s, int osc_idx) {
 PX_API bool PX_GetOscBitcrushEnabled(PxSynth* s, int osc_idx) {
     if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return false;
     return s->ui_snapshot.patch_copy.osc[osc_idx].bitcrush_enabled;
+}
+
+PX_API void PX_SetWSeqFixedTime(PxSynth* s, bool enabled) {
+    if (!s) return;
+    PUSH_CMD_VOID(PX_CMD_SET_WSEQ_FIXED_TIME, .wseq_fixed_time = {enabled});
+}
+
+PX_API bool PX_GetWSeqFixedTime(PxSynth* s) {
+    return s ? s->ui_snapshot.patch_copy.wseq_fixed_time : false;
+}
+
+PX_API void PX_SetWSeqRefFreq(PxSynth* s, float freq) {
+    if (!s) return;
+    PUSH_CMD_VOID(PX_CMD_SET_WSEQ_REF_FREQ, .wseq_ref_freq = {freq});
+}
+
+PX_API float PX_GetWSeqRefFreq(PxSynth* s) {
+    return s ? s->ui_snapshot.patch_copy.wseq_ref_freq : 440.0f;
 }
 
 // --- THREAD-SAFE GET API ---
@@ -3993,6 +4059,16 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
             sq->prev_step_pitch_ratio = sq->step_pitch_ratio;
             sq->step_flags = step->flags;
             sq->step_mute_state = false;
+
+            // v1.8: Calculate Cycle Target
+            float step_freq = v->original_frequency * sq->step_pitch_ratio;
+            if (s->patch.wseq_fixed_time && s->patch.wseq_ref_freq > 0.0f) {
+                float time_scaling = step_freq / s->patch.wseq_ref_freq;
+                sq->current_step_target_cycles = (uint32_t)(step->duration_cycles * time_scaling);
+            } else {
+                sq->current_step_target_cycles = step->duration_cycles;
+            }
+            if (sq->current_step_target_cycles < 1) sq->current_step_target_cycles = 1;
 
             if (sq->step_flags & PX_WSEQ_USE_PROB_MUTE) {
                  uint8_t score = sq->current_sequence->prob_mute_score;
