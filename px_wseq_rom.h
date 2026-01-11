@@ -531,17 +531,19 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Nylon Guitar",
         .end_action = PX_WSEQ_END_STOP,
-        .steps = { {.wave_idx = 144, .duration_cycles = 300, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
+        .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
+        .steps = { {.wave_idx = 144, .duration_cycles = 300, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD}, {.flags = PX_WSEQ_END} }
     },
     // 41: Harp Arp
     {
         .name = "Harp Arp",
         .end_action = PX_WSEQ_END_LOOP,
+        .amp_mod_type = PX_WSEQ_AMP_RAMP_DOWN,
         .steps = {
-            {.wave_idx = 144, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 144, .duration_cycles = 200, .pitch_offset = 400, .flags = 0},
-            {.wave_idx = 144, .duration_cycles = 200, .pitch_offset = 700, .flags = 0},
-            {.wave_idx = 144, .duration_cycles = 200, .pitch_offset = 1200, .flags = 0},
+            {.wave_idx = 144, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 144, .duration_cycles = 200, .pitch_offset = 400, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 144, .duration_cycles = 200, .pitch_offset = 700, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 144, .duration_cycles = 200, .pitch_offset = 1200, .flags = PX_WSEQ_AMP_MOD},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -549,9 +551,10 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Koto",
         .end_action = PX_WSEQ_END_STOP,
+        .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
         .steps = {
-            {.wave_idx = 68, .duration_cycles = 10, .pitch_offset = 200, .flags = 0}, // FM Pluck bend
-            {.wave_idx = 68, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 68, .duration_cycles = 10, .pitch_offset = 200, .flags = PX_WSEQ_AMP_MOD}, // FM Pluck bend
+            {.wave_idx = 68, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -559,35 +562,40 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Banjo",
         .end_action = PX_WSEQ_END_STOP,
-        .steps = { {.wave_idx = 6, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, {.flags = PX_WSEQ_END} },
+        .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
+        .steps = { {.wave_idx = 6, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD}, {.flags = PX_WSEQ_END} },
         .bitcrush_bits = 7
     },
     // 44: Muted Guitar
     {
         .name = "Muted Guitar",
         .end_action = PX_WSEQ_END_STOP,
-        .steps = { {.wave_idx = 144, .duration_cycles = 50, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Short duration
+        .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
+        .steps = { {.wave_idx = 144, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD}, {.flags = PX_WSEQ_END} } // Short duration
     },
     // 45: Electric Pluck
     {
         .name = "Electric Pluck",
         .end_action = PX_WSEQ_END_STOP,
-        .steps = { {.wave_idx = 6, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, {.flags = PX_WSEQ_END} },
+        .amp_mod_type = PX_WSEQ_AMP_RAMP_DOWN,
+        .steps = { {.wave_idx = 6, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD}, {.flags = PX_WSEQ_END} },
         .bitcrush_bits = 4
     },
     // 46: Bass Pluck
     {
         .name = "Bass Pluck",
         .end_action = PX_WSEQ_END_STOP,
-        .steps = { {.wave_idx = 144, .duration_cycles = 300, .pitch_offset = -1200, .flags = 0}, {.flags = PX_WSEQ_END} }
+        .amp_mod_type = PX_WSEQ_AMP_RAMP_DOWN,
+        .steps = { {.wave_idx = 144, .duration_cycles = 300, .pitch_offset = -1200, .flags = PX_WSEQ_AMP_MOD}, {.flags = PX_WSEQ_END} }
     },
     // 47: Random Pluck
     {
         .name = "Random Pluck",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_octave_range = 50,
+        .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
         .steps = {
-            {.wave_idx = 144, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 144, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_AMP_MOD},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -1729,9 +1737,10 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Machine Beat",
         .end_action = PX_WSEQ_END_LOOP,
+        .amp_mod_type = PX_WSEQ_AMP_SQUARE,
         .steps = {
-            {.wave_idx = 138, .duration_cycles = 50, .pitch_offset = -1200, .flags = 0},
-            {.wave_idx = 0,   .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 138, .duration_cycles = 50, .pitch_offset = -1200, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 0,   .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -1891,13 +1900,14 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Prime Arp",
         .end_action = PX_WSEQ_END_LOOP,
+        .amp_mod_type = PX_WSEQ_AMP_PULSE_25,
         .steps = {
-            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 200, .flags = 0},
-            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 300, .flags = 0},
-            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 500, .flags = 0},
-            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 700, .flags = 0},
-            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 1100, .flags = 0},
+            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 200, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 300, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 500, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 700, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 6, .duration_cycles = 10, .pitch_offset = 1100, .flags = PX_WSEQ_AMP_MOD},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -2189,15 +2199,16 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
+        .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
         .steps = {
-            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
-            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
-            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR},
-            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
-            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO},
-            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_END}
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_AMP_MOD}
         }
     },
     // 201: Percussive 2
@@ -2206,15 +2217,16 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
+        .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
         .steps = {
-            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
-            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
-            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR},
-            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
-            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO},
-            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_END}
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_AMP_MOD}
         }
     },
     // 202: Percussive 3
@@ -2223,15 +2235,16 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
+        .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
         .steps = {
-            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
-            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
-            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR},
-            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
-            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO},
-            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_END}
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_AMP_MOD}
         }
     },
     // 203: Percussive 4
@@ -2240,15 +2253,16 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
+        .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
         .steps = {
-            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
-            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
-            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR},
-            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
-            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO},
-            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_END}
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_AMP_MOD}
         }
     },
     // 204: Percussive 5
@@ -2257,15 +2271,16 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
+        .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
         .steps = {
-            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
-            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
-            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR},
-            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
-            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO},
-            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_END}
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_AMP_MOD},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_AMP_MOD}
         }
     },
     // 205: Percussive 6
@@ -2274,15 +2289,16 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
+        .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
         .steps = {
-            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH}
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD}
         }
     },
     // 206: Percussive 7
@@ -2291,15 +2307,16 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
+        .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
         .steps = {
-            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH}
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD}
         }
     },
     // 207: Percussive 8
@@ -2308,15 +2325,16 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_OFF,
         .prob_skip_score = 25,
+        .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
         .steps = {
-            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
-            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH}
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD}
         }
     },
 
