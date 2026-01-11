@@ -301,8 +301,14 @@ PX_API bool PX_SavePresetToBus(PxSynth* s, PxIOWriteFn write_fn, void* token, co
     uint32_t data_len = (uint32_t)(total_size - 32 - 4);
     write_be32_to_buf(ptr, data_len); ptr += 4;
 
-    // Reserved
-    memset(ptr, 0, 4); ptr += 4;
+    // Reserved (Store critical config dimensions for validation)
+    uint16_t n_adsrs = (uint16_t)s->config.num_voice_adsrs;
+    uint16_t n_lfos = (uint16_t)s->config.num_lfos;
+    ptr[0] = (n_adsrs >> 8) & 0xFF;
+    ptr[1] = n_adsrs & 0xFF;
+    ptr[2] = (n_lfos >> 8) & 0xFF;
+    ptr[3] = n_lfos & 0xFF;
+    ptr += 4;
 
     // --- Data Block ---
     uint8_t* data_start = ptr;
@@ -354,6 +360,23 @@ PX_API bool PX_LoadPresetFromBus(PxSynth* s, PxIOReadFn read_fn, void* token) {
 
     if (calc_sum != expected_checksum) {
         free(buffer); return false;
+    }
+
+    // 4a. Validate Dimensions (from Reserved field in header)
+    // Header is at stack variable 'header', reserved is at offset 28.
+    uint16_t file_n_adsrs = ((uint16_t)header[28] << 8) | header[29];
+    uint16_t file_n_lfos = ((uint16_t)header[30] << 8) | header[31];
+
+    // Only validate if non-zero (to support legacy patches which wrote 0)
+    // If user saves a new patch with valid data, these will be non-zero.
+    if (file_n_adsrs != 0 || file_n_lfos != 0) {
+        if (file_n_adsrs != s->config.num_voice_adsrs || file_n_lfos != s->config.num_lfos) {
+            // Dimension mismatch - risk of buffer overflow or corruption
+            fprintf(stderr, "PX_LoadPresetFromBus: Config mismatch (File: %d ADSRs, %d LFOs | Synth: %d, %d)\n",
+                    file_n_adsrs, file_n_lfos, s->config.num_voice_adsrs, s->config.num_lfos);
+            free(buffer);
+            return false;
+        }
     }
 
     // 5. Deserialize

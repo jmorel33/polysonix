@@ -1,5 +1,23 @@
 # Update Log
 
+## v1.7.10 (2026/01/05)
+
+This critical update fixes four significant issues identified in the codebase related to stability, thread safety, and resource management.
+
+### Fixes
+*   **Serialization Buffer Overflow (Patch Loading):**
+    *   **The Issue:** Loading a preset saved with a larger configuration (e.g., 4 LFOs) into an instance with a smaller configuration (e.g., 3 LFOs) would cause a heap buffer overflow during deserialization.
+    *   **The Fix:** Modified the preset file header to store the critical configuration dimensions (`num_voice_adsrs` and `num_lfos`) in the previously reserved block. `PX_LoadPresetFromBus` now validates these values against the running synth configuration and safely aborts the load if a mismatch is detected, preventing memory corruption.
+*   **API Thread Safety (Command Queue Race):**
+    *   **The Issue:** The lock-free command queue was only safe for Single-Producer/Single-Consumer. Concurrent calls from multiple threads (e.g., MIDI thread and GUI thread) could cause race conditions on the write index, leading to lost commands or queue corruption.
+    *   **The Fix:** Introduced a lightweight spinlock (`atomic_flag`) around the `cmd_push` operation, making the API thread-safe for Multi-Producer/Single-Consumer scenarios. Included `PX_CPU_PAUSE()` (using `_mm_pause` / `yield`) for efficient waiting.
+*   **GPU Resource Leak:**
+    *   **The Issue:** `PX_Destroy` did not release Vulkan/Compute resources allocated by `PX_Create` when `use_gpu` was enabled, leading to leaks upon synth destruction.
+    *   **The Fix:** Added a call to `px_vm_cleanup_gpu_resources()` within `PX_Destroy`, guarded by the appropriate configuration checks.
+*   **Wave Sequence Logic (Random Jump Bounds):**
+    *   **The Issue:** The `PX_WSEQ_JUMP_RANDOM` flag used a modulo of the maximum steps (64) regardless of the actual sequence length. This could cause the sequencer to jump into uninitialized memory regions (zeroed steps), resulting in silent loops.
+    *   **The Fix:** Updated `PX_Process` to dynamically scan the active sequence for its valid length (checking for `PX_WSEQ_END` or implicit zero-termination) before calculating the random jump target, ensuring playback stays within valid bounds.
+
 ## v1.7.9 (2025-02-17)
 - **Feature**: Added a `name` field to the `PxWaveSequence` struct in `polysonix.h`, mirroring the structure of wave definitions.
 - **Update**: Populated the `name` field for all 256 Wave Sequencer entries in `px_wseq_rom.h` with descriptive names derived from their comments.
