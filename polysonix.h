@@ -262,7 +262,7 @@ typedef struct {
 } PxWaveSeqStep;
 
 #define PX_MAX_WSEQ_STEPS 64
-#define PX_NUM_WSEQ_BANKS 192
+#define PX_NUM_WSEQ_BANKS 256
 #define PX_OSC_MOD_PARAM_COUNT 11
 
 /**

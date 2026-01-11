@@ -1827,5 +1827,966 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.wave_idx = 238, .duration_cycles = 200, .pitch_offset = -2400, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
         }
-    }
+    },
+
+    // --- Bank 24: Metallic Textures (192-199) ---
+    // Metallic textures use ring mod, bitcrush, and random octave for clangorous, inharmonic sounds.
+    // 192: Metallic 1
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 10,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 42, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 43, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 44, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE},
+            {.wave_idx = 45, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 46, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 47, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 48, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR},
+            {.wave_idx = 49, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_END}
+        }
+    },
+    // 193: Metallic 2
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 10,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 44, .duration_cycles = 170, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 45, .duration_cycles = 170, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 46, .duration_cycles = 170, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE},
+            {.wave_idx = 47, .duration_cycles = 170, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 48, .duration_cycles = 170, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 49, .duration_cycles = 170, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 50, .duration_cycles = 170, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR},
+            {.wave_idx = 51, .duration_cycles = 170, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_END}
+        }
+    },
+    // 194: Metallic 3
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 10,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 46, .duration_cycles = 190, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 47, .duration_cycles = 190, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 48, .duration_cycles = 190, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE},
+            {.wave_idx = 49, .duration_cycles = 190, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 50, .duration_cycles = 190, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 51, .duration_cycles = 190, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 52, .duration_cycles = 190, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR},
+            {.wave_idx = 53, .duration_cycles = 190, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_END}
+        }
+    },
+    // 195: Metallic 4
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 10,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 48, .duration_cycles = 210, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 49, .duration_cycles = 210, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 50, .duration_cycles = 210, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE},
+            {.wave_idx = 51, .duration_cycles = 210, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 52, .duration_cycles = 210, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 53, .duration_cycles = 210, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 54, .duration_cycles = 210, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR},
+            {.wave_idx = 55, .duration_cycles = 210, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_END}
+        }
+    },
+    // 196: Metallic 5
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 10,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 50, .duration_cycles = 230, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 51, .duration_cycles = 230, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_XMOD},
+            {.wave_idx = 52, .duration_cycles = 230, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE | PX_WSEQ_XMOD},
+            {.wave_idx = 53, .duration_cycles = 230, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_XMOD},
+            {.wave_idx = 54, .duration_cycles = 230, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_XMOD},
+            {.wave_idx = 55, .duration_cycles = 230, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO | PX_WSEQ_XMOD},
+            {.wave_idx = 56, .duration_cycles = 230, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR | PX_WSEQ_XMOD},
+            {.wave_idx = 57, .duration_cycles = 230, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_END | PX_WSEQ_XMOD}
+        }
+    },
+    // 197: Metallic 6
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 10,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 52, .duration_cycles = 250, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 53, .duration_cycles = 250, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_XMOD},
+            {.wave_idx = 54, .duration_cycles = 250, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE | PX_WSEQ_XMOD},
+            {.wave_idx = 55, .duration_cycles = 250, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_XMOD},
+            {.wave_idx = 56, .duration_cycles = 250, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_XMOD},
+            {.wave_idx = 57, .duration_cycles = 250, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO | PX_WSEQ_XMOD},
+            {.wave_idx = 58, .duration_cycles = 250, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR | PX_WSEQ_XMOD},
+            {.wave_idx = 59, .duration_cycles = 250, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_END | PX_WSEQ_XMOD}
+        }
+    },
+    // 198: Metallic 7
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 10,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 54, .duration_cycles = 270, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 55, .duration_cycles = 270, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_XMOD},
+            {.wave_idx = 56, .duration_cycles = 270, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE | PX_WSEQ_XMOD},
+            {.wave_idx = 57, .duration_cycles = 270, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_XMOD},
+            {.wave_idx = 58, .duration_cycles = 270, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_XMOD},
+            {.wave_idx = 59, .duration_cycles = 270, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO | PX_WSEQ_XMOD},
+            {.wave_idx = 60, .duration_cycles = 270, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR | PX_WSEQ_XMOD},
+            {.wave_idx = 61, .duration_cycles = 270, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_END | PX_WSEQ_XMOD}
+        }
+    },
+    // 199: Metallic 8
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 10,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 56, .duration_cycles = 290, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 57, .duration_cycles = 290, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_XMOD},
+            {.wave_idx = 58, .duration_cycles = 290, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE | PX_WSEQ_XMOD},
+            {.wave_idx = 59, .duration_cycles = 290, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_XMOD},
+            {.wave_idx = 60, .duration_cycles = 290, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_XMOD},
+            {.wave_idx = 61, .duration_cycles = 290, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO | PX_WSEQ_XMOD},
+            {.wave_idx = 62, .duration_cycles = 290, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR | PX_WSEQ_XMOD},
+            {.wave_idx = 63, .duration_cycles = 290, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_BITCRUSH | PX_WSEQ_END | PX_WSEQ_XMOD}
+        }
+    },
+
+    // --- Bank 25: Percussive Hits (200-207) ---
+    // Percussive hits use short durations, retrigger, and random skip for drum-like patterns.
+    // 200: Percussive 1
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_skip_score = 25,
+        .steps = {
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO},
+            {.wave_idx = 34, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_END}
+        }
+    },
+    // 201: Percussive 2
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_skip_score = 25,
+        .steps = {
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO},
+            {.wave_idx = 35, .duration_cycles = 47, .pitch_offset = 0, .flags = PX_WSEQ_END}
+        }
+    },
+    // 202: Percussive 3
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_skip_score = 25,
+        .steps = {
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO},
+            {.wave_idx = 36, .duration_cycles = 44, .pitch_offset = 0, .flags = PX_WSEQ_END}
+        }
+    },
+    // 203: Percussive 4
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_skip_score = 25,
+        .steps = {
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO},
+            {.wave_idx = 37, .duration_cycles = 41, .pitch_offset = 0, .flags = PX_WSEQ_END}
+        }
+    },
+    // 204: Percussive 5
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_skip_score = 25,
+        .steps = {
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO},
+            {.wave_idx = 38, .duration_cycles = 38, .pitch_offset = 0, .flags = PX_WSEQ_END}
+        }
+    },
+    // 205: Percussive 6
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_skip_score = 25,
+        .steps = {
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 39, .duration_cycles = 35, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH}
+        }
+    },
+    // 206: Percussive 7
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_skip_score = 25,
+        .steps = {
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 40, .duration_cycles = 32, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH}
+        }
+    },
+    // 207: Percussive 8
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_skip_score = 25,
+        .steps = {
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 41, .duration_cycles = 29, .pitch_offset = 0, .flags = PX_WSEQ_END | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH}
+        }
+    },
+
+    // --- Bank 26: Evolving Pads (208-215) ---
+    // Evolving pads use long durations, blending, and random octave for slowly changing textures.
+    // 208: Pad 1
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 50, .duration_cycles = 5000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 51, .duration_cycles = 5000, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 52, .duration_cycles = 5000, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 53, .duration_cycles = 5000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 54, .duration_cycles = 5000, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 55, .duration_cycles = 5000, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 56, .duration_cycles = 5000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 57, .duration_cycles = 5000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END}
+        }
+    },
+    // 209: Pad 2
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 51, .duration_cycles = 5500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 52, .duration_cycles = 5500, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 53, .duration_cycles = 5500, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 54, .duration_cycles = 5500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 55, .duration_cycles = 5500, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 56, .duration_cycles = 5500, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 57, .duration_cycles = 5500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 58, .duration_cycles = 5500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END}
+        }
+    },
+    // 210: Pad 3
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 52, .duration_cycles = 6000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 53, .duration_cycles = 6000, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 54, .duration_cycles = 6000, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 55, .duration_cycles = 6000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 56, .duration_cycles = 6000, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 57, .duration_cycles = 6000, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 58, .duration_cycles = 6000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 59, .duration_cycles = 6000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END}
+        }
+    },
+    // 211: Pad 4
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 53, .duration_cycles = 6500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 54, .duration_cycles = 6500, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 55, .duration_cycles = 6500, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 56, .duration_cycles = 6500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 57, .duration_cycles = 6500, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 58, .duration_cycles = 6500, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 59, .duration_cycles = 6500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 60, .duration_cycles = 6500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END}
+        }
+    },
+    // 212: Pad 5
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 54, .duration_cycles = 7000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 55, .duration_cycles = 7000, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 56, .duration_cycles = 7000, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 57, .duration_cycles = 7000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 58, .duration_cycles = 7000, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 59, .duration_cycles = 7000, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 60, .duration_cycles = 7000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 61, .duration_cycles = 7000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END}
+        }
+    },
+    // 213: Pad 6
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 55, .duration_cycles = 7500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 56, .duration_cycles = 7500, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 57, .duration_cycles = 7500, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 58, .duration_cycles = 7500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 59, .duration_cycles = 7500, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 60, .duration_cycles = 7500, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 61, .duration_cycles = 7500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 62, .duration_cycles = 7500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD}
+        }
+    },
+    // 214: Pad 7
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 56, .duration_cycles = 8000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 57, .duration_cycles = 8000, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 58, .duration_cycles = 8000, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 59, .duration_cycles = 8000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 60, .duration_cycles = 8000, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 61, .duration_cycles = 8000, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 62, .duration_cycles = 8000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 63, .duration_cycles = 8000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD}
+        }
+    },
+    // 215: Pad 8
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 57, .duration_cycles = 8500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 58, .duration_cycles = 8500, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 59, .duration_cycles = 8500, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 60, .duration_cycles = 8500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 61, .duration_cycles = 8500, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 62, .duration_cycles = 8500, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 63, .duration_cycles = 8500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 64, .duration_cycles = 8500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD}
+        }
+    },
+
+    // --- Bank 27: Glitch Effects (216-223) ---
+    // Glitch effects use bitcrush, random skip, and reverse for broken, chaotic sounds.
+    // 216: Glitch 1
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_STEP,
+        .prob_mute_score = 20,
+        .prob_skip_score = 50,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 58, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 59, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 60, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE},
+            {.wave_idx = 61, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 62, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 63, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 64, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR},
+            {.wave_idx = 65, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END}
+        }
+    },
+    // 217: Glitch 2
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_STEP,
+        .prob_mute_score = 20,
+        .prob_skip_score = 50,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 59, .duration_cycles = 60, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 60, .duration_cycles = 60, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 61, .duration_cycles = 60, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE},
+            {.wave_idx = 62, .duration_cycles = 60, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 63, .duration_cycles = 60, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 64, .duration_cycles = 60, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 65, .duration_cycles = 60, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR},
+            {.wave_idx = 66, .duration_cycles = 60, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END}
+        }
+    },
+    // 218: Glitch 3
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_STEP,
+        .prob_mute_score = 20,
+        .prob_skip_score = 50,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 60, .duration_cycles = 70, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 61, .duration_cycles = 70, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 62, .duration_cycles = 70, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE},
+            {.wave_idx = 63, .duration_cycles = 70, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 64, .duration_cycles = 70, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 65, .duration_cycles = 70, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 66, .duration_cycles = 70, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR},
+            {.wave_idx = 67, .duration_cycles = 70, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END}
+        }
+    },
+    // 219: Glitch 4
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_STEP,
+        .prob_mute_score = 20,
+        .prob_skip_score = 50,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 61, .duration_cycles = 80, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 62, .duration_cycles = 80, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 63, .duration_cycles = 80, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE},
+            {.wave_idx = 64, .duration_cycles = 80, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 65, .duration_cycles = 80, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 66, .duration_cycles = 80, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 67, .duration_cycles = 80, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR},
+            {.wave_idx = 68, .duration_cycles = 80, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END}
+        }
+    },
+    // 220: Glitch 5
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_STEP,
+        .prob_mute_score = 20,
+        .prob_skip_score = 50,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 62, .duration_cycles = 90, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 63, .duration_cycles = 90, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 64, .duration_cycles = 90, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 65, .duration_cycles = 90, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 66, .duration_cycles = 90, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 67, .duration_cycles = 90, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 68, .duration_cycles = 90, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 69, .duration_cycles = 90, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY}
+        }
+    },
+    // 221: Glitch 6
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_STEP,
+        .prob_mute_score = 20,
+        .prob_skip_score = 50,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 63, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 64, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 65, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 66, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 67, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 68, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 69, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 70, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY}
+        }
+    },
+    // 222: Glitch 7
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_STEP,
+        .prob_mute_score = 20,
+        .prob_skip_score = 50,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 64, .duration_cycles = 110, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 65, .duration_cycles = 110, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 66, .duration_cycles = 110, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 67, .duration_cycles = 110, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 68, .duration_cycles = 110, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 69, .duration_cycles = 110, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 70, .duration_cycles = 110, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 71, .duration_cycles = 110, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY}
+        }
+    },
+    // 223: Glitch 8
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_STEP,
+        .prob_mute_score = 20,
+        .prob_skip_score = 50,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 65, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 66, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 67, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 68, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 69, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 70, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 71, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RETRIG_ADSR | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 72, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END | PX_WSEQ_XMOD | PX_WSEQ_REVERSE_PLAY}
+        }
+    },
+
+    // --- Bank 28: Noise Sculptures (224-231) ---
+    // Noise sculptures use noise waves with bitcrush, random octave, and mute for abstract, noisy art.
+    // 224: Noise 1
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_mute_score = 30,
+        .prob_skip_score = 40,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 66, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 67, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 68, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 69, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 70, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 71, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 72, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 73, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END}
+        }
+    },
+    // 225: Noise 2
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_mute_score = 30,
+        .prob_skip_score = 40,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 67, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 68, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 69, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 70, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 71, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 72, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 73, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 74, .duration_cycles = 120, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END}
+        }
+    },
+    // 226: Noise 3
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_mute_score = 30,
+        .prob_skip_score = 40,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 68, .duration_cycles = 140, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 69, .duration_cycles = 140, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 70, .duration_cycles = 140, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 71, .duration_cycles = 140, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 72, .duration_cycles = 140, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 73, .duration_cycles = 140, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 74, .duration_cycles = 140, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 75, .duration_cycles = 140, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END}
+        }
+    },
+    // 227: Noise 4
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_mute_score = 30,
+        .prob_skip_score = 40,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 69, .duration_cycles = 160, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 70, .duration_cycles = 160, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 71, .duration_cycles = 160, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 72, .duration_cycles = 160, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 73, .duration_cycles = 160, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 74, .duration_cycles = 160, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 75, .duration_cycles = 160, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 76, .duration_cycles = 160, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END}
+        }
+    },
+    // 228: Noise 5
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_mute_score = 30,
+        .prob_skip_score = 40,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 70, .duration_cycles = 180, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 71, .duration_cycles = 180, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 72, .duration_cycles = 180, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 73, .duration_cycles = 180, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 74, .duration_cycles = 180, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_WAVE | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 75, .duration_cycles = 180, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 76, .duration_cycles = 180, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 77, .duration_cycles = 180, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD}
+        }
+    },
+    // 229: Noise 6
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_mute_score = 30,
+        .prob_skip_score = 40,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 71, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 72, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 73, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 74, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 75, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_WAVE | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 76, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 77, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 78, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD}
+        }
+    },
+    // 230: Noise 7
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_mute_score = 30,
+        .prob_skip_score = 40,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 72, .duration_cycles = 220, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 73, .duration_cycles = 220, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 74, .duration_cycles = 220, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 75, .duration_cycles = 220, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 76, .duration_cycles = 220, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_WAVE | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 77, .duration_cycles = 220, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 78, .duration_cycles = 220, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 79, .duration_cycles = 220, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD}
+        }
+    },
+    // 231: Noise 8
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_OFF,
+        .prob_mute_score = 30,
+        .prob_skip_score = 40,
+        .rnd_octave_range = 50,
+        .steps = {
+            {.wave_idx = 73, .duration_cycles = 240, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 74, .duration_cycles = 240, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 75, .duration_cycles = 240, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 76, .duration_cycles = 240, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_RESET_LFO | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 77, .duration_cycles = 240, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_WAVE | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 78, .duration_cycles = 240, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 79, .duration_cycles = 240, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD},
+            {.wave_idx = 80, .duration_cycles = 240, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_END | PX_WSEQ_XMOD | PX_WSEQ_RING_MOD}
+        }
+    },
+
+    // --- Bank 29: Evolving Pads II (232-239) ---
+    // Evolving pads use long durations, blending, and random octave for slowly changing textures.
+    // 232: Pad II 1
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 74, .duration_cycles = 5000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 75, .duration_cycles = 5000, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 76, .duration_cycles = 5000, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 77, .duration_cycles = 5000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 78, .duration_cycles = 5000, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 79, .duration_cycles = 5000, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 80, .duration_cycles = 5000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 81, .duration_cycles = 5000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END}
+        }
+    },
+    // 233: Pad II 2
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 75, .duration_cycles = 5600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 76, .duration_cycles = 5600, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 77, .duration_cycles = 5600, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 78, .duration_cycles = 5600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 79, .duration_cycles = 5600, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 80, .duration_cycles = 5600, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 81, .duration_cycles = 5600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 82, .duration_cycles = 5600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END}
+        }
+    },
+    // 234: Pad II 3
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 76, .duration_cycles = 6200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 77, .duration_cycles = 6200, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 78, .duration_cycles = 6200, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 79, .duration_cycles = 6200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 80, .duration_cycles = 6200, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 81, .duration_cycles = 6200, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 82, .duration_cycles = 6200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 83, .duration_cycles = 6200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END}
+        }
+    },
+    // 235: Pad II 4
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 77, .duration_cycles = 6800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 78, .duration_cycles = 6800, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE},
+            {.wave_idx = 79, .duration_cycles = 6800, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 80, .duration_cycles = 6800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO},
+            {.wave_idx = 81, .duration_cycles = 6800, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE},
+            {.wave_idx = 82, .duration_cycles = 6800, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP},
+            {.wave_idx = 83, .duration_cycles = 6800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY},
+            {.wave_idx = 84, .duration_cycles = 6800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END}
+        }
+    },
+    // 236: Pad II 5
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 78, .duration_cycles = 7400, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 79, .duration_cycles = 7400, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 80, .duration_cycles = 7400, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 81, .duration_cycles = 7400, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 82, .duration_cycles = 7400, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 83, .duration_cycles = 7400, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 84, .duration_cycles = 7400, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 85, .duration_cycles = 7400, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD}
+        }
+    },
+    // 237: Pad II 6
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 79, .duration_cycles = 8000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 80, .duration_cycles = 8000, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 81, .duration_cycles = 8000, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 82, .duration_cycles = 8000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 83, .duration_cycles = 8000, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 84, .duration_cycles = 8000, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 85, .duration_cycles = 8000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 86, .duration_cycles = 8000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD}
+        }
+    },
+    // 238: Pad II 7
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 80, .duration_cycles = 8600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 81, .duration_cycles = 8600, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 82, .duration_cycles = 8600, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 83, .duration_cycles = 8600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 84, .duration_cycles = 8600, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 85, .duration_cycles = 8600, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 86, .duration_cycles = 8600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 87, .duration_cycles = 8600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD}
+        }
+    },
+    // 239: Pad II 8
+    {
+        .end_action = PX_WSEQ_END_HOLD,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_mute_score = 5,
+        .prob_skip_score = 10,
+        .rnd_octave_range = 30,
+        .steps = {
+            {.wave_idx = 81, .duration_cycles = 9200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 82, .duration_cycles = 9200, .pitch_offset = 200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 83, .duration_cycles = 9200, .pitch_offset = -200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 84, .duration_cycles = 9200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RESET_LFO | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 85, .duration_cycles = 9200, .pitch_offset = 400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_RND_WAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 86, .duration_cycles = 9200, .pitch_offset = -400, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 87, .duration_cycles = 9200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD},
+            {.wave_idx = 88, .duration_cycles = 9200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_END | PX_WSEQ_BITCRUSH | PX_WSEQ_XMOD}
+        }
+    },
+
+    // --- Bank 30: Reserved User Bank (240-247) ---
+    // Reserved for user custom sequences — all empty (zeros).
+    // 240
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 241
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 242
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 243
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 244
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 245
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 246
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 247
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+
+    // --- Bank 31: Reserved User Bank (248-255) ---
+    // Reserved for user custom sequences — all empty (zeros).
+    // 248
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 249
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 250
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 251
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 252
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 253
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 254
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+    // 255
+    {
+        .end_action = 0,
+        .glide_mode = 0,
+        .steps = {{0}},
+    },
+
 };
