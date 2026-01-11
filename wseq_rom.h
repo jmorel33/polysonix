@@ -4,6 +4,76 @@
 // "Ham Crazy" Edition - Enhanced with complex flag combinations,
 // generative probability, and math-based waveforms.
 
+/**
+ * =========================================================================================
+ *  POLYSONIX WAVE SEQUENCE REFERENCE
+ * =========================================================================================
+ *
+ *  STRUCT: PxWaveSequence (Global Settings)
+ *  ----------------------------------------
+ *  uint8_t  end_action         : Action when sequence finishes (or PX_WSEQ_END flag hit).
+ *                                - PX_WSEQ_END_STOP     (0): Stop voice (Release phase).
+ *                                - PX_WSEQ_END_HOLD     (1): Hold last step indefinitely.
+ *                                - PX_WSEQ_END_LOOP     (2): Loop back to 'seq_loop_start_idx' (step with LOOP_POINT flag, or 0).
+ *                                - PX_WSEQ_END_PINGPONG (3): Reverse playback direction.
+ *                                - PX_WSEQ_END_REVERSE  (4): Play backwards.
+ *
+ *  uint8_t  glide_mode         : Pitch transition style.
+ *                                - PX_WSEQ_GLIDE_OFF    (0): Stepped pitch changes.
+ *                                - PX_WSEQ_GLIDE_STEP   (1): Linear glide within step duration.
+ *                                - PX_WSEQ_GLIDE_SMOOTH (2): Continuous RC filter glide (ignores step bounds).
+ *
+ *  uint8_t  bitcrush_bits      : Base bit depth for PX_WSEQ_BITCRUSH (1-16, typically 4-8).
+ *  uint8_t  adsr_retrig_phase  : Target ADSR state on PX_WSEQ_RETRIG_ADSR (1=Attack, 2=Decay, etc).
+ *
+ *  uint8_t  prob_mute_score    : % Chance (0-100) to mute step if PX_WSEQ_USE_PROB_MUTE is set.
+ *  uint8_t  prob_skip_score    : % Chance (0-100) to skip step if PX_WSEQ_USE_PROB_SKIP is set.
+ *  uint8_t  rnd_octave_range   : % Chance (0-100) to shift +/- 1 octave if PX_WSEQ_USE_RND_OCTAVE is set.
+ *  uint8_t  reset_lfo_pos      : Boolean (1=Yes) to reset LFOs on sequence start.
+ *
+ *  uint16_t rnd_wave_low       : Start index for random wave range (PX_WSEQ_USE_RND_WAVE).
+ *  uint16_t rnd_wave_high      : End index for random wave range.
+ *
+ *  int8_t   [x]_mod_src        : Mod Source (-1 = None/Internal, 0 = Velocity, 1 = ModWheel, etc).
+ *  float    [x]_depth          : Base effect depth (0.0 - 1.0).
+ *
+ *
+ *  STRUCT: PxWaveSeqStep (Per-Step Data)
+ *  -------------------------------------
+ *  uint16_t wave_idx           : Waveform Index (0-255+).
+ *  uint16_t duration_cycles    : Duration in oscillator cycles (e.g., 100).
+ *  int16_t  pitch_offset       : Tuning in cents (+/-). 1200 = 1 Octave.
+ *  uint16_t flags              : Bitwise logic flags.
+ *
+ *
+ *  BIT FLAGS (16-bit)
+ *  ------------------
+ *  [Flow Control]
+ *  (1<<0) PX_WSEQ_END             : Force sequence end action here.
+ *  (1<<1) PX_WSEQ_LOOP_POINT      : Mark this step as the start point for LOOP mode.
+ *  (1<<2) PX_WSEQ_JUMP_RANDOM     : Jump to a random step index (0-63).
+ *
+ *  [Reset/Mod]
+ *  (1<<4) PX_WSEQ_RESET_LFO       : Reset LFO phase to 0.
+ *  (1<<5) PX_WSEQ_RETRIG_ADSR     : Retrigger Voice ADSRs.
+ *  (1<<6) PX_WSEQ_LOCK_PHASE      : Hard Sync oscillator phase to 0.
+ *  (1<<7) PX_WSEQ_GLIDE           : Enable per-step exponential glide (overrides Linear).
+ *
+ *  [Generative]
+ *  (1<<8) PX_WSEQ_USE_PROB_MUTE   : Randomly mute this step (uses prob_mute_score).
+ *  (1<<9) PX_WSEQ_USE_PROB_SKIP   : Randomly skip this step (zero duration) (uses prob_skip_score).
+ *  (1<<10) PX_WSEQ_USE_RND_OCTAVE : Randomly offset pitch +/- 1200 cents (uses rnd_octave_range).
+ *  (1<<11) PX_WSEQ_USE_RND_WAVE   : Randomly pick wave_idx from [low, high] range.
+ *
+ *  [Timbre/FX]
+ *  (1<<12) PX_WSEQ_REVERSE_PLAY   : Play waveform backwards (negative freq).
+ *  (1<<13) PX_WSEQ_BITCRUSH       : Enable Bitcrush effect.
+ *  (1<<14) PX_WSEQ_XMOD           : Enable Cross-Mod (FM from prev Osc).
+ *  (1<<15) PX_WSEQ_RING_MOD       : Enable Ring Mod (AM from prev Osc).
+ *
+ * =========================================================================================
+ */
+
 static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
 
     // --- Bank 0: Lead (0-7) ---
@@ -32,14 +102,16 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.flags = PX_WSEQ_END}
         }
     },
-    // 2: FM Solo (Expressive)
+    // 2: FM Solo (Expressive with XMod)
     {
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_STEP,
+        .xmod_depth = 0.3f,
+        .xmod_mod_src = -1,
         .steps = {
-            {.wave_idx = 70, .duration_cycles = 50, .pitch_offset = 0, .flags = 0}, // FM Dynamic Lead
+            {.wave_idx = 70, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_XMOD}, // FM Dynamic Lead
             {.wave_idx = 70, .duration_cycles = 50, .pitch_offset = 10, .flags = 0}, // Vibrato-ish
-            {.wave_idx = 70, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
+            {.wave_idx = 70, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_XMOD},
             {.wave_idx = 70, .duration_cycles = 50, .pitch_offset = -10, .flags = 0},
             {.flags = PX_WSEQ_END}
         }
@@ -51,7 +123,8 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.wave_idx = 116, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_LOCK_PHASE}, // Sync Sweep
             {.wave_idx = 117, .duration_cycles = 200, .pitch_offset = 0, .flags = 0},
             {.flags = PX_WSEQ_END}
-        }
+        },
+        .lock_phase_mod_src = -1
     },
     // 4: Bitcrushed Lead
     {
@@ -63,15 +136,17 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.flags = PX_WSEQ_END}
         }
     },
-    // 5: Glitch Arp (Generative Octave Jumps with Bitcrush)
+    // 5: Glitch Arp (Generative Octave Jumps with Bitcrush & Ring Mod)
     {
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_octave_range = 40,
         .bitcrush_bits = 6,
+        .ring_mod_depth = 0.3f,
+        .ring_mod_mod_src = -1,
         .steps = {
-            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD},
             {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 400, .flags = PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_BITCRUSH | PX_WSEQ_GLIDE}, // Stuttering Morph
-            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 700, .flags = 0},
+            {.wave_idx = 4, .duration_cycles = 150, .pitch_offset = 700, .flags = PX_WSEQ_RING_MOD},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -106,11 +181,15 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.flags = PX_WSEQ_END}
         }
     },
-    // 9: Glassy Pad
+    // 9: Generative Ambient (Replaced Glassy Pad)
     {
         .end_action = PX_WSEQ_END_LOOP,
+        .rnd_wave_low = 80,
+        .rnd_wave_high = 100,
+        .prob_mute_score = 50,
         .steps = {
-            {.wave_idx = 71, .duration_cycles = 500, .pitch_offset = 0, .flags = 0}, // FM Glassy Evolve
+            {.wave_idx = 0, .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE | PX_WSEQ_USE_PROB_MUTE}, // Evolving texture
+            {.wave_idx = 0, .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE | PX_WSEQ_REVERSE_PLAY},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -123,13 +202,14 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.flags = PX_WSEQ_END}
         }
     },
-    // 11: Ring Mod Morph
+    // 11: Ring Mod Morph (Updated)
     {
         .end_action = PX_WSEQ_END_PINGPONG,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_skip_score = 30,
         .steps = {
             {.wave_idx = 107, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
-            {.wave_idx = 108, .duration_cycles = 600, .pitch_offset = 5, .flags = PX_WSEQ_GLIDE}, // Micro detune
+            {.wave_idx = 108, .duration_cycles = 600, .pitch_offset = 5, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP}, // Chance to skip detune
             {.wave_idx = 109, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD}, // Added Ring Mod + Glide
             {.flags = PX_WSEQ_END}
         },
@@ -199,7 +279,8 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.wave_idx = 147, .duration_cycles = 1500, .pitch_offset = 0, .flags = PX_WSEQ_RING_MOD}, // Use Ring Mod as Tremolo
             {.flags = PX_WSEQ_END}
         },
-        .ring_mod_depth = 0.3f
+        .ring_mod_depth = 0.3f,
+        .ring_mod_mod_src = -1
     },
     // 19: Pizzicato
     {
@@ -230,21 +311,24 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.flags = PX_WSEQ_END}
         }
     },
-    // 22: Crushed Strings
+    // 22: Crushed Bow (Updated from Crushed Strings)
     {
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 6,
+        .prob_skip_score = 40,
         .steps = {
-            {.wave_idx = 147, .duration_cycles = 200, .pitch_offset = -5, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 147, .duration_cycles = 200, .pitch_offset = -5, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP}, // Skip creates stutter
             {.wave_idx = 147, .duration_cycles = 200, .pitch_offset = 5, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
         }
     },
-    // 23: Evolving Strings
+    // 23: Reverse Swell Strings (Replaced Evolving Strings)
     {
         .end_action = PX_WSEQ_END_LOOP,
+        .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
         .steps = {
-            {.wave_idx = 151, .duration_cycles = 800, .pitch_offset = 0, .flags = 0}, // Morphing Harmonics
+            {.wave_idx = 147, .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_GLIDE},
+            {.wave_idx = 147, .duration_cycles = 800, .pitch_offset = 1200, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_GLIDE},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -448,23 +532,30 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 129, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
-    // 50: HiHat
+    // 50: Math Hat (Replaced HiHat)
     {
         .end_action = PX_WSEQ_END_STOP,
-        .steps = { {.wave_idx = 132, .duration_cycles = 50, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Cymbalish
+        .bitcrush_bits = 3,
+        .prob_skip_score = 30,
+        .steps = {
+            {.wave_idx = 242, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP}, // Digital Saw
+            {.wave_idx = 245, .duration_cycles = 30, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // White Noise
+            {.flags = PX_WSEQ_END}
+        }
     },
     // 51: Tom
     {
         .end_action = PX_WSEQ_END_STOP,
         .steps = { {.wave_idx = 131, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} }
     },
-    // 52: Evolving Glitch Perc
+    // 52: Evolving Glitch Perc (Updated)
     {
         .end_action = PX_WSEQ_END_STOP,
         .bitcrush_bits = 5,
         .prob_skip_score = 40,
+        .rnd_octave_range = 30,
         .steps = {
-            {.wave_idx = 143, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_RETRIG_ADSR | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_BITCRUSH}, // Multi-flag crazy
+            {.wave_idx = 143, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_RESET_LFO | PX_WSEQ_RETRIG_ADSR | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE}, // Max flags
             {.flags = PX_WSEQ_END}
         },
         .adsr_retrig_phase = 1 // Retrigger Attack
@@ -609,7 +700,8 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.wave_idx = 218, .duration_cycles = 300, .pitch_offset = -1200, .flags = PX_WSEQ_XMOD}, // Added growl
             {.flags = PX_WSEQ_END}
         },
-        .xmod_depth = 0.3f
+        .xmod_depth = 0.3f,
+        .xmod_mod_src = -1
     },
     // 71: Level Up
     {
@@ -771,26 +863,31 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.flags = PX_WSEQ_END}
         }
     },
-    // 92: Morphing Lead
+    // 92: Hyper Stutter (Replaced Morphing Lead)
     {
         .end_action = PX_WSEQ_END_PINGPONG,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .bitcrush_bits = 5,
+        .prob_skip_score = 25,
         .steps = {
-            {.wave_idx = 6, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
-            {.wave_idx = 4, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 6, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 4, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP},
             {.flags = PX_WSEQ_END}
         }
     },
-    // 93: Stutter
+    // 93: Generative Glitch (Replaced Stutter)
     {
         .end_action = PX_WSEQ_END_LOOP,
+        .prob_mute_score = 30,
+        .rnd_wave_low = 0,
+        .rnd_wave_high = 64,
+        .rnd_octave_range = 60,
         .steps = {
-            {.wave_idx = 6, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_SKIP}, // Added skip probability
-            {.wave_idx = 6, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE},
+            {.wave_idx = 6, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE | PX_WSEQ_USE_RND_OCTAVE}, // Random wave & octave
+            {.wave_idx = 6, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_RETRIG_ADSR}, // Mute & Retrigger
             {.flags = PX_WSEQ_END}
         },
-        .prob_mute_score = 30,
-        .prob_skip_score = 40
+        .adsr_retrig_phase = 1
     },
     // 94: Glitch Hop
     {
@@ -814,7 +911,8 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .rnd_octave_range = 75,
         .rnd_wave_low = 0,
         .rnd_wave_high = 255,
-        .ring_mod_depth = 0.4f
+        .ring_mod_depth = 0.4f,
+        .ring_mod_mod_src = -1
     },
 
     // --- Bank 12: Deep (96-103) ---
@@ -829,17 +927,16 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 106, .duration_cycles = 100, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Minor Triad
     },
-    // 98: Chaos Drone
+    // 98: FM Math Drone (Replaced Chaos Drone)
     {
         .end_action = PX_WSEQ_END_LOOP,
+        .xmod_depth = 0.6f,
+        .xmod_mod_src = -1,
         .steps = {
-            {.wave_idx = 93, .duration_cycles = 1000, .pitch_offset = -1200, .flags = PX_WSEQ_RING_MOD | PX_WSEQ_XMOD}, // Heavy texture
+            {.wave_idx = 50, .duration_cycles = 1000, .pitch_offset = -1200, .flags = PX_WSEQ_XMOD | PX_WSEQ_LOCK_PHASE}, // Laser Malfunction with XMod & Phase Lock
             {.flags = PX_WSEQ_END}
         },
-        .ring_mod_depth = 0.3f,
-        .xmod_depth = 0.4f,
-        .ring_mod_mod_src = -1,
-        .xmod_mod_src = -1
+        .lock_phase_mod_src = -1 // Always lock
     },
     // 99: 808 Kick
     {
@@ -896,10 +993,16 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_LOOP,
         .steps = { {.wave_idx = 210, .duration_cycles = 100, .pitch_offset = -1200, .flags = 0}, {.flags = PX_WSEQ_END} } // POKEY Distorted
     },
-    // 107: Laser Harp
+    // 107: Math Laser (Replaced Laser Harp)
     {
         .end_action = PX_WSEQ_END_LOOP,
-        .steps = { {.wave_idx = 50, .duration_cycles = 200, .pitch_offset = 0, .flags = 0}, {.flags = PX_WSEQ_END} } // Laser Malfunction
+        .xmod_depth = 0.4f,
+        .xmod_mod_src = -1,
+        .steps = {
+            {.wave_idx = 50, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_XMOD | PX_WSEQ_GLIDE}, // Laser Malfunction
+            {.wave_idx = 50, .duration_cycles = 200, .pitch_offset = 1200, .flags = PX_WSEQ_XMOD | PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
     },
     // 108: Teleport
     {
@@ -984,86 +1087,102 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
 
     // --- Bank 15: Strange (120-127) ---
     // Generative, chaotic, and experimental "Ham Crazy" sequences.
-    // 120: Fibonacci Spiral
+    // 120: Fractal Spiral (Replaced Fibonacci Spiral)
     {
         .end_action = PX_WSEQ_END_LOOP,
+        .ring_mod_depth = 0.3f,
+        .ring_mod_mod_src = -1,
+        .xmod_depth = 0.3f,
+        .xmod_mod_src = -1,
         .steps = {
-            {.wave_idx = 247, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD}, // Fibonacci with smooth ring mod
-            {.wave_idx = 247, .duration_cycles = 200, .pitch_offset = 700, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD},
+            {.wave_idx = 247, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD | PX_WSEQ_XMOD}, // Fibonacci with Ring+XMod
+            {.wave_idx = 247, .duration_cycles = 200, .pitch_offset = 700, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD | PX_WSEQ_XMOD},
             {.flags = PX_WSEQ_END}
-        },
-        .ring_mod_depth = 0.3f
+        }
     },
-    // 121: Logistic Glitch
+    // 121: Chaos Theory (Replaced Logistic Glitch)
     {
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 4,
+        .rnd_octave_range = 50,
+        .prob_skip_score = 20,
         .steps = {
-            {.wave_idx = 248, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE}, // Chaos map + Bitcrush
+            {.wave_idx = 248, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_USE_PROB_SKIP | PX_WSEQ_REVERSE_PLAY}, // Chaotic!
             {.flags = PX_WSEQ_END}
-        },
-        .rnd_octave_range = 60
+        }
     },
-    // 122: Bitcrush Storm
+    // 122: Digital Hurricane (Replaced Bitcrush Storm)
     {
         .end_action = PX_WSEQ_END_LOOP,
         .bitcrush_bits = 2,
         .prob_skip_score = 25,
+        .prob_mute_score = 10,
         .steps = {
-            {.wave_idx = 245, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_USE_PROB_SKIP}, // Reverse noise crush
+            {.wave_idx = 245, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_USE_PROB_MUTE | PX_WSEQ_GLIDE},
             {.flags = PX_WSEQ_END}
         }
     },
-    // 123: Self-Mod Glitch
+    // 123: Neural Net (Replaced Self-Mod Glitch)
     {
         .end_action = PX_WSEQ_END_LOOP,
+        .xmod_depth = 0.7f,
+        .xmod_mod_src = -1,
+        .ring_mod_depth = 0.3f,
+        .ring_mod_mod_src = -1,
         .steps = {
-            {.wave_idx = 95, .duration_cycles = 300, .pitch_offset = 0, .flags = PX_WSEQ_XMOD | PX_WSEQ_GLIDE}, // Alien Comm with FM
-            {.wave_idx = 95, .duration_cycles = 100, .pitch_offset = 1200, .flags = PX_WSEQ_XMOD | PX_WSEQ_GLIDE},
+            {.wave_idx = 95, .duration_cycles = 300, .pitch_offset = 0, .flags = PX_WSEQ_XMOD | PX_WSEQ_RING_MOD | PX_WSEQ_GLIDE}, // Alien Comm
+            {.wave_idx = 95, .duration_cycles = 100, .pitch_offset = 1200, .flags = PX_WSEQ_XMOD | PX_WSEQ_RING_MOD | PX_WSEQ_GLIDE},
+            {.flags = PX_WSEQ_END}
+        }
+    },
+    // 124: Quantum Leaps (Replaced Stutter Morph)
+    {
+        .end_action = PX_WSEQ_END_LOOP,
+        .rnd_wave_low = 50,
+        .rnd_wave_high = 60,
+        .steps = {
+            {.wave_idx = 50, .duration_cycles = 40, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE | PX_WSEQ_RETRIG_ADSR}, // Random Phase Dist waves
+            {.wave_idx = 50, .duration_cycles = 40, .pitch_offset = 500, .flags = PX_WSEQ_USE_RND_WAVE | PX_WSEQ_GLIDE},
             {.flags = PX_WSEQ_END}
         },
-        .xmod_depth = 0.6f
+        .adsr_retrig_phase = 1
     },
-    // 124: Stutter Morph
-    {
-        .end_action = PX_WSEQ_END_LOOP,
-        .prob_mute_score = 30,
-        .steps = {
-            {.wave_idx = 78, .duration_cycles = 40, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_USE_PROB_MUTE},
-            {.wave_idx = 78, .duration_cycles = 40, .pitch_offset = 300, .flags = PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_MUTE},
-            {.flags = PX_WSEQ_END}
-        }
-    },
-    // 125: Total Chaos
+    // 125: Singularity (Replaced Total Chaos)
     {
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_wave_low = 0,
         .rnd_wave_high = 255,
-        .rnd_octave_range = 80,
+        .rnd_octave_range = 90,
+        .ring_mod_depth = 0.5f,
+        .ring_mod_mod_src = -1,
+        .xmod_depth = 0.5f,
+        .xmod_mod_src = -1,
         .steps = {
-            {.wave_idx = 0, .duration_cycles = 10, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_RING_MOD}, // Max flags
+            {.wave_idx = 0, .duration_cycles = 10, .pitch_offset = 0, .flags = PX_WSEQ_USE_RND_WAVE | PX_WSEQ_USE_RND_OCTAVE | PX_WSEQ_REVERSE_PLAY | PX_WSEQ_RING_MOD | PX_WSEQ_XMOD | PX_WSEQ_BITCRUSH}, // EVERYTHING
             {.flags = PX_WSEQ_END}
-        },
-        .ring_mod_depth = 0.5f
+        }
     },
-    // 126: Reverse Tape (Enhanced)
+    // 126: Time Travel (Replaced Reverse Tape)
     {
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .prob_skip_score = 30,
+        .ring_mod_depth = 0.25f,
+        .ring_mod_mod_src = -1,
         .steps = {
-            {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_RING_MOD | PX_WSEQ_GLIDE},
+            {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_RING_MOD | PX_WSEQ_GLIDE | PX_WSEQ_USE_PROB_SKIP},
             {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = -500, .flags = PX_WSEQ_REVERSE_PLAY | PX_WSEQ_RING_MOD | PX_WSEQ_GLIDE},
             {.flags = PX_WSEQ_END}
-        },
-        .ring_mod_depth = 0.25f,
-        .ring_mod_mod_src = -1
+        }
     },
-    // 127: The End
+    // 127: Heat Death (Replaced The End)
     {
         .end_action = PX_WSEQ_END_STOP,
+        .bitcrush_bits = 8,
         .steps = {
-            {.wave_idx = 2, .duration_cycles = 1000, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 0, .duration_cycles = 0, .pitch_offset = 0, .flags = PX_WSEQ_END} // Silence at end
+            {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // Degrading
+            {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // ...
+            {.wave_idx = 0, .duration_cycles = 0, .pitch_offset = 0, .flags = PX_WSEQ_END} // Silence
         }
     }
 };
