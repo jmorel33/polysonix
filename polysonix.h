@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 8
-#define POLYSONIX_VERSION_PATCH 0
+#define POLYSONIX_VERSION_PATCH 1
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1123,7 +1123,7 @@ typedef struct {
     int  seq_id;
     int  step_idx;
     int  direction;
-    int  cycles_counter;
+    uint32_t cycles_counter;
     uint32_t current_step_target_cycles; // v1.8: Cached target
     bool finished;
     int  loop_start_idx;
@@ -1136,6 +1136,7 @@ typedef struct {
     float    step_bitcrush_scale;
     float    step_amp_mod_val;
     bool     step_mute_state;
+    float    cycle_accumulator; /**< Fractional carry-over for timing precision */
 } PxSeqState;
 
 typedef struct {
@@ -3101,7 +3102,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         // v1.8: Use Cached Target Cycles
                         float dur = (float)sq->current_step_target_cycles;
                         if (dur < 1.0f) dur = 1.0f;
-                        t = (float)sq->cycles_counter / dur;
+                        t = ((float)sq->cycles_counter + sq->cycle_accumulator) / dur;
                         t = fmaxf(0.0f, fminf(1.0f, t));
 
                         float amp_scalar = 1.0f;
@@ -3224,14 +3225,23 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 }
                 v->osc_cycle_completed[o] = cycle_completed; // Cache for next osc sync check
 
-                if (sq->current_sequence && !sq->finished && cycle_completed) {
-                    sq->cycles_counter++;
-                    const PxWaveSeqStep* current_step = &sq->current_sequence->steps[sq->step_idx];
-                    // v1.8: Use Cached Target
-                    uint32_t target_cycles = sq->current_step_target_cycles;
-                    if (target_cycles < 1) target_cycles = 1;
+                if (sq->current_sequence && !sq->finished) {
+                    sq->cycle_accumulator += phase_inc;
 
-                    if (sq->cycles_counter >= target_cycles) {
+                    int whole_cycles = (int)sq->cycle_accumulator;
+                    sq->cycle_accumulator -= (float)whole_cycles;
+
+                    sq->cycles_counter += whole_cycles;
+
+                    // Ensure target is safe before loop
+                    if (sq->current_step_target_cycles < 1) sq->current_step_target_cycles = 1;
+
+                    while (!sq->finished && sq->cycles_counter >= sq->current_step_target_cycles) {
+                        uint32_t target_cycles = sq->current_step_target_cycles;
+                        // Just in case it changed inside loop or something weird
+                        if (target_cycles < 1) target_cycles = 1;
+
+                        const PxWaveSeqStep* current_step = &sq->current_sequence->steps[sq->step_idx];
                         bool force_end = (current_step->flags & PX_WSEQ_END);
                         if (force_end) {
                             switch (sq->current_sequence->end_action) {
@@ -3243,8 +3253,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                                     sq->finished = true;
                                     break;
                                 case PX_WSEQ_END_HOLD: sq->finished = true; break;
-                                case PX_WSEQ_END_LOOP: sq->step_idx = sq->loop_start_idx; sq->cycles_counter = 0; break;
-                                case PX_WSEQ_END_PINGPONG: sq->direction *= -1; sq->step_idx += sq->direction; sq->cycles_counter = 0; break;
+                                case PX_WSEQ_END_LOOP: sq->step_idx = sq->loop_start_idx; sq->cycles_counter -= target_cycles; break;
+                                case PX_WSEQ_END_PINGPONG: sq->direction *= -1; sq->step_idx += sq->direction; sq->cycles_counter -= target_cycles; break;
                                 default: sq->finished = true; break;
                             }
                         } else {
@@ -3279,7 +3289,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                                     sq->step_idx = (sq->step_idx < 0) ? 0 : PX_MAX_WSEQ_STEPS-1;
                                 }
                             }
-                            sq->cycles_counter = 0;
+                            sq->cycles_counter -= target_cycles;
                         }
 
                         if (!sq->finished) {
@@ -4022,6 +4032,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
             sq->step_idx = 0;
             sq->direction = 1;
             sq->cycles_counter = 0;
+            sq->cycle_accumulator = 0.0f;
             sq->finished = false;
             sq->target_pitch_ratio = 1.0f;
             sq->prev_step_pitch_ratio = 1.0f;
