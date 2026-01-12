@@ -1,5 +1,5 @@
 # Polysonix
-**Version 1.7.11** | **Author:** Jacques Morel | **Copyright (c) 2025**
+**Version 1.8.1** | **Author:** Jacques Morel | **Copyright (c) 2026**
 
 A single-header polyphonic synthesizer engine.
 
@@ -62,6 +62,8 @@ like UI, input handling, and audio device management.
 - **Built-in Dynamics:** Includes a per-voice soft-clipper to prevent harsh transients and a master bus lookahead limiter to prevent final output clipping.
 - **Oscillator Quality Modes**: Choose between per-sample calculation for quality or interpolated modes for performance.
 - **Wave Sequencing (v1.5+):** A powerful, bytecode-driven sequencer integrated directly into the voice engine.
+    *   **Time-Locked Mode (v1.8):** Optional mode where step durations are calculated in real-time based on pitch, maintaining consistent rhythmic timing across the keyboard range.
+    *   **Full ROM Library:** Includes 256 professionally designed wave sequences covering Leads, Pads, Rhythms, Glitch, and Experimental textures.
     *   **Independent Sequencing:** Each of the 3 oscillators has its own sequence state, allowing for polyrhythms and complex layering.
     *   **Per-Cycle Precision:** Logic updates exactly at waveform cycle boundaries for phase-perfect transitions.
     *   **Generative Features:** Probability-based Mute and Skip steps, Random Octave, and Random Wave selection, with **Polyphonic RNG** seeding.
@@ -336,7 +338,7 @@ The API is designed to be simple and thread-safe.
 - `PX_PolyAftertouch(PxSynth* s, int key_id, float pressure)`: Sets polyphonic aftertouch pressure for a note.
 
 ### Oscillator Control (v1.6 - v1.7)
-Polysonix features a Triple Oscillator architecture. Functions take an `osc_idx` (0-2).
+Polysonix features a Triple Oscillator Architecture. Functions take an `osc_idx` (0-2).
 
 - `PX_SetOscEnabled(s, osc_idx, enabled)` / `PX_GetOscEnabled`
 - `PX_SetOscWave(s, osc_idx, wave_idx)` / `PX_GetOscWave`
@@ -353,6 +355,10 @@ Polysonix features a Triple Oscillator architecture. Functions take an `osc_idx`
 - `PX_SetOscSync(s, osc_idx, enabled, softness)` / `PX_GetOscSync` / `PX_GetOscSyncEnabled`
 - `PX_SetOscRingMod(s, osc_idx, enabled, depth)` / `PX_GetOscRingMod` / `PX_GetOscRingModEnabled`
 - `PX_SetOscBitcrush(s, osc_idx, enabled, depth)` / `PX_GetOscBitcrush` / `PX_GetOscBitcrushEnabled`
+
+**v1.8 Time-Locked Wave Sequencing:**
+- `PX_SetWSeqFixedTime(s, enabled)` / `PX_GetWSeqFixedTime`: Enables or disables Time-Locked mode.
+- `PX_SetWSeqRefFreq(s, freq)` / `PX_GetWSeqRefFreq`: Sets the reference frequency (e.g., 440.0 Hz) for time scaling.
 
 The library also provides a comprehensive set of `PX_Set...` and `PX_Get...` functions for controlling all aspects of the synthesizer, including:
 
