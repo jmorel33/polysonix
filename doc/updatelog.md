@@ -1,5 +1,15 @@
 # Update Log
 
+## v1.8.1 (2026/01/25)
+**Fix: Wave Sequencer Timing Drift**
+
+This patch addresses a timing drift issue in the Wave Sequencer where fractional phase increments were being truncated, causing step durations to slowly drift away from the intended tempo over long sequences.
+
+*   **Fractional Carry-Over:**
+    *   **Engine Logic:** Implemented a `cycle_accumulator` in the sequencer state to track fractional cycle advancement.
+    *   **Precision:** The "leftover" fraction of a cycle is now carried over to the next processing frame, and any overshoot beyond the target step duration is carried over to the next step.
+    *   **Result:** This ensures that the average step duration remains mathematically exact over time, eliminating rhythm drift while preserving sample-accurate transitions.
+
 ## v1.8.0 (2026/01/22)
 **Major Feature: Time-Locked Wave Sequencing & Engine Fixes**
 
