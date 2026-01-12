@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 8
-#define POLYSONIX_VERSION_PATCH 1
+#define POLYSONIX_VERSION_PATCH 2
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -290,7 +290,6 @@ typedef struct {
     const char* name;             /**< Descriptive name of the sequence. */
     uint8_t  end_action;          /**< PxWSeqEndAction: What to do when the sequence ends. (0-4) */
     uint8_t  glide_mode;          /**< PxWSeqGlideMode: Pitch glide behavior. (0-2) */
-    uint8_t  bitcrush_bits;       /**< Bit depth for bitcrush effect (1-16). 0 defaults to 4. */
     uint8_t  adsr_retrig_phase;   /**< PxADSRState: Target phase on retrigger (1=ATTACK, etc). */
 
     uint8_t  prob_mute_score;     /**< 0-100%: Probability of muting step. 0 defaults to 50%. */
@@ -1133,7 +1132,6 @@ typedef struct {
     float    step_pitch_ratio;
     float    target_pitch_ratio;
     float    prev_step_pitch_ratio;
-    float    step_bitcrush_scale;
     float    step_amp_mod_val;
     bool     step_mute_state;
     float    cycle_accumulator; /**< Fractional carry-over for timing precision */
@@ -2569,7 +2567,7 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
         s->patch.osc[i].ring_mod_enabled = false;
         s->patch.osc[i].ring_mod_depth = 0.0f;
         s->patch.osc[i].bitcrush_enabled = false;
-        s->patch.osc[i].bitcrush_depth = 0.0f;
+        s->patch.osc[i].bitcrush_depth = 0.8f; // Default to ~4 bits for legacy WSEQ compatibility
     }
 
     // v1.8 Defaults
@@ -3119,26 +3117,6 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         raw_sample *= amp_scalar;
                     }
 
-                    if (sq->step_flags & PX_WSEQ_BITCRUSH) {
-                        float bits = (sq->current_sequence->bitcrush_bits > 0) ? (float)sq->current_sequence->bitcrush_bits : 4.0f;
-                        // Modulate: depth 0-1 reduces bits.
-                        // We map depth (0-1) to a reduction of up to 'bits - 1' (keeping at least 1 bit).
-                        float bc_mod = dest_mod[PX_MOD_DEST_OSC1_BITCRUSH_DEPTH + o * PX_OSC_MOD_PARAM_COUNT];
-                        bc_mod = fmaxf(0.0f, fminf(1.0f, bc_mod)); // Clamp modulation to 0-1
-
-                        bits = bits - (bc_mod * (bits - 1.0f));
-                        if (bits < 1.0f) bits = 1.0f;
-
-                        float levels = powf(2.0f, bits);
-
-                        // Optional: Dither for low bit depths
-                        if (bits < 8.0f) {
-                            float dither = ((float)(px_rand(&v->rng_state) % 1000) / 1000.0f) * 2.0f - 1.0f;
-                            dither *= (1.0f / levels);
-                            raw_sample += dither;
-                        }
-                        raw_sample = roundf(raw_sample * levels) / levels;
-                    }
                     if (sq->step_flags & PX_WSEQ_RING_MOD) {
                         float ring_mod_src = sinf(v->osc_phase[o] * 4.0f * PI);
                         float depth = sq->current_sequence->ring_mod_depth;
@@ -3182,14 +3160,39 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     }
                 }
 
-                // v1.7.1: Per-Oscillator Bitcrush
-                if (s->patch.osc[o].bitcrush_enabled) {
+                // v1.7.1 / v1.8.2: Bitcrush (Oscillator or WSEQ Flag)
+                // Determine effective bit depth with Strict Precedence:
+                // 1. If WSEQ is active (current_sequence is set), the WSEQ Flag EXCLUSIVELY determines enabling.
+                // 2. Else, use the Oscillator's enable flag.
+                // Note: Depth always comes from Oscillator/Modulation (with fallback for legacy sequences).
+                float effective_bits = 0.0f;
+                bool do_bitcrush = false;
+
+                if (sq->current_sequence) {
+                    if (sq->step_flags & PX_WSEQ_BITCRUSH) {
+                        do_bitcrush = true;
+                        // Legacy Fallback: If Osc depth is 0, default to 4-bits (0.8f) to support old ROM sequences.
+                        float base_depth = (s->patch.osc[o].bitcrush_depth > 0.001f) ? s->patch.osc[o].bitcrush_depth : 0.8f;
+                        float bc_depth = base_depth + dest_mod[PX_MOD_DEST_OSC1_BITCRUSH_DEPTH + o * PX_OSC_MOD_PARAM_COUNT];
+                        bc_depth = fmaxf(0.0f, fminf(1.0f, bc_depth));
+                        effective_bits = 16.0f - (bc_depth * 15.0f);
+                    }
+                } else if (s->patch.osc[o].bitcrush_enabled) {
+                    do_bitcrush = true;
                     float bc_depth = s->patch.osc[o].bitcrush_depth + dest_mod[PX_MOD_DEST_OSC1_BITCRUSH_DEPTH + o * PX_OSC_MOD_PARAM_COUNT];
                     bc_depth = fmaxf(0.0f, fminf(1.0f, bc_depth));
-                    // Map 0.0-1.0 to 16-1 bits.
-                    float bits = 16.0f - (bc_depth * 15.0f);
-                    if (bits < 1.0f) bits = 1.0f;
-                    float levels = powf(2.0f, bits);
+                    effective_bits = 16.0f - (bc_depth * 15.0f);
+                }
+
+                if (do_bitcrush) {
+                    if (effective_bits < 1.0f) effective_bits = 1.0f;
+                    float levels = powf(2.0f, effective_bits);
+                    // Optional: Dither for low bit depths (from WSEQ logic)
+                    if (effective_bits < 8.0f) {
+                        float dither = ((float)(px_rand(&v->rng_state) % 1000) / 1000.0f) * 2.0f - 1.0f;
+                        dither *= (1.0f / levels);
+                        raw_sample += dither;
+                    }
                     raw_sample = roundf(raw_sample * levels) / levels;
                 }
 
@@ -4045,8 +4048,6 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
                     break;
                 }
             }
-
-            sq->step_bitcrush_scale = (sq->current_sequence->bitcrush_bits > 0) ? powf(2.0f, sq->current_sequence->bitcrush_bits) : 1.0f;
 
             // Initialize Random Amp Mod
             sq->step_amp_mod_val = 1.0f;
