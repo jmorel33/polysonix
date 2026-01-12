@@ -228,7 +228,7 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /* 91*/ { "FM: Metallic 2", "sin(x + sin(x * 2.718) * MOD_A * 5.0)" }, // Another flavor of metallic FM.
 
-/* 92*/ { "Weird: AM Chaos", "sin(x) * sin(x * (1.0 + MOD_A * 100.0))" }, // High-frequency AM sidebands. [SIMILAR TO ORIGINAL #176]
+/* 92*/ { "Weird: AM Chaos", "sin(x) * sin(x * (1.0 + MOD_A * 100.0))" }, // High-frequency AM sidebands.
 
 /* 93*/ { "Sci-Fi Drone", "( (x/PI - 1.0 + 0.3*sin(x*11.0 + RAND_OFFSET*PI)) * 0.6 + ( ( ((MOD_A > 0) ^ (MOD_B > 0)) ? ( (x*0.5 < PI ? 0.4 : -0.4) ) : ( sin(x*0.5 + MOD_B*PI_OVER_2) * 0.4 ) ) * (0.5 + 0.5*abs(MOD_A)) ) ) * (0.4 + 0.6 * (0.5 + 0.5 * tanh( 3.0 * ( (MOD_A * 0.8 - MOD_B * 0.6) - cos(x*(0.5 + ((MOD_A > 0) ^ (MOD_B < 0) ? 1.5 : 0.5) )) ) ))) * 0.7" },
 
@@ -261,7 +261,7 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /*106*/ { "Simple Minor Triad", "( sin(x) + sin(x * 1.189207 * (1.0 + MOD_A*0.005) + RAND_OFFSET*0.05) * 0.8 + sin(x * 1.498307 * (1.0 - MOD_A*0.004) + RAND_OFFSET*0.07) * 0.7 ) * (0.33 / (1.0 + abs(MOD_B*0.5))) + (MOD_B > 0.5 ? sin(x * 1.781797) * 0.2 : 0.0)" },
 
-/*107*/ { "Add: Spec 1", "sin(x) + 0.5*sin(x*2.0) + 0.25*sin(x*3.0) + 0.125*sin(x*4.0)" }, // Basic harmonic series. [SIMILAR TO ORIGINAL #179]
+/*107*/ { "Add: Spec 1", "sin(x) + 0.5*sin(x*2.0) + 0.25*sin(x*3.0) + 0.125*sin(x*4.0)" }, // Basic harmonic series.
 
 /*108*/ { "Add: Spec 2", "sin(x) + 0.3*sin(x*3.0) + 0.2*sin(x*5.0) + 0.1*sin(x*7.0)" }, // Odd harmonics.
 
@@ -283,14 +283,14 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /*116*/ { "Sync Sweep No Slant", "( sin(x * (1.0 + 5.0*abs(MOD_A))) > (MOD_B * 0.9) ? 1.0 : -1.0 ) * 0.6" },
 
-/*117*/ { "Sync Sweep Cos Shape", "( ( sin(x * (1.0 + 5.0*abs(MOD_A))) > (MOD_B * 0.9) ? 1.0 : -1.0 ) * 0.6 + cos(x)*0.3 )"}, // [SIMILAR TO ORIGINAL #77]
+/*117*/ { "Sync Sweep Cos Shape", "( ( sin(x * (1.0 + 5.0*abs(MOD_A))) > (MOD_B * 0.9) ? 1.0 : -1.0 ) * 0.6 + cos(x)*0.3 )"},
 
 /*118*/ { "Smoothed Sync (A=SyncFreq B=Duty)", "( tanh( 10.0 * (sin(x * (1.0 + 5.0*abs(MOD_A))) - (MOD_B * 0.9)) ) * 0.7 + (x/PI-1.0)*0.2 )" },
 
 
 /*119*/ { "Limited Sync (A=SyncFreq B=Duty)", "( ( sin(x * (1.0 + 2.5*abs(MOD_A))) > (MOD_B * 0.9) ? 1.0 : -1.0 ) * 0.6 + (x/PI-1.0)*0.3 )" },
 
-/*120*/ { "Sync Sweep (A=SyncFreq B=Duty)", "( ( sin(x * (1.0 + 5.0*abs(MOD_A))) > (MOD_B * 0.9) ? 1.0 : -1.0 ) * 0.6 + (x/PI-1.0)*0.3 )" }, // [SIMILAR TO ORIGINAL #77]
+/*120*/ { "Sync Sweep (A=SyncFreq B=Duty)", "( ( sin(x * (1.0 + 5.0*abs(MOD_A))) > (MOD_B * 0.9) ? 1.0 : -1.0 ) * 0.6 + (x/PI-1.0)*0.3 )" },
 
 /*121*/ { "Oooh Choir Formant", "sigma(k, 1.0, 8.0 + 4.0*abs(MOD_B), 1.0, ( sin(x*k + RAND_OFFSET*0.1*k) * ( (1.0 / (1.0 + pow( (k - (2.5 + MOD_A*1.5)) / (0.8 + abs(MOD_A*0.3)) , 2.0))) + (0.7 / (1.0 + pow( (k - ( ((MOD_A > 0) ^ (MOD_B > 0.3)) ? (6.0 - MOD_A*2.0) : (5.0 + MOD_A*1.0) ) ) / 1.2 , 2.0))) ) ) / pow(k, 0.7 + 0.2*abs(MOD_B)) ) * 0.25 * (1.0 + 0.15*sin(x*6.0 + RAND_OFFSET*PI))" },
 
@@ -580,11 +580,11 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
         // High rate. MOD_A varies rate further. MOD_B volume.
 
 
-/*235*/ { "POKEY 64kHz Noise (17-bit)", "lfsr_noise(LFSR_17BIT, (63920.0 / ( (FREQUENCY > 1.0 ? FREQUENCY : 1.0) * 131071.0)) * (1.0 + 0.5*abs(MOD_A)) ) * (0.6 + 0.39 * abs(MOD_B))" }, // [SIMILAR TO ORIGINAL #178]
+/*235*/ { "POKEY 64kHz Noise (17-bit)", "lfsr_noise(LFSR_17BIT, (63920.0 / ( (FREQUENCY > 1.0 ? FREQUENCY : 1.0) * 131071.0)) * (1.0 + 0.5*abs(MOD_A)) ) * (0.6 + 0.39 * abs(MOD_B))" },
         // This is essentially same as 178, just named differently for clarity.
 
 
-/*236*/ { "POKEY 15kHz Noise (9-bit)", "lfsr_noise(LFSR_9BIT, (15699.0 / ( (FREQUENCY > 1.0 ? FREQUENCY : 1.0) * 511.0)) * (1.0 + 0.5*abs(MOD_A)) ) * (0.6 + 0.39 * abs(MOD_B))" }, // [SIMILAR TO ORIGINAL #179]
+/*236*/ { "POKEY 15kHz Noise (9-bit)", "lfsr_noise(LFSR_9BIT, (15699.0 / ( (FREQUENCY > 1.0 ? FREQUENCY : 1.0) * 511.0)) * (1.0 + 0.5*abs(MOD_A)) ) * (0.6 + 0.39 * abs(MOD_B))" },
         // This is essentially same as 179.
 
 
@@ -622,24 +622,24 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /*248*/ { "Logistic Chaos", "sin(x * (1.0 + MOD_A * sin(x * (1.0 + MOD_B)))) * sin(x * 2.718)" }, // Chaotic AM/FM texture.
 
-/*249*/ { "POKEY Pure 4b/64k",  "lfsr_noise(LFSR_4BIT, (63920.45 / ((FREQUENCY > 1.0 ? FREQUENCY : 1.0)*15.0)) * (1.0+0.2*MOD_B) ) * (0.5+0.49*MOD_A)" }, // [SIMILAR TO ORIGINAL #176]
+/*249*/ { "Chebyshev 4th", "8.0*pow(x/PI - 1.0, 4.0) - 8.0*pow(x/PI - 1.0, 2.0) + 1.0" }, // Chebyshev T4 polynomial mapped to phase.
 
-/*250*/ { "POKEY Pure 17b/15k", "lfsr_noise(LFSR_17BIT, (15699.46 / ((FREQUENCY > 1.0 ? FREQUENCY : 1.0)*131071.0)) * (1.0+0.2*MOD_B) ) * (0.5+0.49*MOD_A)" }, // [SIMILAR TO ORIGINAL #178]
+/*250*/ { "Tanh Fold", "tanh(sin(x)*5.0 + sin(x*2.0 + MOD_A*PI)*5.0 * MOD_B)" }, // Soft-saturated wavefolder.
 
-    // --- Authentic POKEY "Tone AND Noise" (using lfsr_val, MOD_A=Vol, MOD_B=unused or for tone mod) ---
+    // --- Math & Synthesis Experiments ---
 
-/*251*/ { "POKEY T+N 17b/64k", "( (x<PI?1.0:0.0) && lfsr_val(LFSR_17BIT, (x/TWO_PI)*(63920.45 / (FREQUENCY > 1.0 ? FREQUENCY : 1.0)), 0.1*RAND_OFFSET) ? 1.0 : -1.0) * (0.5+0.49*MOD_A)"},
-
-
-/*252*/ { "POKEY T+N 4b/15k",  "( (x<PI?1.0:0.0) && lfsr_val(LFSR_4BIT, (x/TWO_PI)*(15699.46 / (FREQUENCY > 1.0 ? FREQUENCY : 1.0)), 0.1*RAND_OFFSET) ? 1.0 : -1.0) * (0.5+0.49*MOD_A)"},
+/*251*/ { "Exp FM", "sin(x + exp(sin(x) * (1.0+MOD_A*2.0)) * MOD_B * 5.0)" }, // Exponential Frequency Modulation.
 
 
-/*253*/ { "POKEY Poly17 FreeRun", "( (x < PI ? 1.0 : -1.0) * lfsr_val(LFSR_17BIT, 0.0, 0.0) ) * 0.7" },
+/*252*/ { "Chaotic Map", "sin(x * (1.0 + MOD_A * sin(x*E))) + sin(x*PI*MOD_B)" }, // Recursive sine mapping.
 
 
-/*254*/ { "POKEY Pure", "(x < (TWO_PI * (0.5 + 0.1 * MOD_A)) ? (1.0 - 0.5*x/(TWO_PI*0.5)) : (-1.0 + 0.5*(x - TWO_PI*0.5)/(TWO_PI*0.5))) + 0.5 * MOD_B * sin(2*x)" }, // Harmonic texture
+/*253*/ { "Pseudo-LPG", "sin(x + sin(x)*exp(-x*5.0)*MOD_B*10.0) * exp(-x*(1.0+abs(MOD_A)*5.0))" }, // Simulated Low Pass Gate pluck.
 
-/*255*/ { "Pulse Sweep", "(x < PI*(1.0-MOD_A) ? 1.0 : -1.0)" }, // Classic PWM via phase comparison.
+
+/*254*/ { "Harmonic Steps", "floor(sin(x) * (2.0 + abs(MOD_A) * 10.0)) / (2.0 + abs(MOD_A) * 10.0)" }, // Quantized sine wave.
+
+/*255*/ { "Vocal Formant 2", "sin(x) * (1.0 + cos(x * (2.0 + MOD_A * 10.0)))" }, // Windowed sync formant.
 
 
     };
