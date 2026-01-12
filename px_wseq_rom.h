@@ -670,10 +670,11 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Basic Arp",
         .end_action = PX_WSEQ_END_PINGPONG,
+        .bitcrush_bits = 4,
         .steps = {
-            {.wave_idx = 4, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 4, .duration_cycles = 100, .pitch_offset = 1200, .flags = 0},
-            {.wave_idx = 4, .duration_cycles = 100, .pitch_offset = 2400, .flags = 0},
+            {.wave_idx = 4, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 4, .duration_cycles = 100, .pitch_offset = 1200, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 4, .duration_cycles = 100, .pitch_offset = 2400, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -681,12 +682,13 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "8-bit Run",
         .end_action = PX_WSEQ_END_LOOP,
+        .bitcrush_bits = 4,
         .steps = {
-            {.wave_idx = 5, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 5, .duration_cycles = 50, .pitch_offset = 200, .flags = 0},
-            {.wave_idx = 5, .duration_cycles = 50, .pitch_offset = 400, .flags = 0},
-            {.wave_idx = 5, .duration_cycles = 50, .pitch_offset = 500, .flags = 0},
-            {.wave_idx = 5, .duration_cycles = 50, .pitch_offset = 700, .flags = 0},
+            {.wave_idx = 5, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 5, .duration_cycles = 50, .pitch_offset = 200, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 5, .duration_cycles = 50, .pitch_offset = 400, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 5, .duration_cycles = 50, .pitch_offset = 500, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 5, .duration_cycles = 50, .pitch_offset = 700, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -694,10 +696,11 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "C64 Arp",
         .end_action = PX_WSEQ_END_LOOP,
+        .bitcrush_bits = 3,
         .steps = {
-            {.wave_idx = 4, .duration_cycles = 20, .pitch_offset = 0, .flags = 0}, // Very fast
-            {.wave_idx = 4, .duration_cycles = 20, .pitch_offset = 300, .flags = 0},
-            {.wave_idx = 4, .duration_cycles = 20, .pitch_offset = 700, .flags = 0},
+            {.wave_idx = 4, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // Very fast
+            {.wave_idx = 4, .duration_cycles = 20, .pitch_offset = 300, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 4, .duration_cycles = 20, .pitch_offset = 700, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -706,9 +709,10 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .name = "Mario Jump",
         .end_action = PX_WSEQ_END_STOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .bitcrush_bits = 4,
         .steps = {
-            {.wave_idx = 4, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
-            {.wave_idx = 4, .duration_cycles = 200, .pitch_offset = 1200, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 4, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_BITCRUSH},
+            {.wave_idx = 4, .duration_cycles = 200, .pitch_offset = 1200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -716,9 +720,10 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Coin",
         .end_action = PX_WSEQ_END_STOP,
+        .bitcrush_bits = 4,
         .steps = {
-            {.wave_idx = 32, .duration_cycles = 50, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 32, .duration_cycles = 200, .pitch_offset = 500, .flags = 0}, // 4th/5th up
+            {.wave_idx = 32, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 32, .duration_cycles = 200, .pitch_offset = 500, .flags = PX_WSEQ_BITCRUSH}, // 4th/5th up
             {.flags = PX_WSEQ_END}
         }
     },
@@ -726,12 +731,13 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Power Up",
         .end_action = PX_WSEQ_END_STOP,
+        .bitcrush_bits = 4,
         .steps = {
-            {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 400, .flags = 0},
-            {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 700, .flags = 0},
-            {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 1200, .flags = 0},
-            {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 1600, .flags = 0},
+            {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 400, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 700, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 1200, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 1600, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -739,10 +745,11 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Game Over",
         .end_action = PX_WSEQ_END_STOP,
+        .bitcrush_bits = 5,
         .steps = {
-            {.wave_idx = 6, .duration_cycles = 300, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 6, .duration_cycles = 300, .pitch_offset = -100, .flags = 0},
-            {.wave_idx = 6, .duration_cycles = 400, .pitch_offset = -200, .flags = 0},
+            {.wave_idx = 6, .duration_cycles = 300, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 6, .duration_cycles = 300, .pitch_offset = -100, .flags = PX_WSEQ_BITCRUSH},
+            {.wave_idx = 6, .duration_cycles = 400, .pitch_offset = -200, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -750,9 +757,10 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Chiptune Lead",
         .end_action = PX_WSEQ_END_LOOP,
+        .bitcrush_bits = 4,
         .steps = {
-            {.wave_idx = 32, .duration_cycles = 200, .pitch_offset = 0, .flags = 0}, // Pulse 25
-            {.wave_idx = 34, .duration_cycles = 200, .pitch_offset = 0, .flags = 0}, // Staircase
+            {.wave_idx = 32, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // Pulse 25
+            {.wave_idx = 34, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // Staircase
             {.flags = PX_WSEQ_END}
         }
     },
@@ -1353,11 +1361,13 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .name = "Vector Pad",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .xmod_depth = 0.5f,
+        .xmod_mod_src = -1,
         .steps = {
-            {.wave_idx = 102, .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Pad
-            {.wave_idx = 8,   .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Saw/Sine
-            {.wave_idx = 115, .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Vowel
-            {.wave_idx = 9,   .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Sine/Saw
+            {.wave_idx = 102, .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD}, // Pad
+            {.wave_idx = 8,   .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD}, // Saw/Sine
+            {.wave_idx = 115, .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD}, // Vowel
+            {.wave_idx = 9,   .duration_cycles = 800, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD}, // Sine/Saw
             {.flags = PX_WSEQ_END}
         }
     },
@@ -1365,10 +1375,12 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Ski Jam",
         .end_action = PX_WSEQ_END_LOOP,
+        .xmod_depth = 0.3f,
+        .xmod_mod_src = -1,
         .steps = {
             {.wave_idx = 128, .duration_cycles = 50, .pitch_offset = 0, .flags = 0}, // Kick
             {.wave_idx = 132, .duration_cycles = 25, .pitch_offset = 0, .flags = 0}, // Cymbal
-            {.wave_idx = 129, .duration_cycles = 50, .pitch_offset = 0, .flags = 0}, // Snare
+            {.wave_idx = 129, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_XMOD}, // Snare (with XMod)
             {.wave_idx = 132, .duration_cycles = 25, .pitch_offset = 0, .flags = 0}, // Cymbal
             {.flags = PX_WSEQ_END}
         }
@@ -1378,10 +1390,12 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .name = "Wave Sweep",
         .end_action = PX_WSEQ_END_PINGPONG,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .xmod_depth = 0.4f,
+        .xmod_mod_src = -1,
         .steps = {
-            {.wave_idx = 0,  .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 0,  .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD},
             {.wave_idx = 4,  .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
-            {.wave_idx = 8,  .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 8,  .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD},
             {.wave_idx = 12, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
             {.flags = PX_WSEQ_END}
         }
@@ -1391,9 +1405,11 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .name = "Ethereal",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .ring_mod_depth = 0.2f,
+        .ring_mod_mod_src = -1,
         .steps = {
-            {.wave_idx = 121, .duration_cycles = 1000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Choir
-            {.wave_idx = 152, .duration_cycles = 1000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE}, // Breathing
+            {.wave_idx = 121, .duration_cycles = 1000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD}, // Choir
+            {.wave_idx = 152, .duration_cycles = 1000, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD}, // Breathing
             {.flags = PX_WSEQ_END}
         }
     },
@@ -1401,9 +1417,11 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Motion Texture",
         .end_action = PX_WSEQ_END_LOOP,
+        .xmod_depth = 0.5f,
+        .xmod_mod_src = -1,
         .steps = {
-            {.wave_idx = 151, .duration_cycles = 500, .pitch_offset = 0, .flags = 0},
-            {.wave_idx = 151, .duration_cycles = 500, .pitch_offset = 10, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 151, .duration_cycles = 500, .pitch_offset = 0, .flags = PX_WSEQ_XMOD},
+            {.wave_idx = 151, .duration_cycles = 500, .pitch_offset = 10, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -1411,9 +1429,11 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Resonant Sweep",
         .end_action = PX_WSEQ_END_PINGPONG,
+        .xmod_depth = 0.3f,
+        .xmod_mod_src = -1,
         .steps = {
-            {.wave_idx = 114, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
-            {.wave_idx = 114, .duration_cycles = 600, .pitch_offset = 1200, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 114, .duration_cycles = 600, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD},
+            {.wave_idx = 114, .duration_cycles = 600, .pitch_offset = 1200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -1422,9 +1442,11 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .name = "Glass Morph",
         .end_action = PX_WSEQ_END_LOOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .ring_mod_depth = 0.4f,
+        .ring_mod_mod_src = -1,
         .steps = {
-            {.wave_idx = 71, .duration_cycles = 400, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
-            {.wave_idx = 88, .duration_cycles = 400, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 71, .duration_cycles = 400, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD},
+            {.wave_idx = 88, .duration_cycles = 400, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_RING_MOD},
             {.flags = PX_WSEQ_END}
         }
     },
@@ -1433,9 +1455,11 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .name = "Vector Pluck",
         .end_action = PX_WSEQ_END_STOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
+        .xmod_depth = 0.6f,
+        .xmod_mod_src = -1,
         .steps = {
-            {.wave_idx = 144, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
-            {.wave_idx = 102, .duration_cycles = 500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE},
+            {.wave_idx = 144, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD},
+            {.wave_idx = 102, .duration_cycles = 500, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_XMOD},
             {.flags = PX_WSEQ_END}
         }
     },
