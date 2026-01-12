@@ -24,7 +24,6 @@
  *                                - PX_WSEQ_GLIDE_STEP   (1): Linear glide within step duration.
  *                                - PX_WSEQ_GLIDE_SMOOTH (2): Continuous RC filter glide (ignores step bounds).
  *
- *  uint8_t  bitcrush_bits      : Base bit depth for PX_WSEQ_BITCRUSH. (1-16). 0 defaults to 4.
  *  uint8_t  adsr_retrig_phase  : Target ADSR state on PX_WSEQ_RETRIG_ADSR.
  *                                - 1: Attack, 2: Decay, 3: Sustain, 4: Release.
  *
@@ -151,7 +150,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Bitcrushed Lead",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 4,
         .steps = {
             {.wave_idx = 2, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // Sine
             {.wave_idx = 6, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // Saw
@@ -163,7 +161,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .name = "Glitch Arp",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_octave_range = 40,
-        .bitcrush_bits = 6,
         .ring_mod_depth = 0.3f,
         .ring_mod_mod_src = -1,
         .amp_mod_type = PX_WSEQ_AMP_RANDOM,
@@ -355,7 +352,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Crushed Bow",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 6,
         .prob_skip_score = 40,
         .steps = {
             {.wave_idx = 147, .duration_cycles = 200, .pitch_offset = -5, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP}, // Skip creates stutter
@@ -409,7 +405,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Robot Voice",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 6,
         .steps = {
             {.wave_idx = 112, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // Formantish
             {.flags = PX_WSEQ_END}
@@ -564,7 +559,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_STOP,
         .amp_mod_type = PX_WSEQ_AMP_EXP_DOWN,
         .steps = { {.wave_idx = 6, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD}, {.flags = PX_WSEQ_END} },
-        .bitcrush_bits = 7
     },
     // 44: Muted Guitar
     {
@@ -579,7 +573,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_STOP,
         .amp_mod_type = PX_WSEQ_AMP_RAMP_DOWN,
         .steps = { {.wave_idx = 6, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_AMP_MOD}, {.flags = PX_WSEQ_END} },
-        .bitcrush_bits = 4
     },
     // 46: Bass Pluck
     {
@@ -618,7 +611,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Math Hat",
         .end_action = PX_WSEQ_END_STOP,
-        .bitcrush_bits = 3,
         .prob_skip_score = 30,
         .steps = {
             {.wave_idx = 242, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP}, // Digital Saw
@@ -636,7 +628,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Evolving Glitch Perc",
         .end_action = PX_WSEQ_END_STOP,
-        .bitcrush_bits = 5,
         .prob_skip_score = 40,
         .rnd_octave_range = 30,
         .steps = {
@@ -670,7 +661,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Basic Arp",
         .end_action = PX_WSEQ_END_PINGPONG,
-        .bitcrush_bits = 4,
         .steps = {
             {.wave_idx = 4, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
             {.wave_idx = 4, .duration_cycles = 100, .pitch_offset = 1200, .flags = PX_WSEQ_BITCRUSH},
@@ -682,7 +672,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "8-bit Run",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 4,
         .steps = {
             {.wave_idx = 5, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
             {.wave_idx = 5, .duration_cycles = 50, .pitch_offset = 200, .flags = PX_WSEQ_BITCRUSH},
@@ -696,7 +685,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "C64 Arp",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 3,
         .steps = {
             {.wave_idx = 4, .duration_cycles = 20, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // Very fast
             {.wave_idx = 4, .duration_cycles = 20, .pitch_offset = 300, .flags = PX_WSEQ_BITCRUSH},
@@ -709,7 +697,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .name = "Mario Jump",
         .end_action = PX_WSEQ_END_STOP,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
-        .bitcrush_bits = 4,
         .steps = {
             {.wave_idx = 4, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_BITCRUSH},
             {.wave_idx = 4, .duration_cycles = 200, .pitch_offset = 1200, .flags = PX_WSEQ_GLIDE | PX_WSEQ_BITCRUSH},
@@ -720,7 +707,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Coin",
         .end_action = PX_WSEQ_END_STOP,
-        .bitcrush_bits = 4,
         .steps = {
             {.wave_idx = 32, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
             {.wave_idx = 32, .duration_cycles = 200, .pitch_offset = 500, .flags = PX_WSEQ_BITCRUSH}, // 4th/5th up
@@ -731,7 +717,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Power Up",
         .end_action = PX_WSEQ_END_STOP,
-        .bitcrush_bits = 4,
         .steps = {
             {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
             {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 400, .flags = PX_WSEQ_BITCRUSH},
@@ -745,7 +730,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Game Over",
         .end_action = PX_WSEQ_END_STOP,
-        .bitcrush_bits = 5,
         .steps = {
             {.wave_idx = 6, .duration_cycles = 300, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
             {.wave_idx = 6, .duration_cycles = 300, .pitch_offset = -100, .flags = PX_WSEQ_BITCRUSH},
@@ -757,7 +741,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Chiptune Lead",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 4,
         .steps = {
             {.wave_idx = 32, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // Pulse 25
             {.wave_idx = 34, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // Staircase
@@ -893,7 +876,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Kazoo",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 3,
         .steps = {
             {.wave_idx = 6, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
@@ -1000,7 +982,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .name = "Hyper Stutter",
         .end_action = PX_WSEQ_END_PINGPONG,
         .glide_mode = PX_WSEQ_GLIDE_SMOOTH,
-        .bitcrush_bits = 5,
         .prob_skip_score = 25,
         .steps = {
             {.wave_idx = 6, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_GLIDE | PX_WSEQ_BITCRUSH},
@@ -1032,7 +1013,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.wave_idx = 143, .duration_cycles = 50, .pitch_offset = 1200, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
         },
-        .bitcrush_bits = 4,
         .ring_mod_depth = 0.2f,
         .ring_mod_mod_src = -1
     },
@@ -1265,7 +1245,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Chaos Theory",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 4,
         .rnd_octave_range = 50,
         .prob_skip_score = 20,
         .steps = {
@@ -1277,7 +1256,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Digital Hurricane",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 2,
         .prob_skip_score = 25,
         .prob_mute_score = 10,
         .steps = {
@@ -1346,7 +1324,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Heat Death",
         .end_action = PX_WSEQ_END_STOP,
-        .bitcrush_bits = 8,
         .steps = {
             {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // Degrading
             {.wave_idx = 2, .duration_cycles = 200, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // ...
@@ -1560,7 +1537,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .name = "AFX Acid",
         .end_action = PX_WSEQ_END_LOOP,
         .rnd_octave_range = 60,
-        .bitcrush_bits = 4,
         .steps = {
             {.wave_idx = 29, .duration_cycles = 30, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
             {.wave_idx = 29, .duration_cycles = 30, .pitch_offset = 1200, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_RND_OCTAVE},
@@ -1637,7 +1613,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Bitrot",
         .end_action = PX_WSEQ_END_STOP,
-        .bitcrush_bits = 8,
         .steps = {
             {.wave_idx = 249, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
             {.wave_idx = 249, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
@@ -1727,7 +1702,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Dirty Brass",
         .end_action = PX_WSEQ_END_STOP,
-        .bitcrush_bits = 6,
         .steps = {
             {.wave_idx = 33, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
@@ -1740,7 +1714,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Reznor Bass",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 4,
         .steps = {
             {.wave_idx = 65, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
@@ -1791,7 +1764,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Power Noise",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 2,
         .steps = {
             {.wave_idx = 140, .duration_cycles = 100, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
@@ -1878,7 +1850,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
             {.wave_idx = 157, .duration_cycles = 500, .pitch_offset = -2400, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
         },
-        .bitcrush_bits = 6
     },
     // 174: Space Wind
     {
@@ -1893,7 +1864,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Black Hole",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 4,
         .steps = {
             {.wave_idx = 248, .duration_cycles = 1000, .pitch_offset = -2400, .flags = PX_WSEQ_BITCRUSH},
             {.flags = PX_WSEQ_END}
@@ -2059,7 +2029,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "System Crash",
         .end_action = PX_WSEQ_END_STOP,
-        .bitcrush_bits = 4,
         .steps = {
             {.wave_idx = 238, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
             {.wave_idx = 238, .duration_cycles = 100, .pitch_offset = -1200, .flags = PX_WSEQ_BITCRUSH},
@@ -2988,7 +2957,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Glitch Funk",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 4,
         .prob_skip_score = 40,
         .steps = {
             {.wave_idx = 35, .duration_cycles = 25, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH | PX_WSEQ_USE_PROB_SKIP}, // Bit Crush Bomb
@@ -3055,7 +3023,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Machine Gun",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 4,
         .steps = {
             {.wave_idx = 228, .duration_cycles = 8, .pitch_offset = 0, .flags = PX_WSEQ_RETRIG_ADSR | PX_WSEQ_BITCRUSH}, // POKEY Filtered
             {.wave_idx = 228, .duration_cycles = 8, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH},
@@ -3097,7 +3064,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
         .end_action = PX_WSEQ_END_LOOP,
         .xmod_depth = 0.8f,
         .xmod_mod_src = -1,
-        .bitcrush_bits = 6,
         .steps = {
             {.wave_idx = 53, .duration_cycles = 150, .pitch_offset = 0, .flags = PX_WSEQ_XMOD | PX_WSEQ_BITCRUSH}, // Glitch Sine
             {.wave_idx = 53, .duration_cycles = 150, .pitch_offset = 1200, .flags = PX_WSEQ_XMOD | PX_WSEQ_BITCRUSH},
@@ -3154,7 +3120,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "Logic Fail",
         .end_action = PX_WSEQ_END_LOOP,
-        .bitcrush_bits = 4,
         .xmod_depth = 0.5f,
         .xmod_mod_src = -1,
         .ring_mod_depth = 0.5f,
@@ -3183,7 +3148,6 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     {
         .name = "System Meltdown",
         .end_action = PX_WSEQ_END_STOP,
-        .bitcrush_bits = 2,
         .steps = {
             {.wave_idx = 251, .duration_cycles = 50, .pitch_offset = 0, .flags = PX_WSEQ_BITCRUSH}, // POKEY T+N
             {.wave_idx = 251, .duration_cycles = 50, .pitch_offset = -500, .flags = PX_WSEQ_BITCRUSH},
