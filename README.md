@@ -124,7 +124,7 @@ Think of each `PxSynth*` as a separate hardware synth or module:
 *   Want Prophet-style 5-voice polyphony? Create a 5-voice instance.
 *   Need bass + chords + lead in one project? Create multiple instances — each with its own role.
 
-These limits are fixed for life — just like you can't suddenly turn a 6-voice Minimoog into a 16-voice Jupiter-8 by flipping a switch.
+These limits are fixed for life — just like you can't suddenly turn a 6-voice into a 16-voice by flipping a switch.
 
 ### Patch = The "Sound Program" / Preset
 
