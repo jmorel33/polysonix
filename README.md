@@ -1,7 +1,11 @@
 # Polysonix
-**Version 1.8.3** | **Author:** Jacques Morel | **Copyright (c) 2026**
+**Version 1.8.3** (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
 
 A single-header polyphonic synthesizer engine.
+
+### What's New in v1.8.3
+- Modern polyphonic glide/portamento with smooth RC curve and legato/always modes
+- Bitcrush fully independent of wave sequencing (per-oscillator + modulatable)
 
 <details>
 <summary>Table of Contents</summary>
@@ -43,7 +47,8 @@ like UI, input handling, and audio device management.
     *   **Phase Distortion (PD):** Casio-style phase warping per oscillator for resonant, sharp timbres without filters.
     *   **Oscillator Sync:** Hard/Soft synchronization where Oscillator N resets to Oscillator N-1's cycle, enabling classic "tearing" leads.
     *   **Ring Modulation:** Oscillator N amplitude modulates Oscillator N-1 (or vice versa depending on routing), creating sum/difference frequencies for sci-fi and robotic effects.
-    *   **Bitcrush (v1.7.1):** Per-oscillator bit-reduction for "clean/dirty" layering, with fully modulatable depth.
+    *   **Bitcrush (v1.7.1 / v1.8.2):** Per-oscillator bit-reduction for "clean/dirty" layering, with fully modulatable depth (independent of wave sequencing).
+  - **Portamento/Glide (v1.8.3):** Unified polyphonic glide with multiple modes: Off, Step Linear (legacy Unilegato), and Smooth RC (exponential, analog-style). Configurable for legato-only or always-on behavior, with per-note overlap detection.
   - **ADSR Envelopes**: Up to 3 independent ADSR envelopes per voice for modulating various parameters.
   - **LFOs**: Up to 3 independent Low-Frequency Oscillators (LFOs) with their own ADSRs and flexible routing.
   - **Advanced Multi-Mode Filter:** A highly flexible state-variable filter per voice with key tracking, drive, and extensive modulation.
@@ -53,11 +58,10 @@ like UI, input handling, and audio device management.
         *   **12 dB/oct (2-pole):** Aggressive, Oberheim-style (SVF topology).
         *   **18 dB/oct (3-pole):** Balanced, Roland-style.
         *   **24 dB/oct (4-pole):** Smooth, Moog-style.
-  - **Global Post-Filter:** A dedicated stereo master filter (LP/HP/BP/etc.) placed after voice mixing for final tone shaping of the entire mix.
+  - **Global Post-Filter:** A dedicated stereo master filter (LP/HP/BP/Notch/etc.) placed after voice mixing for final tone shaping of the entire mix.
   - **Unified Modulation Matrix:** A comprehensive 16-slot modulation matrix allowing standard controllers to modulate nearly any synthesis parameter (Oscillators, Filters, LFOs, ADSRs).
     *   **Sources:** Velocity, Channel Aftertouch, **Polyphonic Aftertouch**, Mod Wheel, Pitch Bend, **Key Track**.
     *   **Response Curves:** Velocity and Aftertouch inputs can be shaped using **Linear, Exponential, Logarithmic, or S-Curve** mappings for expressive control.
-  - **Static Glide / Portamento (v1.8.3):** Smooth pitch transitions for non-sequenced playback. Supports legacy Unilegato (linear step) and analog-style Exponential (RC) glide, with polyphonic support.
 - **Stereo Signal Path:** Full stereo output with per-oscillator panning, per-voice panning, and LFO pan modulation.
 - **Built-in Dynamics:** Includes a per-voice soft-clipper to prevent harsh transients and a master bus lookahead limiter to prevent final output clipping.
 - **Oscillator Quality Modes**: Choose between per-sample calculation for quality or interpolated modes for performance.
@@ -76,6 +80,7 @@ like UI, input handling, and audio device management.
 
 ## Design Principles
 - **Header-Only:** Designed for easy integration. Simply define `POLYSONIX_IMPLEMENTATION` in one C/C++ file.
+- **No Built-in Effects:** Focuses on core synthesis (oscillators, sequencing, modulation) — pair with your DAW/modular chain for reverb, delay, etc.
 - **State Encapsulation:** All synthesizer state is managed within an opaque `PxSynth` handle, ensuring no global state and allowing for multiple
   synth instances if needed.
 - **Data-Driven UI:** The library provides a suite of `PX_Get...Info()` functions that return read-only snapshots of the internal state. This allows the host
@@ -595,13 +600,13 @@ typedef struct PxLimiterInfo {
 
 **Other Structures**
 *   `PxSynth`: An opaque handle representing the synthesizer instance.
-*   `PxPatch`: A struct that holds the editable parameters of the sound (internal use, modified via API).
+*   `PxPatch`: A struct that holds the editable parameters of the sound (internal use, modified via API). (Includes glide mode, time, legato-only, and always flags (v1.8.3))
 *   `PxWaveInfo`: Information about a specific waveform (name, compilation status).
 *   `PxADSRParams`: Configuration for an ADSR envelope (attack, decay, sustain, release, enabled).
 *   `PxLFOParams`: Configuration for an LFO (waveform, frequency, etc.).
 
 ## Changelog
-For the full history of changes, please see [updatelog.md](doc/updatelog.md).
+See [updatelog.md](doc/updatelog.md) for detailed changes, including v1.8.3 glide/portamento.
 
 ## Polysonix Waveform Scripting Language
 The Polysonix Waveform Scripting Language is a domain-specific language for defining mathematical expressions that generate audio waveforms in the Polysonix synthesizer. Expressions are stored as strings, tokenized, parsed into an abstract syntax tree (AST), compiled into bytecode, and executed by a virtual machine (VM) for real-time audio synthesis.
@@ -665,6 +670,9 @@ sigma(k, 1.0, 8.0, 1.0, sin(x*k)/k)
 ```
 lfsr_noise(LFSR_8BIT, 2.0 + MOD_B)
 ```
+
+## Seeking Partners
+Polysonix is MIT-licensed and designed for easy embedding. Looking for JUCE/VCV Rack developers to create VST3/AU/CLAP or Rack module wrappers (revenue share or bounty). DM @jmorel33!
 
 ## License
 polysonix.h is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
