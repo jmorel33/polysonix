@@ -55,9 +55,11 @@ PX_API bool PX_SavePresetToBus(PxSynth* s, PxIOWriteFn write_fn, void* token, co
  * @param s The synthesizer instance.
  * @param read_fn The callback to handle read operations.
  * @param token Context passed to the callback.
+ * @param error_msg Optional buffer to receive an error message on failure. Can be NULL.
+ * @param error_len Size of the error buffer.
  * @return true on success, false on failure.
  */
-PX_API bool PX_LoadPresetFromBus(PxSynth* s, PxIOReadFn read_fn, void* token);
+PX_API bool PX_LoadPresetFromBus(PxSynth* s, PxIOReadFn read_fn, void* token, char* error_msg, size_t error_len);
 
 // --- File IO Wrappers ---
 
@@ -66,17 +68,21 @@ PX_API bool PX_LoadPresetFromBus(PxSynth* s, PxIOReadFn read_fn, void* token);
  * @param s The synthesizer instance.
  * @param filename File path.
  * @param patch_name Patch name.
+ * @param error_msg Optional buffer to receive an error message on failure. Can be NULL.
+ * @param error_len Size of the error buffer.
  * @return true on success.
  */
-PX_API bool PX_SavePreset(PxSynth* s, const char* filename, const char* patch_name);
+PX_API bool PX_SavePreset(PxSynth* s, const char* filename, const char* patch_name, char* error_msg, size_t error_len);
 
 /**
  * @brief Loads a patch from a file (disk).
  * @param s The synthesizer instance.
  * @param filename File path.
+ * @param error_msg Optional buffer to receive an error message on failure. Can be NULL.
+ * @param error_len Size of the error buffer.
  * @return true on success.
  */
-PX_API bool PX_LoadPreset(PxSynth* s, const char* filename);
+PX_API bool PX_LoadPreset(PxSynth* s, const char* filename, char* error_msg, size_t error_len);
 
 // --- Patch Bank API ---
 
@@ -146,149 +152,303 @@ PX_API bool PX_Bank_CopySlot(PxPatchBank* bank, int src_idx, int dest_idx);
 
 // --- Helper Functions ---
 
-static void write_be32_to_buf(uint8_t* buf, uint32_t val) {
-    buf[0] = (uint8_t)((val >> 24) & 0xFF);
-    buf[1] = (uint8_t)((val >> 16) & 0xFF);
-    buf[2] = (uint8_t)((val >> 8) & 0xFF);
-    buf[3] = (uint8_t)(val & 0xFF);
+static void write_u8(uint8_t** ptr, uint8_t val) {
+    if (*ptr) { **ptr = val; (*ptr)++; }
 }
 
-static uint32_t read_be32_from_buf(const uint8_t* buf) {
-    return ((uint32_t)buf[0] << 24) | ((uint32_t)buf[1] << 16) | ((uint32_t)buf[2] << 8) | (uint32_t)buf[3];
+static void write_u16(uint8_t** ptr, uint16_t val) {
+    if (*ptr) {
+        (*ptr)[0] = (val >> 8) & 0xFF;
+        (*ptr)[1] = val & 0xFF;
+        *ptr += 2;
+    }
 }
+
+static void write_u32(uint8_t** ptr, uint32_t val) {
+    if (*ptr) {
+        (*ptr)[0] = (val >> 24) & 0xFF;
+        (*ptr)[1] = (val >> 16) & 0xFF;
+        (*ptr)[2] = (val >> 8) & 0xFF;
+        (*ptr)[3] = val & 0xFF;
+        *ptr += 4;
+    }
+}
+
+static void write_f32(uint8_t** ptr, float val) {
+    // Assuming IEEE 754 layout match (most platforms)
+    // For portability, one might use a union or memcpy.
+    if (*ptr) {
+        union { float f; uint32_t u; } u;
+        u.f = val;
+        // Write as big endian to allow cross-platform safety
+        write_u32(ptr, u.u);
+    }
+}
+
+static void write_bool(uint8_t** ptr, bool val) {
+    write_u8(ptr, val ? 1 : 0);
+}
+
+static void write_buf(uint8_t** ptr, const void* data, size_t size) {
+    if (*ptr) {
+        memcpy(*ptr, data, size);
+        *ptr += size;
+    }
+}
+
+static bool read_u8(const uint8_t** ptr, const uint8_t* end, uint8_t* out) {
+    if (*ptr + 1 > end) return false;
+    *out = **ptr;
+    (*ptr)++;
+    return true;
+}
+
+static bool read_u16(const uint8_t** ptr, const uint8_t* end, uint16_t* out) {
+    if (*ptr + 2 > end) return false;
+    *out = ((uint16_t)(*ptr)[0] << 8) | (*ptr)[1];
+    *ptr += 2;
+    return true;
+}
+
+static bool read_u32(const uint8_t** ptr, const uint8_t* end, uint32_t* out) {
+    if (*ptr + 4 > end) return false;
+    *out = ((uint32_t)(*ptr)[0] << 24) | ((uint32_t)(*ptr)[1] << 16) |
+           ((uint32_t)(*ptr)[2] << 8) | (*ptr)[3];
+    *ptr += 4;
+    return true;
+}
+
+static bool read_f32(const uint8_t** ptr, const uint8_t* end, float* out) {
+    uint32_t u_val;
+    if (!read_u32(ptr, end, &u_val)) return false;
+    union { float f; uint32_t u; } u;
+    u.u = u_val;
+    *out = u.f;
+    return true;
+}
+
+static bool read_bool(const uint8_t** ptr, const uint8_t* end, bool* out) {
+    uint8_t val;
+    if (!read_u8(ptr, end, &val)) return false;
+    *out = (val != 0);
+    return true;
+}
+
+static bool read_buf(const uint8_t** ptr, const uint8_t* end, void* out, size_t size) {
+    if (*ptr + size > end) return false;
+    memcpy(out, *ptr, size);
+    *ptr += size;
+    return true;
+}
+
+// --- Checksum Implementation (Adler-32) ---
+static uint32_t adler32(const uint8_t* data, size_t len) {
+    uint32_t a = 1, b = 0;
+    const uint32_t MOD_ADLER = 65521;
+    for (size_t i = 0; i < len; i++) {
+        a = (a + data[i]) % MOD_ADLER;
+        b = (b + a) % MOD_ADLER;
+    }
+    return (b << 16) | a;
+}
+
+// --- Header Constant ---
+#define PX_PRESET_HEADER_SIZE 40
 
 // --- Serialization Core ---
 
 static void px_serialize_patch_impl(const PxPatch* p, const PxConfig* c, uint8_t** ptr_ref, size_t* size_ref, bool calculate_only) {
-    uint8_t* ptr = ptr_ref ? *ptr_ref : NULL;
+    // If calculate_only is true, ptr_ref might be NULL, but we track size.
+    uint8_t* ptr = (ptr_ref && !calculate_only) ? *ptr_ref : NULL;
     size_t size = 0;
 
-    #define SER_BUF(data, data_size) \
-        do { \
-            if (!calculate_only) { if(ptr) memcpy(ptr, data, data_size); ptr += data_size; } \
-            size += data_size; \
-        } while(0)
+    #define WR_U8(v)   do { if(ptr) write_u8(&ptr, v); size += 1; } while(0)
+    #define WR_U16(v)  do { if(ptr) write_u16(&ptr, v); size += 2; } while(0)
+    #define WR_U32(v)  do { if(ptr) write_u32(&ptr, v); size += 4; } while(0)
+    #define WR_F32(v)  do { if(ptr) write_f32(&ptr, v); size += 4; } while(0)
+    #define WR_BOOL(v) do { if(ptr) write_bool(&ptr, v); size += 1; } while(0)
+    #define WR_BUF(v, s) do { if(ptr) write_buf(&ptr, v, s); size += s; } while(0)
 
-    #define SER_SCALAR(val, type) SER_BUF(&val, sizeof(type))
-
-    uint16_t version = (POLYSONIX_VERSION_MAJOR << 8) | POLYSONIX_VERSION_MINOR;
-    SER_SCALAR(version, uint16_t);
-
+    // 1. Dynamic Arrays
     if (p->template_voice_adsrs)
-        SER_BUF(p->template_voice_adsrs, sizeof(PxADSRParams) * c->num_voice_adsrs);
+        WR_BUF(p->template_voice_adsrs, sizeof(PxADSRParams) * c->num_voice_adsrs);
     if (p->template_voice_adsr_mod_amounts)
-        SER_BUF(p->template_voice_adsr_mod_amounts, sizeof(float) * c->num_voice_adsrs * PX_ADSR_DEST_COUNT);
+        WR_BUF(p->template_voice_adsr_mod_amounts, sizeof(float) * c->num_voice_adsrs * PX_ADSR_DEST_COUNT);
     if (p->template_lfos)
-        SER_BUF(p->template_lfos, sizeof(PxLFOParams) * c->num_lfos);
+        WR_BUF(p->template_lfos, sizeof(PxLFOParams) * c->num_lfos);
 
-    SER_SCALAR(p->filter_cutoff_hz, float);
-    SER_SCALAR(p->filter_resonance_q, float);
-    SER_SCALAR(p->filter_env_amount_hz, float);
-    SER_SCALAR(p->filter_drive, float);
-    SER_SCALAR(p->filter_key_track, float);
-    SER_SCALAR(p->filter_poles, int);
-    SER_SCALAR(p->filter_mode, PxFilterMode);
-    SER_SCALAR(p->voice_pan_setting, float);
-    SER_SCALAR(p->default_note_amp, float);
-    SER_SCALAR(p->limiter_threshold, float);
-    SER_SCALAR(p->limiter_release_ms, float);
-    SER_SCALAR(p->unilegato_enabled, bool);
-    SER_SCALAR(p->unilegato_slide_duration_s, float);
-    SER_BUF(p->mod_matrix, sizeof(PxModSlot) * PX_MOD_MATRIX_SLOTS);
-    SER_SCALAR(p->pitchbend_range_semitones, float);
-    SER_SCALAR(p->global_filter_enabled, bool);
-    SER_SCALAR(p->global_filter_cutoff_hz, float);
-    SER_SCALAR(p->global_filter_resonance_q, float);
-    SER_SCALAR(p->global_filter_env_amount_hz, float);
-    SER_SCALAR(p->global_filter_drive, float);
-    SER_SCALAR(p->global_filter_key_track, float);
-    SER_SCALAR(p->global_filter_poles, int);
-    SER_SCALAR(p->global_filter_mode, PxFilterMode);
-    SER_SCALAR(p->velocity_curve, PxCurveType);
-    SER_SCALAR(p->aftertouch_curve, PxCurveType);
-    SER_BUF(p->osc, sizeof(PxOscillator) * PX_MAX_OSC_PER_VOICE);
+    // 2. Scalars
+    WR_F32(p->filter_cutoff_hz);
+    WR_F32(p->filter_resonance_q);
+    WR_F32(p->filter_env_amount_hz);
+    WR_F32(p->filter_drive);
+    WR_F32(p->filter_key_track);
+    WR_U32((uint32_t)p->filter_poles);
+    WR_U8((uint8_t)p->filter_mode);
+    WR_F32(p->voice_pan_setting);
+    WR_F32(p->default_note_amp);
+    WR_F32(p->limiter_threshold);
+    WR_F32(p->limiter_release_ms);
+    WR_BOOL(p->unilegato_enabled);
+    WR_F32(p->unilegato_slide_duration_s);
 
-    SER_SCALAR(p->wseq_fixed_time, bool);
-    SER_SCALAR(p->wseq_ref_freq, float);
+    WR_BUF(p->mod_matrix, sizeof(PxModSlot) * PX_MOD_MATRIX_SLOTS);
 
-    SER_SCALAR(p->glide_mode, PxGlideMode);
-    SER_SCALAR(p->glide_time, float);
-    SER_SCALAR(p->glide_legato_only, bool);
-    SER_SCALAR(p->glide_always, bool);
+    WR_F32(p->pitchbend_range_semitones);
 
-    #undef SER_BUF
-    #undef SER_SCALAR
+    WR_BOOL(p->global_filter_enabled);
+    WR_F32(p->global_filter_cutoff_hz);
+    WR_F32(p->global_filter_resonance_q);
+    WR_F32(p->global_filter_env_amount_hz);
+    WR_F32(p->global_filter_drive);
+    WR_F32(p->global_filter_key_track);
+    WR_U32((uint32_t)p->global_filter_poles);
+    WR_U8((uint8_t)p->global_filter_mode);
+
+    WR_U8((uint8_t)p->velocity_curve);
+    WR_U8((uint8_t)p->aftertouch_curve);
+
+    // 3. Oscillators (Explicit Fields)
+    for (int i = 0; i < PX_MAX_OSC_PER_VOICE; i++) {
+        const PxOscillator* o = &p->osc[i];
+        WR_BOOL(o->enabled);
+        WR_U32((uint32_t)o->wave_idx);
+        WR_F32(o->coarse_semitones);
+        WR_F32(o->fine_cents);
+        WR_F32(o->mix_level);
+        WR_F32(o->pan);
+        WR_U32((uint32_t)(int32_t)o->sequence_id); // Cast to signed 32-bit then unsigned for transport
+
+        WR_BOOL(o->cross_mod_enabled);
+        WR_F32(o->cross_mod_depth);
+        WR_BOOL(o->phase_dist_enabled);
+        WR_F32(o->phase_dist_amount);
+        WR_BOOL(o->osc_sync_enabled);
+        WR_F32(o->osc_sync_softness);
+        WR_BOOL(o->ring_mod_enabled);
+        WR_F32(o->ring_mod_depth);
+
+        WR_BOOL(o->bitcrush_enabled);
+        WR_F32(o->bitcrush_depth);
+    }
+
+    WR_BOOL(p->wseq_fixed_time);
+    WR_F32(p->wseq_ref_freq);
+
+    WR_U8((uint8_t)p->glide_mode);
+    WR_F32(p->glide_time);
+    WR_BOOL(p->glide_legato_only);
+    WR_BOOL(p->glide_always);
 
     if (ptr_ref && !calculate_only) *ptr_ref = ptr;
     if (size_ref) *size_ref = size;
+
+    #undef WR_U8
+    #undef WR_U16
+    #undef WR_U32
+    #undef WR_F32
+    #undef WR_BOOL
+    #undef WR_BUF
 }
 
 static bool px_deserialize_patch_impl(PxPatch* p, const PxConfig* c, const uint8_t** ptr_ref, const uint8_t* end) {
     const uint8_t* ptr = *ptr_ref;
 
-    #define DESER_BUF(data, data_size) \
-        do { \
-            if (ptr + data_size > end) return false; \
-            memcpy(data, ptr, data_size); \
-            ptr += data_size; \
-        } while(0)
+    #define RD_U8(v)   if(!read_u8(&ptr, end, (uint8_t*)v)) return false
+    #define RD_U16(v)  if(!read_u16(&ptr, end, (uint16_t*)v)) return false
+    #define RD_U32(v)  if(!read_u32(&ptr, end, (uint32_t*)v)) return false
+    #define RD_F32(v)  if(!read_f32(&ptr, end, (float*)v)) return false
+    #define RD_BOOL(v) if(!read_bool(&ptr, end, (bool*)v)) return false
+    #define RD_BUF(v, s) if(!read_buf(&ptr, end, v, s)) return false
 
-    #define DESER_SCALAR(val, type) DESER_BUF(&val, sizeof(type))
-
-    uint16_t version;
-    DESER_SCALAR(version, uint16_t);
-
+    // 1. Dynamic Arrays
     if (p->template_voice_adsrs)
-        DESER_BUF(p->template_voice_adsrs, sizeof(PxADSRParams) * c->num_voice_adsrs);
+        RD_BUF(p->template_voice_adsrs, sizeof(PxADSRParams) * c->num_voice_adsrs);
     if (p->template_voice_adsr_mod_amounts)
-        DESER_BUF(p->template_voice_adsr_mod_amounts, sizeof(float) * c->num_voice_adsrs * PX_ADSR_DEST_COUNT);
+        RD_BUF(p->template_voice_adsr_mod_amounts, sizeof(float) * c->num_voice_adsrs * PX_ADSR_DEST_COUNT);
     if (p->template_lfos)
-        DESER_BUF(p->template_lfos, sizeof(PxLFOParams) * c->num_lfos);
+        RD_BUF(p->template_lfos, sizeof(PxLFOParams) * c->num_lfos);
 
-    DESER_SCALAR(p->filter_cutoff_hz, float);
-    DESER_SCALAR(p->filter_resonance_q, float);
-    DESER_SCALAR(p->filter_env_amount_hz, float);
-    DESER_SCALAR(p->filter_drive, float);
-    DESER_SCALAR(p->filter_key_track, float);
-    DESER_SCALAR(p->filter_poles, int);
-    DESER_SCALAR(p->filter_mode, PxFilterMode);
-    DESER_SCALAR(p->voice_pan_setting, float);
-    DESER_SCALAR(p->default_note_amp, float);
-    DESER_SCALAR(p->limiter_threshold, float);
-    DESER_SCALAR(p->limiter_release_ms, float);
-    DESER_SCALAR(p->unilegato_enabled, bool);
-    DESER_SCALAR(p->unilegato_slide_duration_s, float);
-    DESER_BUF(p->mod_matrix, sizeof(PxModSlot) * PX_MOD_MATRIX_SLOTS);
-    DESER_SCALAR(p->pitchbend_range_semitones, float);
-    DESER_SCALAR(p->global_filter_enabled, bool);
-    DESER_SCALAR(p->global_filter_cutoff_hz, float);
-    DESER_SCALAR(p->global_filter_resonance_q, float);
-    DESER_SCALAR(p->global_filter_env_amount_hz, float);
-    DESER_SCALAR(p->global_filter_drive, float);
-    DESER_SCALAR(p->global_filter_key_track, float);
-    DESER_SCALAR(p->global_filter_poles, int);
-    DESER_SCALAR(p->global_filter_mode, PxFilterMode);
-    DESER_SCALAR(p->velocity_curve, PxCurveType);
-    DESER_SCALAR(p->aftertouch_curve, PxCurveType);
-    DESER_BUF(p->osc, sizeof(PxOscillator) * PX_MAX_OSC_PER_VOICE);
+    // 2. Scalars
+    RD_F32(&p->filter_cutoff_hz);
+    RD_F32(&p->filter_resonance_q);
+    RD_F32(&p->filter_env_amount_hz);
+    RD_F32(&p->filter_drive);
+    RD_F32(&p->filter_key_track);
+    uint32_t u_poles; RD_U32(&u_poles); p->filter_poles = (int)u_poles;
+    uint8_t u_mode; RD_U8(&u_mode); p->filter_mode = (PxFilterMode)u_mode;
 
-    DESER_SCALAR(p->wseq_fixed_time, bool);
-    DESER_SCALAR(p->wseq_ref_freq, float);
+    RD_F32(&p->voice_pan_setting);
+    RD_F32(&p->default_note_amp);
+    RD_F32(&p->limiter_threshold);
+    RD_F32(&p->limiter_release_ms);
+    RD_BOOL(&p->unilegato_enabled);
+    RD_F32(&p->unilegato_slide_duration_s);
 
-    DESER_SCALAR(p->glide_mode, PxGlideMode);
-    DESER_SCALAR(p->glide_time, float);
-    DESER_SCALAR(p->glide_legato_only, bool);
-    DESER_SCALAR(p->glide_always, bool);
+    RD_BUF(p->mod_matrix, sizeof(PxModSlot) * PX_MOD_MATRIX_SLOTS);
 
-    #undef DESER_BUF
-    #undef DESER_SCALAR
+    RD_F32(&p->pitchbend_range_semitones);
+
+    RD_BOOL(&p->global_filter_enabled);
+    RD_F32(&p->global_filter_cutoff_hz);
+    RD_F32(&p->global_filter_resonance_q);
+    RD_F32(&p->global_filter_env_amount_hz);
+    RD_F32(&p->global_filter_drive);
+    RD_F32(&p->global_filter_key_track);
+    RD_U32(&u_poles); p->global_filter_poles = (int)u_poles;
+    RD_U8(&u_mode); p->global_filter_mode = (PxFilterMode)u_mode;
+
+    uint8_t u_curve;
+    RD_U8(&u_curve); p->velocity_curve = (PxCurveType)u_curve;
+    RD_U8(&u_curve); p->aftertouch_curve = (PxCurveType)u_curve;
+
+    // 3. Oscillators
+    for (int i = 0; i < PX_MAX_OSC_PER_VOICE; i++) {
+        PxOscillator* o = &p->osc[i];
+        RD_BOOL(&o->enabled);
+        uint32_t u_wave; RD_U32(&u_wave); o->wave_idx = (int)u_wave;
+        RD_F32(&o->coarse_semitones);
+        RD_F32(&o->fine_cents);
+        RD_F32(&o->mix_level);
+        RD_F32(&o->pan);
+        uint32_t u_seq; RD_U32(&u_seq); o->sequence_id = (int32_t)u_seq; // Cast back to signed int
+
+        RD_BOOL(&o->cross_mod_enabled);
+        RD_F32(&o->cross_mod_depth);
+        RD_BOOL(&o->phase_dist_enabled);
+        RD_F32(&o->phase_dist_amount);
+        RD_BOOL(&o->osc_sync_enabled);
+        RD_F32(&o->osc_sync_softness);
+        RD_BOOL(&o->ring_mod_enabled);
+        RD_F32(&o->ring_mod_depth);
+
+        RD_BOOL(&o->bitcrush_enabled);
+        RD_F32(&o->bitcrush_depth);
+    }
+
+    RD_BOOL(&p->wseq_fixed_time);
+    RD_F32(&p->wseq_ref_freq);
+
+    uint8_t u_glide_mode;
+    RD_U8(&u_glide_mode); p->glide_mode = (PxGlideMode)u_glide_mode;
+    RD_F32(&p->glide_time);
+    RD_BOOL(&p->glide_legato_only);
+    RD_BOOL(&p->glide_always);
 
     *ptr_ref = ptr;
+
+    #undef RD_U8
+    #undef RD_U16
+    #undef RD_U32
+    #undef RD_F32
+    #undef RD_BOOL
+    #undef RD_BUF
+
     return true;
 }
 
 PX_API size_t PX_CalculatePresetSize(PxSynth* s) {
-    size_t size = 32; // Header
+    size_t size = PX_PRESET_HEADER_SIZE;
     size_t body_size = 0;
     px_serialize_patch_impl(&s->patch, &s->config, NULL, &body_size, true);
     size += body_size;
@@ -306,44 +466,55 @@ PX_API bool PX_SavePresetToBus(PxSynth* s, PxIOWriteFn write_fn, void* token, co
     uint8_t* ptr = buffer;
 
     // --- Header ---
-    memcpy(ptr, "POLY", 4); ptr += 4;
-    uint8_t version[4] = {POLYSONIX_VERSION_MAJOR, POLYSONIX_VERSION_MINOR, POLYSONIX_VERSION_PATCH, 0};
-    memcpy(ptr, version, 4); ptr += 4;
+    // Manually write header to ensure packing/layout
+    // Magic (4)
+    write_buf(&ptr, "POLY", 4);
+    // Ver (2+2+2) = 6
+    write_u16(&ptr, POLYSONIX_VERSION_MAJOR);
+    write_u16(&ptr, POLYSONIX_VERSION_MINOR);
+    write_u16(&ptr, POLYSONIX_VERSION_PATCH);
 
+    // Name (16)
     char name[16];
-    memset(name, ' ', 16);
+    memset(name, 0, 16); // Zero pad
     if (patch_name) {
         size_t len = strlen(patch_name);
-        if (len > 16) len = 16;
+        if (len > 15) len = 15;
         memcpy(name, patch_name, len);
     }
-    memcpy(ptr, name, 16); ptr += 16;
+    write_buf(&ptr, name, 16);
 
-    // Data Length (Total - Header - Footer)
-    uint32_t data_len = (uint32_t)(total_size - 32 - 4);
-    write_be32_to_buf(ptr, data_len); ptr += 4;
+    // Data Len (4) - calculated later, placeholder
+    uint8_t* len_ptr = ptr;
+    write_u32(&ptr, 0); // Placeholder
 
-    // Reserved (Store critical config dimensions for validation)
-    uint16_t n_adsrs = (uint16_t)s->config.num_voice_adsrs;
-    uint16_t n_lfos = (uint16_t)s->config.num_lfos;
-    ptr[0] = (n_adsrs >> 8) & 0xFF;
-    ptr[1] = n_adsrs & 0xFF;
-    ptr[2] = (n_lfos >> 8) & 0xFF;
-    ptr[3] = n_lfos & 0xFF;
-    ptr += 4;
+    // Config (2+2) = 4
+    write_u16(&ptr, (uint16_t)s->config.num_voice_adsrs);
+    write_u16(&ptr, (uint16_t)s->config.num_lfos);
+
+    // Config Hash (4)
+    uint32_t config_hash = (s->config.num_voices * 31UL) + (s->config.num_lfos * 37UL) + (s->config.num_voice_adsrs * 41UL);
+    write_u32(&ptr, config_hash);
+
+    // Padding (2) to reach 40 bytes
+    write_u16(&ptr, 0);
+
+    // Total Header Written: 4 + 6 + 16 + 4 + 4 + 4 + 2 = 40 bytes.
 
     // --- Data Block ---
     uint8_t* data_start = ptr;
     px_serialize_patch_impl(&s->patch, &s->config, &ptr, NULL, false);
 
-    // --- Checksum ---
-    uint32_t checksum = 0;
+    // Patch Data Len
     size_t written_data_len = (size_t)(ptr - data_start);
-    for (size_t i = 0; i < written_data_len; i++) {
-        checksum += data_start[i];
-    }
 
-    write_be32_to_buf(ptr, checksum); ptr += 4;
+    // Write actual length to placeholder
+    uint8_t* temp_ptr = len_ptr;
+    write_u32(&temp_ptr, (uint32_t)written_data_len);
+
+    // --- Checksum (Adler-32) ---
+    uint32_t checksum = adler32(data_start, written_data_len);
+    write_u32(&ptr, checksum);
 
     // --- Batch Write ---
     size_t written = write_fn(token, buffer, total_size);
@@ -352,60 +523,102 @@ PX_API bool PX_SavePresetToBus(PxSynth* s, PxIOWriteFn write_fn, void* token, co
     return (written == total_size);
 }
 
-PX_API bool PX_LoadPresetFromBus(PxSynth* s, PxIOReadFn read_fn, void* token) {
-    if (!s || !read_fn) return false;
+PX_API bool PX_LoadPresetFromBus(PxSynth* s, PxIOReadFn read_fn, void* token, char* error_msg, size_t error_len) {
+    if (!s || !read_fn) {
+        if(error_msg && error_len > 0) snprintf(error_msg, error_len, "Invalid arguments (NULL synth or callback)");
+        return false;
+    }
+    if (error_msg && error_len > 0) error_msg[0] = '\0';
 
-    // 1. Read Header
-    uint8_t header[32];
-    if (read_fn(token, header, 32) != 32) return false;
+    // 1. Read Header (40 bytes)
+    uint8_t header[PX_PRESET_HEADER_SIZE];
+    if (read_fn(token, header, PX_PRESET_HEADER_SIZE) != PX_PRESET_HEADER_SIZE) {
+        if(error_msg && error_len > 0) snprintf(error_msg, error_len, "Failed to read header");
+        return false;
+    }
 
-    if (strncmp((char*)header, "POLY", 4) != 0) return false;
-    // Version check (strict major/minor)
-    if (header[4] != POLYSONIX_VERSION_MAJOR || header[5] != POLYSONIX_VERSION_MINOR) return false;
+    // Parse Header
+    if (memcmp(header, "POLY", 4) != 0) {
+        if(error_msg && error_len > 0) snprintf(error_msg, error_len, "Invalid magic number");
+        return false;
+    }
 
-    uint32_t data_len = read_be32_from_buf(header + 24);
+    const uint8_t* hptr = header + 4;
+    // Helper to read header fields from buffer without advancing stream (already read)
+    // We can use the read_u16 helpers if we treat 'hptr' as the stream.
+    const uint8_t* hend = header + PX_PRESET_HEADER_SIZE;
+
+    uint16_t maj, min, pat;
+    read_u16(&hptr, hend, &maj);
+    read_u16(&hptr, hend, &min);
+    read_u16(&hptr, hend, &pat);
+
+    // Version check
+    if (maj > POLYSONIX_VERSION_MAJOR || (maj == POLYSONIX_VERSION_MAJOR && min > POLYSONIX_VERSION_MINOR)) {
+        if(error_msg && error_len > 0) snprintf(error_msg, error_len, "Version mismatch: File %d.%d > Synth %d.%d", maj, min, POLYSONIX_VERSION_MAJOR, POLYSONIX_VERSION_MINOR);
+        return false;
+    }
+
+    // Name (skip 16)
+    hptr += 16;
+
+    uint32_t data_len;
+    read_u32(&hptr, hend, &data_len);
+
+    uint16_t file_n_adsrs, file_n_lfos;
+    read_u16(&hptr, hend, &file_n_adsrs);
+    read_u16(&hptr, hend, &file_n_lfos);
+
+    uint32_t file_config_hash;
+    read_u32(&hptr, hend, &file_config_hash);
+
+    // Config validation
+    uint32_t current_hash = (s->config.num_voices * 31UL) + (s->config.num_lfos * 37UL) + (s->config.num_voice_adsrs * 41UL);
+
+    if (file_config_hash != current_hash) {
+         if(error_msg && error_len > 0) snprintf(error_msg, error_len, "Config mismatch (Hash %u != %u)", file_config_hash, current_hash);
+         return false;
+    }
+
+    // Skip padding (2)
+    hptr += 2;
 
     // 2. Allocate Data + Footer
     size_t payload_size = data_len + 4;
     uint8_t* buffer = (uint8_t*)malloc(payload_size);
-    if (!buffer) return false;
+    if (!buffer) {
+        if(error_msg && error_len > 0) snprintf(error_msg, error_len, "Memory allocation failed");
+        return false;
+    }
 
     // 3. Read Body + Checksum
     if (read_fn(token, buffer, payload_size) != payload_size) {
+        if(error_msg && error_len > 0) snprintf(error_msg, error_len, "Failed to read body");
         free(buffer); return false;
     }
 
-    // 4. Verify Checksum
-    uint32_t expected_checksum = read_be32_from_buf(buffer + data_len);
-    uint32_t calc_sum = 0;
-    for (uint32_t i = 0; i < data_len; i++) calc_sum += buffer[i];
+    // 4. Verify Checksum (Adler-32)
+    uint32_t expected_checksum;
+    // Checksum is at end of buffer
+    const uint8_t* cptr = buffer + data_len;
+    const uint8_t* cend = buffer + payload_size;
+    read_u32(&cptr, cend, &expected_checksum);
+
+    uint32_t calc_sum = adler32(buffer, data_len);
 
     if (calc_sum != expected_checksum) {
+        if(error_msg && error_len > 0) snprintf(error_msg, error_len, "Checksum mismatch (Calc %08X != Exp %08X)", calc_sum, expected_checksum);
         free(buffer); return false;
-    }
-
-    // 4a. Validate Dimensions (from Reserved field in header)
-    // Header is at stack variable 'header', reserved is at offset 28.
-    uint16_t file_n_adsrs = ((uint16_t)header[28] << 8) | header[29];
-    uint16_t file_n_lfos = ((uint16_t)header[30] << 8) | header[31];
-
-    // Only validate if non-zero (to support legacy patches which wrote 0)
-    // If user saves a new patch with valid data, these will be non-zero.
-    if (file_n_adsrs != 0 || file_n_lfos != 0) {
-        if (file_n_adsrs != s->config.num_voice_adsrs || file_n_lfos != s->config.num_lfos) {
-            // Dimension mismatch - risk of buffer overflow or corruption
-            fprintf(stderr, "PX_LoadPresetFromBus: Config mismatch (File: %d ADSRs, %d LFOs | Synth: %d, %d)\n",
-                    file_n_adsrs, file_n_lfos, s->config.num_voice_adsrs, s->config.num_lfos);
-            free(buffer);
-            return false;
-        }
     }
 
     // 5. Deserialize
     const uint8_t* ptr = buffer;
     const uint8_t* end = buffer + data_len;
 
-    bool result = px_deserialize_patch_impl(&s->patch, &s->config, &ptr, end);
+    bool result = px_deserialize_patch_impl(&s->patch, (const PxConfig*)&s->config, &ptr, end);
+    if (!result) {
+        if(error_msg && error_len > 0) snprintf(error_msg, error_len, "Deserialization failed (buffer overrun?)");
+    }
 
     free(buffer);
     return result;
@@ -421,18 +634,24 @@ static size_t file_read_wrapper(void* token, void* data, size_t size) {
     return fread(data, 1, size, (FILE*)token);
 }
 
-PX_API bool PX_SavePreset(PxSynth* s, const char* filename, const char* patch_name) {
+PX_API bool PX_SavePreset(PxSynth* s, const char* filename, const char* patch_name, char* error_msg, size_t error_len) {
     FILE* f = fopen(filename, "wb");
-    if (!f) return false;
+    if (!f) {
+        if (error_msg && error_len > 0) snprintf(error_msg, error_len, "Failed to open file for writing: %s", filename);
+        return false;
+    }
     bool res = PX_SavePresetToBus(s, file_write_wrapper, f, patch_name);
     fclose(f);
     return res;
 }
 
-PX_API bool PX_LoadPreset(PxSynth* s, const char* filename) {
+PX_API bool PX_LoadPreset(PxSynth* s, const char* filename, char* error_msg, size_t error_len) {
     FILE* f = fopen(filename, "rb");
-    if (!f) return false;
-    bool res = PX_LoadPresetFromBus(s, file_read_wrapper, f);
+    if (!f) {
+        if (error_msg && error_len > 0) snprintf(error_msg, error_len, "Failed to open file for reading: %s", filename);
+        return false;
+    }
+    bool res = PX_LoadPresetFromBus(s, file_read_wrapper, f, error_msg, error_len);
     fclose(f);
     return res;
 }
@@ -441,11 +660,6 @@ PX_API bool PX_LoadPreset(PxSynth* s, const char* filename) {
 
 // Helper: Deep copy a single patch
 static bool px_copy_patch_deep(PxPatch* dest, const PxPatch* src, const PxConfig* config) {
-    // Debug
-    // printf("Copying Deep: ADSR Count: %d\n", config->num_voice_adsrs);
-    // if (dest->template_voice_adsrs) printf("Dest ADSR Ptr Before: %p\n", dest->template_voice_adsrs);
-    // if (src->template_voice_adsrs) printf("Src ADSR Ptr: %p\n", src->template_voice_adsrs);
-
     // Save dest pointers (preservation of allocated memory)
     PxADSRParams* dest_adsrs = dest->template_voice_adsrs;
     float* dest_mod_amounts = dest->template_voice_adsr_mod_amounts;
@@ -515,8 +729,6 @@ PX_API PxPatchBank* PX_CreatePatchBank(const PxConfig* config) {
             free(bank);
             return NULL;
         }
-        // Initialize with default values just in case? Or zero is fine.
-        // It's calloc'd, so it's zero.
     }
 
     return bank;
@@ -539,38 +751,28 @@ PX_API bool PX_Bank_SaveToSlot(PxPatchBank* bank, int slot_idx, PxSynth* s) {
     // Safety Check: Ensure bank configuration is sufficient to hold synth data
     if (bank->config.num_voice_adsrs < s->config.num_voice_adsrs ||
         bank->config.num_lfos < s->config.num_lfos) {
-        // fprintf(stderr, "PX_Bank_SaveToSlot: Configuration mismatch (Bank smaller than Synth)\n");
         return false;
     }
 
-    // We use the synth's config for the copy size to avoid copying garbage if bank is larger,
-    // but since we checked capacity, it fits.
-    // However, deep copy uses the *passed* config for sizes.
-    // If we use s->config, we copy only valid data.
-    return px_copy_patch_deep(&bank->patches[slot_idx], &s->patch, &s->config);
+    return px_copy_patch_deep(&bank->patches[slot_idx], (const PxPatch*)&s->patch, (const PxConfig*)&s->config);
 }
 
 PX_API bool PX_Bank_LoadFromSlot(PxPatchBank* bank, int slot_idx, PxSynth* s) {
     if (!bank || !s || slot_idx < 0 || slot_idx >= PX_PATCH_BANK_SIZE) return false;
 
     // Safety Check: Ensure synth configuration is sufficient to hold bank data
-    // If bank has MORE items than synth, we can only copy what fits, or fail.
-    // Failing is safer to prevent data loss or confusion.
     if (s->config.num_voice_adsrs < bank->config.num_voice_adsrs ||
         s->config.num_lfos < bank->config.num_lfos) {
-        // fprintf(stderr, "PX_Bank_LoadFromSlot: Configuration mismatch (Synth smaller than Bank)\n");
         return false;
     }
 
-    // Use bank's config to determine how much valid data to copy.
-    // Since s has capacity >= bank, this is safe.
-    return px_copy_patch_deep(&s->patch, &bank->patches[slot_idx], &bank->config);
+    return px_copy_patch_deep(&s->patch, (const PxPatch*)&bank->patches[slot_idx], (const PxConfig*)&bank->config);
 }
 
 PX_API bool PX_Bank_CopySlot(PxPatchBank* bank, int src_idx, int dest_idx) {
     if (!bank || src_idx < 0 || src_idx >= PX_PATCH_BANK_SIZE || dest_idx < 0 || dest_idx >= PX_PATCH_BANK_SIZE) return false;
     if (src_idx == dest_idx) return true;
-    return px_copy_patch_deep(&bank->patches[dest_idx], &bank->patches[src_idx], &bank->config);
+    return px_copy_patch_deep(&bank->patches[dest_idx], (const PxPatch*)&bank->patches[src_idx], (const PxConfig*)&bank->config);
 }
 
 #endif // POLYSONIX_PATCHING_IMPLEMENTATION
