@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 8
-#define POLYSONIX_VERSION_PATCH 2
+#define POLYSONIX_VERSION_PATCH 3
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -124,6 +124,16 @@ typedef enum {
     PX_FILTER_MODE_ALLPASS, /**< All-Pass Filter (for phase shifting effects). (In 1-pole mode: approximate). */
     PX_FILTER_MODE_COUNT    /**< The total number of filter modes. */
 } PxFilterMode;
+
+/**
+ * @enum PxGlideMode
+ * @brief Defines the pitch glide behavior for static (non-sequenced) playback.
+ */
+typedef enum {
+    PX_GLIDE_OFF = 0,        /**< Instant pitch changes. */
+    PX_GLIDE_STEP_LINEAR,    /**< Hard jump to new note, then linear interpolation over time (Legacy Unilegato). */
+    PX_GLIDE_SMOOTH_RC       /**< Natural exponential glide (RC-filter style) for smooth portamento. */
+} PxGlideMode;
 
 typedef enum {
     PX_CURVE_LINEAR,       // Default: straight 0-1 mapping
@@ -609,6 +619,16 @@ PX_API void        PX_SetWSeqFixedTime(PxSynth* s, bool enabled);
 PX_API bool        PX_GetWSeqFixedTime(PxSynth* s);
 PX_API void        PX_SetWSeqRefFreq(PxSynth* s, float freq);
 PX_API float       PX_GetWSeqRefFreq(PxSynth* s);
+
+// --- v1.8.3 Static Glide / Portamento ---
+PX_API void        PX_SetGlideMode(PxSynth* s, PxGlideMode mode);
+PX_API PxGlideMode PX_GetGlideMode(PxSynth* s);
+PX_API void        PX_SetGlideTime(PxSynth* s, float time_s);
+PX_API float       PX_GetGlideTime(PxSynth* s);
+PX_API void        PX_SetGlideLegatoOnly(PxSynth* s, bool legato_only);
+PX_API bool        PX_GetGlideLegatoOnly(PxSynth* s);
+PX_API void        PX_SetGlideAlways(PxSynth* s, bool always);
+PX_API bool        PX_GetGlideAlways(PxSynth* s);
 
 /**
  * @brief Releases a note that was previously triggered.
@@ -1340,6 +1360,12 @@ typedef struct PxPatch {
     // v1.8: Time-Locked Wave Sequencing
     bool  wseq_fixed_time;      // Enable Time-Locked mode
     float wseq_ref_freq;        // Reference frequency (default 440.0 Hz)
+
+    // v1.8.3: Static Glide / Portamento
+    PxGlideMode glide_mode;
+    float glide_time;           // Time constant (seconds)
+    bool glide_legato_only;     // Only glide on overlapped notes (default true)
+    bool glide_always;          // Force glide behavior (Monophonic/Polyphonic Portamento)
 } PxPatch;
 
 // --- THREAD-SAFE COMMUNICATION STRUCTURES ---
@@ -1402,7 +1428,12 @@ typedef enum {
     PX_CMD_SET_OSC_BITCRUSH,
     // v1.8
     PX_CMD_SET_WSEQ_FIXED_TIME,
-    PX_CMD_SET_WSEQ_REF_FREQ
+    PX_CMD_SET_WSEQ_REF_FREQ,
+    // v1.8.3 Static Glide
+    PX_CMD_SET_GLIDE_MODE,
+    PX_CMD_SET_GLIDE_TIME,
+    PX_CMD_SET_GLIDE_LEGATO_ONLY,
+    PX_CMD_SET_GLIDE_ALWAYS
 } PxCommandType;
 
 typedef union {
@@ -1434,6 +1465,9 @@ typedef union {
     struct { int osc_idx; bool enabled; float value; } osc_feat; // v1.7: enabled + depth/amount
     struct { bool enabled; } wseq_fixed_time;
     struct { float freq; } wseq_ref_freq;
+    struct { int mode; } glide_mode;
+    struct { float time_s; } glide_time;
+    struct { bool enabled; } glide_bool;
 } PxCommandData;
 
 typedef struct {
@@ -2314,6 +2348,18 @@ static void PX_ProcessCommands(PxSynth* s) {
             case PX_CMD_SET_WSEQ_REF_FREQ:
                 s->patch.wseq_ref_freq = fmaxf(1.0f, cmd.data.wseq_ref_freq.freq);
                 break;
+            case PX_CMD_SET_GLIDE_MODE:
+                s->patch.glide_mode = (PxGlideMode)cmd.data.glide_mode.mode;
+                break;
+            case PX_CMD_SET_GLIDE_TIME:
+                s->patch.glide_time = fmaxf(0.0f, cmd.data.glide_time.time_s);
+                break;
+            case PX_CMD_SET_GLIDE_LEGATO_ONLY:
+                s->patch.glide_legato_only = cmd.data.glide_bool.enabled;
+                break;
+            case PX_CMD_SET_GLIDE_ALWAYS:
+                s->patch.glide_always = cmd.data.glide_bool.enabled;
+                break;
         }
     }
 }
@@ -2358,6 +2404,11 @@ static void PX_UpdateUISnapshot(PxSynth* s) {
 
     s->ui_snapshot.patch_copy.wseq_fixed_time = s->patch.wseq_fixed_time;
     s->ui_snapshot.patch_copy.wseq_ref_freq = s->patch.wseq_ref_freq;
+
+    s->ui_snapshot.patch_copy.glide_mode = s->patch.glide_mode;
+    s->ui_snapshot.patch_copy.glide_time = s->patch.glide_time;
+    s->ui_snapshot.patch_copy.glide_legato_only = s->patch.glide_legato_only;
+    s->ui_snapshot.patch_copy.glide_always = s->patch.glide_always;
 
     for (int i = 0; i < s->config.num_voices; ++i) { s->ui_snapshot.voices[i] = PX_GetVoiceInfo_internal(s, i); }
     for (int i = 0; i < s->config.num_lfos; ++i) { s->ui_snapshot.lfos[i] = PX_GetLFOInfo_internal(s, i); }
@@ -2574,6 +2625,12 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     s->patch.wseq_fixed_time = false;
     s->patch.wseq_ref_freq = 440.0f;
 
+    // v1.8.3 Defaults
+    s->patch.glide_mode = PX_GLIDE_OFF;
+    s->patch.glide_time = 0.1f;
+    s->patch.glide_legato_only = true;
+    s->patch.glide_always = false;
+
     PX_UpdateUISnapshot(s);
     return s;
 }
@@ -2768,18 +2825,37 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
         for (int v_idx = 0; v_idx < s->config.num_voices; ++v_idx) {
             Voice *v = &s->voices[v_idx];
 
-            // Update unilegato slide
+            // Update unilegato slide / Static Glide
             if (v->is_sliding) {
-                v->slide_progress += s->time_per_sample / s->patch.unilegato_slide_duration_s;
+                // v->is_sliding covers legacy unilegato (GLIDE_STEP_LINEAR)
+                float duration = s->patch.glide_time;
+                if (duration < 0.001f) duration = 0.001f;
+                v->slide_progress += s->time_per_sample / duration;
                 if (v->slide_progress >= 1.0f) {
                     v->slide_progress = 1.0f;
                     v->is_sliding = false;
                     v->frequency = v->slide_target_freq;
                 } else {
                     float t = v->slide_progress;
-                    t = t * t * (3.0f - 2.0f * t);
+                    t = t * t * (3.0f - 2.0f * t); // Cubic
                     v->frequency = v->slide_start_freq + (v->slide_target_freq - v->slide_start_freq) * t;
                 }
+            } else if (s->patch.glide_mode == PX_GLIDE_SMOOTH_RC && v->frequency != v->original_frequency) {
+                // RC-style exponential approach
+                float duration = s->patch.glide_time;
+                if (duration < 0.001f) duration = 0.001f;
+                float dt = s->time_per_sample;
+                float coeff = 1.0f - expf(-dt / duration);
+
+                v->frequency += (v->original_frequency - v->frequency) * coeff;
+
+                // Snap if close enough (avoids denormals/endless processing)
+                if (fabsf(v->frequency - v->original_frequency) < 0.01f) {
+                    v->frequency = v->original_frequency;
+                }
+            } else {
+                // Ensure frequency is snapped to target if glide is disabled or inactive
+                v->frequency = v->original_frequency;
             }
 
             // === v1.3: Apply Modulation Matrix ===
@@ -3471,8 +3547,25 @@ PX_API void PX_SetLFOADSRParam(PxSynth* s, int idx, PxADSRParamType p, float v) 
 PX_API void PX_SetLFOADSREnabled(PxSynth* s, int idx, bool enabled) { PUSH_CMD_VOID(PX_CMD_SET_LFO_ADSR_ENABLED, .param_idx_bool = {idx, enabled}); }
 PX_API void PX_SetLFOModAmount(PxSynth* s, int idx, PxLFODestination d, float v) { PUSH_CMD_VOID(PX_CMD_SET_LFO_MOD_AMOUNT, .param_idx_enum_float = {idx, (int)d, v}); }
 PX_API void PX_SetLFOUpdateInterval(PxSynth* s, float interval_ms) { PUSH_CMD_VOID(PX_CMD_SET_LFO_UPDATE_INTERVAL, .param_float = {interval_ms}); }
-PX_API void PX_SetUnilegatoEnabled(PxSynth* s, bool enabled) { PUSH_CMD_VOID(PX_CMD_SET_UNILEGATO_ENABLED, .param_bool = {enabled}); }
-PX_API void PX_SetUnilegatoSlideTime(PxSynth* s, float duration_s) { PUSH_CMD_VOID(PX_CMD_SET_UNILEGATO_SLIDE_TIME, .param_float = {duration_s}); }
+PX_API void PX_SetUnilegatoEnabled(PxSynth* s, bool enabled) {
+    PUSH_CMD_VOID(PX_CMD_SET_UNILEGATO_ENABLED, .param_bool = {enabled});
+    // Automatically configure Glide parameters for legacy unilegato behavior
+    if (enabled) {
+        PUSH_CMD_VOID(PX_CMD_SET_GLIDE_MODE, .glide_mode = {(int)PX_GLIDE_STEP_LINEAR});
+        PUSH_CMD_VOID(PX_CMD_SET_GLIDE_LEGATO_ONLY, .glide_bool = {true});
+    } else {
+        // If disabling unilegato, should we disable glide?
+        // Probably yes, to maintain legacy "Unilegato Off" state.
+        // But if user explicitly set Glide Mode, this might override it.
+        // Legacy function implies legacy behavior control.
+        PUSH_CMD_VOID(PX_CMD_SET_GLIDE_MODE, .glide_mode = {(int)PX_GLIDE_OFF});
+    }
+}
+PX_API void PX_SetUnilegatoSlideTime(PxSynth* s, float duration_s) {
+    PUSH_CMD_VOID(PX_CMD_SET_UNILEGATO_SLIDE_TIME, .param_float = {duration_s});
+    // Also update generic glide time
+    PUSH_CMD_VOID(PX_CMD_SET_GLIDE_TIME, .glide_time = {duration_s});
+}
 PX_API void PX_SetFilterParam(PxSynth* s, PxFilterParamType p, float v) { PUSH_CMD_VOID(PX_CMD_SET_FILTER_PARAM, .param_enum_float = {(int)p, v}); }
 PX_API void PX_SetFilterMode(PxSynth* s, PxFilterMode mode) { PUSH_CMD_VOID(PX_CMD_SET_FILTER_MODE, .param_mode = {(int)mode}); }
 
@@ -3709,6 +3802,39 @@ PX_API float PX_GetWSeqRefFreq(PxSynth* s) {
     return s ? s->ui_snapshot.patch_copy.wseq_ref_freq : 440.0f;
 }
 
+// --- v1.8.3 Static Glide / Portamento ---
+PX_API void PX_SetGlideMode(PxSynth* s, PxGlideMode mode) {
+    if (!s) return;
+    PUSH_CMD_VOID(PX_CMD_SET_GLIDE_MODE, .glide_mode = {(int)mode});
+}
+PX_API PxGlideMode PX_GetGlideMode(PxSynth* s) {
+    return s ? s->ui_snapshot.patch_copy.glide_mode : PX_GLIDE_OFF;
+}
+
+PX_API void PX_SetGlideTime(PxSynth* s, float time_s) {
+    if (!s) return;
+    PUSH_CMD_VOID(PX_CMD_SET_GLIDE_TIME, .glide_time = {time_s});
+}
+PX_API float PX_GetGlideTime(PxSynth* s) {
+    return s ? s->ui_snapshot.patch_copy.glide_time : 0.0f;
+}
+
+PX_API void PX_SetGlideLegatoOnly(PxSynth* s, bool legato_only) {
+    if (!s) return;
+    PUSH_CMD_VOID(PX_CMD_SET_GLIDE_LEGATO_ONLY, .glide_bool = {legato_only});
+}
+PX_API bool PX_GetGlideLegatoOnly(PxSynth* s) {
+    return s ? s->ui_snapshot.patch_copy.glide_legato_only : true;
+}
+
+PX_API void PX_SetGlideAlways(PxSynth* s, bool always) {
+    if (!s) return;
+    PUSH_CMD_VOID(PX_CMD_SET_GLIDE_ALWAYS, .glide_bool = {always});
+}
+PX_API bool PX_GetGlideAlways(PxSynth* s) {
+    return s ? s->ui_snapshot.patch_copy.glide_always : false;
+}
+
 // --- THREAD-SAFE GET API ---
 PX_API float PX_GetVoiceADSRParam(PxSynth* s, int idx, PxADSRParamType p) {
     if (!s || idx < 0 || idx >= s->config.num_voice_adsrs) return 0.0f;
@@ -3871,13 +3997,40 @@ PX_API void PX_ClearModMatrix(PxSynth* s) {
 
 // --- INTERNAL IMPLEMENTATIONS ---
 static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_id, float velocity) {
-    if (s->patch.unilegato_enabled && s->num_keys_held > 0) {
+    // 1. Determine if we should perform Legato/Glide behavior
+    bool do_glide = false;
+    bool is_legato_overlap = (s->num_keys_held > 0);
+
+    // Logic: Glide if mode enabled AND (Always OR (LegatoOnly AND Overlap))
+    if (s->patch.glide_mode != PX_GLIDE_OFF) {
+        if (!s->patch.glide_legato_only || s->patch.glide_always) do_glide = true; // Glide Always
+        else if (is_legato_overlap) do_glide = true;      // Legato Overlap
+    }
+
+    // 2. Unilegato Logic (Mono Voice Reuse)
+    // If enabled, we reuse the active voice instead of stealing/finding new one.
+    // Legacy support: unilegato_enabled implies glide_legato_only=true, glide_mode=STEP.
+    // But we map that in setters. Here we check the unified flags.
+    // However, strict "Unilegato" means MONOPHONIC behavior on overlap.
+    // Standard Poly Portamento means new voice glides from old pitch.
+
+    // We assume "Legato Only" + "Glide Enabled" -> Reuse Voice (Mono Style)?
+    // Not necessarily. Many polysynths have "Legato" glide which glides newly allocated voice from previous note pitch if overlapping.
+    // BUT Polysonix's "Unilegato" feature was explicitly monophonic voice reuse.
+    // We will keep the voice reuse logic tied to `glide_legato_only` to mimic Unilegato behavior,
+    // OR we can rely on `unilegato_enabled` flag if we want to separate "Mono Voice Mode" from "Glide".
+    // User requested: "Tie into existing Unilegato mode".
+
+    bool reuse_voice = s->patch.unilegato_enabled && is_legato_overlap;
+    // Note: If we move fully to new system, we might want a separate "Mono" flag.
+    // For now, respect the legacy flag for voice reuse.
+
+    if (reuse_voice) {
         int active_voice_idx = -1;
         for (int i = 0; i < s->config.num_voices; ++i) if (s->voices[i].active && s->voices[i].midi_note == s->last_held_note_midi) { active_voice_idx = i; break; }
         if (active_voice_idx != -1) {
             Voice* v = &s->voices[active_voice_idx];
 
-            // Unilegato: Slide the Base Frequency
             float start_freq = v->frequency;
 
             // Update voice state to new note
@@ -3895,12 +4048,19 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
 
             v->original_frequency = get_midi_frequency(midi_note); // Set new base
 
-            float target_freq = v->original_frequency;
-
-            v->is_sliding = true;
-            v->slide_target_freq = target_freq;
-            v->slide_start_freq = start_freq;
-            v->slide_progress = 0.0f;
+            // Apply Glide Logic
+            if (s->patch.glide_mode == PX_GLIDE_STEP_LINEAR) {
+                v->is_sliding = true;
+                v->slide_target_freq = v->original_frequency;
+                v->slide_start_freq = start_freq;
+                v->slide_progress = 0.0f;
+            } else if (s->patch.glide_mode == PX_GLIDE_SMOOTH_RC) {
+                v->is_sliding = false;
+                // Do nothing to v->frequency, let it slide from current value in PX_Process
+            } else {
+                v->is_sliding = false;
+                v->frequency = v->original_frequency; // Snap
+            }
 
             for (int j = 0; j < s->config.num_voice_adsrs; ++j) if (v->adsrs[j].enabled) ADSR_TriggerAttack(&v->adsrs[j]);
             for (int k = 0; k < s->config.num_lfos; ++k) if (s->patch.template_lfos[k].adsr.enabled) ADSR_TriggerAttack(&v->lfo_instances[k].adsr);
@@ -3928,12 +4088,37 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     }
 
     v->original_frequency = get_midi_frequency(midi_note);
-    v->frequency = v->original_frequency; // Base frequency (no tuning applied yet)
+    // Don't snap v->frequency yet if we might glide.
+    // v->frequency = v->original_frequency;
 
     v->key_id = key_id;
     v->trigger_sequence_number = s->global_trigger_counter++;
     v->pan_position = s->patch.voice_pan_setting;
-    v->is_sliding = false;
+
+    // Apply Polyphonic Glide Logic (if not in reuse_voice block)
+    // If do_glide is true, we should glide from CURRENT voice freq (portamento).
+    // We only glide if the previous frequency was valid (> 1Hz) to avoid swooping up from 0Hz.
+    bool can_glide_from_prev = do_glide && (v->frequency > 1.0f);
+
+    if (can_glide_from_prev) {
+        if (s->patch.glide_mode == PX_GLIDE_STEP_LINEAR) {
+            v->is_sliding = true;
+            v->slide_start_freq = v->frequency;
+            v->slide_target_freq = v->original_frequency;
+            v->slide_progress = 0.0f;
+        } else if (s->patch.glide_mode == PX_GLIDE_SMOOTH_RC) {
+            v->is_sliding = false;
+            // Let PX_Process handle RC approach (it will see v->freq != v->orig_freq)
+        } else {
+            // Should not happen if do_glide is true, but safe fallback
+            v->is_sliding = false;
+            v->frequency = v->original_frequency;
+        }
+    } else {
+        v->is_sliding = false;
+        v->frequency = v->original_frequency; // Snap
+    }
+
     v->slide_progress = 0.0f;
     v->update_countdown = 1.0f;
     switch (s->config.osc_update_mode) {
