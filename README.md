@@ -90,6 +90,85 @@ like UI, input handling, and audio device management.
 - **Data-Driven UI:** The library provides a suite of `PX_Get...Info()` functions that return read-only snapshots of the internal state. This allows the host
   application to build a detailed UI without directly accessing internal memory, ensuring a stable and glitch-free API.
 
+## Synth Instance vs. Patch: The Core Concept
+
+Polysonix deliberately separates **what the synth actually is** from **what sound it’s currently making**.
+This mirrors real hardware synthesizers and keeps the engine safe, predictable, and real-time friendly.
+
+### Synth Instance = The "Hardware"
+
+A **Synth Instance** is created once with a fixed configuration (`PxConfig`):
+
+```c
+PxConfig cfg = {
+    .num_voices       = 16,     // maximum polyphony
+    .num_lfos         = 3,      // number of global LFOs
+    .num_voice_adsrs  = 3,      // ADSRs per voice
+    .sample_rate      = 44100.0f,
+    // ... other fixed settings
+};
+PxSynth* synth = PX_Create(&cfg);
+```
+
+This defines the structural limits of the synth — things that cannot change after creation:
+
+*   How many notes can play simultaneously (`num_voices`)
+*   How many global LFOs exist
+*   How many ADSRs each voice has
+*   Sample rate, oscillator update mode, etc.
+
+Think of each `PxSynth*` as a separate hardware synth or module:
+
+*   Want a dedicated bass-drum synth? Create a 1-voice instance tuned low.
+*   Want a monophonic lead with always-on glide? Create a 1-voice mono synth.
+*   Want Prophet-style 5-voice polyphony? Create a 5-voice instance.
+*   Need bass + chords + lead in one project? Create multiple instances — each with its own role.
+
+These limits are fixed for life — just like you can't suddenly turn a 6-voice Minimoog into a 16-voice Jupiter-8 by flipping a switch.
+
+### Patch = The "Sound Program" / Preset
+
+A **Patch** is a complete snapshot of sound parameters only:
+
+*   Oscillator settings (wave_idx, tuning, mix, pan, enabled, bitcrush, cross-mod, etc.)
+*   Glide/portamento behavior
+*   Filter settings
+*   Modulation matrix routings
+*   ADSR and LFO templates (attack/decay/sustain/release, wave, frequency, etc.)
+*   Global voice pan, limiter threshold, etc.
+
+When you save a preset (`PX_SavePreset`), only these tonal/timbral parameters are stored.
+When you load a preset (`PX_LoadPreset`), it completely overwrites the current sound — but never changes the synth instance’s structural limits (voice count, LFO count, ADSR count).
+
+### How It Behaves in Practice
+
+**Monosynth instance (`num_voices = 1`):**
+Any preset you load becomes monophonic. Glide/portamento works smoothly, only one note plays at a time — classic mono synth behavior.
+
+**Polysynth instance (`num_voices = 16`):**
+The same preset now plays polyphonically (up to 16 notes). Glide only triggers on overlaps if `glide_legato_only` is true — classic poly synth behavior.
+
+**Load mismatch?**
+If you try to load a preset saved from a 32-voice synth into your 16-voice instance → load fails safely (config hash mismatch error). No silent corruption, no surprises.
+
+### Why This Separation Is Powerful (and Hardware-Like)
+
+*   **Real-time safety** — No dynamic reallocation mid-audio callback → zero risk of glitches or xruns.
+*   **Predictable performance** — CPU/memory usage is known upfront per instance.
+*   **Modular workflow** — Create exactly the instruments you need (mono bass, poly chords, gliding lead) — all from the same engine.
+*   **Hardware authenticity** — Presets change the sound, not the machine — just like loading a patch into a Minimoog doesn't give it more voices.
+
+### Summary
+
+*   **Synth Instance** = the fixed "hardware" (polyphony, LFO/ADSR counts, sample rate, etc.) — set once at creation.
+*   **Patch** = the sound program (oscillators, glide, filter, modulation, etc.) — fully overwrites timbre when loaded.
+
+A preset cannot morph one synth instance into another. It can only shape how each voice sounds.
+
+This architecture is one of the things that makes Polysonix feel like real analog hardware while remaining tiny, embeddable, and programmable.
+
+You can run multiple instances side-by-side — each with its own patch, each playing its own role — all perfectly in sync and lightweight.
+
 ## CPU vs GPU Backends
 
 Polysonix utilizes a unified backend architecture defined in `px_vm.h`. By default, the highly optimized CPU virtual machine is used. To enable the GPU backend, simply define `POLYSONIX_USE_GPU` before including `polysonix.h`.
