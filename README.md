@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="logo.PNG" alt="Polysonix Logo" width="800">
+  <img src="logo.PNG" alt="Polysonix Logo" width="850">
 </div>
 # Polysonix
 **Version 1.8.3** (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
