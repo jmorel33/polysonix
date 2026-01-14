@@ -648,9 +648,10 @@ typedef struct {
 Defines a complete Wave Sequence, including global settings and step data.
 ```c
 typedef struct {
+    const char* name;             // Descriptive name
     uint8_t  end_action;          // PxWSeqEndAction
     uint8_t  glide_mode;          // PxWSeqGlideMode
-    uint8_t  bitcrush_bits;       // 1-8
+    uint8_t  adsr_retrig_phase;   // PxADSRState (Target phase on retrigger)
     // ... modulation and probability settings ...
     PxWaveSeqStep steps[PX_MAX_WSEQ_STEPS];
 } PxWaveSequence;
