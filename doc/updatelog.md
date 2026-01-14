@@ -1,6 +1,6 @@
 # Update Log
 
-## v1.8.3 (2026/02/13)
+## v1.8.3 (2026/01/13)
 **Feature Update: Static Glide / Portamento**
 
 This release implements a robust Static Glide (Portamento) system for non-sequenced playback, bridging the gap between classic Unilegato and modern polyphonic glide.
