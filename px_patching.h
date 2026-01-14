@@ -171,6 +171,9 @@ static void px_serialize_patch_impl(const PxPatch* p, const PxConfig* c, uint8_t
 
     #define SER_SCALAR(val, type) SER_BUF(&val, sizeof(type))
 
+    uint16_t version = (POLYSONIX_VERSION_MAJOR << 8) | POLYSONIX_VERSION_MINOR;
+    SER_SCALAR(version, uint16_t);
+
     if (p->template_voice_adsrs)
         SER_BUF(p->template_voice_adsrs, sizeof(PxADSRParams) * c->num_voice_adsrs);
     if (p->template_voice_adsr_mod_amounts)
@@ -208,6 +211,11 @@ static void px_serialize_patch_impl(const PxPatch* p, const PxConfig* c, uint8_t
     SER_SCALAR(p->wseq_fixed_time, bool);
     SER_SCALAR(p->wseq_ref_freq, float);
 
+    SER_SCALAR(p->glide_mode, PxGlideMode);
+    SER_SCALAR(p->glide_time, float);
+    SER_SCALAR(p->glide_legato_only, bool);
+    SER_SCALAR(p->glide_always, bool);
+
     #undef SER_BUF
     #undef SER_SCALAR
 
@@ -226,6 +234,9 @@ static bool px_deserialize_patch_impl(PxPatch* p, const PxConfig* c, const uint8
         } while(0)
 
     #define DESER_SCALAR(val, type) DESER_BUF(&val, sizeof(type))
+
+    uint16_t version;
+    DESER_SCALAR(version, uint16_t);
 
     if (p->template_voice_adsrs)
         DESER_BUF(p->template_voice_adsrs, sizeof(PxADSRParams) * c->num_voice_adsrs);
@@ -263,6 +274,11 @@ static bool px_deserialize_patch_impl(PxPatch* p, const PxConfig* c, const uint8
 
     DESER_SCALAR(p->wseq_fixed_time, bool);
     DESER_SCALAR(p->wseq_ref_freq, float);
+
+    DESER_SCALAR(p->glide_mode, PxGlideMode);
+    DESER_SCALAR(p->glide_time, float);
+    DESER_SCALAR(p->glide_legato_only, bool);
+    DESER_SCALAR(p->glide_always, bool);
 
     #undef DESER_BUF
     #undef DESER_SCALAR
