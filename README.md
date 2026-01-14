@@ -1,5 +1,5 @@
 # Polysonix
-**Version 1.8.2** | **Author:** Jacques Morel | **Copyright (c) 2026**
+**Version 1.8.3** | **Author:** Jacques Morel | **Copyright (c) 2026**
 
 A single-header polyphonic synthesizer engine.
 
@@ -57,7 +57,7 @@ like UI, input handling, and audio device management.
   - **Unified Modulation Matrix:** A comprehensive 16-slot modulation matrix allowing standard controllers to modulate nearly any synthesis parameter (Oscillators, Filters, LFOs, ADSRs).
     *   **Sources:** Velocity, Channel Aftertouch, **Polyphonic Aftertouch**, Mod Wheel, Pitch Bend, **Key Track**.
     *   **Response Curves:** Velocity and Aftertouch inputs can be shaped using **Linear, Exponential, Logarithmic, or S-Curve** mappings for expressive control.
-  - **Unilegato Mode**: Smooth, monophonic legato with pitch sliding between notes.
+  - **Static Glide / Portamento (v1.8.3):** Smooth pitch transitions for non-sequenced playback. Supports legacy Unilegato (linear step) and analog-style Exponential (RC) glide, with polyphonic support.
 - **Stereo Signal Path:** Full stereo output with per-oscillator panning, per-voice panning, and LFO pan modulation.
 - **Built-in Dynamics:** Includes a per-voice soft-clipper to prevent harsh transients and a master bus lookahead limiter to prevent final output clipping.
 - **Oscillator Quality Modes**: Choose between per-sample calculation for quality or interpolated modes for performance.
@@ -360,6 +360,12 @@ Polysonix features a Triple Oscillator Architecture. Functions take an `osc_idx`
 - `PX_SetWSeqFixedTime(s, enabled)` / `PX_GetWSeqFixedTime`: Enables or disables Time-Locked mode.
 - `PX_SetWSeqRefFreq(s, freq)` / `PX_GetWSeqRefFreq`: Sets the reference frequency (e.g., 440.0 Hz) for time scaling.
 
+**v1.8.3 Static Glide / Portamento:**
+- `PX_SetGlideMode(s, mode)` / `PX_GetGlideMode`: Sets the glide behavior (Off, Step Linear, Smooth RC).
+- `PX_SetGlideTime(s, time_s)` / `PX_GetGlideTime`: Sets the glide duration/time constant.
+- `PX_SetGlideLegatoOnly(s, enabled)` / `PX_GetGlideLegatoOnly`: If true, only glide on overlapping notes.
+- `PX_SetGlideAlways(s, enabled)` / `PX_GetGlideAlways`: Force glide on every note.
+
 The library also provides a comprehensive set of `PX_Set...` and `PX_Get...` functions for controlling all aspects of the synthesizer, including:
 
 - Voice ADSR parameters
@@ -465,6 +471,7 @@ Enums are used extensively in `polysonix.h` to define modes, targets, and parame
 *   `PxWseqAmpModType` (v1.7.11): `PX_WSEQ_AMP_RAMP_DOWN` (Pluck), `PX_WSEQ_AMP_RAMP_UP` (Reverse), `PX_WSEQ_AMP_TRIANGLE`, `PX_WSEQ_AMP_SINE`, `PX_WSEQ_AMP_SQUARE` (Gate 50%), `PX_WSEQ_AMP_PULSE_25` (Gate 25%), `PX_WSEQ_AMP_EXP_DOWN` (Percussive), `PX_WSEQ_AMP_RANDOM` (S&H).
 *   `PxWSeqEndAction`: `PX_WSEQ_END_STOP`, `PX_WSEQ_END_HOLD`, `PX_WSEQ_END_LOOP`, `PX_WSEQ_END_PINGPONG`, `PX_WSEQ_END_REVERSE`.
 *   `PxWSeqGlideMode`: `PX_WSEQ_GLIDE_OFF`, `PX_WSEQ_GLIDE_STEP`, `PX_WSEQ_GLIDE_SMOOTH`.
+*   `PxGlideMode` (v1.8.3): `PX_GLIDE_OFF`, `PX_GLIDE_STEP_LINEAR`, `PX_GLIDE_SMOOTH_RC`.
 *   `PxModSource`: `PX_MOD_SRC_VELOCITY`, `PX_MOD_SRC_AFTERTOUCH`, `PX_MOD_SRC_MODWHEEL` (CC #1), `PX_MOD_SRC_PITCHBEND`, `PX_MOD_SRC_POLY_AFTERTOUCH`, `PX_MOD_SRC_KEY_TRACK`.
 *   `PxModDestination`:
     *   **ADSR:** `PX_MOD_DEST_ADSR1_ATTACK` to `PX_MOD_DEST_ADSR3_RELEASE` (3 ADSRs * 4 Params).

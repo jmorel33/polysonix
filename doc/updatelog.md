@@ -1,5 +1,28 @@
 # Update Log
 
+## v1.8.3 (2026/02/08)
+**Feature Update: Static Glide / Portamento**
+
+This release implements a robust Static Glide (Portamento) system for non-sequenced playback, bridging the gap between classic Unilegato and modern polyphonic glide.
+
+*   **Static Glide:**
+    *   **New Modes (`PxGlideMode`):**
+        *   `PX_GLIDE_OFF`: Instant pitch changes (default).
+        *   `PX_GLIDE_STEP_LINEAR`: Legacy "Unilegato" behavior. Hard jump to new note, then linear interpolation over time.
+        *   **`PX_GLIDE_SMOOTH_RC`:** A new, natural-sounding exponential glide (RC-filter style). Pitch asymptotically approaches the target note, mimicking analog capacitor charge/discharge.
+    *   **Configuration:**
+        *   `glide_time`: Sets the glide duration (or RC time constant).
+        *   `glide_legato_only`: If true, glide only occurs when notes overlap (fingered portamento). If false, glide always occurs (monophonic/polyphonic portamento).
+        *   `glide_always`: (Helper flag) Force glide behavior regardless of overlap.
+    *   **Polyphonic Support:** Unlike legacy Unilegato which was strictly monophonic (voice reuse), the new system supports polyphonic glide. If a voice is stolen or re-allocated while glide is active, it will glide from its previous pitch to the new note.
+    *   **Backward Compatibility:** The existing `PX_SetUnilegatoEnabled` API is fully preserved. Internally, it configures the new system to use `PX_GLIDE_STEP_LINEAR` and `glide_legato_only = true`, ensuring identical behavior for existing code.
+
+*   **API Updates:**
+    *   Added `PX_SetGlideMode`, `PX_GetGlideMode`.
+    *   Added `PX_SetGlideTime`, `PX_GetGlideTime`.
+    *   Added `PX_SetGlideLegatoOnly`, `PX_GetGlideLegatoOnly`.
+    *   Added `PX_SetGlideAlways`, `PX_GetGlideAlways`.
+
 ## v1.8.2 (2026/02/01)
 **Refactor: Bitcrush Logic**
 
