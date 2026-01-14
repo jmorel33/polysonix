@@ -1,6 +1,6 @@
 # Update Log
 
-## v1.8.3 (2026/02/08)
+## v1.8.3 (2026/02/13)
 **Feature Update: Static Glide / Portamento**
 
 This release implements a robust Static Glide (Portamento) system for non-sequenced playback, bridging the gap between classic Unilegato and modern polyphonic glide.
@@ -23,7 +23,7 @@ This release implements a robust Static Glide (Portamento) system for non-sequen
     *   Added `PX_SetGlideLegatoOnly`, `PX_GetGlideLegatoOnly`.
     *   Added `PX_SetGlideAlways`, `PX_GetGlideAlways`.
 
-## v1.8.2 (2026/02/01)
+## v1.8.2 (2026/01/12)
 **Refactor: Bitcrush Logic**
 
 Refactored the Bitcrush effect from being a strictly Wave Sequencer property to being a per-Oscillator property.
@@ -32,7 +32,7 @@ Refactored the Bitcrush effect from being a strictly Wave Sequencer property to 
 *   **Default Behavior:** To maintain legacy behavior for ROM sequences, oscillator bitcrush depth defaults to `0.8f` (approx. 4 bits) when initialized.
 *   **Cleanup:** Removed the deprecated `bitcrush_bits` field from `PxWaveSequence` and `step_bitcrush_scale` from internal state.
 
-## v1.8.1 (2026/01/25)
+## v1.8.1 (2026/01/11)
 **Fix: Wave Sequencer Timing Drift**
 
 This patch addresses a timing drift issue in the Wave Sequencer where fractional phase increments were being truncated, causing step durations to slowly drift away from the intended tempo over long sequences.
@@ -42,7 +42,7 @@ This patch addresses a timing drift issue in the Wave Sequencer where fractional
     *   **Precision:** The "leftover" fraction of a cycle is now carried over to the next processing frame, and any overshoot beyond the target step duration is carried over to the next step.
     *   **Result:** This ensures that the average step duration remains mathematically exact over time, eliminating rhythm drift while preserving sample-accurate transitions.
 
-## v1.8.0 (2026/01/22)
+## v1.8.0 (2026/01/11)
 **Major Feature: Time-Locked Wave Sequencing & Engine Fixes**
 
 This release introduces the "Time-Locked" Wave Sequencing mode, which ensures consistent step duration across different pitches, crucial for rhythmic sequences and bass lines. It also includes critical fixes for the LFSR system and sequencer logic.
@@ -60,7 +60,7 @@ This release introduces the "Time-Locked" Wave Sequencing mode, which ensures co
     *   **Cycle Counting Logic:** Fixed a logic error in `PX_Process` where the cycle target for the *next* step was incorrectly calculated using the *current* step's properties.
     *   **Verification:** Verified timing logic correctness across octaves using a custom `mprotect`-based test harness.
 
-## v1.7.11 (2026/01/15)
+## v1.7.11 (2026/01/09)
 **Feature Update: Wave Sequencer Amplitude Modulation**
 
 This release adds per-step Amplitude Modulation to the Wave Sequencer, allowing for intricate rhythmic gating and envelope shaping directly within the sequence.
