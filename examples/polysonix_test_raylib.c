@@ -50,7 +50,8 @@ typedef enum {
     EDIT_TARGET_LFO_0_CORE_PARAMS,EDIT_TARGET_LFO_0_ADSR_PARAMS,EDIT_TARGET_LFO_0_ROUTING,
     EDIT_TARGET_LFO_1_CORE_PARAMS,EDIT_TARGET_LFO_1_ADSR_PARAMS,EDIT_TARGET_LFO_1_ROUTING,
     EDIT_TARGET_LFO_2_CORE_PARAMS,EDIT_TARGET_LFO_2_ADSR_PARAMS,EDIT_TARGET_LFO_2_ROUTING,
-    EDIT_TARGET_FILTER_PARAMS,    EDIT_TARGET_COUNT
+    EDIT_TARGET_FILTER_PARAMS,    EDIT_TARGET_GLIDE_PARAMS,     EDIT_TARGET_OSC_PARAMS,
+    EDIT_TARGET_COUNT
 } EditTarget;
 
 static EditTarget current_edit_target = EDIT_TARGET_ADSR_0_PARAMS;
@@ -63,7 +64,7 @@ static const char* edit_target_names[] = {
     "LFO 0 CORE", "LFO 0 ADSR", "LFO 0 ROUTING",
     "LFO 1 CORE", "LFO 1 ADSR", "LFO 1 ROUTING",
     "LFO 2 CORE", "LFO 2 ADSR", "LFO 2 ROUTING",
-    "FILTER PARAMS"
+    "FILTER PARAMS",   "GLIDE PARAMS",    "OSC 0 PARAMS"
 };
 
 // Keyboard mapping
@@ -318,6 +319,25 @@ static void ProcessInput() {
         if (IsKeyPressed(KEY_KP_SUBTRACT)) PX_SetFilterParam(synth, PX_FILTER_PARAM_KEYTRACK, PX_GetFilterParam(synth, PX_FILTER_PARAM_KEYTRACK) - keytrack_step);
         if (IsKeyPressed(KEY_KP_ADD)) PX_SetFilterParam(synth, PX_FILTER_PARAM_KEYTRACK, PX_GetFilterParam(synth, PX_FILTER_PARAM_KEYTRACK) + keytrack_step);
     }
+    else if (current_edit_target == EDIT_TARGET_GLIDE_PARAMS) {
+        if (IsKeyPressed(KEY_KP_0)) PX_SetGlideTime(synth, fmaxf(0.0f, PX_GetGlideTime(synth) - 0.05f));
+        if (IsKeyPressed(KEY_KP_1)) PX_SetGlideTime(synth, PX_GetGlideTime(synth) + 0.05f);
+        if (IsKeyPressed(KEY_KP_2)) {
+            PxGlideMode m = PX_GetGlideMode(synth);
+            if (m == PX_GLIDE_OFF) m = PX_GLIDE_STEP_LINEAR;
+            else if (m == PX_GLIDE_STEP_LINEAR) m = PX_GLIDE_SMOOTH_RC;
+            else m = PX_GLIDE_OFF;
+            PX_SetGlideMode(synth, m);
+        }
+        if (IsKeyPressed(KEY_KP_8)) PX_SetGlideLegatoOnly(synth, !PX_GetGlideLegatoOnly(synth));
+        if (IsKeyPressed(KEY_KP_9)) PX_SetGlideAlways(synth, !PX_GetGlideAlways(synth));
+    }
+    else if (current_edit_target == EDIT_TARGET_OSC_PARAMS) {
+        float bc_step = 0.05f;
+        if (IsKeyPressed(KEY_KP_0)) PX_SetOscBitcrush(synth, 0, PX_GetOscBitcrushEnabled(synth, 0), fmaxf(0.0f, PX_GetOscBitcrush(synth, 0) - bc_step));
+        if (IsKeyPressed(KEY_KP_1)) PX_SetOscBitcrush(synth, 0, PX_GetOscBitcrushEnabled(synth, 0), fminf(1.0f, PX_GetOscBitcrush(synth, 0) + bc_step));
+        if (IsKeyPressed(KEY_KP_9)) PX_SetOscBitcrush(synth, 0, !PX_GetOscBitcrushEnabled(synth, 0), PX_GetOscBitcrush(synth, 0));
+    }
 
     // Note On/Off
     for (int i = 0; piano_keys[i].raylib_key != 0; ++i) {
@@ -449,6 +469,20 @@ static void DrawFrame() {
             PX_GetFilterParam(synth, PX_FILTER_PARAM_KEYTRACK)),
             20, y_offset, small_line_height, DARKGRAY);
         y_offset += small_line_height;
+    } else if (current_edit_target == EDIT_TARGET_GLIDE_PARAMS) {
+        DrawText("GLIDE PARAMETERS:", 20, y_offset, small_line_height, DARKBLUE); y_offset += small_line_height;
+        const char* mode_str = "OFF";
+        PxGlideMode m = PX_GetGlideMode(synth);
+        if (m == PX_GLIDE_STEP_LINEAR) mode_str = "LINEAR (Step)";
+        if (m == PX_GLIDE_SMOOTH_RC) mode_str = "SMOOTH (RC)";
+        DrawText(TextFormat("Mode (KP2): %s", mode_str), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+        DrawText(TextFormat("Time (KP0/1): %.2fs", PX_GetGlideTime(synth)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+        DrawText(TextFormat("Legato Only (KP8): %s", PX_GetGlideLegatoOnly(synth) ? "ON" : "OFF"), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+        DrawText(TextFormat("Always Glide (KP9): %s", PX_GetGlideAlways(synth) ? "ON" : "OFF"), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+    } else if (current_edit_target == EDIT_TARGET_OSC_PARAMS) {
+        DrawText("OSC 0 PARAMETERS:", 20, y_offset, small_line_height, DARKBLUE); y_offset += small_line_height;
+        DrawText(TextFormat("Bitcrush (KP9): %s", PX_GetOscBitcrushEnabled(synth, 0) ? "ON" : "OFF"), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+        DrawText(TextFormat("BC Depth (KP0/1): %.2f", PX_GetOscBitcrush(synth, 0)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
     }
     y_offset += 3;
 
