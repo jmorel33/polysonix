@@ -85,7 +85,8 @@ typedef enum {
     EDIT_TARGET_LFO_0_CORE_PARAMS,EDIT_TARGET_LFO_0_ADSR_PARAMS,EDIT_TARGET_LFO_0_ROUTING,
     EDIT_TARGET_LFO_1_CORE_PARAMS,EDIT_TARGET_LFO_1_ADSR_PARAMS,EDIT_TARGET_LFO_1_ROUTING,
     EDIT_TARGET_LFO_2_CORE_PARAMS,EDIT_TARGET_LFO_2_ADSR_PARAMS,EDIT_TARGET_LFO_2_ROUTING,
-    EDIT_TARGET_FILTER_PARAMS,    EDIT_TARGET_COUNT
+    EDIT_TARGET_FILTER_PARAMS,    EDIT_TARGET_GLIDE_PARAMS,     EDIT_TARGET_OSC_PARAMS,
+    EDIT_TARGET_COUNT
 } EditTarget;
 
 static EditTarget current_edit_target = EDIT_TARGET_ADSR_0_PARAMS;
@@ -98,7 +99,7 @@ static const char* edit_target_names[] = {
     "LFO 0 CORE", "LFO 0 ADSR", "LFO 0 ROUTING",
     "LFO 1 CORE", "LFO 1 ADSR", "LFO 1 ROUTING",
     "LFO 2 CORE", "LFO 2 ADSR", "LFO 2 ROUTING",
-    "FILTER PARAMS"
+    "FILTER PARAMS",   "GLIDE PARAMS",    "OSC 0 PARAMS"
 };
 
 // Keyboard mapping
@@ -302,6 +303,8 @@ static bool InitializeApplication() {
 
     // SDK 2.3.36 Initialization
     SituationInitInfo init_info = {0};
+    init_info.app_name = "Polysonix Situation Player";
+    init_info.app_version = "1.0.0";
     init_info.window_width = SCREEN_WIDTH;
     init_info.window_height = SCREEN_HEIGHT;
     init_info.window_title = "Polysonix Situation Player";
@@ -365,11 +368,10 @@ static bool InitializeApplication() {
     SituationPlayLoadedSound(&audio_stream);
 
     // Load and Bake Font (SDK 2.3.36)
-    SituationLoadFont("./font.ttf", &main_font);
-    if (!SituationIsFontValid(main_font)) {
+    if (SituationLoadFont("./font.ttf", &main_font) != SITUATION_SUCCESS) {
         printf("Warning: Failed to load font. Text will not be rendered.\n");
     } else {
-        if (!SituationBakeFontAtlas(&main_font, 20.0f)) {
+        if (SituationBakeFontAtlas(&main_font, 20.0f) != SITUATION_SUCCESS) {
             printf("Warning: Failed to bake font atlas.\n");
         }
     }
@@ -545,6 +547,25 @@ static void ProcessInput() {
         if (SituationIsKeyPressed(SIT_KEY_KP_SUBTRACT)) PX_SetFilterParam(synth, PX_FILTER_PARAM_KEYTRACK, PX_GetFilterParam(synth, PX_FILTER_PARAM_KEYTRACK) - keytrack_step);
         if (SituationIsKeyPressed(SIT_KEY_KP_ADD)) PX_SetFilterParam(synth, PX_FILTER_PARAM_KEYTRACK, PX_GetFilterParam(synth, PX_FILTER_PARAM_KEYTRACK) + keytrack_step);
     }
+    else if (current_edit_target == EDIT_TARGET_GLIDE_PARAMS) {
+        if (SituationIsKeyPressed(SIT_KEY_KP_0)) PX_SetGlideTime(synth, fmaxf(0.0f, PX_GetGlideTime(synth) - 0.05f));
+        if (SituationIsKeyPressed(SIT_KEY_KP_1)) PX_SetGlideTime(synth, PX_GetGlideTime(synth) + 0.05f);
+        if (SituationIsKeyPressed(SIT_KEY_KP_2)) {
+            PxGlideMode m = PX_GetGlideMode(synth);
+            if (m == PX_GLIDE_OFF) m = PX_GLIDE_STEP_LINEAR;
+            else if (m == PX_GLIDE_STEP_LINEAR) m = PX_GLIDE_SMOOTH_RC;
+            else m = PX_GLIDE_OFF;
+            PX_SetGlideMode(synth, m);
+        }
+        if (SituationIsKeyPressed(SIT_KEY_KP_8)) PX_SetGlideLegatoOnly(synth, !PX_GetGlideLegatoOnly(synth));
+        if (SituationIsKeyPressed(SIT_KEY_KP_9)) PX_SetGlideAlways(synth, !PX_GetGlideAlways(synth));
+    }
+    else if (current_edit_target == EDIT_TARGET_OSC_PARAMS) {
+        float bc_step = 0.05f;
+        if (SituationIsKeyPressed(SIT_KEY_KP_0)) PX_SetOscBitcrush(synth, 0, PX_GetOscBitcrushEnabled(synth, 0), fmaxf(0.0f, PX_GetOscBitcrush(synth, 0) - bc_step));
+        if (SituationIsKeyPressed(SIT_KEY_KP_1)) PX_SetOscBitcrush(synth, 0, PX_GetOscBitcrushEnabled(synth, 0), fminf(1.0f, PX_GetOscBitcrush(synth, 0) + bc_step));
+        if (SituationIsKeyPressed(SIT_KEY_KP_9)) PX_SetOscBitcrush(synth, 0, !PX_GetOscBitcrushEnabled(synth, 0), PX_GetOscBitcrush(synth, 0));
+    }
 
     // Note On/Off
     for (int i = 0; piano_keys[i].situation_key != 0; ++i) {
@@ -662,6 +683,20 @@ static void DrawInterface(RenderContext* ctx) {
             PX_GetFilterParam(synth, PX_FILTER_PARAM_KEYTRACK)),
             20, y_offset, small_line_height, DARKGRAY);
         y_offset += small_line_height;
+    } else if (current_edit_target == EDIT_TARGET_GLIDE_PARAMS) {
+        DrawText(ctx, "GLIDE PARAMETERS:", 20, y_offset, small_line_height, DARKBLUE); y_offset += small_line_height;
+        const char* mode_str = "OFF";
+        PxGlideMode m = PX_GetGlideMode(synth);
+        if (m == PX_GLIDE_STEP_LINEAR) mode_str = "LINEAR (Step)";
+        if (m == PX_GLIDE_SMOOTH_RC) mode_str = "SMOOTH (RC)";
+        DrawText(ctx, TextFormat("Mode (KP2): %s", mode_str), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+        DrawText(ctx, TextFormat("Time (KP0/1): %.2fs", PX_GetGlideTime(synth)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+        DrawText(ctx, TextFormat("Legato Only (KP8): %s", PX_GetGlideLegatoOnly(synth) ? "ON" : "OFF"), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+        DrawText(ctx, TextFormat("Always Glide (KP9): %s", PX_GetGlideAlways(synth) ? "ON" : "OFF"), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+    } else if (current_edit_target == EDIT_TARGET_OSC_PARAMS) {
+        DrawText(ctx, "OSC 0 PARAMETERS:", 20, y_offset, small_line_height, DARKBLUE); y_offset += small_line_height;
+        DrawText(ctx, TextFormat("Bitcrush (KP9): %s", PX_GetOscBitcrushEnabled(synth, 0) ? "ON" : "OFF"), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+        DrawText(ctx, TextFormat("BC Depth (KP0/1): %.2f", PX_GetOscBitcrush(synth, 0)), 20, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
     }
     y_offset += 3;
 
@@ -794,9 +829,12 @@ static void DrawFrame() {
     DrawInterface(&ctx_cpu);
 
     // --- 2. Upload the canvas to the GPU and render it ---
-    // SDK 2.3.36: Use Destroy/Create as UpdateTexture is not available for CPU-generated images
-    if (canvas_texture.id != 0) SituationDestroyTexture(&canvas_texture);
-    SituationCreateTexture(canvas_image, false, &canvas_texture);
+    // SDK 2.3.36: Use UpdateTexture for efficiency
+    if (canvas_texture.id == 0) {
+        SituationCreateTexture(canvas_image, false, &canvas_texture);
+    } else {
+        SituationUpdateTexture(canvas_texture, canvas_image);
+    }
 
     if (SituationAcquireFrameCommandBuffer()) {
         SituationCommandBuffer cmd = SituationGetMainCommandBuffer();
@@ -835,8 +873,7 @@ static void DrawFrame() {
         SituationCmdSetPushConstant(cmd, 0, &mvp, sizeof(mat4));
 
         // SDK 2.3.36: CmdDrawQuad with args (cmd, model, color)
-        // Note: vec4 is implied float[4] compatible with cglm vec4.
-        vec4 white = {1.0f, 1.0f, 1.0f, 1.0f};
+        Vector4 white = {1.0f, 1.0f, 1.0f, 1.0f};
         SituationCmdDrawQuad(cmd, model, white);
 
         // Second Pass: Draw Text/UI overlay directly on GPU
