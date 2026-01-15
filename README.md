@@ -143,10 +143,12 @@ When you load a preset (`PX_LoadPreset`), it completely overwrites the current s
 ### How It Behaves in Practice
 
 **Monosynth instance (`num_voices = 1`):**
-Any preset you load becomes monophonic. Glide/portamento works smoothly, only one note plays at a time — classic mono synth behavior.
+A patch running on this instance behaves monophonically. Glide/portamento works smoothly, only one note plays at a time — classic mono synth behavior.
 
 **Polysynth instance (`num_voices = 16`):**
-The same preset now plays polyphonically (up to 16 notes). Glide only triggers on overlaps if `glide_legato_only` is true — classic poly synth behavior.
+The same patch configuration running on this instance plays polyphonically (up to 16 notes). Glide only triggers on overlaps if `glide_legato_only` is true.
+
+**Important:** While the patch data is structurally compatible, `PX_LoadPreset` strictly enforces that the source and destination instances have matching configurations (including voice count) to prevent errors. To transfer patches between instances with different voice counts, use the `PX_Bank` API.
 
 **Load mismatch?**
 If you try to load a preset saved from a 32-voice synth into your 16-voice instance → load fails safely (config hash mismatch error). No silent corruption, no surprises.
