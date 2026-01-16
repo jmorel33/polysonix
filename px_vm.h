@@ -3965,9 +3965,7 @@ float generate_sample_from_bytecode(BytecodeChunk *chunk, uint16_t sample_index,
 }
 
 
-
-
-// --- Initialization Function (No changes needed here) ---
+// --- Initialization Function ---
 /*
 static void initialize_wave_tables_interpreted(polysonix_device *dev, uint16_t base_addr, uint16_t wave_length, uint8_t num_tables) {
     // Use NUM_DEFAULT_WAVES for bounds checking against the definition array
