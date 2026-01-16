@@ -3965,47 +3965,6 @@ float generate_sample_from_bytecode(BytecodeChunk *chunk, uint16_t sample_index,
 }
 
 
-// **************** BELOW HAS TO DO WITH THE OLD WAY OF MAPPING MEMORY AND IS DEPRECATED
-
-//#include "polysonix.h"
-
-// --- Wave Shape Storage (WSS) Addresses --- (Starting at USER_WAVE_RAM_START)
-// These are simply default single cycle waves that the user can override
-#define WSS_BASE_ADDR = USER_WAVE_RAM_START
-#define WSS_TABLE_SIZE 256
-#define WSS_NUM_TABLES 64
-#define WSSCYCLE1 (WSS_BASE_ADDR + 0 * WSS_TABLE_SIZE) // USER_WAVE_RAM_START
-#define WSSCYCLE2 (WSS_BASE_ADDR + 1 * WSS_TABLE_SIZE) // USER_WAVE_RAM_START + 0x0100
-//...
-#define WSSCYCLE8 (WSS_BASE_ADDR + 15 * WSS_TABLE_SIZE) // USER_WAVE_RAM_START + 0x0F00
-#define WSS_END_ADDR (WSS_BASE_ADDR + WSS_NUM_TABLES * WSS_TABLE_SIZE - 1)
-
-
-// --- User Waveform RAM Addresses (Bank 3: 0x0000 - 0x77FF) ---
-#define USER_WAVE_RAM_BANK 3
-
-#define USER_WAVE_256_SLOTS NUM_DEFAULT_WAVES
-#define USER_WAVE_128_SLOTS NUM_DEFAULT_WAVES
-#define USER_WAVE_64_SLOTS  NUM_DEFAULT_WAVES
-#define USER_WAVE_32_SLOTS  NUM_DEFAULT_WAVES
-
-#define USER_WAVE_RAM_START 0x0000
-#define USER_WAVE_256_BASE  0x0000 // 64 slots * 256 bytes = 0x4000 size (Ends 0x3FFF)
-#define USER_WAVE_128_BASE  0x4000 // 64 slots * 128 bytes = 0x2000 size (Ends 0x5FFF)
-#define USER_WAVE_64_BASE   0x6000 // 64 slots * 64 bytes  = 0x1000 size (Ends 0x6FFF)
-#define USER_WAVE_32_BASE   0x7000 // 64 slots * 32 bytes  = 0x0800 size (Ends 0x77FF)
-#define USER_WAVE_RAM_SIZE ( USER_WAVE_256_SLOTS * 256 + USER_WAVE_128_SLOTS * 128 + USER_WAVE_64_SLOTS * 64 + USER_WAVE_32_SLOTS * 32 ) // Should equal 30720 (0x7800)
-#define USER_WAVE_RAM_END   (USER_WAVE_RAM_START + USER_WAVE_RAM_SIZE - 1) // Should be 0x77FF
-
-// Wave Sequencing RAM (Bank 3)
-#define WSEQ_WAVES  32
-#define WSEQ_BYTES  (WSEQ_WAVES * 3)  // 96 bytes per wave sequence (1 unit is 3 bytes ( wave + cycles + state ) * 32 entries)
-#define WSEQ_TOTAL  256 // 256 wave sequences
-#define WSEQ_BASE   0x7800 // 96 * 256 = 0x06000 size (Ends 0xD7FF)
-#define WAVE_SEQ_RAM_SIZE (WSEQ_BYTES * WSEQ_TOTAL) // Size = 96 * 256 = 24576 (0x6000)
-#define WAVE_SEQ_RAM_END (WSEQ_BASE + WAVE_SEQ_RAM_SIZE - 1) // 0x7800 + 0x6000 - 1 = 0xD7FF
-
-#define POLYSONIX_SEQUENCES 8
 
 
 // --- Initialization Function (No changes needed here) ---
