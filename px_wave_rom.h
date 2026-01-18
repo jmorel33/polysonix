@@ -1,3 +1,6 @@
+#ifndef PX_WAVE_ROM_H
+#define PX_WAVE_ROM_H
+
 #include <stdio.h>
 #include <stdint.h>
 #include "px_vm.h"
@@ -16,6 +19,37 @@
 // --- Waveform Expressions ---
 // WaveDefinition is defined in px_vm.h
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern WaveDefinition default_waves[NUM_DEFAULT_WAVES];
+
+typedef struct {
+    bool system_initialized;
+    int lfsr_types_initialized;
+    bool cache_initialized;
+    size_t cache_entry_count;
+    int default_waves_compiled;
+    size_t total_memory_usage_estimate; // Rough estimate in bytes
+} PxVmStats;
+
+bool px_vm_init(void);
+void px_vm_deinit(void);
+BytecodeChunk* get_default_wave_bytecode(int wave_index);
+BytecodeChunk* get_or_compile_wave_bytecode(const char* expression);
+bool px_vm_is_initialized(void);
+void px_vm_get_stats(PxVmStats* stats);
+void px_vm_print_stats(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // PX_WAVE_ROM_H
+
+#ifdef PX_WAVE_ROM_IMPLEMENTATION
 WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
     // --- Bank 0: Analog & Basic Shapes (0-15) ---
 /*   0*/ { "Triangle Up", "1.0 - 2.0 * abs((x + MOD_C * 0.5) / PI - 1.0) + 1.0 * MOD_B * sin(2.0*x)" }, // MOD_A: Unused. MOD_B: Harmonic. MOD_C: Phase skew/bend.
@@ -645,6 +679,7 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
     };
 
 
+
 /**
  * @brief Initialize the Polysonix wave system.
  *
@@ -852,14 +887,7 @@ bool px_vm_is_initialized(void) {
  *
  * @param stats Pointer to structure to fill with statistics (can be NULL)
  */
-typedef struct {
-    bool system_initialized;
-    int lfsr_types_initialized;
-    bool cache_initialized;
-    size_t cache_entry_count;
-    int default_waves_compiled;
-    size_t total_memory_usage_estimate; // Rough estimate in bytes
-} PxVmStats;
+
 
 void px_vm_get_stats(PxVmStats* stats) {
     if (!stats) return;
@@ -945,3 +973,5 @@ int main() {
     return 0;
 }
 */
+
+#endif // PX_WAVE_ROM_IMPLEMENTATION
