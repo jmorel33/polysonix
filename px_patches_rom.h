@@ -81,7 +81,7 @@ typedef struct {
     bool glide_always;
 } PxRomPatch;
 
-extern const PxRomPatch ROM_PATCHES[16];
+extern const PxRomPatch ROM_PATCHES[32];
 
 PX_API void PX_LoadRomPatch(PxSynth* s, const PxRomPatch* rom);
 
@@ -141,7 +141,7 @@ PX_API void PX_LoadRomPatch(PxSynth* s, const PxRomPatch* rom) {
     s->patch.glide_always = rom->glide_always;
 }
 
-const PxRomPatch ROM_PATCHES[16] = {
+const PxRomPatch ROM_PATCHES[32] = {
     // 0: Massive Bass
     {
         .adsrs = {{.attack_time=0.01f, .decay_time=0.4f, .sustain_level=0.5f, .release_time=0.3f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.3f, .sustain_level=0.0f, .release_time=0.1f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
@@ -750,6 +750,807 @@ const PxRomPatch ROM_PATCHES[16] = {
         .glide_legato_only = true,
         .glide_always = false
     },
+        // 16: Ethereal Pad
+    {
+        .adsrs = {
+            {.attack_time=2.0f, .decay_time=2.0f, .sustain_level=1.0f, .release_time=3.0f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 300.0f,
+        .filter_resonance_q = 0.5f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_HP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=84, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.6f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=true, .wave_idx=83, .coarse_semitones=0.0f, .fine_cents=15.0f, .mix_level=0.4f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 17: Gritty Lead
+    {
+        .adsrs = {
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 8000.0f,
+        .filter_resonance_q = 0.707f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.5f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_LP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=6, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=true, .bitcrush_depth=0.4f},
+            {.enabled=true, .wave_idx=4, .coarse_semitones=-12.0f, .fine_cents=0.0f, .mix_level=0.5f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_SMOOTH_RC,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 18: Bell Chime
+    {
+        .adsrs = {
+            {.attack_time=0.01f, .decay_time=1.5f, .sustain_level=0.0f, .release_time=1.5f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 12000.0f,
+        .filter_resonance_q = 0.707f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_LP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=2, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=true, .ring_mod_depth=0.8f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=true, .wave_idx=2, .coarse_semitones=7.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 19: Rhythmic Bass
+    {
+        .adsrs = {
+            {.attack_time=0.01f, .decay_time=0.3f, .sustain_level=0.4f, .release_time=0.1f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 3000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 100.0f,
+        .filter_resonance_q = 2.0f,
+        .filter_env_amount_hz = 1.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_LP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=40, .coarse_semitones=-12.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=true, .wave_idx=4, .coarse_semitones=-24.0f, .fine_cents=0.0f, .mix_level=0.5f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 20: Sci-Fi FX
+    {
+        .adsrs = {
+            {.attack_time=0.1f, .decay_time=2.0f, .sustain_level=0.0f, .release_time=0.5f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=8.0f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 20000.0f,
+        .filter_resonance_q = 0.707f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_LP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=50, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 21: Pluck
+    {
+        .adsrs = {
+            {.attack_time=0.0f, .decay_time=0.4f, .sustain_level=0.0f, .release_time=0.1f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 800.0f,
+        .filter_resonance_q = 0.707f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_LP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=41, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 22: Wobble Bass
+    {
+        .adsrs = {
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=2, .frequency=4.0f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 2500.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 300.0f,
+        .filter_resonance_q = 1.5f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_LP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=29, .coarse_semitones=-12.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=true, .wave_idx=4, .coarse_semitones=-12.0f, .fine_cents=0.0f, .mix_level=0.6f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 23: 5th Stabs
+    {
+        .adsrs = {
+            {.attack_time=0.01f, .decay_time=0.2f, .sustain_level=0.5f, .release_time=0.2f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 3000.0f,
+        .filter_resonance_q = 0.707f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_LP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=6, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=true, .wave_idx=6, .coarse_semitones=7.0f, .fine_cents=0.0f, .mix_level=0.8f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 24: Noise Perc
+    {
+        .adsrs = {
+            {.attack_time=0.0f, .decay_time=0.15f, .sustain_level=0.0f, .release_time=0.05f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 4000.0f,
+        .filter_resonance_q = 0.707f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_HP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=86, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 25: Vowel Pad
+    {
+        .adsrs = {
+            {.attack_time=1.0f, .decay_time=1.0f, .sustain_level=1.0f, .release_time=1.5f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 800.0f,
+        .filter_resonance_q = 1.0f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_BP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=113, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=true, .wave_idx=115, .coarse_semitones=0.0f, .fine_cents=10.0f, .mix_level=0.5f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 26: Detuned Saw
+    {
+        .adsrs = {
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 6000.0f,
+        .filter_resonance_q = 0.707f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_LP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=6, .coarse_semitones=0.0f, .fine_cents=-15.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=true, .wave_idx=6, .coarse_semitones=0.0f, .fine_cents=15.0f, .mix_level=0.8f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 27: Square Lead
+    {
+        .adsrs = {
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 20000.0f,
+        .filter_resonance_q = 0.707f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_LP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=4, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_STEP_LINEAR,
+        .glide_time = 0.15f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 28: Soft Flute
+    {
+        .adsrs = {
+            {.attack_time=0.2f, .decay_time=0.2f, .sustain_level=0.9f, .release_time=0.3f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=5.0f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.1f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 20000.0f,
+        .filter_resonance_q = 0.707f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_LP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=2, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=true, .wave_idx=125, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.4f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 29: Arcade Arp
+    {
+        .adsrs = {
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=4, .frequency=12.0f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 20000.0f,
+        .filter_resonance_q = 0.707f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_LP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=56, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 30: Deep Drone
+    {
+        .adsrs = {
+            {.attack_time=4.0f, .decay_time=4.0f, .sustain_level=1.0f, .release_time=4.0f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=0.1f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 200.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 400.0f,
+        .filter_resonance_q = 2.0f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_LP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=12, .coarse_semitones=-24.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=true, .wave_idx=13, .coarse_semitones=-12.0f, .fine_cents=0.0f, .mix_level=0.7f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+    // 31: Alien Texture
+    {
+        .adsrs = {
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=true},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
+            {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}
+        },
+        .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+        .lfos = {
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+        },
+        .filter_cutoff_hz = 1500.0f,
+        .filter_resonance_q = 0.707f,
+        .filter_env_amount_hz = 0.0f,
+        .filter_drive = 1.0f,
+        .filter_key_track = 0.0f,
+        .filter_poles = 4,
+        .filter_mode = PX_FILTER_MODE_BP_HP,
+        .voice_pan_setting = 0.0f,
+        .default_note_amp = 0.5f,
+        .limiter_threshold = 0.95f,
+        .limiter_release_ms = 50.0f,
+        .unilegato_enabled = false,
+        .unilegato_slide_duration_s = 0.1f,
+        .mod_matrix = {0},
+        .pitchbend_range_semitones = 2.0f,
+        .global_filter_enabled = false,
+        .global_filter_cutoff_hz = 20000.0f,
+        .global_filter_resonance_q = 0.707f,
+        .global_filter_env_amount_hz = 0.0f,
+        .global_filter_drive = 1.0f,
+        .global_filter_key_track = 0.0f,
+        .global_filter_poles = 1,
+        .global_filter_mode = PX_FILTER_MODE_OFF,
+        .velocity_curve = PX_CURVE_LINEAR,
+        .aftertouch_curve = PX_CURVE_LINEAR,
+        .osc = {
+            {.enabled=true, .wave_idx=164, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=1.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=true, .cross_mod_depth=0.7f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=true, .wave_idx=164, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f},
+            {.enabled=false, .wave_idx=0, .coarse_semitones=0.0f, .fine_cents=0.0f, .mix_level=0.0f, .pan=0.0f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0f, .phase_dist_enabled=false, .phase_dist_amount=0.0f, .osc_sync_enabled=false, .osc_sync_softness=0.0f, .ring_mod_enabled=false, .ring_mod_depth=0.0f, .bitcrush_enabled=false, .bitcrush_depth=0.0f}
+        },
+        .wseq_fixed_time = false,
+        .wseq_ref_freq = 440.0f,
+        .glide_mode = PX_GLIDE_OFF,
+        .glide_time = 0.1f,
+        .glide_legato_only = true,
+        .glide_always = false
+    },
+
 };
 
 #endif // PX_PATCHES_ROM_IMPLEMENTATION

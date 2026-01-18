@@ -9,7 +9,7 @@
 
 #define POLYSONIX_IMPLEMENTATION
 #include "polysonix.h"
-#include "../px_vm_bank.h"
+#include "../px_wave_rom.h"
 
 // --- Global Application State (Not Synth State) ---
 static bool enable_drawing = true;

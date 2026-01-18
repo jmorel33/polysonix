@@ -16,6 +16,8 @@
 #include <stddef.h>
 
 #include "px_patches_rom.h"
+#include "px_wseq_rom.h"
+#include "px_wave_rom.h"
 
 
 
@@ -162,6 +164,12 @@ PX_API bool PX_Bank_CopySlot(PxPatchBank* bank, int src_idx, int dest_idx);
 
 #define PX_PATCHES_ROM_IMPLEMENTATION
 #include "px_patches_rom.h"
+
+#define PX_WSEQ_ROM_IMPLEMENTATION
+#include "px_wseq_rom.h"
+
+#define PX_WAVE_ROM_IMPLEMENTATION
+#include "px_wave_rom.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,5 +1,18 @@
 # Update Log
 
+## v1.8.4 (2026/01/17)
+**Codebase Hygiene & Content Update**
+
+This maintenance release refactors the ROM architecture for clarity and significantly expands the preset library.
+
+*   **Refactoring:**
+    *   **Renamed Header:** `px_vm_bank.h` has been renamed to `px_wave_rom.h` to better reflect its purpose as a read-only waveform memory.
+    *   **Consolidated Includes:** `px_patching.h` now serves as the single entry point for all ROM data, automatically managing the inclusion of `px_patches_rom.h`, `px_wseq_rom.h`, and `px_wave_rom.h`.
+    *   **Example Updates:** Updated all examples and test harnesses to align with the new file structure.
+
+*   **Content:**
+    *   **New Patches:** Replaced the placeholder slots (Indices 16-31) in `px_patches_rom.h` with 16 new, high-quality presets. These patches showcase advanced features like FM, Filter Drive, and complex envelopes (e.g., "Ethereal Pad", "Gritty Lead", "Bell Chime").
+
 ## v1.8.3 (2026/01/13)
 **Feature Update: Static Glide / Portamento**
 
