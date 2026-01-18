@@ -156,7 +156,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 1: Patch 1
     {
-        .name = "Patch 1",
+        .name = "Choir Pad",
         .adsrs = {{.attack_time=1.5f, .decay_time=2.0f, .sustain_level=0.8f, .release_time=2.5f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=1, .frequency=0.2f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.05f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -195,6 +195,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 2: Patch 2
     {
+        .name = "Lo-Fi Pulse",
         .adsrs = {{.attack_time=0.001f, .decay_time=0.1f, .sustain_level=0.5f, .release_time=0.1f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -233,6 +234,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 3: Patch 3
     {
+        .name = "Sync Lead",
         .adsrs = {{.attack_time=0.01f, .decay_time=0.5f, .sustain_level=1.0f, .release_time=0.2f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.3f, .sustain_level=0.0f, .release_time=0.1f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -271,6 +273,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 4: Patch 4
     {
+        .name = "FM Pluck Ring",
         .adsrs = {{.attack_time=0.0f, .decay_time=2.0f, .sustain_level=0.0f, .release_time=0.5f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -309,6 +312,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 5: Patch 5
     {
+        .name = "Metallic Seq",
         .adsrs = {{.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.5f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -347,6 +351,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 6: Patch 6
     {
+        .name = "Sci-Fi Bass",
         .adsrs = {{.attack_time=2.0f, .decay_time=5.0f, .sustain_level=1.0f, .release_time=5.0f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=1, .frequency=0.1f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.3f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -385,6 +390,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 7: Patch 7
     {
+        .name = "Acid Bass",
         .adsrs = {{.attack_time=0.01f, .decay_time=0.2f, .sustain_level=0.0f, .release_time=0.1f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.3f, .sustain_level=0.0f, .release_time=0.1f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -423,6 +429,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 8: Patch 8
     {
+        .name = "Fat Saw Bass",
         .adsrs = {{.attack_time=0.05f, .decay_time=0.5f, .sustain_level=0.6f, .release_time=1.0f, .enabled=true}, {.attack_time=0.1f, .decay_time=0.6f, .sustain_level=0.3f, .release_time=1.0f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -461,6 +468,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 9: Patch 9
     {
+        .name = "Glassy Highs",
         .adsrs = {{.attack_time=0.01f, .decay_time=1.5f, .sustain_level=0.0f, .release_time=1.0f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -499,6 +507,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 10: Patch 10
     {
+        .name = "LFO Wobble",
         .adsrs = {{.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.2f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=4.0f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 2000.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -537,6 +546,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 11: Patch 11
     {
+        .name = "Arp Sequence",
         .adsrs = {{.attack_time=0.0f, .decay_time=2.0f, .sustain_level=1.0f, .release_time=0.5f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -575,6 +585,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 12: Patch 12
     {
+        .name = "String Layer",
         .adsrs = {{.attack_time=0.5f, .decay_time=0.0f, .sustain_level=1.0f, .release_time=1.0f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -613,6 +624,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 13: Patch 13
     {
+        .name = "Sub Triangle",
         .adsrs = {{.attack_time=0.001f, .decay_time=0.3f, .sustain_level=0.0f, .release_time=0.1f, .enabled=true}, {.attack_time=0.001f, .decay_time=0.1f, .sustain_level=0.0f, .release_time=0.05f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 48.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -651,6 +663,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 14: Patch 14
     {
+        .name = "Noise Sweep",
         .adsrs = {{.attack_time=0.001f, .decay_time=0.2f, .sustain_level=0.0f, .release_time=0.1f, .enabled=true}, {.attack_time=0.001f, .decay_time=0.1f, .sustain_level=0.0f, .release_time=0.1f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -689,6 +702,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 15: Patch 15
     {
+        .name = "Glitch Seq",
         .adsrs = {{.attack_time=0.05f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -727,6 +741,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
         // 16: Ethereal Pad
     {
+        .name = "Ethereal Pad",
         .adsrs = {
             {.attack_time=2.0f, .decay_time=2.0f, .sustain_level=1.0f, .release_time=3.0f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -777,6 +792,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 17: Gritty Lead
     {
+        .name = "Gritty Lead",
         .adsrs = {
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -827,6 +843,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 18: Bell Chime
     {
+        .name = "Bell Chime",
         .adsrs = {
             {.attack_time=0.01f, .decay_time=1.5f, .sustain_level=0.0f, .release_time=1.5f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -877,6 +894,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 19: Rhythmic Bass
     {
+        .name = "Rhythmic Bass",
         .adsrs = {
             {.attack_time=0.01f, .decay_time=0.3f, .sustain_level=0.4f, .release_time=0.1f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -927,6 +945,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 20: Sci-Fi FX
     {
+        .name = "Sci-Fi FX",
         .adsrs = {
             {.attack_time=0.1f, .decay_time=2.0f, .sustain_level=0.0f, .release_time=0.5f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -977,6 +996,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 21: Pluck
     {
+        .name = "Pluck",
         .adsrs = {
             {.attack_time=0.0f, .decay_time=0.4f, .sustain_level=0.0f, .release_time=0.1f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -1027,6 +1047,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 22: Wobble Bass
     {
+        .name = "Wobble Bass",
         .adsrs = {
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -1077,6 +1098,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 23: 5th Stabs
     {
+        .name = "5th Stabs",
         .adsrs = {
             {.attack_time=0.01f, .decay_time=0.2f, .sustain_level=0.5f, .release_time=0.2f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -1127,6 +1149,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 24: Noise Perc
     {
+        .name = "Noise Perc",
         .adsrs = {
             {.attack_time=0.0f, .decay_time=0.15f, .sustain_level=0.0f, .release_time=0.05f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -1177,6 +1200,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 25: Vowel Pad
     {
+        .name = "Vowel Pad",
         .adsrs = {
             {.attack_time=1.0f, .decay_time=1.0f, .sustain_level=1.0f, .release_time=1.5f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -1227,6 +1251,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 26: Detuned Saw
     {
+        .name = "Detuned Saw",
         .adsrs = {
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -1277,6 +1302,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 27: Square Lead
     {
+        .name = "Square Lead",
         .adsrs = {
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -1327,6 +1353,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 28: Soft Flute
     {
+        .name = "Soft Flute",
         .adsrs = {
             {.attack_time=0.2f, .decay_time=0.2f, .sustain_level=0.9f, .release_time=0.3f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -1377,6 +1404,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 29: Arcade Arp
     {
+        .name = "Arcade Arp",
         .adsrs = {
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -1427,6 +1455,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 30: Deep Drone
     {
+        .name = "Deep Drone",
         .adsrs = {
             {.attack_time=4.0f, .decay_time=4.0f, .sustain_level=1.0f, .release_time=4.0f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -1477,6 +1506,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 31: Alien Texture
     {
+        .name = "Alien Texture",
         .adsrs = {
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=true},
             {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false},
@@ -1527,6 +1557,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 32: Super Saw Stack
     {
+        .name = "Super Saw Stack",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=2, .frequency=0.2000f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 200.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -1565,6 +1596,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 33: Creamy Porta Lead
     {
+        .name = "Creamy Porta Lead",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=6.0000f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.5000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -1603,6 +1635,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 34: Analog Brass
     {
+        .name = "Analog Brass",
         .adsrs = {{.attack_time=0.0500f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0500f, .decay_time=0.3000f, .sustain_level=0.4000f, .release_time=0.2000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 1.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=5.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.2000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -1641,6 +1674,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 35: Warm Poly Pad
     {
+        .name = "Warm Poly Pad",
         .adsrs = {{.attack_time=1.0000f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=1.5000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -1679,6 +1713,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 36: Detuned Keys
     {
+        .name = "Detuned Keys",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -1717,6 +1752,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 37: Glide Bass
     {
+        .name = "Glide Bass",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -1755,6 +1791,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 38: Resonant Sweep
     {
+        .name = "Resonant Sweep",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -1793,6 +1830,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 39: Soft Pluck
     {
+        .name = "Soft Pluck",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.3000f, .sustain_level=0.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.2000f, .sustain_level=0.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 1.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -1831,6 +1869,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 40: Vowel Pad
     {
+        .name = "Vowel Pad",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=0.3000f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.5000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -1869,6 +1908,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 41: Formant Bell
     {
+        .name = "Formant Bell",
         .adsrs = {{.attack_time=0.0100f, .decay_time=2.0000f, .sustain_level=0.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -1907,6 +1947,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 42: Robot Voice
     {
+        .name = "Robot Voice",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -1945,6 +1986,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 43: Choir Ahh
     {
+        .name = "Choir Ahh",
         .adsrs = {{.attack_time=0.5000f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.3000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -1983,6 +2025,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 44: Operatic Lead
     {
+        .name = "Operatic Lead",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2021,6 +2064,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 45: Whisper Drone
     {
+        .name = "Whisper Drone",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=3.0000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2059,6 +2103,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 46: Talkbox Funk
     {
+        .name = "Talkbox Funk",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2097,6 +2142,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 47: Ethereal Vowels
     {
+        .name = "Ethereal Vowels",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=0.2000f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 300.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2135,6 +2181,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 48: Ice Fields
     {
+        .name = "Ice Fields",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=0.1000f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 200.0000f, 0.0000f, 0.0000f, 0.4000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2173,6 +2220,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 49: Drifting Clouds
     {
+        .name = "Drifting Clouds",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=4.0000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2211,6 +2259,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 50: Infinite Reverb Pad
     {
+        .name = "Infinite Reverb Pad",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=5.0000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2249,6 +2298,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 51: Granular Mist
     {
+        .name = "Granular Mist",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=2.0000f, .decay_time=2.0000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 1.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2287,6 +2337,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 52: Cosmic Drift
     {
+        .name = "Cosmic Drift",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=0.2000f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2325,6 +2376,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 53: Frozen Lake
     {
+        .name = "Frozen Lake",
         .adsrs = {{.attack_time=1.5000f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=2.0000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2363,6 +2415,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 54: Aurora Swell
     {
+        .name = "Aurora Swell",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=2.0000f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 1.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=0.0000f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=0.1000f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.3000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2401,6 +2454,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 55: Deep Space Hum
     {
+        .name = "Deep Space Hum",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2439,6 +2493,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 56: Wobble Bass
     {
+        .name = "Wobble Bass",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=6.0000f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 5000.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2477,6 +2532,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 57: Tearing Lead
     {
+        .name = "Tearing Lead",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2515,6 +2571,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 58: Glitch Monster
     {
+        .name = "Glitch Monster",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2553,6 +2610,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 59: Neuro Reese
     {
+        .name = "Neuro Reese",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=8.0000f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 1000.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2591,6 +2649,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 60: Cyber Grind
     {
+        .name = "Cyber Grind",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2629,6 +2688,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 61: FM Stab
     {
+        .name = "FM Stab",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.2000f, .sustain_level=0.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2667,6 +2727,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 62: Chaos Engine
     {
+        .name = "Chaos Engine",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
@@ -2705,6 +2766,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 63: System Overload
     {
+        .name = "System Overload",
         .adsrs = {{.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=true}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, {.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}},
         .adsr_mod_amounts = {0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f},
         .lfos = {{.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}, {.wave_idx=0, .frequency=1.0000f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.0100f, .decay_time=0.1000f, .sustain_level=1.0000f, .release_time=0.1000f, .enabled=false}, .mod_amounts={0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f, 0.0000f}}},
