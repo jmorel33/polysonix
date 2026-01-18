@@ -365,6 +365,9 @@ static void px_serialize_patch_impl(const PxPatch* p, const PxConfig* c, uint8_t
     WR_BOOL(p->glide_legato_only);
     WR_BOOL(p->glide_always);
 
+    // v1.8.5: Full patch name
+    WR_BUF(p->name, PX_PATCH_NAME_LEN);
+
     if (ptr_ref && !calculate_only) *ptr_ref = ptr;
     if (size_ref) *size_ref = size;
 
@@ -376,7 +379,7 @@ static void px_serialize_patch_impl(const PxPatch* p, const PxConfig* c, uint8_t
     #undef WR_BUF
 }
 
-static bool px_deserialize_patch_impl(PxPatch* p, const PxConfig* c, const uint8_t** ptr_ref, const uint8_t* end) {
+static bool px_deserialize_patch_impl(PxPatch* p, const PxConfig* c, const uint8_t** ptr_ref, const uint8_t* end, uint16_t maj, uint16_t min, uint16_t pat) {
     const uint8_t* ptr = *ptr_ref;
 
     #define RD_U8(v)   if(!read_u8(&ptr, end, (uint8_t*)v)) return false
@@ -460,6 +463,18 @@ static bool px_deserialize_patch_impl(PxPatch* p, const PxConfig* c, const uint8
     RD_BOOL(&p->glide_legato_only);
     RD_BOOL(&p->glide_always);
 
+    // v1.8.5: Full patch name
+    // Check version: only read if >= 1.8.5
+    bool has_full_name = false;
+    if (maj > 1 || (maj == 1 && min > 8) || (maj == 1 && min == 8 && pat >= 5)) {
+        has_full_name = true;
+    }
+
+    if (has_full_name) {
+        RD_BUF(p->name, PX_PATCH_NAME_LEN);
+        p->name[PX_PATCH_NAME_LEN - 1] = '\0'; // Safety null termination
+    }
+
     *ptr_ref = ptr;
 
     #undef RD_U8
@@ -502,10 +517,11 @@ PX_API bool PX_SavePresetToBus(PxSynth* s, PxIOWriteFn write_fn, void* token, co
     // Name (16)
     char name[16];
     memset(name, 0, 16); // Zero pad
-    if (patch_name) {
-        size_t len = strlen(patch_name);
+    const char* src_name = (patch_name && patch_name[0] != '\0') ? patch_name : s->patch.name;
+    if (src_name) {
+        size_t len = strlen(src_name);
         if (len > 15) len = 15;
-        memcpy(name, patch_name, len);
+        memcpy(name, src_name, len);
     }
     write_buf(&ptr, name, 16);
 
@@ -584,7 +600,9 @@ PX_API bool PX_LoadPresetFromBus(PxSynth* s, PxIOReadFn read_fn, void* token, ch
         return false;
     }
 
-    // Name (skip 16)
+    // Name (16)
+    memcpy(s->patch.name, hptr, 16);
+    s->patch.name[15] = '\0'; // Ensure null termination
     hptr += 16;
 
     uint32_t data_len;
@@ -640,7 +658,7 @@ PX_API bool PX_LoadPresetFromBus(PxSynth* s, PxIOReadFn read_fn, void* token, ch
     const uint8_t* ptr = buffer;
     const uint8_t* end = buffer + data_len;
 
-    bool result = px_deserialize_patch_impl(&s->patch, (const PxConfig*)&s->config, &ptr, end);
+    bool result = px_deserialize_patch_impl(&s->patch, (const PxConfig*)&s->config, &ptr, end, maj, min, pat);
     if (!result) {
         if(error_msg && error_len > 0) snprintf(error_msg, error_len, "Deserialization failed (buffer overrun?)");
     }
