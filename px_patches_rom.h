@@ -258,7 +258,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
-        },
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.2f, .enabled=true},},
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
         .global_filter_cutoff_hz = 20000.0f,
@@ -369,7 +370,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.6f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_OSC1_RING_MOD_DEPTH, .amount=0.5f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
-        },
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_RING_MOD_DEPTH, .amount=0.5f, .enabled=true},},
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
         .global_filter_cutoff_hz = 20000.0f,
@@ -650,7 +652,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
-        },
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},},
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
         .global_filter_cutoff_hz = 20000.0f,
@@ -705,7 +708,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
-        },
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_LFO1_FREQ, .amount=0.5f, .enabled=true},},
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
         .global_filter_cutoff_hz = 20000.0f,
@@ -874,7 +878,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
-        },
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},},
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
         .global_filter_cutoff_hz = 20000.0f,
@@ -929,7 +934,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
-        },
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.5f, .enabled=true},},
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
         .global_filter_cutoff_hz = 20000.0f,
@@ -1328,7 +1334,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.6f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_OSC1_RING_MOD_DEPTH, .amount=0.5f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
-        },
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.4f, .enabled=true},},
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
         .global_filter_cutoff_hz = 20000.0f,
@@ -1439,7 +1446,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.6f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_OSC1_RING_MOD_DEPTH, .amount=0.5f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
-        },
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.4f, .enabled=true},},
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
         .global_filter_cutoff_hz = 20000.0f,
@@ -1494,7 +1502,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
-        },
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.6f, .enabled=true},},
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
         .global_filter_cutoff_hz = 20000.0f,
@@ -1605,7 +1614,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
-        },
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},},
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
         .global_filter_cutoff_hz = 20000.0f,
@@ -1716,7 +1726,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
-        },
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.3f, .enabled=true},},
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
         .global_filter_cutoff_hz = 20000.0f,
@@ -1829,7 +1840,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
-        },
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.2f, .enabled=true},},
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
         .global_filter_cutoff_hz = 20000.0f,
