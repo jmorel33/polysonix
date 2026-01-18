@@ -1943,6 +1943,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -1956,7 +1958,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=147, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.4000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=103, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.4000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=147, .coarse_semitones=0.0000f, .fine_cents=8.0000f, .mix_level=0.7000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=147, .coarse_semitones=0.0000f, .fine_cents=-8.0000f, .mix_level=0.7000f, .pan=0.4000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2012,7 +2014,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=123, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=true, .phase_dist_amount=0.3000f, .osc_sync_enabled=true, .osc_sync_softness=0.5000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=6, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=true, .phase_dist_amount=0.3000f, .osc_sync_enabled=true, .osc_sync_softness=0.5000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2054,6 +2056,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -2067,7 +2071,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=6, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.4000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=98, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.4000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=4, .coarse_semitones=0.0000f, .fine_cents=5.0000f, .mix_level=0.8000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=4, .coarse_semitones=-12.0000f, .fine_cents=0.0000f, .mix_level=0.6000f, .pan=0.4000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=true, .ring_mod_depth=0.3000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2165,6 +2169,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -2178,7 +2184,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=101, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=2, .coarse_semitones=0.0000f, .fine_cents=5.0000f, .mix_level=0.8000f, .pan=0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=true, .bitcrush_depth=0.2000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2234,7 +2240,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=6, .coarse_semitones=-12.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=29, .coarse_semitones=-12.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=6, .coarse_semitones=-12.0000f, .fine_cents=10.0000f, .mix_level=0.8000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=6, .coarse_semitones=-24.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2276,6 +2282,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -2289,7 +2297,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=120, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=true, .phase_dist_amount=0.3000f, .osc_sync_enabled=true, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=114, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=true, .phase_dist_amount=0.3000f, .osc_sync_enabled=true, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2331,6 +2339,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.6f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_OSC1_RING_MOD_DEPTH, .amount=0.5f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -2344,7 +2354,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=6, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.4000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=144, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.4000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=6, .coarse_semitones=0.0000f, .fine_cents=15.0000f, .mix_level=0.8000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=6, .coarse_semitones=0.0000f, .fine_cents=-15.0000f, .mix_level=0.8000f, .pan=0.4000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2442,6 +2452,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -2455,7 +2467,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=121, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=112, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=122, .coarse_semitones=12.0000f, .fine_cents=0.0000f, .mix_level=0.6000f, .pan=0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=true, .ring_mod_depth=0.5000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2497,6 +2509,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -2510,7 +2524,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=35, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=true, .bitcrush_depth=0.6000f},
+            {.enabled=true, .wave_idx=201, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=true, .bitcrush_depth=0.6000f},
             {.enabled=true, .wave_idx=36, .coarse_semitones=-12.0000f, .fine_cents=0.0000f, .mix_level=0.8000f, .pan=0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=true, .ring_mod_depth=0.8000f, .bitcrush_enabled=true, .bitcrush_depth=0.7000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2552,6 +2566,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -2565,7 +2581,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=113, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=121, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=6, .coarse_semitones=0.0000f, .fine_cents=5.0000f, .mix_level=0.4000f, .pan=0.3000f, .sequence_id=-1, .cross_mod_enabled=true, .cross_mod_depth=0.1000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2621,7 +2637,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=60, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=true, .phase_dist_amount=0.3000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=113, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=true, .phase_dist_amount=0.3000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2663,6 +2679,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -2676,7 +2694,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=141, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.7000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=146, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.7000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=2, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.5000f, .pan=0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2718,6 +2736,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -2731,7 +2751,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=116, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=115, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=true, .osc_sync_softness=0.1000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=true, .bitcrush_depth=0.3000f},
+            {.enabled=true, .wave_idx=75, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=115, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=true, .osc_sync_softness=0.1000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=true, .bitcrush_depth=0.3000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2787,7 +2807,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=122, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.4000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=true, .phase_dist_amount=0.2000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=151, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.4000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=true, .phase_dist_amount=0.2000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=122, .coarse_semitones=0.0000f, .fine_cents=10.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=true, .phase_dist_amount=0.4000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=122, .coarse_semitones=0.0000f, .fine_cents=-5.0000f, .mix_level=1.0000f, .pan=0.4000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=true, .phase_dist_amount=0.6000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2829,6 +2849,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -2842,7 +2864,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=102, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=154, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=6, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.3000f, .pan=0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2898,7 +2920,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.4000f, .sequence_id=9, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=152, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.4000f, .sequence_id=9, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=6.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=-6.0000f, .mix_level=1.0000f, .pan=0.4000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2954,7 +2976,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=2, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=145, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=2, .coarse_semitones=7.0000f, .fine_cents=0.0000f, .mix_level=0.7000f, .pan=0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=true, .ring_mod_depth=0.4000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -2996,6 +3018,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -3009,7 +3033,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=149, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=true, .bitcrush_depth=0.3000f},
+            {.enabled=true, .wave_idx=150, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=149, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=true, .bitcrush_depth=0.3000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -3051,6 +3075,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = true,
@@ -3064,7 +3090,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=151, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=51, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -3106,6 +3132,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -3119,7 +3147,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=150, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=84, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -3161,6 +3189,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -3174,7 +3204,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=54, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=true, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=149, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=true, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -3216,6 +3246,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -3229,7 +3261,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=2, .coarse_semitones=-12.0000f, .fine_cents=0.0000f, .mix_level=0.8000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=79, .coarse_semitones=-12.0000f, .fine_cents=0.0000f, .mix_level=0.8000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=209, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.5000f, .pan=0.3000f, .sequence_id=9, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -3285,7 +3317,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=29, .coarse_semitones=-12.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=true, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=true, .bitcrush_depth=0.4000f},
+            {.enabled=true, .wave_idx=21, .coarse_semitones=-12.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=true, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=true, .bitcrush_depth=0.4000f},
             {.enabled=true, .wave_idx=4, .coarse_semitones=-12.0000f, .fine_cents=0.0000f, .mix_level=0.8000f, .pan=0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -3341,7 +3373,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=116, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=true, .cross_mod_depth=0.5000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=true, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=120, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=-0.3000f, .sequence_id=-1, .cross_mod_enabled=true, .cross_mod_depth=0.5000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=true, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=true, .wave_idx=6, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.3000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -3397,7 +3429,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=220, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=true, .ring_mod_depth=0.5000f, .bitcrush_enabled=true, .bitcrush_depth=0.8000f},
+            {.enabled=true, .wave_idx=175, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=220, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=true, .ring_mod_depth=0.5000f, .bitcrush_enabled=true, .bitcrush_depth=0.8000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -3439,6 +3471,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -3494,6 +3528,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -3507,7 +3543,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=210, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=93, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=true, .bitcrush_depth=0.6000f},
+            {.enabled=true, .wave_idx=162, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=93, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=true, .bitcrush_depth=0.6000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -3549,6 +3585,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.6f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_OSC1_RING_MOD_DEPTH, .amount=0.5f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -3562,7 +3600,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=70, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=true, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=true, .ring_mod_depth=0.4000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
+            {.enabled=true, .wave_idx=85, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=true, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=true, .ring_mod_depth=0.4000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -3604,6 +3642,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = false,
@@ -3617,7 +3657,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=125, .cross_mod_enabled=true, .cross_mod_depth=0.5000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=true, .osc_sync_softness=0.0000f, .ring_mod_enabled=true, .ring_mod_depth=0.5000f, .bitcrush_enabled=true, .bitcrush_depth=0.5000f},
+            {.enabled=true, .wave_idx=153, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=125, .cross_mod_enabled=true, .cross_mod_depth=0.5000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=true, .osc_sync_softness=0.0000f, .ring_mod_enabled=true, .ring_mod_depth=0.5000f, .bitcrush_enabled=true, .bitcrush_depth=0.5000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
@@ -3659,6 +3699,8 @@ const PxRomPatch ROM_PATCHES[64] = {
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_FILTER_CUTOFF, .amount=0.3f, .enabled=true},
             {.source=PX_MOD_SRC_MODWHEEL, .dest=PX_MOD_DEST_LFO1_DEPTH, .amount=0.2f, .enabled=true},
             {.source=PX_MOD_SRC_VELOCITY, .dest=PX_MOD_DEST_OSC_MODC, .amount=0.3f, .enabled=true},
+
+            {.source=PX_MOD_SRC_AFTERTOUCH, .dest=PX_MOD_DEST_OSC1_BITCRUSH_DEPTH, .amount=0.5f, .enabled=true},
         },
         .pitchbend_range_semitones = 2.0f,
         .global_filter_enabled = true,
@@ -3672,7 +3714,7 @@ const PxRomPatch ROM_PATCHES[64] = {
         .velocity_curve = PX_CURVE_EXP,
         .aftertouch_curve = PX_CURVE_LINEAR,
         .osc = {
-            {.enabled=true, .wave_idx=251, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=255, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=true, .bitcrush_depth=0.9000f},
+            {.enabled=true, .wave_idx=19, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=1.0000f, .pan=0.0000f, .sequence_id=255, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=true, .bitcrush_depth=0.9000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
             {.enabled=false, .wave_idx=0, .coarse_semitones=0.0000f, .fine_cents=0.0000f, .mix_level=0.0000f, .pan=0.0000f, .sequence_id=-1, .cross_mod_enabled=false, .cross_mod_depth=0.0000f, .phase_dist_enabled=false, .phase_dist_amount=0.0000f, .osc_sync_enabled=false, .osc_sync_softness=0.0000f, .ring_mod_enabled=false, .ring_mod_depth=0.0000f, .bitcrush_enabled=false, .bitcrush_depth=0.0000f},
         },
