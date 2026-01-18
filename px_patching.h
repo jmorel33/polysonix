@@ -1,9 +1,23 @@
 #ifndef PX_PATCHING_H
 #define PX_PATCHING_H
 
+#ifdef POLYSONIX_IMPLEMENTATION
+  #define _PX_IMP_WAS_DEF
+  #undef POLYSONIX_IMPLEMENTATION
+#endif
+
 #include "polysonix.h"
+
+#ifdef _PX_IMP_WAS_DEF
+  #define POLYSONIX_IMPLEMENTATION
+  #undef _PX_IMP_WAS_DEF
+#endif
 #include <stdint.h>
 #include <stddef.h>
+
+#include "px_patches_rom.h"
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -145,6 +159,9 @@ PX_API bool PX_Bank_CopySlot(PxPatchBank* bank, int src_idx, int dest_idx);
 #endif // PX_PATCHING_H
 
 #ifdef POLYSONIX_PATCHING_IMPLEMENTATION
+
+#define PX_PATCHES_ROM_IMPLEMENTATION
+#include "px_patches_rom.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -774,5 +791,7 @@ PX_API bool PX_Bank_CopySlot(PxPatchBank* bank, int src_idx, int dest_idx) {
     if (src_idx == dest_idx) return true;
     return px_copy_patch_deep(&bank->patches[dest_idx], (const PxPatch*)&bank->patches[src_idx], (const PxConfig*)&bank->config);
 }
+
+
 
 #endif // POLYSONIX_PATCHING_IMPLEMENTATION
