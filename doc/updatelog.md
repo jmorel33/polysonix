@@ -1,5 +1,16 @@
 # Update Log
 
+## v1.8.5 (2026/01/18)
+**Feature Update: Long Patch Names & ROM Persistence**
+
+This update addresses user feedback regarding preset naming limitations and ensures that patch names are fully persisted across all system components.
+
+*   **Expanded Patch Name:**
+    *   **64-Character Support:** Increased the maximum patch name length from 16 to 64 characters (`PX_PATCH_NAME_LEN`), allowing for descriptive titles without truncation.
+    *   **Serialization:** Updated the preset file format (.syx) to include the full name in the data body for versions >= 1.8.5, while maintaining backward compatibility with older readers (which will use the 16-char header fallback).
+    *   **Runtime Persistence:** Ensure the full name is stored in the `PxPatch` struct and accessible via `PX_GetPatchName` at runtime.
+    *   **ROM Updates:** Updated `px_patches_rom.h` to include full names for factory presets.
+
 ## v1.8.4 (2026/01/17)
 **Codebase Hygiene & Content Update**
 

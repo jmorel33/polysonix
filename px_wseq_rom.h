@@ -4,6 +4,9 @@
 // "Ham Crazy" Edition - Enhanced with complex flag combinations,
 // generative probability, and math-based waveforms.
 
+#ifndef PX_WSEQ_ROM_H
+#define PX_WSEQ_ROM_H
+
 /**
  * =========================================================================================
  *  POLYSONIX WAVE SEQUENCE REFERENCE
@@ -89,7 +92,13 @@
  * =========================================================================================
  */
 
-static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
+extern const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS];
+#endif // PX_WSEQ_ROM_H
+
+#ifdef PX_WSEQ_ROM_IMPLEMENTATION
+#ifndef PX_WSEQ_ROM_IMP_INCLUDED
+#define PX_WSEQ_ROM_IMP_INCLUDED
+const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
 
     // --- Bank 0: Lead (0-7) ---
     // Leads are focused on melodic playback, often with glide or expressive articulation.
@@ -3158,3 +3167,5 @@ static const PxWaveSequence ROM_WAVE_SEQUENCES[PX_NUM_WSEQ_BANKS] = {
     },
 
 };
+#endif // PX_WSEQ_ROM_IMP_INCLUDED
+#endif // PX_WSEQ_ROM_IMPLEMENTATION

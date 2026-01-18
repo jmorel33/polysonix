@@ -50,6 +50,9 @@ void px_vm_print_stats(void);
 #endif // PX_WAVE_ROM_H
 
 #ifdef PX_WAVE_ROM_IMPLEMENTATION
+#ifndef PX_WAVE_ROM_IMP_INCLUDED
+#define PX_WAVE_ROM_IMP_INCLUDED
+
 WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
     // --- Bank 0: Analog & Basic Shapes (0-15) ---
 /*   0*/ { "Triangle Up", "1.0 - 2.0 * abs((x + MOD_C * 0.5) / PI - 1.0) + 1.0 * MOD_B * sin(2.0*x)" }, // MOD_A: Unused. MOD_B: Harmonic. MOD_C: Phase skew/bend.
@@ -974,4 +977,5 @@ int main() {
 }
 */
 
+#endif // PX_WAVE_ROM_IMP_INCLUDED
 #endif // PX_WAVE_ROM_IMPLEMENTATION

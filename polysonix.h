@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 8
-#define POLYSONIX_VERSION_PATCH 4
+#define POLYSONIX_VERSION_PATCH 5
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -630,6 +630,9 @@ PX_API bool        PX_GetGlideLegatoOnly(PxSynth* s);
 PX_API void        PX_SetGlideAlways(PxSynth* s, bool always);
 PX_API bool        PX_GetGlideAlways(PxSynth* s);
 
+PX_API void        PX_SetPatchName(PxSynth* s, const char* name);
+PX_API const char* PX_GetPatchName(PxSynth* s);
+
 /**
  * @brief Releases a note that was previously triggered.
  * @details This function is thread-safe and sends a command to the audio thread to begin the release phase of the note's envelopes.
@@ -1067,7 +1070,11 @@ static const float HB[5] = {
 };
 
 // --- v1.5 ROM (Populated) ---
+#define PX_WSEQ_ROM_IMPLEMENTATION
 #include "px_wseq_rom.h"
+
+#define PX_WAVE_ROM_IMPLEMENTATION
+#include "px_wave_rom.h"
 
 static const char* PX_FILTER_MODE_NAMES[] = {"OFF", "LP", "BP", "HP", "LP+BP", "LP+HP", "BP+HP", "NOTCH", "ALLPASS"};
 static const char* PX_ADSR_DEST_NAMES[] = { "NONE", "PARAM1", "PARAM2", "PARAM3", "AMP", "FREQ(ST)", "LFO0 LVL", "LFO1 LVL", "LFO2 LVL", "FREQ.CUT(HZ)", "FREQ.ENV IN", "FREQ.RES(Q)"};
@@ -1313,9 +1320,11 @@ typedef struct {
 } PxModSlot;
 
 #define PX_MOD_MATRIX_SLOTS 16
+#define PX_PATCH_NAME_LEN 64
 
 // PxPatch: The editable parameters of the synthesizer (the "sound").
 typedef struct PxPatch {
+    char name[PX_PATCH_NAME_LEN];
     PxADSRParams* template_voice_adsrs;
     float* template_voice_adsr_mod_amounts;
     PxLFOParams* template_lfos;
@@ -1433,7 +1442,8 @@ typedef enum {
     PX_CMD_SET_GLIDE_MODE,
     PX_CMD_SET_GLIDE_TIME,
     PX_CMD_SET_GLIDE_LEGATO_ONLY,
-    PX_CMD_SET_GLIDE_ALWAYS
+    PX_CMD_SET_GLIDE_ALWAYS,
+    PX_CMD_SET_PATCH_NAME
 } PxCommandType;
 
 typedef union {
@@ -1468,6 +1478,7 @@ typedef union {
     struct { int mode; } glide_mode;
     struct { float time_s; } glide_time;
     struct { bool enabled; } glide_bool;
+    struct { char name[PX_PATCH_NAME_LEN]; } patch_name;
 } PxCommandData;
 
 typedef struct {
@@ -2360,12 +2371,18 @@ static void PX_ProcessCommands(PxSynth* s) {
             case PX_CMD_SET_GLIDE_ALWAYS:
                 s->patch.glide_always = cmd.data.glide_bool.enabled;
                 break;
+            case PX_CMD_SET_PATCH_NAME:
+                // Ensure null termination safe copy
+                memset(s->patch.name, 0, PX_PATCH_NAME_LEN);
+                strncpy(s->patch.name, cmd.data.patch_name.name, PX_PATCH_NAME_LEN - 1);
+                break;
         }
     }
 }
 
 // --- UI SNAPSHOT UPDATE (Audio Thread Only) ---
 static void PX_UpdateUISnapshot(PxSynth* s) {
+    memcpy(s->ui_snapshot.patch_copy.name, s->patch.name, PX_PATCH_NAME_LEN);
     memcpy(s->ui_snapshot.patch_copy.template_voice_adsrs, s->patch.template_voice_adsrs, s->config.num_voice_adsrs * sizeof(PxADSRParams));
     memcpy(s->ui_snapshot.patch_copy.template_voice_adsr_mod_amounts, s->patch.template_voice_adsr_mod_amounts, s->config.num_voice_adsrs * PX_ADSR_DEST_COUNT * sizeof(float));
     memcpy(s->ui_snapshot.patch_copy.template_lfos, s->patch.template_lfos, s->config.num_lfos * sizeof(PxLFOParams));
@@ -2526,6 +2543,7 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     }
 
     // 10. Set up the default patch parameters.
+    snprintf(s->patch.name, PX_PATCH_NAME_LEN, "Init Patch");
     s->patch.default_note_amp = 0.5f;
     s->patch.voice_pan_setting = 0.0f;
 
@@ -3833,6 +3851,19 @@ PX_API void PX_SetGlideAlways(PxSynth* s, bool always) {
 }
 PX_API bool PX_GetGlideAlways(PxSynth* s) {
     return s ? s->ui_snapshot.patch_copy.glide_always : false;
+}
+
+PX_API void PX_SetPatchName(PxSynth* s, const char* name) {
+    if (!s || !name) return;
+    PxCommand cmd = {0};
+    cmd.command_type = PX_CMD_SET_PATCH_NAME;
+    memset(cmd.data.patch_name.name, 0, PX_PATCH_NAME_LEN);
+    strncpy(cmd.data.patch_name.name, name, PX_PATCH_NAME_LEN - 1);
+    cmd_push(&s->cmd_queue, cmd);
+}
+
+PX_API const char* PX_GetPatchName(PxSynth* s) {
+    return s ? s->ui_snapshot.patch_copy.name : "";
 }
 
 // --- THREAD-SAFE GET API ---

@@ -30,6 +30,7 @@
  * @brief A flattened version of PxPatch suitable for ROM storage.
  */
 typedef struct {
+    char name[PX_PATCH_NAME_LEN];
     PxADSRParams adsrs[PX_ROM_NUM_ADSRS];
     float adsr_mod_amounts[PX_ROM_NUM_ADSRS * PX_ADSR_DEST_COUNT];
     PxLFOParams lfos[PX_ROM_NUM_LFOS];
@@ -75,6 +76,8 @@ PX_API void PX_LoadRomPatch(PxSynth* s, const PxRomPatch* rom) {
     if (!s || !rom) return;
     int n_adsr = (s->config.num_voice_adsrs < PX_ROM_NUM_ADSRS) ? s->config.num_voice_adsrs : PX_ROM_NUM_ADSRS;
     int n_lfo = (s->config.num_lfos < PX_ROM_NUM_LFOS) ? s->config.num_lfos : PX_ROM_NUM_LFOS;
+    memset(s->patch.name, 0, PX_PATCH_NAME_LEN);
+    strncpy(s->patch.name, rom->name, PX_PATCH_NAME_LEN - 1);
     memcpy(s->patch.template_voice_adsrs, rom->adsrs, sizeof(PxADSRParams) * n_adsr);
     memcpy(s->patch.template_voice_adsr_mod_amounts, rom->adsr_mod_amounts, sizeof(float) * n_adsr * PX_ADSR_DEST_COUNT);
     memcpy(s->patch.template_lfos, rom->lfos, sizeof(PxLFOParams) * n_lfo);
@@ -114,6 +117,7 @@ PX_API void PX_LoadRomPatch(PxSynth* s, const PxRomPatch* rom) {
 const PxRomPatch ROM_PATCHES[64] = {
     // 0: Massive Bass
     {
+        .name = "Massive Bass",
         .adsrs = {{.attack_time=0.01f, .decay_time=0.4f, .sustain_level=0.5f, .release_time=0.3f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.3f, .sustain_level=0.0f, .release_time=0.1f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -152,6 +156,7 @@ const PxRomPatch ROM_PATCHES[64] = {
     },
     // 1: Patch 1
     {
+        .name = "Patch 1",
         .adsrs = {{.attack_time=1.5f, .decay_time=2.0f, .sustain_level=0.8f, .release_time=2.5f, .enabled=true}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, {.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}},
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {{.wave_idx=1, .frequency=0.2f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.05f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}, {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
@@ -729,9 +734,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 300.0f,
         .filter_resonance_q = 0.5f,
@@ -779,9 +784,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 8000.0f,
         .filter_resonance_q = 0.707f,
@@ -829,9 +834,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 12000.0f,
         .filter_resonance_q = 0.707f,
@@ -879,9 +884,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 3000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 100.0f,
         .filter_resonance_q = 2.0f,
@@ -929,9 +934,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=8.0f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=8.0f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 20000.0f,
         .filter_resonance_q = 0.707f,
@@ -979,9 +984,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2000.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 800.0f,
         .filter_resonance_q = 0.707f,
@@ -1029,9 +1034,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=2, .frequency=4.0f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 2500.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=2, .frequency=4.0f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 2500.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 300.0f,
         .filter_resonance_q = 1.5f,
@@ -1079,9 +1084,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 3000.0f,
         .filter_resonance_q = 0.707f,
@@ -1129,9 +1134,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 4000.0f,
         .filter_resonance_q = 0.707f,
@@ -1179,9 +1184,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 800.0f,
         .filter_resonance_q = 1.0f,
@@ -1229,9 +1234,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 6000.0f,
         .filter_resonance_q = 0.707f,
@@ -1279,9 +1284,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 20000.0f,
         .filter_resonance_q = 0.707f,
@@ -1329,9 +1334,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=5.0f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.1f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=5.0f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.1f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 20000.0f,
         .filter_resonance_q = 0.707f,
@@ -1379,9 +1384,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=4, .frequency=12.0f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=4, .frequency=12.0f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 12.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 20000.0f,
         .filter_resonance_q = 0.707f,
@@ -1429,9 +1434,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=0.1f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 200.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=0.1f, .enabled=true, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 200.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 400.0f,
         .filter_resonance_q = 2.0f,
@@ -1479,9 +1484,9 @@ const PxRomPatch ROM_PATCHES[64] = {
         },
         .adsr_mod_amounts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
         .lfos = {
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}},
-            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}}
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}},
+            {.wave_idx=0, .frequency=1.0f, .enabled=false, .reset_on_key_on=false, .adsr={.attack_time=0.01f, .decay_time=0.1f, .sustain_level=1.0f, .release_time=0.1f, .enabled=false}, .mod_amounts={0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f}}
         },
         .filter_cutoff_hz = 1500.0f,
         .filter_resonance_q = 0.707f,

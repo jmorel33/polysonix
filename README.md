@@ -3,11 +3,12 @@
 </div>
 
 # Polysonix
-**Version 1.8.4 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
+**Version 1.8.5 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
 
 A single-header polyphonic synthesizer engine.
 
-### What's New in v1.8.3
+### What's New in v1.8.5
+- **Expanded Patch Name:** Full support for 64-character patch names in struct, serialization, and ROM.
 - Modern polyphonic glide/portamento with smooth RC curve and legato/always modes
 - Bitcrush fully independent of wave sequencing (per-oscillator + modulatable)
 
