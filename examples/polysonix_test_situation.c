@@ -35,8 +35,8 @@ typedef struct Rectangle { float x, y, width, height; } Rectangle;
 
 
 #define POLYSONIX_IMPLEMENTATION
-#include "../polysonix.h"
-#include "../px_wave_rom.h"
+#define POLYSONIX_PATCHING_IMPLEMENTATION
+#include "../px_patching.h"
 
 // --- Global Application State (Not Synth State) ---
 static bool enable_drawing = true;
@@ -74,6 +74,7 @@ static mat4 projection;
 
 // --- UI & Control State ---
 static int current_wave_index = 0;
+static int current_patch_index = 0;
 static int octave_shift = 0;
 static int last_drawn_wave_index = -1;
 static bool last_wave_compile_status = false;
@@ -349,6 +350,9 @@ static bool InitializeApplication() {
         return false;
     }
 
+    // Load initial patch
+    PX_LoadRomPatch(synth, &ROM_PATCHES[current_patch_index]);
+
     if (!compile_all_waves()) {
         printf("Critical: Wave compilation resulted in zero successful waveforms. Exiting.\n");
         PX_Destroy(synth);
@@ -443,8 +447,23 @@ static void ProcessInput() {
 
     if (SituationIsKeyPressed(SIT_KEY_DOWN)) current_wave_index = (current_wave_index + 1) % PX_GetNumWaveforms();
     if (SituationIsKeyPressed(SIT_KEY_UP)) current_wave_index = (current_wave_index - 1 + PX_GetNumWaveforms()) % PX_GetNumWaveforms();
-    if (SituationIsKeyPressed(KEY_OCTAVE_UP)) { if (octave_shift < 3) octave_shift++; }
-    if (SituationIsKeyPressed(KEY_OCTAVE_DOWN)) { if (octave_shift > -3) octave_shift--; }
+
+    bool ctrl_down = SituationIsKeyDown(SIT_KEY_LEFT_CONTROL) || SituationIsKeyDown(SIT_KEY_RIGHT_CONTROL);
+    if (ctrl_down) {
+        // Patch Loading
+        if (SituationIsKeyPressed(SIT_KEY_LEFT)) {
+             current_patch_index = (current_patch_index - 1 + 64) % 64;
+             PX_LoadRomPatch(synth, &ROM_PATCHES[current_patch_index]);
+        }
+        if (SituationIsKeyPressed(SIT_KEY_RIGHT)) {
+             current_patch_index = (current_patch_index + 1) % 64;
+             PX_LoadRomPatch(synth, &ROM_PATCHES[current_patch_index]);
+        }
+    } else {
+        // Octave Shift
+        if (SituationIsKeyPressed(KEY_OCTAVE_UP)) { if (octave_shift < 3) octave_shift++; }
+        if (SituationIsKeyPressed(KEY_OCTAVE_DOWN)) { if (octave_shift > -3) octave_shift--; }
+    }
 
     // Restore LFO update interval control
     if (SituationIsKeyPressed(SIT_KEY_F1)) PX_SetLFOUpdateInterval(synth, fmaxf(0.1f, PX_GetLFOUpdateInterval(synth) - 0.1f));
@@ -615,7 +634,8 @@ static void DrawInterface(RenderContext* ctx) {
 
     // --- Header / Help Text ---
     DrawText(ctx, "Polysonix Synthesizer Player (Situation)", 10, y_offset, line_height, DARKGRAY); y_offset += line_height + 2;
-    DrawText(ctx, "UP/DN:Wave, L/R:Oct, F1/F2:LFO Rate, F3/F4:Pan, Keys:Play", 10, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+    // <<< NEW: Update Help Text
+    DrawText(ctx, "CTRL+L/R:Patch, UP/DN:Wave, L/R:Oct, F1/F2:LFO Rate, F3/F4:Pan, Keys:Play", 10, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
     DrawText(ctx, "KP_ENTER: Edit Target, KP0-9/etc: Edit Params/Routing", 10, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height + 3;
 
     // --- Currently Editing Target Display ---
@@ -704,6 +724,10 @@ static void DrawInterface(RenderContext* ctx) {
     PxWaveInfo waveInfo = PX_GetWaveInfo(current_wave_index);
     DrawText(ctx, TextFormat("Osc Wave[%d]:%s Oct:%d", current_wave_index, waveInfo.name, octave_shift), 10, y_offset, small_line_height, waveInfo.is_compiled ? DARKBLUE : RED);
     y_offset += small_line_height;
+    // <<< NEW: Display Current Patch
+    DrawText(ctx, TextFormat("Patch [%d]: %s", current_patch_index, ROM_PATCHES[current_patch_index].name), 10, y_offset, small_line_height, DARKGREEN);
+    y_offset += small_line_height;
+
     DrawText(ctx, TextFormat("Global Voice Pan (F3/F4): %.2f", PX_GetGlobalVoicePan(synth)), 10, y_offset, small_line_height, DARKGRAY);
     y_offset += small_line_height;
     DrawText(ctx, TextFormat("Unilegato (F10): %s", PX_GetUnilegatoEnabled(synth) ? "ON" : "OFF"), 10, y_offset, small_line_height, DARKGRAY);
