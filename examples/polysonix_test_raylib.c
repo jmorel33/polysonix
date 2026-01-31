@@ -9,10 +9,12 @@
 
 #define POLYSONIX_IMPLEMENTATION
 #include "polysonix.h"
-#include "../px_wave_rom.h"
+#define POLYSONIX_PATCHING_IMPLEMENTATION
+#include "../px_patching.h"
 
 // --- Global Application State (Not Synth State) ---
 static bool enable_drawing = true;
+static int current_patch_index = 0;
 
 // --- Configuration ---
 #define SCREEN_WIDTH        800
@@ -214,8 +216,23 @@ static void ProcessInput() {
 
     if (IsKeyPressed(KEY_DOWN)) current_wave_index = (current_wave_index + 1) % PX_GetNumWaveforms();
     if (IsKeyPressed(KEY_UP)) current_wave_index = (current_wave_index - 1 + PX_GetNumWaveforms()) % PX_GetNumWaveforms();
-    if (IsKeyPressed(KEY_OCTAVE_UP)) { if (octave_shift < 3) octave_shift++; }
-    if (IsKeyPressed(KEY_OCTAVE_DOWN)) { if (octave_shift > -3) octave_shift--; }
+
+    bool ctrl_down = IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL);
+
+    if (!ctrl_down) {
+        if (IsKeyPressed(KEY_OCTAVE_UP)) { if (octave_shift < 3) octave_shift++; }
+        if (IsKeyPressed(KEY_OCTAVE_DOWN)) { if (octave_shift > -3) octave_shift--; }
+    } else {
+        // Patch Loading (CTRL + LEFT/RIGHT)
+        if (IsKeyPressed(KEY_LEFT)) {
+            current_patch_index = (current_patch_index - 1 + 64) % 64;
+            PX_LoadRomPatch(synth, &ROM_PATCHES[current_patch_index]);
+        }
+        if (IsKeyPressed(KEY_RIGHT)) {
+            current_patch_index = (current_patch_index + 1) % 64;
+            PX_LoadRomPatch(synth, &ROM_PATCHES[current_patch_index]);
+        }
+    }
 
     // Restore LFO update interval control
     if (IsKeyPressed(KEY_F1)) PX_SetLFOUpdateInterval(synth, fmaxf(0.1f, PX_GetLFOUpdateInterval(synth) - 0.1f));
@@ -397,7 +414,11 @@ static void DrawFrame() {
     // --- Header / Help Text (Identical to v8, but updated for new keys) ---
     DrawText("Polysonix Synthesizer Player (v9 - Feature Complete)", 10, y_offset, line_height, DARKGRAY); y_offset += line_height + 2;
     DrawText("UP/DN:Wave, L/R:Oct, F1/F2:LFO Rate, F3/F4:Pan, Keys:Play", 10, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
-    DrawText("KP_ENTER: Edit Target, KP0-9/etc: Edit Params/Routing", 10, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height + 3;
+    DrawText("KP_ENTER: Edit Target, KP0-9/etc: Edit Params/Routing", 10, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height;
+    DrawText("CTRL+L/R: Prev/Next Patch", 10, y_offset, small_line_height, DARKGRAY); y_offset += small_line_height + 3;
+
+    // --- Patch Name Display ---
+    DrawText(TextFormat("PATCH: %s (%d/64)", PX_GetPatchName(synth), current_patch_index), 10, y_offset, line_height, DARKGREEN); y_offset += line_height + 2;
 
     // --- Currently Editing Target Display ---
     DrawText(TextFormat("EDITING: %s", edit_target_names[current_edit_target]), 10, y_offset, line_height, BLUE); y_offset += line_height;
