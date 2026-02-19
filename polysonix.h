@@ -348,9 +348,18 @@ typedef struct {
     float mod_amounts[PX_LFO_DEST_COUNT];   /**< An array specifying the modulation amount for each possible destination. */
 } PxLFOParams;
 
+// --- Internal Constants & Data ---
+#ifndef MAX_VOICES
+#define MAX_VOICES 16
+#endif
+#ifndef MAX_LFOS
+#define MAX_LFOS 3 // For snapshot array sizing
+#endif
+#ifndef CMD_QUEUE_SIZE
+#define CMD_QUEUE_SIZE 1024
+#endif
 #ifndef NUM_WAVEFORMS
-    #define NUM_WAVEFORMS 256
-    #define NUM_WAVEFORMS 256
+#define NUM_WAVEFORMS 256
 #endif
 
 // --- Configuration and Patch Structures ---
@@ -1044,20 +1053,12 @@ PX_API const char* PX_GetADSRStateName(PxADSRState state);
 #define ADSR_STATE_SUSTAIN  3
 #define ADSR_STATE_RELEASE  4
 
-// --- Internal Constants & Data ---
-#define MAX_VOICES 16
-#define MAX_LFOS 3 // For snapshot array sizing
-#define CMD_QUEUE_SIZE 1024
 #define MIN_ADSR_TIME 0.001f
 #define EXP_DECAY_TARGET 0.001f
 #define INAUDIBLE_AMPLITUDE_THRESHOLD 0.001f
 #define INAUDIBLE_ADSR_LEVEL 0.0001f
 #define DEFAULT_NYQUIST_MULTIPLIER 8.0f
 #define DEFAULT_OSC_FIXED_UPDATE_RATE_HZ 35000.0f
-
-#ifndef NUM_WAVEFORMS
-    #define NUM_WAVEFORMS 212
-#endif
 
 #define SOFTCLIP_RATIO 0.8f
 #define SOFTCLIP_K2 (SOFTCLIP_RATIO * SOFTCLIP_RATIO)
