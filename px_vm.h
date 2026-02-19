@@ -376,6 +376,7 @@ struct BytecodeChunk {
     int     strings_count;            // How many strings are used
     BytecodeChunk* sigma_sub_chunks[MAX_SIGMA_CHUNKS]; // Array of pointers
     int sigma_sub_chunk_count;      // How many sub-chunks are used
+    bool has_error;                 // Error flag for compilation (e.g., overflow)
 };
 
 // Structure to hold loop variable info during sigma execution
@@ -1698,8 +1699,8 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
 static void emit_byte(BytecodeChunk *chunk, uint8_t byte) {
     if (chunk->code_count >= MAX_BYTECODE_SIZE) {
         fprintf(stderr, "Compile Error: Bytecode buffer overflow.\n");
-        // Handle error - maybe return bool or set an error flag
-        return; // Or exit? For now, just stop emitting.
+        chunk->has_error = true;
+        return;
     }
     chunk->code[chunk->code_count++] = byte;
 }
@@ -1726,7 +1727,8 @@ static uint16_t add_constant(BytecodeChunk *chunk, float value) {
     // Add new constant if pool not full
     if (chunk->constants_count >= MAX_CONSTANTS) {
         fprintf(stderr, "Compile Error: Constant pool overflow.\n");
-        return 0; // Return index 0 on error? Or a special value?
+        chunk->has_error = true;
+        return 0;
     }
     chunk->constants[chunk->constants_count] = value;
     return (uint16_t)chunk->constants_count++;
@@ -1747,16 +1749,16 @@ static uint8_t add_string(BytecodeChunk *chunk, const char *string) {
     // Add new string if pool not full
     if (chunk->strings_count >= MAX_STRINGS) {
         fprintf(stderr, "Compile Error: String pool overflow (max %d).\n", MAX_STRINGS);
-        return 0; // Return index 0 on error? Requires careful handling in VM
-                  // Maybe return UINT8_MAX to signal error? Let's use 0 for now.
+        chunk->has_error = true;
+        return 0;
     }
 
     // Duplicate the string - the chunk now owns this memory
     chunk->strings[chunk->strings_count] = strdup(string);
     if (!chunk->strings[chunk->strings_count]) {
          perror("Compile Error: Failed to duplicate string for pool");
-         // Handle memory allocation failure - maybe return error index?
-         return 0; // Return 0 on error
+         chunk->has_error = true;
+         return 0;
     }
 
     return (uint8_t)chunk->strings_count++;
@@ -1789,6 +1791,7 @@ static void patch_jump(BytecodeChunk *chunk, int jump_instruction_index) {
 static uint16_t add_sigma_sub_chunk(BytecodeChunk *chunk, BytecodeChunk* sub_chunk) {
     if (chunk->sigma_sub_chunk_count >= MAX_SIGMA_CHUNKS) {
         fprintf(stderr, "Compile Error: Sigma sub-chunk pool overflow.\n");
+        chunk->has_error = true;
         free_bytecode_chunk(sub_chunk); // Free the unused sub-chunk
         return UINT16_MAX; // Indicate error
     }
@@ -1799,7 +1802,7 @@ static uint16_t add_sigma_sub_chunk(BytecodeChunk *chunk, BytecodeChunk* sub_chu
 // --- Main Recursive Compilation Function ---
 // active_loop_var_name_ptr helps resolve loop variables inside sigma body
 static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_loop_var_name_ptr) {
-    if (!node) return false; // Should not happen with valid AST
+    if (!node || chunk->has_error) return false; // Stop early if error occurred
     bool ok = true;
 
     switch (node->type) {
@@ -2294,6 +2297,7 @@ void init_bytecode_chunk(BytecodeChunk *chunk) {
     for (int i = 0; i < MAX_SIGMA_CHUNKS; ++i) {
         chunk->sigma_sub_chunks[i] = NULL;
     }
+    chunk->has_error = false;
 }
 
 // Free a chunk's internal data, including sub-chunks it owns and duplicated strings
@@ -2329,15 +2333,18 @@ bool compile_ast_to_bytecode(Node *node, BytecodeChunk *chunk) {
 
     bool success = compile_node(node, chunk, NULL); // Start with no active loop variable
 
-    if (success) {
+    if (success && !chunk->has_error) {
         emit_byte(chunk, OP_HALT); // Add final instruction
-    } else {
+    }
+
+    if (!success || chunk->has_error) {
         // Cleanup potentially partially filled chunk? For now, the caller should probably discard it on failure.
         fprintf(stderr, "Compilation failed.\n");
         free_bytecode_chunk(chunk); // Free sub-chunks if any were created before failure
+        return false;
     }
 
-    return success;
+    return true;
 }
 
 // --- LFSR Implementation ---
