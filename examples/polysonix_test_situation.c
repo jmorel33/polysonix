@@ -15,23 +15,20 @@
 #include <cglm/cglm.h>
 
 
-// --- Temporary Type Definitions (to replace raylib types) ---
-// Note: Situation SDK provides Vector2 and ColorRGBA.
-// We define Color to map legacy Raylib code to Situation.
-typedef struct Color { unsigned char r, g, b, a; } Color; // raylib Color
-typedef struct Rectangle { float x, y, width, height; } Rectangle;
+// --- Situation SDK Types ---
+// Note: Situation SDK provides Vector2, ColorRGBA, and Rectangle.
 // Pre-defined colors from raylib
-#define LIGHTGRAY  (Color){ 200, 200, 200, 255 }
-#define RAYWHITE   (Color){ 245, 245, 245, 255 }
-#define DARKGRAY   (Color){ 80, 80, 80, 255 }
-#define BLUE       (Color){ 0, 121, 241, 255 }
-#define GREEN      (Color){ 0, 228, 48, 255 }
-#define DARKGREEN  (Color){ 0, 117, 44, 255 }
-#define RED        (Color){ 230, 41, 55, 255 }
-#define DARKBLUE   (Color){ 0, 82, 172, 255 }
-#define BLACK      (Color){ 0, 0, 0, 255 }
-#define MAROON     (Color){ 190, 33, 55, 255 }
-#define GRAY       (Color){ 130, 130, 130, 255 }
+#define LIGHTGRAY  (ColorRGBA){ 200, 200, 200, 255 }
+#define RAYWHITE   (ColorRGBA){ 245, 245, 245, 255 }
+#define DARKGRAY   (ColorRGBA){ 80, 80, 80, 255 }
+#define BLUE       (ColorRGBA){ 0, 121, 241, 255 }
+#define GREEN      (ColorRGBA){ 0, 228, 48, 255 }
+#define DARKGREEN  (ColorRGBA){ 0, 117, 44, 255 }
+#define RED        (ColorRGBA){ 230, 41, 55, 255 }
+#define DARKBLUE   (ColorRGBA){ 0, 82, 172, 255 }
+#define BLACK      (ColorRGBA){ 0, 0, 0, 255 }
+#define MAROON     (ColorRGBA){ 190, 33, 55, 255 }
+#define GRAY       (ColorRGBA){ 130, 130, 130, 255 }
 
 
 #define POLYSONIX_IMPLEMENTATION
@@ -129,9 +126,6 @@ const char* TextFormat(const char* format, ...) {
     return buffer;
 }
 
-static inline ColorRGBA rl_to_sit_color(Color color) {
-    return (ColorRGBA){ color.r, color.g, color.b, color.a };
-}
 
 static bool compile_all_waves() {
     printf("Compiling %d waveform expressions...\n", PX_GetNumWaveforms());
@@ -192,13 +186,13 @@ typedef struct {
     RenderMode mode;
 } RenderContext;
 
-void DrawPixelV(RenderContext* ctx, Vector2 position, Color color) {
+void DrawPixelV(RenderContext* ctx, Vector2 position, ColorRGBA color) {
     if (ctx->mode == RENDER_MODE_CPU_CANVAS) {
-        SituationSetPixelColor(&canvas_image, (int)position.x, (int)position.y, rl_to_sit_color(color));
+        SituationSetPixelColor(&canvas_image, (int)position.x, (int)position.y, color);
     }
 }
 
-void DrawLine(RenderContext* ctx, int startPosX, int startPosY, int endPosX, int endPosY, Color color) {
+void DrawLine(RenderContext* ctx, int startPosX, int startPosY, int endPosX, int endPosY, ColorRGBA color) {
     if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
     int dx = abs(endPosX - startPosX);
     int sx = startPosX < endPosX ? 1 : -1;
@@ -208,7 +202,7 @@ void DrawLine(RenderContext* ctx, int startPosX, int startPosY, int endPosX, int
     int e2;
 
     for (;;) {
-        SituationSetPixelColor(&canvas_image, startPosX, startPosY, rl_to_sit_color(color));
+        SituationSetPixelColor(&canvas_image, startPosX, startPosY, color);
         if (startPosX == endPosX && startPosY == endPosY) break;
         e2 = 2 * err;
         if (e2 >= dy) {
@@ -222,7 +216,7 @@ void DrawLine(RenderContext* ctx, int startPosX, int startPosY, int endPosX, int
     }
 }
 
-void DrawLineStrip(RenderContext* ctx, Vector2 *points, int pointCount, Color color) {
+void DrawLineStrip(RenderContext* ctx, Vector2 *points, int pointCount, ColorRGBA color) {
     if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
     if (pointCount < 2) return;
     for (int i = 0; i < pointCount - 1; i++) {
@@ -230,22 +224,21 @@ void DrawLineStrip(RenderContext* ctx, Vector2 *points, int pointCount, Color co
     }
 }
 
-void DrawCircle(RenderContext* ctx, int centerX, int centerY, float radius, Color color) {
+void DrawCircle(RenderContext* ctx, int centerX, int centerY, float radius, ColorRGBA color) {
     if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
     int x = (int)radius;
     int y = 0;
     int err = 0;
-    ColorRGBA sit_color = rl_to_sit_color(color);
 
     while (x >= y) {
-        SituationSetPixelColor(&canvas_image, centerX + x, centerY + y, sit_color);
-        SituationSetPixelColor(&canvas_image, centerX + y, centerY + x, sit_color);
-        SituationSetPixelColor(&canvas_image, centerX - y, centerY + x, sit_color);
-        SituationSetPixelColor(&canvas_image, centerX - x, centerY + y, sit_color);
-        SituationSetPixelColor(&canvas_image, centerX - x, centerY - y, sit_color);
-        SituationSetPixelColor(&canvas_image, centerX - y, centerY - x, sit_color);
-        SituationSetPixelColor(&canvas_image, centerX + y, centerY - x, sit_color);
-        SituationSetPixelColor(&canvas_image, centerX + x, centerY - y, sit_color);
+        SituationSetPixelColor(&canvas_image, centerX + x, centerY + y, color);
+        SituationSetPixelColor(&canvas_image, centerX + y, centerY + x, color);
+        SituationSetPixelColor(&canvas_image, centerX - y, centerY + x, color);
+        SituationSetPixelColor(&canvas_image, centerX - x, centerY + y, color);
+        SituationSetPixelColor(&canvas_image, centerX - x, centerY - y, color);
+        SituationSetPixelColor(&canvas_image, centerX - y, centerY - x, color);
+        SituationSetPixelColor(&canvas_image, centerX + y, centerY - x, color);
+        SituationSetPixelColor(&canvas_image, centerX + x, centerY - y, color);
 
         y++;
         err += 1 + 2*y;
@@ -256,17 +249,16 @@ void DrawCircle(RenderContext* ctx, int centerX, int centerY, float radius, Colo
     }
 }
 
-void DrawRectangle(RenderContext* ctx, int x, int y, int width, int height, Color color) {
+void DrawRectangle(RenderContext* ctx, int x, int y, int width, int height, ColorRGBA color) {
     if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
-    ColorRGBA sit_color = rl_to_sit_color(color);
     for (int j = y; j < y + height; j++) {
         for (int i = x; i < x + width; i++) {
-            SituationSetPixelColor(&canvas_image, i, j, sit_color);
+            SituationSetPixelColor(&canvas_image, i, j, color);
         }
     }
 }
 
-void DrawRectangleLines(RenderContext* ctx, int x, int y, int width, int height, Color color) {
+void DrawRectangleLines(RenderContext* ctx, int x, int y, int width, int height, ColorRGBA color) {
     if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
     DrawLine(ctx, x, y, x + width, y, color);
     DrawLine(ctx, x + width, y, x + width, y + height, color);
@@ -274,11 +266,11 @@ void DrawRectangleLines(RenderContext* ctx, int x, int y, int width, int height,
     DrawLine(ctx, x, y + height, x, y, color);
 }
 
-void DrawText(RenderContext* ctx, const char* text, int x, int y, int fontSize, Color color) {
+void DrawText(RenderContext* ctx, const char* text, int x, int y, int fontSize, ColorRGBA color) {
     if (ctx->mode == RENDER_MODE_GPU_OVERLAY && main_font.id != 0) {
         // SDK 2.3.36: Use GPU command for text.
         // Spacing 0.0f is standard.
-        SituationCmdDrawTextEx(ctx->cmd, main_font, text, (Vector2){(float)x, (float)y}, (float)fontSize, 0.0f, rl_to_sit_color(color));
+        SituationCmdDrawTextEx(ctx->cmd, main_font, text, (Vector2){(float)x, (float)y}, (float)fontSize, 0.0f, color);
     }
 }
 
@@ -293,7 +285,7 @@ int MeasureText(const char *text, int fontSize) {
 static void DrawLFOIndicator(RenderContext* ctx, float lfo_value_normalized, int x, int y, int radius) {
     if (ctx->mode != RENDER_MODE_CPU_CANVAS) return;
     float t = fmaxf(0.0f, fminf(1.0f, (lfo_value_normalized + 1.0f) * 0.5f));
-    Color color = {(uint8_t)(255 * t), (uint8_t)(255 * (1.0f - t)), 0, 255};
+    ColorRGBA color = {(uint8_t)(255 * t), (uint8_t)(255 * (1.0f - t)), 0, 255};
     DrawCircle(ctx, x, y, radius, color);
 }
 
