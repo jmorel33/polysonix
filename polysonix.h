@@ -1060,6 +1060,9 @@ PX_API const char* PX_GetADSRStateName(PxADSRState state);
 #endif
 
 #define SOFTCLIP_RATIO 0.8f
+#define SOFTCLIP_K2 (SOFTCLIP_RATIO * SOFTCLIP_RATIO)
+#define SOFTCLIP_K4 (SOFTCLIP_K2 * SOFTCLIP_K2)
+#define SOFTCLIP_LIMIT (1.0f / SOFTCLIP_RATIO)
 
 static const float HB[5] = {
     0.036681502163648017f,   /* h[-2] */
@@ -1563,7 +1566,7 @@ static void LFOInstance_Init(LFOInstance* lfo, float sample_rate);
 static float get_midi_frequency(int midi_note);
 static int find_inactive_voice(PxSynth* s);
 static int find_voice_to_steal(PxSynth* s);
-static float soft_clip(float x);
+static inline float soft_clip(float x);
 static float cubic_interpolate(float y0, float y1, float y2, float y3, float t);
 
 // Simple LCG PRNG for audio thread safety
@@ -2038,8 +2041,19 @@ static int find_voice_to_steal(PxSynth* s) {
     return oldest_held_idx;
 }
 
-static float soft_clip(float x) {
-    return tanhf(x * SOFTCLIP_RATIO) / SOFTCLIP_RATIO;
+static inline float soft_clip(float x) {
+    // Pade [5/4] rational approximation for tanh(kx)/k
+    // This is transformed to avoid per-sample scaling and branches where possible.
+    float x2 = x * x;
+    float x4 = x2 * x2;
+    float num = x * (945.0f + (105.0f * SOFTCLIP_K2) * x2 + SOFTCLIP_K4 * x4);
+    float den = 945.0f + (420.0f * SOFTCLIP_K2) * x2 + (15.0f * SOFTCLIP_K4) * x4;
+    float result = num / den;
+
+    // Clamping handles the divergence of the Pade approximant at large x
+    if (result > SOFTCLIP_LIMIT) return SOFTCLIP_LIMIT;
+    if (result < -SOFTCLIP_LIMIT) return -SOFTCLIP_LIMIT;
+    return result;
 }
 
 static float cubic_interpolate(float y0, float y1, float y2, float y3, float t) {
