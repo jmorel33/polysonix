@@ -1,5 +1,15 @@
 # Update Log
 
+## v1.8.9 (2026/01/21)
+**Fix: Sigma VM Stack Overflow**
+
+This release flattens the `sigma` (summation) function implementation in the VM to use iterative bytecode instead of C-stack recursion.
+
+*   **Iterative Sigma:**
+    *   **Architecture:** Replaced recursive `execute_sub_chunk` calls with a flat loop using new opcodes (`OP_SIGMA_INIT`, `OP_SIGMA_CHECK`, `OP_SIGMA_INC`).
+    *   **Safety:** Prevents C-stack overflows in real-time audio threads when using deeply nested or high-iteration summation loops.
+    *   **Stability:** Removed `exit(1)` calls from VM error handling to prevent host process termination.
+
 ## v1.8.8 (2026/01/20)
 **Fix: LFO Zipper Noise**
 

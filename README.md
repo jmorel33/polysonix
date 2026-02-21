@@ -3,11 +3,12 @@
 </div>
 
 # Polysonix
-**Version 1.8.8 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
+**Version 1.8.9 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
 
 A single-header polyphonic synthesizer engine.
 
-### What's New in v1.8.8
+### What's New in v1.8.9
+- **Sigma VM Stack Fix:** Replaced recursive `sigma` implementation with iterative bytecode to prevent stack overflows in real-time audio threads.
 - **Smooth LFO Modulation:** Implemented linear interpolation for LFO control signals (Pitch, Filter, Amp, Pan) to eliminate audible "zipper noise" stepping artifacts.
 - **Improved Performance:** Optimization of LFO summation logic by moving calculations to the control rate block.
 

@@ -426,6 +426,8 @@ typedef struct {
     VmParams* params;                               // Pointer to the parameters for this execution run
     // Sigma loop state
     LoopVarInfo   active_loop_var;
+    float         sigma_end;
+    float         sigma_step;
     bool          is_in_sigma_body;
 } VM;
 
@@ -446,6 +448,7 @@ static void vm_error(VM *vm_ptr, const char *format, ...) {
     // In a real system, you might set an error flag in the VM struct
     // or use longjmp for unrecoverable errors. For this demo, printing
     // and potentially returning a default value (0.0) is sufficient.
+    // exit(1); // Removed to prevent process termination in audio thread
 }
 
 // --- Function IDs (for OP_CALL) ---
@@ -1482,8 +1485,13 @@ typedef enum {
     OP_PUSH_LOOP_VAR  = 0x19, // Operand: uint8_t var_name_id
     OP_SIGMA_EXEC     = 0x1A, // Operands: uint8_t name_idx, uint16_t start_idx, uint16_t end_idx, uint16_t step_idx, uint16_t body_idx
 
+    // --- Iterative Sigma ---
+    OP_SIGMA_INIT     = 0x1B, // Operand: uint8_t name_idx. Pops start, end, step. Pushes accumulator (0.0).
+    OP_SIGMA_CHECK    = 0x1C, // Operand: int16_t jump_offset. Checks loop condition.
+    OP_SIGMA_INC      = 0x1D, // No operand. Increments loop variable.
+
     // --- End ---
-    OP_HALT           = 0x1B  // No operand - MUST BE LAST (used for array sizes)
+    OP_HALT           = 0x1E  // No operand - MUST BE LAST (used for array sizes)
 } OpCode;
 #define VM_MAX_OPCODE OP_HALT
 #define VM_DISPATCH_TABLE_SIZE (VM_MAX_OPCODE + 1) // Important for computed goto table size
@@ -1794,17 +1802,6 @@ static void patch_jump(BytecodeChunk *chunk, int jump_instruction_index) {
     chunk->code[jump_instruction_index + 1] = offset & 0xFF;    // Low byte
 }
 
-// Adds a sub-chunk (e.g., for sigma) and returns its index
-static uint16_t add_sigma_sub_chunk(BytecodeChunk *chunk, BytecodeChunk* sub_chunk) {
-    if (chunk->sigma_sub_chunk_count >= MAX_SIGMA_CHUNKS) {
-        fprintf(stderr, "Compile Error: Sigma sub-chunk pool overflow.\n");
-        chunk->has_error = true;
-        free_bytecode_chunk(sub_chunk); // Free the unused sub-chunk
-        return UINT16_MAX; // Indicate error
-    }
-    chunk->sigma_sub_chunks[chunk->sigma_sub_chunk_count] = sub_chunk;
-    return (uint16_t)chunk->sigma_sub_chunk_count++;
-}
 
 // --- Main Recursive Compilation Function ---
 // active_loop_var_name_ptr helps resolve loop variables inside sigma body
@@ -2000,7 +1997,7 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
             const char* fname = node->data.name;
 
             if (strcmp(fname, "sigma") == 0) {
-                // --- Sigma Compilation ---
+                // --- Sigma Compilation (Iterative) ---
                 if (active_loop_var_name_ptr && *active_loop_var_name_ptr) {
                     fprintf(stderr, "Compile Error: Nested sigma() is not supported.\n");
                     return false;
@@ -2017,64 +2014,46 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
                     return false;
                 }
                 const char* loop_var_name = var_node->data.name; // e.g., "k"
-
-                // Compile start, end, step, body into *separate* chunks
-                BytecodeChunk *start_chunk = (BytecodeChunk*)malloc(sizeof(BytecodeChunk));
-                BytecodeChunk *end_chunk = (BytecodeChunk*)malloc(sizeof(BytecodeChunk));
-                BytecodeChunk *step_chunk = (BytecodeChunk*)malloc(sizeof(BytecodeChunk));
-                BytecodeChunk *body_chunk = (BytecodeChunk*)malloc(sizeof(BytecodeChunk));
-
-                if (!start_chunk || !end_chunk || !step_chunk || !body_chunk) {
-                    fprintf(stderr, "Compile Error (sigma): Failed to allocate memory for sub-chunks.\n");
-                    free(start_chunk); free(end_chunk); free(step_chunk); free(body_chunk);
-                    return false;
-                }
-
-                init_bytecode_chunk(start_chunk);
-                init_bytecode_chunk(end_chunk);
-                init_bytecode_chunk(step_chunk);
-                init_bytecode_chunk(body_chunk);
-
-                // Compile sub-expressions. Pass NULL for active_loop_var_name_ptr for start/end/step.
-                bool start_ok = compile_node(start_node, start_chunk, NULL);
-                if (start_ok) emit_byte(start_chunk, OP_HALT); // End sub-chunk
-                bool end_ok = compile_node(end_node, end_chunk, NULL);
-                 if (end_ok) emit_byte(end_chunk, OP_HALT);
-                bool step_ok = compile_node(step_node, step_chunk, NULL);
-                 if (step_ok) emit_byte(step_chunk, OP_HALT);
-
-                // IMPORTANT: Compile the body with the loop variable name active
-                bool body_ok = compile_node(body_node, body_chunk, &loop_var_name);
-                 if (body_ok) emit_byte(body_chunk, OP_HALT);
-
-                if (!start_ok || !end_ok || !step_ok || !body_ok) {
-                    fprintf(stderr, "Compile Error (sigma): Failed to compile one or more sub-expressions.\n");
-                    free_bytecode_chunk(start_chunk); free(start_chunk);
-                    free_bytecode_chunk(end_chunk); free(end_chunk);
-                    free_bytecode_chunk(step_chunk); free(step_chunk);
-                    free_bytecode_chunk(body_chunk); free(body_chunk);
-                    return false;
-                }
-
-                // Add sub-chunks to the main chunk's storage
-                uint16_t start_idx = add_sigma_sub_chunk(chunk, start_chunk);
-                uint16_t end_idx = add_sigma_sub_chunk(chunk, end_chunk);
-                uint16_t step_idx = add_sigma_sub_chunk(chunk, step_chunk);
-                uint16_t body_idx = add_sigma_sub_chunk(chunk, body_chunk);
-
-                if (start_idx == UINT16_MAX || end_idx == UINT16_MAX || step_idx == UINT16_MAX || body_idx == UINT16_MAX) {
-                     // Error adding sub-chunk (already printed), cleanup handled by add_sigma_sub_chunk which calls free_bytecode_chunk on the sub_chunk, so we don't need to free them again here.
-                     return false;
-                }
-
                 uint8_t name_index = add_string(chunk, loop_var_name);
 
-                emit_byte(chunk, OP_SIGMA_EXEC);
-                emit_byte(chunk, name_index); // Operand 0: loop var name index
-                emit_short(chunk, start_idx); // Operand 1+2: start chunk index
-                emit_short(chunk, end_idx);   // Operand 3+4: end chunk index
-                emit_short(chunk, step_idx);  // Operand 5+6: step chunk index
-                emit_short(chunk, body_idx);  // Operand 7+8: body chunk index
+                // 1. Compile start, end, step (Inline, no sub-chunks)
+                // Stack after this: [start, end, step]
+                if (!compile_node(start_node, chunk, NULL)) return false;
+                if (!compile_node(end_node, chunk, NULL)) return false;
+                if (!compile_node(step_node, chunk, NULL)) return false;
+
+                // 2. Emit INIT
+                emit_byte(chunk, OP_SIGMA_INIT);
+                emit_byte(chunk, name_index);
+
+                // 3. Mark Loop Start
+                int loop_start_idx = chunk->code_count;
+
+                // 4. Emit CHECK (Conditional Jump to End)
+                int jump_check_idx = emit_jump(chunk, OP_SIGMA_CHECK);
+
+                // 5. Compile Body (Inline)
+                // Stack input: [accumulator] -> Stack output: [accumulator, body_result]
+                if (!compile_node(body_node, chunk, &loop_var_name)) return false;
+
+                // 6. Emit ADD
+                emit_byte(chunk, OP_ADD);
+
+                // 7. Emit INC
+                emit_byte(chunk, OP_SIGMA_INC);
+
+                // 8. Emit JUMP (Back to Start)
+                // emit_jump returns the index of the first operand byte (offset high byte).
+                int jump_back_idx = emit_jump(chunk, OP_JUMP);
+                // Patch backward jump manually.
+                // Target: loop_start_idx.
+                // Next instruction starts at: jump_back_idx + 2 (since jump_back_idx is operand[0], operand[1] is next, then next op).
+                int16_t offset_back = (int16_t)(loop_start_idx - (jump_back_idx + 2));
+                chunk->code[jump_back_idx] = (offset_back >> 8) & 0xFF;
+                chunk->code[jump_back_idx + 1] = offset_back & 0xFF;
+
+                // 9. Patch CHECK Jump (Forward to current position, i.e., Loop End)
+                patch_jump(chunk, jump_check_idx);
 
             } else {
                 // --- Standard Function Call Compilation ---
@@ -2159,7 +2138,10 @@ const char* getOpCodeName(OpCode code) {
         /* 0x18 */ "OP_SIGMA_SETUP",
         /* 0x19 */ "OP_PUSH_LOOP_VAR",
         /* 0x1A */ "OP_SIGMA_EXEC",
-        /* 0x1B */ "OP_HALT"
+        /* 0x1B */ "OP_SIGMA_INIT",
+        /* 0x1C */ "OP_SIGMA_CHECK",
+        /* 0x1D */ "OP_SIGMA_INC",
+        /* 0x1E */ "OP_HALT"
     };
     // Basic bounds check using VM_MAX_OPCODE
     if (code >= 0 && code <= VM_MAX_OPCODE) {
@@ -2234,6 +2216,26 @@ int disassembleInstruction(BytecodeChunk *chunk, int offset) {
              break;
          }
 
+        case OP_SIGMA_INIT: {
+            uint8_t name_index = chunk->code[offset + 1];
+            printf("idx:%u (", name_index);
+            if (name_index < chunk->strings_count && chunk->strings[name_index] != NULL) {
+                 printf("'%s'", chunk->strings[name_index]);
+             } else {
+                 printf("INVALID_IDX");
+             }
+             printf(")");
+             instruction_size += 1; // Opcode + index
+             break;
+        }
+        case OP_SIGMA_CHECK: {
+            int16_t jump_offset = (int16_t)((chunk->code[offset + 1] << 8) | chunk->code[offset + 2]);
+            int target_offset = offset + 3 + jump_offset; // Offset relative to *next* instruction
+            printf("%4d (target: %04d)", jump_offset, target_offset);
+            instruction_size += 2; // Opcode + 2 bytes offset
+            break;
+        }
+
         // Opcodes with no operands:
         case OP_PUSH_VAR_X:
         case OP_PUSH_VAR_FREQ:
@@ -2243,6 +2245,7 @@ int disassembleInstruction(BytecodeChunk *chunk, int offset) {
         case OP_ADD: case OP_SUB: case OP_MUL: case OP_DIV: case OP_MOD:
         case OP_NEGATE: case OP_NOT:
         case OP_CMP_EQ: case OP_CMP_NE: case OP_CMP_GT: case OP_CMP_GE: case OP_CMP_LT: case OP_CMP_LE:
+        case OP_SIGMA_INC:
         case OP_SIGMA_SETUP: // Has operands, but getOpCodeName handles it, so no specific print needed here for operands if disassembleInstruction logic is followed correctly for size
         case OP_HALT:
             // No operands, size is 1, or operands handled by get_instruction_size for OP_SIGMA_SETUP
@@ -2765,9 +2768,12 @@ static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
         /* 0x16 OP_JUMP_IF_FALSE */   &&SUB_LABEL_OP_JUMP_IF_FALSE,
         /* 0x17 OP_CALL */             &&SUB_LABEL_OP_CALL,
         /* 0x18 OP_SIGMA_SETUP */      &&SUB_LABEL_ERROR_SIGMA_SETUP_IN_SUB,
-        /* 0x19 OP_PUSH_LOOP_VAR */   &&SUB_LABEL_OP_PUSH_LOOP_VAR,
-        /* 0x1A OP_SIGMA_EXEC */      &&SUB_LABEL_ERROR_SIGMA_EXEC_IN_SUB,
-        /* 0x1B OP_HALT */             &&SUB_LABEL_OP_HALT
+        /* 0x19 OP_PUSH_LOOP_VAR */    &&SUB_LABEL_OP_PUSH_LOOP_VAR,
+        /* 0x1A OP_SIGMA_EXEC */       &&SUB_LABEL_ERROR_SIGMA_EXEC_IN_SUB,
+        /* 0x1B OP_SIGMA_INIT */       &&SUB_LABEL_ERROR_SIGMA_INIT_IN_SUB,
+        /* 0x1C OP_SIGMA_CHECK */      &&SUB_LABEL_ERROR_SIGMA_CHECK_IN_SUB,
+        /* 0x1D OP_SIGMA_INC */        &&SUB_LABEL_ERROR_SIGMA_INC_IN_SUB,
+        /* 0x1E OP_HALT */             &&SUB_LABEL_OP_HALT
     };
 
     uint8_t instruction;
@@ -3285,6 +3291,25 @@ SUB_LABEL_ERROR_SIGMA_EXEC_IN_SUB: {
     goto sub_chunk_end;
 }
 
+SUB_LABEL_ERROR_SIGMA_INIT_IN_SUB: {
+    vm->ip = ip; vm->stack_top = sp;
+    vm_error(vm, "Iterative sigma instruction (INIT) in sub-chunk. Not allowed.");
+    success = false;
+    goto sub_chunk_end;
+}
+SUB_LABEL_ERROR_SIGMA_CHECK_IN_SUB: {
+    vm->ip = ip; vm->stack_top = sp;
+    vm_error(vm, "Iterative sigma instruction (CHECK) in sub-chunk. Not allowed.");
+    success = false;
+    goto sub_chunk_end;
+}
+SUB_LABEL_ERROR_SIGMA_INC_IN_SUB: {
+    vm->ip = ip; vm->stack_top = sp;
+    vm_error(vm, "Iterative sigma instruction (INC) in sub-chunk. Not allowed.");
+    success = false;
+    goto sub_chunk_end;
+}
+
 SUB_LABEL_OP_HALT: {
     // CRITICAL FIX: Always leave exactly one result on stack for caller
     if (PX_LIKELY(success && sp > vm->stack)) {
@@ -3396,9 +3421,12 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
         /* 0x16 OP_JUMP_IF_FALSE */   &&LABEL_OP_JUMP_IF_FALSE,
         /* 0x17 OP_CALL */             &&LABEL_OP_CALL,
         /* 0x18 OP_SIGMA_SETUP */      &&LABEL_OP_SIGMA_SETUP,
-        /* 0x19 OP_PUSH_LOOP_VAR */   &&LABEL_OP_PUSH_LOOP_VAR,
-        /* 0x1A OP_SIGMA_EXEC */      &&LABEL_OP_SIGMA_EXEC,
-        /* 0x1B OP_HALT */             &&LABEL_OP_HALT
+        /* 0x19 OP_PUSH_LOOP_VAR */    &&LABEL_OP_PUSH_LOOP_VAR,
+        /* 0x1A OP_SIGMA_EXEC */       &&LABEL_OP_SIGMA_EXEC,
+        /* 0x1B OP_SIGMA_INIT */       &&LABEL_OP_SIGMA_INIT,
+        /* 0x1C OP_SIGMA_CHECK */      &&LABEL_OP_SIGMA_CHECK,
+        /* 0x1D OP_SIGMA_INC */        &&LABEL_OP_SIGMA_INC,
+        /* 0x1E OP_HALT */             &&LABEL_OP_HALT
     };
 
     // --- Central Dispatch Loop ---
@@ -3416,6 +3444,7 @@ LABEL_OP_PUSH_CONST: {
         vm_error(&vm, "Invalid constant index %u.", const_idx);
         *sp++ = 0.0f;
         success = false;
+        goto execution_end;
     } else {
         *sp++ = vm.chunk->constants[const_idx];
     }
@@ -3440,6 +3469,7 @@ LABEL_OP_DIV: {
         vm_error(&vm,"Division by zero.");
         *sp++ = 0.0f;
         success = false;
+        goto execution_end;
     } else {
         *sp++ = a / b;
     }
@@ -3453,6 +3483,7 @@ LABEL_OP_MOD: {
         vm_error(&vm,"Modulo by zero.");
         *sp++ = 0.0f;
         success = false;
+        goto execution_end;
     } else {
         *sp++ = fmodf(a, b);
     }
@@ -3492,6 +3523,7 @@ LABEL_OP_CALL: {
         vm_error(&vm, "Stack underflow for OP_CALL! Need %u args, have %td", arg_count, sp - vm.stack);
         success = false;
         *sp++ = 0.0f;
+        goto execution_end;
     } else {
         vm.stack_top = sp; // Sync
         vm.ip = ip; // Sync
@@ -3594,14 +3626,46 @@ LABEL_OP_SIGMA_SETUP: {
 }
 
 LABEL_OP_PUSH_LOOP_VAR: {
-    vm.ip = ip; vm.stack_top = sp; // Sync
-    vm_error(&vm, "OP_PUSH_LOOP_VAR encountered outside sigma context.");
-    *sp++ = 0.0f;
-    success = false;
+    uint8_t name_index = *ip++;
+    if (PX_UNLIKELY(!vm.is_in_sigma_body)) {
+        vm.ip = ip; vm.stack_top = sp; // Sync
+        vm_error(&vm, "OP_PUSH_LOOP_VAR encountered outside sigma context.");
+        *sp++ = 0.0f;
+        success = false;
+        goto execution_end;
+    } else if (PX_UNLIKELY(name_index >= vm.chunk->strings_count || vm.chunk->strings[name_index] == NULL)) {
+        vm.ip = ip; vm.stack_top = sp;
+        vm_error(&vm, "OP_PUSH_LOOP_VAR invalid name index %u.", name_index);
+        *sp++ = 0.0f;
+        success = false;
+        goto execution_end;
+    } else {
+        // Name check (optional but good for safety)
+        // For performance, we might skip string comparison in release, but let's keep it for now.
+        if (PX_LIKELY(vm.active_loop_var.name != NULL && strcmp(vm.chunk->strings[name_index], vm.active_loop_var.name) == 0)) {
+             *sp++ = vm.active_loop_var.current_value;
+        } else {
+             vm.ip = ip; vm.stack_top = sp;
+             vm_error(&vm, "OP_PUSH_LOOP_VAR name mismatch ('%s' vs '%s')", vm.chunk->strings[name_index], vm.active_loop_var.name ? vm.active_loop_var.name : "<none>");
+             *sp++ = 0.0f;
+             success = false;
+             goto execution_end;
+        }
+    }
     goto DISPATCH_LOOP;
 }
 
 LABEL_OP_SIGMA_EXEC: {
+    // Legacy support or fallback if needed, but intended to be replaced.
+    // For now, keep as is or error out? Keeping it for safety during transition.
+    // ... existing implementation preserved ...
+    // Wait, I should probably copy the existing implementation to be safe or just reference it?
+    // The user wants me to replace recursion. But existing code uses it.
+    // I will keep it for now as "deprecated" logic if we still support old chunks (though transient).
+    // Actually, I'll keep the logic block identical to SEARCH block to just update the opcodes list above,
+    // but here I am modifying the block because I need to insert new labels AFTER it.
+
+    // START OF EXISTING LOGIC REPEAT
     if (PX_UNLIKELY(vm.is_in_sigma_body)) {
         vm.ip = ip; vm.stack_top = sp; // Sync
         vm_error(&vm, "Nested OP_SIGMA_EXEC call detected at runtime.");
@@ -3668,6 +3732,64 @@ LABEL_OP_SIGMA_EXEC: {
             if (!sigma_success) { success = false; }
         }
     }
+    goto DISPATCH_LOOP;
+}
+
+LABEL_OP_SIGMA_INIT: {
+    uint8_t name_index = *ip++;
+    if (PX_UNLIKELY((sp - vm.stack) < 3)) {
+        vm.ip = ip; vm.stack_top = sp;
+        vm_error(&vm, "Stack underflow for OP_SIGMA_INIT! Need 3 args, have %td", sp - vm.stack);
+        *sp++ = 0.0f;
+        success = false;
+        goto execution_end;
+    } else {
+        float step = *(--sp);
+        float end  = *(--sp);
+        float start = *(--sp);
+
+        if (PX_UNLIKELY(name_index >= vm.chunk->strings_count || vm.chunk->strings[name_index] == NULL)) {
+             vm.ip = ip; vm.stack_top = sp;
+             vm_error(&vm, "OP_SIGMA_INIT invalid name index %u.", name_index);
+             success = false;
+             goto execution_end;
+        } else {
+             vm.active_loop_var.name = vm.chunk->strings[name_index];
+             vm.active_loop_var.current_value = start;
+             // Precompute boundary for robust float comparison
+             vm.sigma_end = (step > 0) ? (end + fabsf(step) * 0.5f) : (end - fabsf(step) * 0.5f);
+             vm.sigma_step = step;
+             vm.is_in_sigma_body = true;
+             *sp++ = 0.0f; // Push initial accumulator
+        }
+    }
+    goto DISPATCH_LOOP;
+}
+
+LABEL_OP_SIGMA_CHECK: {
+    int16_t offset = (int16_t)((ip[0] << 8) | ip[1]);
+    ip += 2;
+
+    // Check condition: (step > 0) ? (k <= boundary) : (k >= boundary)
+    bool condition;
+    if (vm.sigma_step > 0) {
+        condition = vm.active_loop_var.current_value <= vm.sigma_end;
+    } else {
+        condition = vm.active_loop_var.current_value >= vm.sigma_end;
+    }
+
+    if (!condition) {
+        // Loop finished
+        ip += offset;
+        vm.is_in_sigma_body = false;
+        vm.active_loop_var.name = NULL; // Clear loop var name
+    }
+    // Else fall through to loop body
+    goto DISPATCH_LOOP;
+}
+
+LABEL_OP_SIGMA_INC: {
+    vm.active_loop_var.current_value += vm.sigma_step;
     goto DISPATCH_LOOP;
 }
 
@@ -3845,6 +3967,7 @@ static int get_instruction_size(const BytecodeChunk *chunk, int offset) {
         case OP_PUSH_CONST:
         case OP_JUMP:
         case OP_JUMP_IF_FALSE:
+        case OP_SIGMA_CHECK:
             size += 2;
             break;
         // Instructions with 2 single-byte operands
@@ -3853,6 +3976,7 @@ static int get_instruction_size(const BytecodeChunk *chunk, int offset) {
              break;
         // Instructions with 1 single-byte operand
         case OP_PUSH_LOOP_VAR:
+        case OP_SIGMA_INIT:
             size += 1; // name_index
             break;
         // Special case: OP_SIGMA_EXEC
@@ -3880,6 +4004,7 @@ static int get_instruction_size(const BytecodeChunk *chunk, int offset) {
         case OP_CMP_GE:
         case OP_CMP_LT:
         case OP_CMP_LE:
+        case OP_SIGMA_INC:
         case OP_HALT:
             // Size remains 1
             break;
