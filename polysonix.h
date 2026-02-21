@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 9
-#define POLYSONIX_VERSION_PATCH 7
+#define POLYSONIX_VERSION_PATCH 8
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -3459,18 +3459,26 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 float phase_inc = osc_freq * s->time_per_sample;
                 bool cycle_completed = false;
 
+                // Add increment (can be highly positive or highly negative)
                 if (sq->current_sequence && (sq->step_flags & PX_WSEQ_REVERSE_PLAY)) {
                     v->osc_phase[o] -= phase_inc;
-                    if (v->osc_phase[o] < 0.0f) {
-                        v->osc_phase[o] += (float)((int)(-v->osc_phase[o]) + 1);
-                        cycle_completed = true;
-                    }
                 } else {
                     v->osc_phase[o] += phase_inc;
-                    if (v->osc_phase[o] >= 1.0f) {
-                        v->osc_phase[o] -= (float)((int)v->osc_phase[o]);
-                        cycle_completed = true;
-                    }
+                }
+
+                // Safely wrap positive out-of-bounds
+                if (PX_UNLIKELY(v->osc_phase[o] >= 1.0f)) {
+                    // Fast float-to-int cast strips the integer part (e.g., 2.3 -> 2)
+                    int wraps = (int)v->osc_phase[o];
+                    v->osc_phase[o] -= (float)wraps;
+                    cycle_completed = true;
+                }
+                // Safely wrap negative out-of-bounds (Reverse play or heavy negative FM)
+                else if (PX_UNLIKELY(v->osc_phase[o] < 0.0f)) {
+                    // e.g., -1.3 -> int(-1.3) is -1. We subtract (-1) and add 1 to wrap properly.
+                    int wraps = (int)(v->osc_phase[o]) - 1;
+                    v->osc_phase[o] -= (float)wraps;
+                    cycle_completed = true;
                 }
                 v->osc_cycle_completed[o] = cycle_completed; // Cache for next osc sync check
 

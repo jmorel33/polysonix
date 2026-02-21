@@ -3194,8 +3194,14 @@ SUB_LABEL_OP_CMP_LE: {
 
 SUB_LABEL_OP_JUMP: {
     int16_t offset = (int16_t)((ip[0] << 8) | ip[1]);
-    ip += 2;
-    ip += offset;
+    uint8_t *target = ip + 2 + offset;
+    if (PX_UNLIKELY(target < vm->chunk->code || target >= vm->chunk->code + vm->chunk->code_count)) {
+        vm->ip = ip + 2; vm->stack_top = sp;
+        vm_error(vm, "Jump target out of bounds (sub).");
+        success = false;
+        goto sub_chunk_end;
+    }
+    ip = target;
     instruction = *ip++;
     goto *sub_dispatch_table[instruction];
 }
@@ -3210,7 +3216,14 @@ SUB_LABEL_OP_JUMP_IF_FALSE: {
     } else {
         float condition = *(--sp);
         if (!VM_IS_TRUE(condition)) {
-            ip += offset;
+            uint8_t *target = ip + offset;
+            if (PX_UNLIKELY(target < vm->chunk->code || target >= vm->chunk->code + vm->chunk->code_count)) {
+                vm->ip = ip; vm->stack_top = sp;
+                vm_error(vm, "Jump target out of bounds (sub).");
+                success = false;
+                goto sub_chunk_end;
+            }
+            ip = target;
         }
     }
     instruction = *ip++;
@@ -3549,15 +3562,34 @@ LABEL_OP_CMP_LE: { float b = *(--sp); float a = *(--sp); *sp++ = (a - b) < EPSIL
 
 LABEL_OP_JUMP: {
     int16_t offset = (int16_t)((ip[0] << 8) | ip[1]);
-    ip += 2;
-    ip += offset;
+    uint8_t *target = ip + 2 + offset;
+    if (PX_UNLIKELY(target < vm.chunk->code || target >= vm.chunk->code + vm.chunk->code_count)) {
+        vm.ip = ip + 2; vm.stack_top = sp;
+        vm_error(&vm, "Jump target out of bounds.");
+        success = false;
+        goto execution_end;
+    }
+    ip = target;
     goto DISPATCH_LOOP;
 }
 LABEL_OP_JUMP_IF_FALSE: {
     int16_t offset = (int16_t)((ip[0] << 8) | ip[1]);
     ip += 2;
+    if (PX_UNLIKELY(sp <= vm.stack)) {
+        vm.ip = ip; vm.stack_top = sp;
+        vm_error(&vm, "Stack underflow on OP_JUMP_IF_FALSE.");
+        success = false;
+        goto execution_end;
+    }
     if (!VM_IS_TRUE(*(--sp))) {
-        ip += offset;
+        uint8_t *target = ip + offset;
+        if (PX_UNLIKELY(target < vm.chunk->code || target >= vm.chunk->code + vm.chunk->code_count)) {
+            vm.ip = ip; vm.stack_top = sp;
+            vm_error(&vm, "Jump target out of bounds.");
+            success = false;
+            goto execution_end;
+        }
+        ip = target;
     }
     goto DISPATCH_LOOP;
 }
@@ -3780,7 +3812,14 @@ LABEL_OP_SIGMA_CHECK: {
 
     if (!condition) {
         // Loop finished
-        ip += offset;
+        uint8_t *target = ip + offset;
+        if (PX_UNLIKELY(target < vm.chunk->code || target >= vm.chunk->code + vm.chunk->code_count)) {
+            vm.ip = ip; vm.stack_top = sp;
+            vm_error(&vm, "Jump target out of bounds (sigma).");
+            success = false;
+            goto execution_end;
+        }
+        ip = target;
         vm.is_in_sigma_body = false;
         vm.active_loop_var.name = NULL; // Clear loop var name
     }
