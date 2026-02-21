@@ -25,7 +25,7 @@ int main() {
     printf("# Polysonix VM v1.9.0 Performance Report\n\n");
     printf("This report compares the execution time of the new Flat Opcode VM (v1.9.0) against the v1.8.10 baseline.\n");
     printf("Both sets of measurements were taken on this cloud environment for direct comparison.\n\n");
-    printf("| Patch ID | Name | v1.8.10 (Before) (ns) | v1.9.0 (After) (ns) | Improvement |\n");
+    printf("| Patch ID | Name | v1.8.10 (Before) (ns) | v1.9.7 (After) (ns) | Improvement |\n");
     printf("| :--- | :--- | :--- | :--- | :--- |\n");
 
     // Initialize Global Tables
@@ -73,10 +73,10 @@ int main() {
             continue;
         }
 
-        // Link Native Function if available (to test transpilation)
-        if (i >= 0 && i < sizeof(native_waves)/sizeof(native_waves[0])) {
-            chunk->native_func = native_waves[i];
-        }
+        // Disable Native Function linking to benchmark Bytecode Interpreter
+        // if (i >= 0 && i < sizeof(native_waves)/sizeof(native_waves[0])) {
+        //     chunk->native_func = native_waves[i];
+        // }
 
         double patch_total_time = 0.0;
 

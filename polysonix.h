@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 9
-#define POLYSONIX_VERSION_PATCH 6
+#define POLYSONIX_VERSION_PATCH 8
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1041,6 +1041,7 @@ PX_API const char* PX_GetADSRStateName(PxADSRState state);
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <limits.h>
 
 #ifndef PI
 #define PI 3.14159265358979323846f
@@ -2187,7 +2188,16 @@ static void PX_ProcessCommands(PxSynth* s) {
             case PX_CMD_SET_LFO_MOD_AMOUNT: if (cmd.data.param_idx_enum_float.idx < s->config.num_lfos) s->patch.template_lfos[cmd.data.param_idx_enum_float.idx].mod_amounts[cmd.data.param_idx_enum_float.enum_val] = cmd.data.param_idx_enum_float.float_val; break;
             case PX_CMD_SET_LFO_UPDATE_INTERVAL:
                 s->config.lfo_update_interval_ms = cmd.data.param_float.float_val;
-                s->config.samples_per_lfo_update = (int)(s->config.sample_rate * (cmd.data.param_float.float_val / 1000.0f));
+                {
+                    float samples = s->config.sample_rate * (cmd.data.param_float.float_val / 1000.0f);
+                    if (samples >= (float)INT_MAX) {
+                        s->config.samples_per_lfo_update = INT_MAX;
+                    } else if (samples <= 1.0f || isnan(samples)) {
+                        s->config.samples_per_lfo_update = 1;
+                    } else {
+                        s->config.samples_per_lfo_update = (int)samples;
+                    }
+                }
                 if (s->config.samples_per_lfo_update < 1) s->config.samples_per_lfo_update = 1;
                 break;
             case PX_CMD_SET_FILTER_PARAM:
@@ -3449,18 +3459,26 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 float phase_inc = osc_freq * s->time_per_sample;
                 bool cycle_completed = false;
 
+                // Add increment (can be highly positive or highly negative)
                 if (sq->current_sequence && (sq->step_flags & PX_WSEQ_REVERSE_PLAY)) {
                     v->osc_phase[o] -= phase_inc;
-                    if (v->osc_phase[o] < 0.0f) {
-                        v->osc_phase[o] += (float)((int)(-v->osc_phase[o]) + 1);
-                        cycle_completed = true;
-                    }
                 } else {
                     v->osc_phase[o] += phase_inc;
-                    if (v->osc_phase[o] >= 1.0f) {
-                        v->osc_phase[o] -= (float)((int)v->osc_phase[o]);
-                        cycle_completed = true;
-                    }
+                }
+
+                // Safely wrap positive out-of-bounds
+                if (PX_UNLIKELY(v->osc_phase[o] >= 1.0f)) {
+                    // Fast float-to-int cast strips the integer part (e.g., 2.3 -> 2)
+                    int wraps = (int)v->osc_phase[o];
+                    v->osc_phase[o] -= (float)wraps;
+                    cycle_completed = true;
+                }
+                // Safely wrap negative out-of-bounds (Reverse play or heavy negative FM)
+                else if (PX_UNLIKELY(v->osc_phase[o] < 0.0f)) {
+                    // e.g., -1.3 -> int(-1.3) is -1. We subtract (-1) and add 1 to wrap properly.
+                    int wraps = (int)(v->osc_phase[o]) - 1;
+                    v->osc_phase[o] -= (float)wraps;
+                    cycle_completed = true;
                 }
                 v->osc_cycle_completed[o] = cycle_completed; // Cache for next osc sync check
 
