@@ -1,5 +1,17 @@
 # Update Log
 
+## v1.9.0 (2026/01/24)
+**Refactor: Flat Math Opcodes**
+
+This major update overhauls the `px_vm` execution engine to replace the generic function call mechanism with high-performance, flat opcodes.
+
+*   **Flat Opcode Architecture:**
+    *   **The Issue:** Previously, all mathematical functions (sin, cos, pow, etc.) were executed via a single `OP_CALL` instruction, which required decoding a secondary `FunctionID` inside a switch statement. This double-dispatch caused branch mispredictions and stalled the CPU pipeline.
+    *   **The Fix:** Every math function is now a first-class citizen with its own opcode (e.g., `OP_SIN`, `OP_RAND`, `OP_LFSR_NOISE`). The main interpreter loop dispatches directly to the implementation label using computed gotos (where supported).
+    *   **Inline Stack Operations:** Mathematical operations now perform stack bounds checking and value manipulation inline within the dispatch block, eliminating the overhead of helper function calls for argument popping and result pushing.
+    *   **Code Size:** Common operations like `sin(x)` now consume fewer bytes in the bytecode stream (2 bytes vs 4 bytes), allowing for more complex expressions within the 1024-byte chunk limit.
+    *   **Legacy Support:** The original `OP_CALL` (0x17) has been renamed to `OP_CALL_DEPRECATED` and will trigger a safe error if encountered, preserving enum alignment for existing tools.
+
 ## v1.8.12 (2026/01/23)
 **Fix: Unsafe Oscillator Phase Wrapping**
 
