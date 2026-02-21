@@ -3,9 +3,12 @@
 </div>
 
 # Polysonix
-**Version 1.9.0 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
+**Version 1.9.1 (February 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
 
 A single-header polyphonic synthesizer engine.
+
+### What's New in v1.9.1
+- **Performance: Optimized Transcendental Functions:** Replaced the expensive `tanhf` standard library call with a fast polynomial approximation (`fast_tanh`) for both the filter drive and VM opcodes. This yields a ~2.2x speedup for saturation-heavy patches.
 
 ### What's New in v1.9.0
 - **Refactor: Flat Math Opcodes:** Significantly optimized the `px_vm` by replacing the generic `OP_CALL` dispatch mechanism with specific, flat opcodes (e.g., `OP_SIN`, `OP_RAND`, `OP_POW`). This flattening reduces branch misprediction overhead in the interpreter loop and simplifies the bytecode structure.
