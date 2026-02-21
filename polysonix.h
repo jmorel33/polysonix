@@ -1854,10 +1854,13 @@ static void Filter_SetCoefficients(Filter* filter, float cutoff_hz, float resona
     filter->poles = poles;
 }
 
-// Fast polynomial approximation for tanh(x) for small values
+// Fast polynomial approximation for tanh(x) for small values (Padé [2/2])
+// Note: This approximation diverges linearly (asymptotically x/9) for large inputs.
+// Clamping is mandatory to enforce the [-1.0, 1.0] saturation range of real tanh.
 static inline float fast_tanh(float x) {
     float x2 = x * x;
-    return x * (27.0f + x2) / (27.0f + 9.0f * x2);
+    float y = x * (27.0f + x2) / (27.0f + 9.0f * x2);
+    return fmaxf(-1.0f, fminf(1.0f, y));
 }
 
 static float Filter_Process_Internal(Filter* filter, float input_sample) {
