@@ -11,7 +11,7 @@
  * It uses a command queue to safely receive parameter changes from a UI/control thread
  * while the audio processing runs on a dedicated audio thread.
  *
- * @copyright Copyright (c) 2025, Jacques Morel
+ * @copyright Copyright (c) 2025-2026, Jacques Morel
  * @license This software is licensed under the MIT License. See the LICENSE file for more information.
  */
 // --- Version Macros ---

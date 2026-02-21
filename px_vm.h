@@ -1,7 +1,7 @@
 /***************************************************************************************************
 *
 *   Polysonix Waveform Scripting Language
-*   Copyright (c) 2025 Jacques Morel
+*   Copyright (c) 2025-2026 Jacques Morel
 *   Licensed under the MIT License.
 *
 ****************************************************************************************************/

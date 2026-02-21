@@ -2,7 +2,7 @@
 
 _Core API library v2.3.36 "Velocity"_
 
-_(c) 2025 Jacques Morel_
+_(c) 2025-2026 Jacques Morel_
 
 _MIT Licenced_
 
@@ -6061,7 +6061,7 @@ The Virtual Display system (see `4.6.5`) is a perfect tool for 2D layer manageme
 
 ---
 
-Copyright (c) 2025 Jacques Morel
+Copyright (c) 2025-2026 Jacques Morel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
