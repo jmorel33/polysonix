@@ -296,6 +296,12 @@ typedef enum {
     LFSR_FIBONACCI = 15 /**< 16-bit LFSR using a Fibonacci feedback configuration. */
 } LfsrType;
 
+// Simple LCG PRNG for audio thread safety
+static inline uint32_t px_rand(uint32_t* state) {
+    *state = *state * 1664525 + 1013904223;
+    return *state;
+}
+
 /**
  * @brief Initializes and pre-computes the bit sequences for all LFSR types.
  *
@@ -407,6 +413,7 @@ typedef struct {
     uint32_t lfsr_position; // Current position in the LFSR sequence
     uint32_t lfsr_seed;     // Initial seed for resetting (can be used by caller to reset lfsr_state)
     float lfsr_accum_phase; // New: Accumulator for fractional LFSR advances
+    uint32_t* rng_state_ptr; // Pointer to the voice's RNG state
 } VmParams;
 
 
@@ -3104,7 +3111,16 @@ SUB_LABEL_OP_CALL: {
             case FUNC_ID_MAX: if (arg_count == 2) { float b=pop(vm); float a=pop(vm); call_result=fmaxf(a,b); } else { vm_error(vm,"max expects 2 args"); success = false; } break;
             case FUNC_ID_SQRT: if (arg_count == 1) { float v=pop(vm); call_result=(v >= 0) ? sqrtf(v): 0.0f; } else { vm_error(vm,"sqrt expects 1 arg"); success = false; } break;
             case FUNC_ID_POW: if (arg_count == 2) { float b=pop(vm); float a=pop(vm); call_result=powf(a,b); } else { vm_error(vm,"pow expects 2 args"); success = false; } break;
-            case FUNC_ID_RAND: if (arg_count == 0) call_result = (float)rand() / RAND_MAX; else { vm_error(vm,"rand expects 0 args"); success = false; } break;
+            case FUNC_ID_RAND:
+                if (arg_count == 0) {
+                    if (vm->params->rng_state_ptr) {
+                        uint32_t r = px_rand(vm->params->rng_state_ptr);
+                        call_result = (float)r / (float)UINT32_MAX;
+                    } else {
+                        call_result = 0.0f; // Safe fallback if no RNG state provided
+                    }
+                } else { vm_error(vm,"rand expects 0 args"); success = false; }
+                break;
 
             case FUNC_ID_LFSR_VAL:
                 if (arg_count == 3) {
@@ -3498,7 +3514,16 @@ LABEL_OP_CALL: {
         case FUNC_ID_MAX: if (arg_count == 2) { float b=pop(&vm); float a=pop(&vm); call_result=fmaxf(a,b); } else vm_error(&vm,"max expects 2 args"); break;
         case FUNC_ID_SQRT: if (arg_count == 1) { float v=pop(&vm); call_result=(v >= 0) ? sqrtf(v): 0.0f; } else vm_error(&vm,"sqrt expects 1 arg"); break;
         case FUNC_ID_POW: if (arg_count == 2) { float b=pop(&vm); float a=pop(&vm); call_result=powf(a,b); } else vm_error(&vm,"pow expects 2 args"); break;
-        case FUNC_ID_RAND: if (arg_count == 0) call_result = (float)rand() / RAND_MAX; else vm_error(&vm,"rand expects 0 args"); break;
+        case FUNC_ID_RAND:
+            if (arg_count == 0) {
+                if (vm.params->rng_state_ptr) {
+                    uint32_t r = px_rand(vm.params->rng_state_ptr);
+                    call_result = (float)r / (float)UINT32_MAX;
+                } else {
+                    call_result = 0.0f;
+                }
+            } else vm_error(&vm,"rand expects 0 args");
+            break;
         case FUNC_ID_LFSR_VAL:
             if (arg_count == 3) {
                 float seed_arg = pop(&vm); float position_arg = pop(&vm); float type_arg_float = pop(&vm); int type_id = (int)roundf(type_arg_float);
