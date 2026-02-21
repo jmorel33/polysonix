@@ -1,5 +1,18 @@
 # Update Log
 
+## v1.8.10 (2026/01/22)
+**Fix: Command Queue Spinlock**
+
+Replaced the spinlock-based CommandQueue implementation with a true lock-free Multi-Producer Single-Consumer (MPSC) design using atomic flags.
+
+*   **The Issue:**
+    *   The previous implementation used `atomic_flag` as a spinlock around the push operation. If a UI thread was preempted by the OS while holding this lock, the audio thread (or other producer threads) would spin infinitely, burning CPU cycles and causing potential audio dropouts (priority inversion).
+*   **The Fix:**
+    *   **Lock-Free MPSC:** Implemented a robust "reserve-then-commit" strategy.
+    *   **Atomic Flags:** Each slot in the ring buffer now has an `_Atomic uint8_t ready` flag.
+    *   **Push:** Producers use a CAS loop to reserve a write index, write data, and then set the `ready` flag.
+    *   **Pop:** The consumer checks the `ready` flag at the read index. If it's not set (data not yet committed), it treats the queue as empty, avoiding race conditions without blocking.
+
 ## v1.8.9 (2026/01/21)
 **Fix: Sigma VM Stack Overflow**
 

@@ -3,14 +3,14 @@
 </div>
 
 # Polysonix
-**Version 1.8.9 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
+**Version 1.8.10 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
 
 A single-header polyphonic synthesizer engine.
 
-### What's New in v1.8.9
+### What's New in v1.8.10
+- **Fix: Command Queue Spinlock:** Replaced the spinlock-based CommandQueue implementation with a true lock-free Multi-Producer Single-Consumer (MPSC) design using atomic flags. This prevents priority inversion and infinite spinning if the UI thread is preempted while pushing a command.
 - **Sigma VM Stack Fix:** Replaced recursive `sigma` implementation with iterative bytecode to prevent stack overflows in real-time audio threads.
 - **Smooth LFO Modulation:** Implemented linear interpolation for LFO control signals (Pitch, Filter, Amp, Pan) to eliminate audible "zipper noise" stepping artifacts.
-- **Improved Performance:** Optimization of LFO summation logic by moving calculations to the control rate block.
 
 <details>
 <summary>Table of Contents</summary>

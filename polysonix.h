@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 8
-#define POLYSONIX_VERSION_PATCH 9
+#define POLYSONIX_VERSION_PATCH 10
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1507,11 +1507,15 @@ typedef struct {
 } PxCommand;
 
 typedef struct {
-    PxCommand* buffer;
+    _Atomic uint8_t ready;
+    PxCommand cmd;
+} PxQueueSlot;
+
+typedef struct {
+    PxQueueSlot* buffer;
     int capacity;
     _Atomic int write;
     _Atomic int read;
-    atomic_flag lock;
 } CommandQueue;
 
 typedef struct {
@@ -2090,49 +2094,31 @@ static float cubic_interpolate(float y0, float y1, float y2, float y3, float t) 
 #endif
 
 static bool cmd_push(CommandQueue* q, PxCommand cmd) {
-    // 1. Spinlock Acquire
-    // "memory_order_acquire" prevents memory reordering of the buffer write
-    // to before the lock is taken.
-    while (atomic_flag_test_and_set_explicit(&q->lock, memory_order_acquire)) {
-        PX_CPU_PAUSE(); // Hint to CPU that we are in a spin-wait loop
-    }
+    int w;
+    int next_w;
+    do {
+        w = atomic_load_explicit(&q->write, memory_order_relaxed);
+        next_w = (w + 1) % q->capacity;
+        if (next_w == atomic_load_explicit(&q->read, memory_order_acquire)) {
+            return false; // Queue full
+        }
+    } while (!atomic_compare_exchange_weak_explicit(&q->write, &w, next_w, memory_order_release, memory_order_relaxed));
 
-    // --- Critical Section Start ---
-
-    // Load 'write' index (Relaxed is fine because we hold the lock)
-    int w = atomic_load_explicit(&q->write, memory_order_relaxed);
-    int next_w = (w + 1) % q->capacity;
-    bool success = false;
-
-    // Load 'read' index
-    // Using 'acquire' ensures we see the most up-to-date 'read' value from the
-    // audio thread (Consumer). If we used relaxed, we might think the queue
-    // is full when it actually has space.
-    int r = atomic_load_explicit(&q->read, memory_order_acquire);
-
-    // Check full condition
-    if (next_w != r) {
-        q->buffer[w] = cmd;
-        // Store 'write' (Release ensures the Consumer sees the data
-        // before seeing the index update)
-        atomic_store_explicit(&q->write, next_w, memory_order_release);
-        success = true;
-    }
-
-    // --- Critical Section End ---
-
-    // 2. Spinlock Release
-    atomic_flag_clear_explicit(&q->lock, memory_order_release);
-
-    return success;
+    q->buffer[w].cmd = cmd;
+    atomic_store_explicit(&q->buffer[w].ready, 1, memory_order_release);
+    return true;
 }
 
 static bool cmd_pop(CommandQueue* q, PxCommand* out_cmd) {
     int r = atomic_load_explicit(&q->read, memory_order_relaxed);
     if (r == atomic_load_explicit(&q->write, memory_order_acquire)) {
-        return false; // Queue is empty.
+        return false; // Queue is empty (no reserved slots)
     }
-    *out_cmd = q->buffer[r];
+    if (atomic_load_explicit(&q->buffer[r].ready, memory_order_acquire) == 0) {
+        return false; // Slot claimed but data not ready
+    }
+    *out_cmd = q->buffer[r].cmd;
+    atomic_store_explicit(&q->buffer[r].ready, 0, memory_order_release);
     atomic_store_explicit(&q->read, (r + 1) % q->capacity, memory_order_release);
     return true;
 }
@@ -2487,11 +2473,10 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     s->lfo_update_countdown = 1;
 
     s->cmd_queue.capacity = CMD_QUEUE_SIZE;
-    s->cmd_queue.buffer = (PxCommand*)calloc(CMD_QUEUE_SIZE, sizeof(PxCommand));
+    s->cmd_queue.buffer = (PxQueueSlot*)calloc(CMD_QUEUE_SIZE, sizeof(PxQueueSlot));
     if (!s->cmd_queue.buffer) { free(s); return NULL; }
     atomic_init(&s->cmd_queue.write, 0);
     atomic_init(&s->cmd_queue.read, 0);
-    atomic_flag_clear(&s->cmd_queue.lock);
 
     atomic_init(&s->snapshot_seqlock, 0); // Initialize SeqLock to EVEN (0)
 
