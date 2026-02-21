@@ -1,5 +1,15 @@
 # Update Log
 
+## v1.9.6 (2026/02/21)
+**Performance: Optimized Panning Calculation**
+
+This release optimizes the main per-sample audio loop by caching trigonometric panning coefficients.
+
+*   **Smart Pan Caching:**
+    *   **The Issue:** The engine was calculating `cosf` and `sinf` for every sample, even when the pan position hadn't changed.
+    *   **The Fix:** Added a caching mechanism to the `Voice` struct (`cached_pan_l`, `cached_pan_r`, `last_pan_effective`). The engine now checks if the effective pan (Base + LFO) has changed significantly (> 0.001f) before recalculating the gains.
+    *   **Impact:** Reduces CPU usage by eliminating redundant trigonometric calls for voices with static or slowly moving pan positions.
+
 ## v1.9.5 (2026/02/21)
 **Performance: Redundant Filter Calculation Check**
 

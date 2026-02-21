@@ -3,42 +3,11 @@
 </div>
 
 # Polysonix
-**Version 1.9.5 (February 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
+**Version 1.9.6 (February 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
 
 A single-header polyphonic synthesizer engine.
 
-### What's New in v1.9.5
-- **Performance: Redundant Filter Calculation Check:** Implemented intelligent caching for the voice filter. The engine now detects when filter parameters (cutoff, resonance, mode) are static and skips the computationally expensive coefficient recalculation (`sinf`/`tanf`) for those sample frames, yielding a ~7% performance boost in typical polyphonic scenarios.
-
-### What's New in v1.9.4
-- **Performance: Optimized Filter Key Tracking:** Hoisted the computationally expensive filter key tracking calculation (`exp2f`) out of the per-sample audio loop. It is now calculated once per block for active voices, reducing redundant math operations and improving overall engine performance.
-
-### What's New in v1.9.3
-- **Dev Tooling:** Added `tools/transpile_waves.py`, a script that transpiles the ROM waveform expressions into native C code. This allows for A/B performance benchmarking (Native vs. VM Interpreter), revealing significant potential speedups (~61% avg) on static content. Native execution is gated behind `PX_BENCHMARK_NATIVE_WAVES` for testing purposes.
-- **Refactor:** Internal VM logic for Random Number Generation and LFSRs has been refactored into shared inline helper functions, improving code modularity and maintainability.
-
-### What's New in v1.9.2
-- **Performance: Optimized Pitch Modulation:** Replaced general-purpose `powf(2.0f, x)` calls with the optimized `exp2f(x)` function for all frequency and pitch calculations (MIDI conversion, LFO modulation, key tracking), yielding significant CPU gains.
-- **VM Optimization:** Updated the `OP_POW` instruction in the virtual machine (both CPU and GPU backends) to conditionally use `exp2` when the base is exactly 2.0, speeding up scripts that use octave scaling.
-
-### What's New in v1.9.1
-- **Performance: Optimized Transcendental Functions:** Replaced the expensive `tanhf` standard library call with a fast polynomial approximation (`fast_tanh`) for both the filter drive and VM opcodes. This yields a ~2.2x speedup for saturation-heavy patches.
-
-### What's New in v1.9.0
-- **Refactor: Flat Math Opcodes:** Significantly optimized the `px_vm` by replacing the generic `OP_CALL` dispatch mechanism with specific, flat opcodes (e.g., `OP_SIN`, `OP_RAND`, `OP_POW`). This flattening reduces branch misprediction overhead in the interpreter loop and simplifies the bytecode structure.
-- **Optimization: Inline VM Stack:** Mathematical operations now perform inline stack checks and manipulation within the main dispatch loop, further reducing function call overhead.
-
-### What's New in v1.8.12
-- **Fix: Unsafe Oscillator Phase Wrapping:** Implemented safe phase wrapping logic to handle large increments (e.g., during high-frequency synthesis or aggressive modulation), preventing phase values from exceeding the valid [0.0, 1.0) range.
-
-### What's New in v1.8.11
-- **Fix: Soft Clip Aliasing:** The soft clipper is now applied inside the 2x oversampling loop (before decimation) to prevent harmonics from folding back into the audible spectrum.
-- **Optimization: Fast Tanh:** Replaced expensive standard library `tanhf` calls in the filter with a fast polynomial approximation (`fast_tanh`), yielding significant CPU performance improvements.
-
-### What's New in v1.8.10
-- **Fix: Command Queue Spinlock:** Replaced the spinlock-based CommandQueue implementation with a true lock-free Multi-Producer Single-Consumer (MPSC) design using atomic flags. This prevents priority inversion and infinite spinning if the UI thread is preempted while pushing a command.
-- **Sigma VM Stack Fix:** Replaced recursive `sigma` implementation with iterative bytecode to prevent stack overflows in real-time audio threads.
-- **Smooth LFO Modulation:** Implemented linear interpolation for LFO control signals (Pitch, Filter, Amp, Pan) to eliminate audible "zipper noise" stepping artifacts.
+For detailed changes, see the [Update Log](doc/updatelog.md).
 
 <details>
 <summary>Table of Contents</summary>
