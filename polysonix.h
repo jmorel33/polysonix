@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 9
-#define POLYSONIX_VERSION_PATCH 3
+#define POLYSONIX_VERSION_PATCH 4
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -2749,6 +2749,20 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
     }
 
     memset(stereo_buffer, 0, num_frames * 2 * sizeof(float));
+
+    // Pre-calculate filter key tracking factors
+    float key_track_factors[MAX_VOICES];
+    int voices_to_calc = (s->config.num_voices < MAX_VOICES) ? s->config.num_voices : MAX_VOICES;
+
+    for (int v_idx = 0; v_idx < voices_to_calc; ++v_idx) {
+        Voice *v = &s->voices[v_idx];
+        if (v->active) {
+            key_track_factors[v_idx] = exp2f((v->midi_note - 60.0f) / 12.0f * s->patch.filter_key_track);
+        } else {
+            key_track_factors[v_idx] = 1.0f;
+        }
+    }
+
     // --- Main Sample Loop ---
     for (int i = 0; i < num_frames; i++) {
         // --- LFO Update Block (runs at a slower rate) ---
@@ -3122,7 +3136,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             float effective_voice_freq = v->frequency * exp2f(global_pitch_mod / 12.0f);
 
             // 5.2 Filter Logic
-            float key_track_factor = exp2f((v->midi_note - 60.0f) / 12.0f * s->patch.filter_key_track);
+            float key_track_factor = key_track_factors[v_idx];
             float current_filter_cutoff = (s->patch.filter_cutoff_hz * key_track_factor) + (adsr_filter_env_input + lfo_filter_env_input) * s->patch.filter_env_amount_hz + adsr_total_filter_cutoff_hz;
             current_filter_cutoff += dest_mod[PX_MOD_DEST_FILTER_CUTOFF] * 8000.0f;
             current_filter_cutoff = fmaxf(20.f, fminf(current_filter_cutoff, s->config.sample_rate * .48f));

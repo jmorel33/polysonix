@@ -3,9 +3,12 @@
 </div>
 
 # Polysonix
-**Version 1.9.3 (February 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
+**Version 1.9.4 (February 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
 
 A single-header polyphonic synthesizer engine.
+
+### What's New in v1.9.4
+- **Performance: Optimized Filter Key Tracking:** Hoisted the computationally expensive filter key tracking calculation (`exp2f`) out of the per-sample audio loop. It is now calculated once per block for active voices, reducing redundant math operations and improving overall engine performance.
 
 ### What's New in v1.9.3
 - **Dev Tooling:** Added `tools/transpile_waves.py`, a script that transpiles the ROM waveform expressions into native C code. This allows for A/B performance benchmarking (Native vs. VM Interpreter), revealing significant potential speedups (~61% avg) on static content. Native execution is gated behind `PX_BENCHMARK_NATIVE_WAVES` for testing purposes.
