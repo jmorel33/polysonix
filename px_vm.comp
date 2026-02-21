@@ -1,6 +1,6 @@
 // Polysonix Wave Bytecode Compute Shader
 // Author: Jacques Morel
-// (c) 2025 Jacques Morel. All rights reserved.
+// (c) 2025-2026 Jacques Morel. All rights reserved.
 // Licensed under the MIT license. See LICENSE for details.
 
 #version 450 core

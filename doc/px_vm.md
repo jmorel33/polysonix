@@ -1,5 +1,5 @@
 # Polysonix Waveform Scripting Language Guide
-   (c) 2025 Jacques Morel
+   (c) 2025-2026 Jacques Morel
    This software is licensed under the MIT License.
 
 ## 1. Introduction
