@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 8
-#define POLYSONIX_VERSION_PATCH 7
+#define POLYSONIX_VERSION_PATCH 8
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1229,6 +1229,22 @@ typedef struct {
 
     // --- v1.6: Per-Oscillator Sequencer State ---
     PxSeqState seq_states[PX_MAX_OSC_PER_VOICE];
+
+    // Smooth LFO Modulations (v1.8.8 Zipper Noise Fix)
+    float lfo_pitch_mod_val;
+    float lfo_pitch_mod_step;
+    float lfo_cutoff_mod_val;
+    float lfo_cutoff_mod_step;
+    float lfo_amp_mod_val;
+    float lfo_amp_mod_step;
+    float lfo_pan_mod_val;
+    float lfo_pan_mod_step;
+    float lfo_param1_mod_val;
+    float lfo_param1_mod_step;
+    float lfo_param2_mod_val;
+    float lfo_param2_mod_step;
+    float lfo_param3_mod_val;
+    float lfo_param3_mod_step;
 
     uint32_t rng_state;         // Context-aware PRNG state (Shared)
 } Voice;
@@ -2861,6 +2877,54 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         vlfo->current_output_value = 0.0f;
                     }
                 }
+
+                // --- Calculate Aggregated LFO Targets for Smoothing (Zipper Noise Fix) ---
+                float target_lfo_pitch = 0.0f;
+                float target_lfo_cutoff = 0.0f;
+                float target_lfo_amp = 0.0f;
+                float target_lfo_pan = 0.0f;
+                float target_lfo_param1 = 0.0f;
+                float target_lfo_param2 = 0.0f;
+                float target_lfo_param3 = 0.0f;
+
+                // Calculate ADSR Scaling for LFOs (Snapshot)
+                float adsr_lfo_scale[MAX_LFOS];
+                for(int k=0; k<s->config.num_lfos; ++k) adsr_lfo_scale[k] = 1.0f;
+
+                for (int j = 0; j < s->config.num_voice_adsrs; ++j) {
+                    if (s->patch.template_voice_adsrs[j].enabled && v->adsrs[j].level > INAUDIBLE_ADSR_LEVEL) {
+                        float lvl = v->adsrs[j].level; // Snapshot of current level
+                        float* mods = &s->patch.template_voice_adsr_mod_amounts[j * PX_ADSR_DEST_COUNT];
+                        if (s->config.num_lfos > 0) adsr_lfo_scale[0] += (lvl-0.5f)*2.f * mods[PX_ADSR_DEST_LFO0_OUTPUT_LEVEL];
+                        if (s->config.num_lfos > 1) adsr_lfo_scale[1] += (lvl-0.5f)*2.f * mods[PX_ADSR_DEST_LFO1_OUTPUT_LEVEL];
+                        if (s->config.num_lfos > 2) adsr_lfo_scale[2] += (lvl-0.5f)*2.f * mods[PX_ADSR_DEST_LFO2_OUTPUT_LEVEL];
+                    }
+                }
+                for(int k=0; k<s->config.num_lfos; ++k) adsr_lfo_scale[k] = fmaxf(0.f, adsr_lfo_scale[k]);
+
+                // Sum LFO Contributions
+                for (int lfo_idx = 0; lfo_idx < s->config.num_lfos; ++lfo_idx) {
+                    float lfo_val = v->lfo_instances[lfo_idx].current_output_value * adsr_lfo_scale[lfo_idx];
+                    float* mods = s->patch.template_lfos[lfo_idx].mod_amounts;
+
+                    target_lfo_pitch += lfo_val * mods[PX_LFO_DEST_PITCH];
+                    target_lfo_cutoff += lfo_val * mods[PX_LFO_DEST_FILTER_CUTOFF];
+                    target_lfo_amp += lfo_val * mods[PX_LFO_DEST_AMP];
+                    target_lfo_pan += lfo_val * mods[PX_LFO_DEST_PAN];
+                    target_lfo_param1 += lfo_val * mods[PX_LFO_DEST_PARAM1];
+                    target_lfo_param2 += lfo_val * mods[PX_LFO_DEST_PARAM2];
+                    target_lfo_param3 += lfo_val * mods[PX_LFO_DEST_PARAM3];
+                }
+
+                // Calculate Steps
+                float inv_samples = 1.0f / (float)s->config.samples_per_lfo_update;
+                v->lfo_pitch_mod_step = (target_lfo_pitch - v->lfo_pitch_mod_val) * inv_samples;
+                v->lfo_cutoff_mod_step = (target_lfo_cutoff - v->lfo_cutoff_mod_val) * inv_samples;
+                v->lfo_amp_mod_step = (target_lfo_amp - v->lfo_amp_mod_val) * inv_samples;
+                v->lfo_pan_mod_step = (target_lfo_pan - v->lfo_pan_mod_val) * inv_samples;
+                v->lfo_param1_mod_step = (target_lfo_param1 - v->lfo_param1_mod_val) * inv_samples;
+                v->lfo_param2_mod_step = (target_lfo_param2 - v->lfo_param2_mod_val) * inv_samples;
+                v->lfo_param3_mod_step = (target_lfo_param3 - v->lfo_param3_mod_val) * inv_samples;
             }
         } // End LFO update block
 
@@ -2972,13 +3036,20 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             }
 
             // --- Step 2: Calculate All Modulations LIVE from the Patch ---
+            // Apply Smooth LFO Steps (Zipper Noise Fix)
+            v->lfo_pitch_mod_val += v->lfo_pitch_mod_step;
+            v->lfo_cutoff_mod_val += v->lfo_cutoff_mod_step;
+            v->lfo_amp_mod_val += v->lfo_amp_mod_step;
+            v->lfo_pan_mod_val += v->lfo_pan_mod_step;
+            v->lfo_param1_mod_val += v->lfo_param1_mod_step;
+            v->lfo_param2_mod_val += v->lfo_param2_mod_step;
+            v->lfo_param3_mod_val += v->lfo_param3_mod_step;
+
             float adsr_total_param1_mod=0, adsr_total_param2_mod=0, adsr_total_param3_mod=0, adsr_total_pitch_mod_st=0, adsr_total_filter_cutoff_hz=0, adsr_filter_env_input=0, adsr_total_filter_res=0;
 
             // Removed v1.2 hard-wired velocity/aftertouch
             float vel_amp_scale = 1.0f;
 
-            float adsr_lfo_level_scale[s->config.num_lfos];
-            for(int k=0; k<s->config.num_lfos; ++k) adsr_lfo_level_scale[k] = 1.0f;
             for (int j = 0; j < s->config.num_voice_adsrs; ++j) {
                 if (s->patch.template_voice_adsrs[j].enabled && v->adsrs[j].level > INAUDIBLE_ADSR_LEVEL) {
                     float lvl = v->adsrs[j].level;
@@ -2987,28 +3058,21 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     adsr_total_param2_mod += lvl * mods[PX_ADSR_DEST_PARAM2];
                     adsr_total_param3_mod += lvl * mods[PX_ADSR_DEST_PARAM3];
                     adsr_total_pitch_mod_st += lvl * mods[PX_ADSR_DEST_FREQUENCY];
-                    if (s->config.num_lfos > 0) adsr_lfo_level_scale[0] += (lvl-0.5f)*2.f * mods[PX_ADSR_DEST_LFO0_OUTPUT_LEVEL];
-                    if (s->config.num_lfos > 1) adsr_lfo_level_scale[1] += (lvl-0.5f)*2.f * mods[PX_ADSR_DEST_LFO1_OUTPUT_LEVEL];
-                    if (s->config.num_lfos > 2) adsr_lfo_level_scale[2] += (lvl-0.5f)*2.f * mods[PX_ADSR_DEST_LFO2_OUTPUT_LEVEL];
+                    // LFO Scaling via ADSR moved to LFO Update Block
                     adsr_total_filter_cutoff_hz += lvl * mods[PX_ADSR_DEST_FILTER_CUTOFF];
                     adsr_filter_env_input += lvl * mods[PX_ADSR_DEST_FILTER_ENV_INPUT];
                     adsr_total_filter_res += lvl * mods[PX_ADSR_DEST_FILTER_RESONANCE];
                 }
             }
-            for(int k=0; k<s->config.num_lfos; ++k) adsr_lfo_level_scale[k] = fmaxf(0.f, adsr_lfo_level_scale[k]);
             adsr_filter_env_input = fmaxf(0.f, fminf(1.f, adsr_filter_env_input));
-            float lfo_pitch_env_input=0, lfo_filter_env_input=0, lfo_amp_env_input=0, lfo_bytecode_mod_a=0, lfo_bytecode_mod_b=0, lfo_bytecode_mod_c=0, lfo_pan_env_input=0;
-            for (int lfo_idx = 0; lfo_idx < s->config.num_lfos; ++lfo_idx) {
-                float lfo_final_output = v->lfo_instances[lfo_idx].current_output_value * adsr_lfo_level_scale[lfo_idx];
-                float* mods = s->patch.template_lfos[lfo_idx].mod_amounts;
-                lfo_pitch_env_input += lfo_final_output * mods[PX_LFO_DEST_PITCH];
-                lfo_filter_env_input += lfo_final_output * mods[PX_LFO_DEST_FILTER_CUTOFF];
-                lfo_amp_env_input += lfo_final_output * mods[PX_LFO_DEST_AMP];
-                lfo_bytecode_mod_a += lfo_final_output * mods[PX_LFO_DEST_PARAM1];
-                lfo_bytecode_mod_b += lfo_final_output * mods[PX_LFO_DEST_PARAM2];
-                lfo_bytecode_mod_c += lfo_final_output * mods[PX_LFO_DEST_PARAM3];
-                lfo_pan_env_input += lfo_final_output * mods[PX_LFO_DEST_PAN];
-            }
+
+            float lfo_pitch_env_input = v->lfo_pitch_mod_val;
+            float lfo_filter_env_input = v->lfo_cutoff_mod_val;
+            float lfo_amp_env_input = v->lfo_amp_mod_val;
+            float lfo_bytecode_mod_a = v->lfo_param1_mod_val;
+            float lfo_bytecode_mod_b = v->lfo_param2_mod_val;
+            float lfo_bytecode_mod_c = v->lfo_param3_mod_val;
+            float lfo_pan_env_input = v->lfo_pan_mod_val;
 
             // --- Step 3: Amplitude Calculation ---
             float effective_amplitude = 0.0f; bool is_amp_targeted = false; float summed_amp_contributions = 0.0f;
@@ -4166,6 +4230,16 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     if (voice_idx == -1) voice_idx = find_voice_to_steal(s);
     if (voice_idx == -1) return;
     Voice* v = &s->voices[voice_idx];
+
+    // Reset LFO Smooth Mods
+    v->lfo_pitch_mod_val = 0.0f; v->lfo_pitch_mod_step = 0.0f;
+    v->lfo_cutoff_mod_val = 0.0f; v->lfo_cutoff_mod_step = 0.0f;
+    v->lfo_amp_mod_val = 0.0f; v->lfo_amp_mod_step = 0.0f;
+    v->lfo_pan_mod_val = 0.0f; v->lfo_pan_mod_step = 0.0f;
+    v->lfo_param1_mod_val = 0.0f; v->lfo_param1_mod_step = 0.0f;
+    v->lfo_param2_mod_val = 0.0f; v->lfo_param2_mod_step = 0.0f;
+    v->lfo_param3_mod_val = 0.0f; v->lfo_param3_mod_step = 0.0f;
+
     v->initial_velocity = fmaxf(0.0f, fminf(1.0f, velocity));
     v->poly_aftertouch_pressure = 0.0f;
     v->active = true; v->midi_note = midi_note;

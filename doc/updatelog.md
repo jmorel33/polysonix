@@ -1,5 +1,15 @@
 # Update Log
 
+## v1.8.8 (2026/01/20)
+**Fix: LFO Zipper Noise**
+
+This release eliminates audible stepping artifacts ("zipper noise") when using LFOs to modulate pitch or filter cutoff.
+
+*   **Smooth LFO Modulation:**
+    *   **Interpolation:** Implemented linear interpolation for all LFO control signals (Pitch, Filter Cutoff, Amp, Pan, Params). Instead of holding a value constant for ~32 samples (the control block size), the engine now calculates a target value and smoothly ramps towards it every audio sample.
+    *   **Performance:** Optimized the modulation summing logic. By moving the heavy lifting of summing multiple LFOs and scaling by ADSRs to the control-rate block (once every 32 samples), per-sample overhead is actually reduced despite the added interpolation math.
+    *   **Clean Attacks:** LFO interpolation state is reset on Note On, ensuring a clean start to modulation without slew artifacts from previous voice states.
+
 ## v1.8.7 (2026/01/19)
 **Fix: UI Snapshot Thread Safety**
 
