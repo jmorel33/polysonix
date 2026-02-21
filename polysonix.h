@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 9
-#define POLYSONIX_VERSION_PATCH 4
+#define POLYSONIX_VERSION_PATCH 5
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1245,6 +1245,12 @@ typedef struct {
     float lfo_param2_mod_step;
     float lfo_param3_mod_val;
     float lfo_param3_mod_step;
+
+    // Cache for filter optimization
+    float last_filter_cutoff_hz;
+    float last_filter_resonance_q;
+    PxFilterMode last_filter_mode;
+    int last_filter_poles;
 
     uint32_t rng_state;         // Context-aware PRNG state (Shared)
 } Voice;
@@ -3141,12 +3147,25 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             current_filter_cutoff += dest_mod[PX_MOD_DEST_FILTER_CUTOFF] * 8000.0f;
             current_filter_cutoff = fmaxf(20.f, fminf(current_filter_cutoff, s->config.sample_rate * .48f));
             float current_filter_res = s->patch.filter_resonance_q + adsr_total_filter_res; current_filter_res = fmaxf(0.5f, fminf(current_filter_res, 20.f));
-            Filter_SetCoefficients(&v->filter_instance, current_filter_cutoff, current_filter_res, s->patch.filter_mode, s->patch.filter_poles, s->config.sample_rate); v->filter_instance.drive = s->patch.filter_drive;
-            v->filter_instance_r.f_coeff = v->filter_instance.f_coeff;
-            v->filter_instance_r.q_inv_coeff = v->filter_instance.q_inv_coeff;
-            v->filter_instance_r.pole3_coeff = v->filter_instance.pole3_coeff;
-            v->filter_instance_r.current_mode = v->filter_instance.current_mode;
-            v->filter_instance_r.poles = v->filter_instance.poles;
+
+            if (current_filter_cutoff != v->last_filter_cutoff_hz ||
+                current_filter_res != v->last_filter_resonance_q ||
+                s->patch.filter_mode != v->last_filter_mode ||
+                s->patch.filter_poles != v->last_filter_poles)
+            {
+                Filter_SetCoefficients(&v->filter_instance, current_filter_cutoff, current_filter_res, s->patch.filter_mode, s->patch.filter_poles, s->config.sample_rate);
+                v->last_filter_cutoff_hz = current_filter_cutoff;
+                v->last_filter_resonance_q = current_filter_res;
+                v->last_filter_mode = s->patch.filter_mode;
+                v->last_filter_poles = s->patch.filter_poles;
+
+                v->filter_instance_r.f_coeff = v->filter_instance.f_coeff;
+                v->filter_instance_r.q_inv_coeff = v->filter_instance.q_inv_coeff;
+                v->filter_instance_r.pole3_coeff = v->filter_instance.pole3_coeff;
+                v->filter_instance_r.current_mode = v->filter_instance.current_mode;
+                v->filter_instance_r.poles = v->filter_instance.poles;
+            }
+            v->filter_instance.drive = s->patch.filter_drive;
             v->filter_instance_r.drive = v->filter_instance.drive;
 
             float voice_mixed_l = 0.0f;
@@ -4344,6 +4363,12 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     v->filter_env_amount_hz = s->patch.filter_env_amount_hz;
     v->filter_instance.drive = s->patch.filter_drive;
     v->filter_instance_r.drive = s->patch.filter_drive;
+
+    v->last_filter_cutoff_hz = -1.0f;
+    v->last_filter_resonance_q = -1.0f;
+    v->last_filter_mode = PX_FILTER_MODE_OFF;
+    v->last_filter_poles = -1;
+
     for (int i = 0; i < s->config.num_lfos; ++i) {
         LFOInstance* vlfo = &v->lfo_instances[i];
         PxLFOParams* tlfo = &s->patch.template_lfos[i];

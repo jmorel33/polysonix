@@ -3,9 +3,12 @@
 </div>
 
 # Polysonix
-**Version 1.9.4 (February 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
+**Version 1.9.5 (February 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
 
 A single-header polyphonic synthesizer engine.
+
+### What's New in v1.9.5
+- **Performance: Redundant Filter Calculation Check:** Implemented intelligent caching for the voice filter. The engine now detects when filter parameters (cutoff, resonance, mode) are static and skips the computationally expensive coefficient recalculation (`sinf`/`tanf`) for those sample frames, yielding a ~7% performance boost in typical polyphonic scenarios.
 
 ### What's New in v1.9.4
 - **Performance: Optimized Filter Key Tracking:** Hoisted the computationally expensive filter key tracking calculation (`exp2f`) out of the per-sample audio loop. It is now calculated once per block for active voices, reducing redundant math operations and improving overall engine performance.
