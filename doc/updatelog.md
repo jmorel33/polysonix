@@ -1,5 +1,25 @@
 # Update Log
 
+## v1.8.7 (2026/01/19)
+**Fix: UI Snapshot Thread Safety**
+
+This release resolves a data race condition where the UI thread could read partially updated ("torn") state from the audio thread, potentially leading to visual glitches or invalid values in the UI.
+
+*   **SeqLock Implementation:**
+    *   **Mechanism:** Implemented a Sequence Lock pattern using C11 atomics (`snapshot_seqlock`). The audio thread increments a counter before and after writing to the snapshot buffer. The UI thread reads the counter, copies the data, and checks the counter again to ensure validity.
+    *   **Zero-Cost Writer:** The writer (audio thread) never blocks and only performs two lightweight atomic increments, ensuring zero impact on real-time audio performance.
+    *   **Consistency:** Getters like `PX_GetVoiceInfo`, `PX_GetLFOInfo`, and `PX_GetLimiterInfo` now guarantee that the returned struct is a consistent, atomic snapshot of a single point in time.
+
+## v1.8.6 (2026/01/18)
+**Fix: Audio Thread Thread-Safety (PRNG)**
+
+This update eliminates a source of potential audio dropouts by removing non-thread-safe standard library calls from the audio path.
+
+*   **Lock-Free PRNG:**
+    *   **The Issue:** The standard `rand()` function often uses a global lock (mutex) in many libc implementations. Calling this from the real-time audio thread could cause priority inversion or blocking if the UI thread was also calling `rand()`.
+    *   **The Fix:** Replaced all usages of `rand()` in `PX_Process` (e.g., for noise generation, probabilistic sequencing) with `px_rand`, a context-aware, lock-free Linear Congruential Generator.
+    *   **Per-Voice State:** The PRNG state is stored per-voice (`rng_state`), ensuring that random sequences are deterministic and independent for each voice.
+
 ## v1.8.5 (2026/01/18)
 **Feature Update: Long Patch Names & ROM Persistence**
 

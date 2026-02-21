@@ -3,11 +3,12 @@
 </div>
 
 # Polysonix
-**Version 1.8.6 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
+**Version 1.8.7 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
 
 A single-header polyphonic synthesizer engine.
 
-### What's New in v1.8.6
+### What's New in v1.8.7
+- **UI Snapshot Thread Safety:** Implemented SeqLock to prevent data tearing when reading voice state from the UI thread.
 - **Lock-Free Audio Thread:** Replaced standard `rand()` with context-aware, lock-free PRNG to eliminate audio thread dropouts.
 - **Expanded Patch Name:** Full support for 64-character patch names in struct, serialization, and ROM.
 - Modern polyphonic glide/portamento with smooth RC curve and legato/always modes

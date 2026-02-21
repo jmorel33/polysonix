@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 8
-#define POLYSONIX_VERSION_PATCH 6
+#define POLYSONIX_VERSION_PATCH 7
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1542,6 +1542,7 @@ struct PxSynth {
     CommandQueue cmd_queue;
     UISnapshot ui_snapshot;
     uint32_t rng_state; // Context-aware PRNG state for template/global logic
+    _Atomic uint32_t snapshot_seqlock; // SeqLock for UI Snapshot tearing prevention
 };
 
 
@@ -2392,6 +2393,9 @@ static void PX_ProcessCommands(PxSynth* s) {
 
 // --- UI SNAPSHOT UPDATE (Audio Thread Only) ---
 static void PX_UpdateUISnapshot(PxSynth* s) {
+    // SeqLock Writer: Increment to ODD
+    atomic_fetch_add_explicit(&s->snapshot_seqlock, 1, memory_order_acquire);
+
     memcpy(s->ui_snapshot.patch_copy.name, s->patch.name, PX_PATCH_NAME_LEN);
     memcpy(s->ui_snapshot.patch_copy.template_voice_adsrs, s->patch.template_voice_adsrs, s->config.num_voice_adsrs * sizeof(PxADSRParams));
     memcpy(s->ui_snapshot.patch_copy.template_voice_adsr_mod_amounts, s->patch.template_voice_adsr_mod_amounts, s->config.num_voice_adsrs * PX_ADSR_DEST_COUNT * sizeof(float));
@@ -2440,6 +2444,9 @@ static void PX_UpdateUISnapshot(PxSynth* s) {
     for (int i = 0; i < s->config.num_voices; ++i) { s->ui_snapshot.voices[i] = PX_GetVoiceInfo_internal(s, i); }
     for (int i = 0; i < s->config.num_lfos; ++i) { s->ui_snapshot.lfos[i] = PX_GetLFOInfo_internal(s, i); }
     s->ui_snapshot.limiter = PX_GetLimiterInfo_internal(s);
+
+    // SeqLock Writer: Increment to EVEN (Release makes data visible)
+    atomic_fetch_add_explicit(&s->snapshot_seqlock, 1, memory_order_release);
 }
 
 // --- PUBLIC API IMPLEMENTATION ---
@@ -2469,6 +2476,8 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     atomic_init(&s->cmd_queue.write, 0);
     atomic_init(&s->cmd_queue.read, 0);
     atomic_flag_clear(&s->cmd_queue.lock);
+
+    atomic_init(&s->snapshot_seqlock, 0); // Initialize SeqLock to EVEN (0)
 
     // 4. Allocate memory for all dynamic arrays within the patch.
     s->patch.template_voice_adsrs = (PxADSRParams*)calloc(config->num_voice_adsrs, sizeof(PxADSRParams));
@@ -3989,16 +3998,50 @@ PX_API float PX_GetPitchBendRange(PxSynth* s) {
 
 PX_API PxVoiceInfo PX_GetVoiceInfo(PxSynth* s, int idx) {
     if (!s || idx < 0 || idx >= s->config.num_voices) return (PxVoiceInfo){0};
-    return s->ui_snapshot.voices[idx];
+    PxVoiceInfo info;
+    uint32_t seq0, seq1;
+    do {
+        seq0 = atomic_load_explicit(&s->snapshot_seqlock, memory_order_acquire);
+        if (seq0 & 1) { continue; } // Spin while writing
+
+        info = s->ui_snapshot.voices[idx];
+
+        atomic_thread_fence(memory_order_acquire);
+        seq1 = atomic_load_explicit(&s->snapshot_seqlock, memory_order_acquire);
+    } while ((seq0 & 1) || seq0 != seq1);
+    return info;
 }
 
 PX_API PxLFOInfo PX_GetLFOInfo(PxSynth* s, int lfo_idx) {
     if (!s || lfo_idx < 0 || lfo_idx >= s->config.num_lfos) return (PxLFOInfo){0};
-    return s->ui_snapshot.lfos[lfo_idx];
+    PxLFOInfo info;
+    uint32_t seq0, seq1;
+    do {
+        seq0 = atomic_load_explicit(&s->snapshot_seqlock, memory_order_acquire);
+        if (seq0 & 1) { continue; }
+
+        info = s->ui_snapshot.lfos[lfo_idx];
+
+        atomic_thread_fence(memory_order_acquire);
+        seq1 = atomic_load_explicit(&s->snapshot_seqlock, memory_order_acquire);
+    } while ((seq0 & 1) || seq0 != seq1);
+    return info;
 }
 
 PX_API PxLimiterInfo PX_GetLimiterInfo(PxSynth* s) {
-    return s ? s->ui_snapshot.limiter : (PxLimiterInfo){0};
+    if (!s) return (PxLimiterInfo){0};
+    PxLimiterInfo info;
+    uint32_t seq0, seq1;
+    do {
+        seq0 = atomic_load_explicit(&s->snapshot_seqlock, memory_order_acquire);
+        if (seq0 & 1) { continue; }
+
+        info = s->ui_snapshot.limiter;
+
+        atomic_thread_fence(memory_order_acquire);
+        seq1 = atomic_load_explicit(&s->snapshot_seqlock, memory_order_acquire);
+    } while ((seq0 & 1) || seq0 != seq1);
+    return info;
 }
 
 PX_API int PX_GetNumWaveforms() {
