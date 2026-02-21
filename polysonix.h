@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 9
-#define POLYSONIX_VERSION_PATCH 5
+#define POLYSONIX_VERSION_PATCH 6
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1251,6 +1251,11 @@ typedef struct {
     float last_filter_resonance_q;
     PxFilterMode last_filter_mode;
     int last_filter_poles;
+
+    // Cache for pan optimization
+    float cached_pan_l;
+    float cached_pan_r;
+    float last_pan_effective;
 
     uint32_t rng_state;         // Context-aware PRNG state (Shared)
 } Voice;
@@ -2769,6 +2774,21 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
         }
     }
 
+    // Pre-calculate pan gains for the block (optimization)
+    for (int v_idx = 0; v_idx < voices_to_calc; ++v_idx) {
+        Voice *v = &s->voices[v_idx];
+        if (v->active) {
+            float current_pan = s->patch.voice_pan_setting + v->lfo_pan_mod_val;
+            current_pan = fmaxf(-1.f, fminf(1.f, current_pan));
+            if (fabsf(current_pan - v->last_pan_effective) > 0.001f) {
+                float pan_angle = (current_pan + 1.f) * .25f * PI;
+                v->cached_pan_l = cosf(pan_angle);
+                v->cached_pan_r = sinf(pan_angle);
+                v->last_pan_effective = current_pan;
+            }
+        }
+    }
+
     // --- Main Sample Loop ---
     for (int i = 0; i < num_frames; i++) {
         // --- LFO Update Block (runs at a slower rate) ---
@@ -3608,11 +3628,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             float final_sample_l = Filter_Process_Oversampled(&v->filter_instance, voice_mixed_l, final_amp_with_lfo);
             float final_sample_r = Filter_Process_Oversampled(&v->filter_instance_r, voice_mixed_r, final_amp_with_lfo);
 
-            float current_pan = s->patch.voice_pan_setting + lfo_pan_env_input;
-            current_pan = fmaxf(-1.f, fminf(1.f, current_pan));
-            float pan_angle = (current_pan + 1.f) * .25f * PI;
-            float gain_l = cosf(pan_angle);
-            float gain_r = sinf(pan_angle);
+            float gain_l = v->cached_pan_l;
+            float gain_r = v->cached_pan_r;
 
             mixed_sample_l_f += final_sample_l * gain_l;
             mixed_sample_r_f += final_sample_r * gain_r;
@@ -4289,6 +4306,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     v->key_id = key_id;
     v->trigger_sequence_number = s->global_trigger_counter++;
     v->pan_position = s->patch.voice_pan_setting;
+    v->last_pan_effective = -10.0f; // Sentinel to force update
 
     // Apply Polyphonic Glide Logic (if not in reuse_voice block)
     // If do_glide is true, we should glide from CURRENT voice freq (portamento).
