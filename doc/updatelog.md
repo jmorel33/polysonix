@@ -1,5 +1,14 @@
 # Update Log
 
+## v1.8.12 (2026/01/23)
+**Fix: Unsafe Oscillator Phase Wrapping**
+
+This release resolves a critical logic bug where the oscillator phase could drift out of bounds under extreme modulation or high-frequency conditions.
+
+*   **Safe Phase Wrapping:**
+    *   **The Issue:** The phase update logic previously used a simple conditional subtraction (`if (phase >= 1.0f) phase -= 1.0f;`). If the phase increment per sample exceeded `1.0f` (e.g., during deep FM, high-pitch playback, or aggressive pitch modulation), the phase would remain > 1.0f, causing audio corruption or silence in VM scripts expecting normalized input.
+    *   **The Fix:** Updated the phase wrapping logic to use integer casting (`phase -= (float)((int)phase)`). This ensures the phase is correctly wrapped into the [0.0, 1.0) interval regardless of how large the increment is, guaranteeing stability for all synthesis scenarios.
+
 ## v1.8.11 (2026/01/23)
 **Fix: DSP Aliasing & Optimization**
 
