@@ -3,9 +3,12 @@
 </div>
 
 # Polysonix
-**Version 1.8.11 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
+**Version 1.8.12 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
 
 A single-header polyphonic synthesizer engine.
+
+### What's New in v1.8.12
+- **Fix: Unsafe Oscillator Phase Wrapping:** Implemented safe phase wrapping logic to handle large increments (e.g., during high-frequency synthesis or aggressive modulation), preventing phase values from exceeding the valid [0.0, 1.0) range.
 
 ### What's New in v1.8.11
 - **Fix: Soft Clip Aliasing:** The soft clipper is now applied inside the 2x oversampling loop (before decimation) to prevent harmonics from folding back into the audible spectrum.

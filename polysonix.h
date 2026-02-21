@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 8
-#define POLYSONIX_VERSION_PATCH 11
+#define POLYSONIX_VERSION_PATCH 12
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -3311,8 +3311,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         float xmod = sq->current_sequence->xmod_depth;
                         if (sq->current_sequence->xmod_mod_src >= 0) xmod += mod_sources[sq->current_sequence->xmod_mod_src];
                         v->osc_phase[o] += raw_sample * xmod * 0.1f;
-                        if (v->osc_phase[o] >= 1.0f) v->osc_phase[o] -= 1.0f;
-                        else if (v->osc_phase[o] < 0.0f) v->osc_phase[o] += 1.0f;
+                        if (v->osc_phase[o] >= 1.0f) v->osc_phase[o] -= (float)((int)v->osc_phase[o]);
+                        else if (v->osc_phase[o] < 0.0f) v->osc_phase[o] += (float)((int)(-v->osc_phase[o]) + 1);
                     }
                 }
 
@@ -3325,8 +3325,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         // Scaling: raw_sample is +/-1.
                         v->osc_phase[o-1] += raw_sample * xm_depth * 0.5f;
                         // Wrap
-                        if (v->osc_phase[o-1] >= 1.0f) v->osc_phase[o-1] -= 1.0f;
-                        else if (v->osc_phase[o-1] < 0.0f) v->osc_phase[o-1] += 1.0f;
+                        if (v->osc_phase[o-1] >= 1.0f) v->osc_phase[o-1] -= (float)((int)v->osc_phase[o-1]);
+                        else if (v->osc_phase[o-1] < 0.0f) v->osc_phase[o-1] += (float)((int)(-v->osc_phase[o-1]) + 1);
                     }
                 }
 
@@ -3396,13 +3396,13 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 if (sq->current_sequence && (sq->step_flags & PX_WSEQ_REVERSE_PLAY)) {
                     v->osc_phase[o] -= phase_inc;
                     if (v->osc_phase[o] < 0.0f) {
-                        v->osc_phase[o] += 1.0f;
+                        v->osc_phase[o] += (float)((int)(-v->osc_phase[o]) + 1);
                         cycle_completed = true;
                     }
                 } else {
                     v->osc_phase[o] += phase_inc;
                     if (v->osc_phase[o] >= 1.0f) {
-                        v->osc_phase[o] -= 1.0f;
+                        v->osc_phase[o] -= (float)((int)v->osc_phase[o]);
                         cycle_completed = true;
                     }
                 }
