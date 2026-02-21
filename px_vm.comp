@@ -491,7 +491,7 @@ void main() {
             case OP_MIN:  { float b = pop(); float a = pop(); push(min(a, b)); break; }
             case OP_MAX:  { float b = pop(); float a = pop(); push(max(a, b)); break; }
             case OP_SQRT: { float v = pop(); push(v >= 0.0 ? sqrt(v) : 0.0); break; }
-            case OP_POW:  { float b = pop(); float a = pop(); push(pow(a, b)); break; }
+            case OP_POW:  { float b = pop(); float a = pop(); push(a == 2.0 ? exp2(b) : pow(a, b)); break; }
             case OP_RAND: push(pseudo_rand()); break;
 
             case OP_LFSR_VAL: {
