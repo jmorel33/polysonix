@@ -3,9 +3,13 @@
 </div>
 
 # Polysonix
-**Version 1.9.1 (February 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
+**Version 1.9.2 (February 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
 
 A single-header polyphonic synthesizer engine.
+
+### What's New in v1.9.2
+- **Performance: Optimized Pitch Modulation:** Replaced general-purpose `powf(2.0f, x)` calls with the optimized `exp2f(x)` function for all frequency and pitch calculations (MIDI conversion, LFO modulation, key tracking), yielding significant CPU gains.
+- **VM Optimization:** Updated the `OP_POW` instruction in the virtual machine (both CPU and GPU backends) to conditionally use `exp2` when the base is exactly 2.0, speeding up scripts that use octave scaling.
 
 ### What's New in v1.9.1
 - **Performance: Optimized Transcendental Functions:** Replaced the expensive `tanhf` standard library call with a fast polynomial approximation (`fast_tanh`) for both the filter drive and VM opcodes. This yields a ~2.2x speedup for saturation-heavy patches.

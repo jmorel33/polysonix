@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 9
-#define POLYSONIX_VERSION_PATCH 1
+#define POLYSONIX_VERSION_PATCH 2
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1997,7 +1997,7 @@ static void LFOInstance_Init(LFOInstance* lfo, float sample_rate) {
 }
 
 static float get_midi_frequency(int midi_note) {
-    return 440.0f * powf(2.0f, (midi_note - 69.0f) / 12.0f);
+    return 440.0f * exp2f((midi_note - 69.0f) / 12.0f);
 }
 
 static int find_inactive_voice(PxSynth* s) {
@@ -2857,7 +2857,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     if (tplfo->enabled) {
                         // Matrix Mod: Frequency
                         float freq_mod = dest_mod[PX_MOD_DEST_LFO1_FREQ + lfo_idx * 2];
-                        float effective_freq = tplfo->frequency * powf(2.0f, freq_mod * 4.0f);
+                        float effective_freq = tplfo->frequency * exp2f(freq_mod * 4.0f);
                         effective_freq = fmaxf(0.01f, effective_freq);
 
                         vlfo->phase = fmodf(vlfo->phase + (effective_freq * lfo_update_delta_time), 1.0f);
@@ -3119,10 +3119,10 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
             // Calculate Effective Frequency (with Global Pitch Mod)
             float global_pitch_mod = lfo_pitch_env_input + adsr_total_pitch_mod_st;
-            float effective_voice_freq = v->frequency * powf(2.0f, global_pitch_mod / 12.0f);
+            float effective_voice_freq = v->frequency * exp2f(global_pitch_mod / 12.0f);
 
             // 5.2 Filter Logic
-            float key_track_factor = powf(2.0f, (v->midi_note - 60.0f) / 12.0f * s->patch.filter_key_track);
+            float key_track_factor = exp2f((v->midi_note - 60.0f) / 12.0f * s->patch.filter_key_track);
             float current_filter_cutoff = (s->patch.filter_cutoff_hz * key_track_factor) + (adsr_filter_env_input + lfo_filter_env_input) * s->patch.filter_env_amount_hz + adsr_total_filter_cutoff_hz;
             current_filter_cutoff += dest_mod[PX_MOD_DEST_FILTER_CUTOFF] * 8000.0f;
             current_filter_cutoff = fmaxf(20.f, fminf(current_filter_cutoff, s->config.sample_rate * .48f));
@@ -3226,7 +3226,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 // Standard Pitch Calc
                 float osc_pitch_mod = dest_mod[PX_MOD_DEST_OSC1_PITCH + o * PX_OSC_MOD_PARAM_COUNT];
                 float tuning_st = v->current_osc_coarse_semitones[o] + (v->current_osc_fine_cents[o] / 100.0f) + osc_pitch_mod * 12.0f;
-                float osc_freq = effective_voice_freq * powf(2.0f, tuning_st / 12.0f) * seq_pitch_mult;
+                float osc_freq = effective_voice_freq * exp2f(tuning_st / 12.0f) * seq_pitch_mult;
                 v->osc_vm_params[o].frequency = osc_freq;
 
                 int base_dest = PX_MOD_DEST_OSC1_MODA + o * PX_OSC_MOD_PARAM_COUNT;
@@ -3369,7 +3369,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
                 if (do_bitcrush) {
                     if (effective_bits < 1.0f) effective_bits = 1.0f;
-                    float levels = powf(2.0f, effective_bits);
+                    float levels = exp2f(effective_bits);
                     // Optional: Dither for low bit depths (from WSEQ logic)
                     if (effective_bits < 8.0f) {
                         float dither = ((float)(px_rand(&v->rng_state) % 1000) / 1000.0f) * 2.0f - 1.0f;
@@ -3492,7 +3492,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                             // Load Pitch
                             // v1.7.1: Start next glide from CURRENT ratio to avoid jumps if previous glide was clamped/interrupted
                             sq->prev_step_pitch_ratio = seq_pitch_mult;
-                            sq->step_pitch_ratio = powf(2.0f, next_step->pitch_offset / 1200.0f);
+                            sq->step_pitch_ratio = exp2f(next_step->pitch_offset / 1200.0f);
 
                             // v1.8: Calculate Cycle Target for Next Step
                             float step_freq = v->original_frequency * sq->step_pitch_ratio;
@@ -4413,7 +4413,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
             // Override Static Wave with Sequence Wave
             v->osc_wave_indices[o] = step->wave_idx;
 
-            sq->step_pitch_ratio = powf(2.0f, step->pitch_offset / 1200.0f);
+            sq->step_pitch_ratio = exp2f(step->pitch_offset / 1200.0f);
             sq->target_pitch_ratio = sq->step_pitch_ratio;
             sq->prev_step_pitch_ratio = sq->step_pitch_ratio;
             sq->step_flags = step->flags;

@@ -3167,7 +3167,7 @@ SUB_LABEL_OP_RAND: {
 // 2-argument functions
 SUB_LABEL_OP_MIN: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (min)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = fminf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_MAX: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (max)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = fmaxf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
-SUB_LABEL_OP_POW: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (pow)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = powf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_POW: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (pow)"); success=false; goto sub_chunk_end; } float b=*(--sp); if (sp[-1] == 2.0f) sp[-1] = exp2f(b); else sp[-1] = powf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 
 // LFSR functions
 SUB_LABEL_OP_LFSR_VAL: {
@@ -3575,7 +3575,7 @@ LABEL_OP_RAND: {
 // 2-argument functions
 LABEL_OP_MIN: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (min)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = fminf(sp[-1], b); goto DISPATCH_LOOP; }
 LABEL_OP_MAX: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (max)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = fmaxf(sp[-1], b); goto DISPATCH_LOOP; }
-LABEL_OP_POW: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (pow)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = powf(sp[-1], b); goto DISPATCH_LOOP; }
+LABEL_OP_POW: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (pow)"); success=false; goto execution_end; } float b=*(--sp); if (sp[-1] == 2.0f) sp[-1] = exp2f(b); else sp[-1] = powf(sp[-1], b); goto DISPATCH_LOOP; }
 
 // LFSR functions
 LABEL_OP_LFSR_VAL: {
