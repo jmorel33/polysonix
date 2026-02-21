@@ -4,6 +4,7 @@
 #include <math.h>
 #include <string.h>
 
+#define PX_BENCHMARK_NATIVE_WAVES
 #define POLYSONIX_IMPLEMENTATION
 #include "../polysonix.h"
 
@@ -70,6 +71,11 @@ int main() {
         if (!chunk) {
             fprintf(stderr, "Failed to compile patch %d: %s\n", i, name);
             continue;
+        }
+
+        // Link Native Function if available (to test transpilation)
+        if (i >= 0 && i < sizeof(native_waves)/sizeof(native_waves[0])) {
+            chunk->native_func = native_waves[i];
         }
 
         double patch_total_time = 0.0;

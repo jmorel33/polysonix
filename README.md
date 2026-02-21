@@ -3,9 +3,13 @@
 </div>
 
 # Polysonix
-**Version 1.9.2 (February 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
+**Version 1.9.3 (February 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
 
 A single-header polyphonic synthesizer engine.
+
+### What's New in v1.9.3
+- **Dev Tooling:** Added `tools/transpile_waves.py`, a script that transpiles the ROM waveform expressions into native C code. This allows for A/B performance benchmarking (Native vs. VM Interpreter), revealing significant potential speedups (~61% avg) on static content. Native execution is gated behind `PX_BENCHMARK_NATIVE_WAVES` for testing purposes.
+- **Refactor:** Internal VM logic for Random Number Generation and LFSRs has been refactored into shared inline helper functions, improving code modularity and maintainability.
 
 ### What's New in v1.9.2
 - **Performance: Optimized Pitch Modulation:** Replaced general-purpose `powf(2.0f, x)` calls with the optimized `exp2f(x)` function for all frequency and pitch calculations (MIDI conversion, LFO modulation, key tracking), yielding significant CPU gains.
