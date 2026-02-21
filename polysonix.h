@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 9
-#define POLYSONIX_VERSION_PATCH 6
+#define POLYSONIX_VERSION_PATCH 7
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1041,6 +1041,7 @@ PX_API const char* PX_GetADSRStateName(PxADSRState state);
 #include <string.h>
 #include <math.h>
 #include <time.h>
+#include <limits.h>
 
 #ifndef PI
 #define PI 3.14159265358979323846f
@@ -2187,7 +2188,16 @@ static void PX_ProcessCommands(PxSynth* s) {
             case PX_CMD_SET_LFO_MOD_AMOUNT: if (cmd.data.param_idx_enum_float.idx < s->config.num_lfos) s->patch.template_lfos[cmd.data.param_idx_enum_float.idx].mod_amounts[cmd.data.param_idx_enum_float.enum_val] = cmd.data.param_idx_enum_float.float_val; break;
             case PX_CMD_SET_LFO_UPDATE_INTERVAL:
                 s->config.lfo_update_interval_ms = cmd.data.param_float.float_val;
-                s->config.samples_per_lfo_update = (int)(s->config.sample_rate * (cmd.data.param_float.float_val / 1000.0f));
+                {
+                    float samples = s->config.sample_rate * (cmd.data.param_float.float_val / 1000.0f);
+                    if (samples >= (float)INT_MAX) {
+                        s->config.samples_per_lfo_update = INT_MAX;
+                    } else if (samples <= 1.0f || isnan(samples)) {
+                        s->config.samples_per_lfo_update = 1;
+                    } else {
+                        s->config.samples_per_lfo_update = (int)samples;
+                    }
+                }
                 if (s->config.samples_per_lfo_update < 1) s->config.samples_per_lfo_update = 1;
                 break;
             case PX_CMD_SET_FILTER_PARAM:

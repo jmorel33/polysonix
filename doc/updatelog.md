@@ -1,5 +1,15 @@
 # Update Log
 
+## v1.9.7 (2026/02/21)
+**Security: Fix LFO Update Interval Undefined Behavior**
+
+This release fixes a potential security vulnerability where setting a very large LFO update interval could cause undefined behavior due to integer overflow.
+
+*   **Robust Input Validation:**
+    *   **The Issue:** When converting the LFO update interval from milliseconds (float) to samples (int), extremely large values could exceed `INT_MAX`, causing undefined behavior during the cast.
+    *   **The Fix:** Added robust checks to ensure the sample count is within the safe range [1, INT_MAX] before casting. Values exceeding `INT_MAX` are clamped to the maximum integer value, and values less than or equal to 1.0 (including NaN) are clamped to 1.
+    *   **Impact:** Prevents potential crashes or undefined behavior when processing malformed or malicious command inputs.
+
 ## v1.9.6 (2026/02/21)
 **Performance: Optimized Panning Calculation**
 
