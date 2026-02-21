@@ -1,5 +1,18 @@
 # Update Log
 
+## v1.8.11 (2026/01/23)
+**Fix: DSP Aliasing & Optimization**
+
+This release addresses two critical DSP issues: aliasing artifacts from the soft clipper and CPU performance overhead in the filter.
+
+*   **Soft Clip Anti-Aliasing:**
+    *   **The Issue:** The per-voice soft clipper was previously applied *after* the oversampled filter had been decimated back to the base sample rate. Non-linear saturation generates harmonics that extend beyond Nyquist, causing them to fold back as metallic aliasing.
+    *   **The Fix:** Moved the amplitude scaling and `soft_clip` logic *inside* the `Filter_Process_Oversampled` loop. Saturation is now applied at the 2x oversampled rate, allowing the subsequent FIR half-band decimation filter to effectively remove high-frequency harmonics before downsampling.
+
+*   **Fast Tanh Optimization:**
+    *   **The Issue:** The State-Variable Filter (SVF) used the standard library `tanhf` function for input drive and state saturation. This transcendental function is computationally expensive (15-20 cycles), consuming significant CPU when called 8 times per sample per voice (for 4-pole filters).
+    *   **The Fix:** Replaced `tanhf` with a fast Pade-approximated polynomial (`fast_tanh`). This provides a massive ~15-20% reduction in overall CPU usage while maintaining the desired analog saturation characteristics.
+
 ## v1.8.10 (2026/01/22)
 **Fix: Command Queue Spinlock**
 

@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 8
-#define POLYSONIX_VERSION_PATCH 10
+#define POLYSONIX_VERSION_PATCH 11
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1583,7 +1583,7 @@ static void ProcessEnhancedLimiter(EnhancedLimiter* limiter, float *input_l, flo
 static void Filter_Init(Filter* filter);
 static void Filter_SetCoefficients(Filter* filter, float cutoff_hz, float resonance_q, PxFilterMode mode, int poles, float sample_rate);
 static float Filter_Process_Internal(Filter* filter, float input_sample);
-static float Filter_Process_Oversampled(Filter* filter, float input_sample);
+static float Filter_Process_Oversampled(Filter* filter, float input_sample, float amp);
 static float GenerateLFOValue(LFOInstance* lfo_instance);
 static void LFOInstance_Init(LFOInstance* lfo, float sample_rate);
 static float get_midi_frequency(int midi_note);
@@ -1854,6 +1854,12 @@ static void Filter_SetCoefficients(Filter* filter, float cutoff_hz, float resona
     filter->poles = poles;
 }
 
+// Fast polynomial approximation for tanh(x) for small values
+static inline float fast_tanh(float x) {
+    float x2 = x * x;
+    return x * (27.0f + x2) / (27.0f + 9.0f * x2);
+}
+
 static float Filter_Process_Internal(Filter* filter, float input_sample) {
     if (filter->current_mode == PX_FILTER_MODE_OFF) return input_sample;
 
@@ -1862,7 +1868,7 @@ static float Filter_Process_Internal(Filter* filter, float input_sample) {
     float dc_blocked = input_sample - filter->dc_block_x1 + dc_block_coeff * filter->dc_block_y1;
     filter->dc_block_x1 = input_sample;
     filter->dc_block_y1 = dc_blocked;
-    float driven_input = tanhf(dc_blocked * filter->drive);
+    float driven_input = fast_tanh(dc_blocked * filter->drive);
 
     // v1.4.3: Unified 6 dB/oct (1-pole) path with full combo support
     if (filter->poles == 1) {
@@ -1899,8 +1905,8 @@ static float Filter_Process_Internal(Filter* filter, float input_sample) {
 
     // Update the state variables for the next sample.
     const float anti_denormal = 1e-25f;
-    filter->lp_state1 = tanhf(lp1 + anti_denormal) - anti_denormal;
-    filter->bp_state1 = tanhf(bp1 + anti_denormal) - anti_denormal;
+    filter->lp_state1 = fast_tanh(lp1 + anti_denormal) - anti_denormal;
+    filter->bp_state1 = fast_tanh(bp1 + anti_denormal) - anti_denormal;
 
     // --- Initialize final outputs with the 12dB results ---
     float final_lp = filter->lp_state1;
@@ -1930,8 +1936,8 @@ static float Filter_Process_Internal(Filter* filter, float input_sample) {
         float hp2 = notch2 - lp2;
         float bp2 = filter->bp_state2 + filter->f_coeff * hp2;
 
-        filter->lp_state2 = tanhf(lp2 + anti_denormal) - anti_denormal;
-        filter->bp_state2 = tanhf(bp2 + anti_denormal) - anti_denormal;
+        filter->lp_state2 = fast_tanh(lp2 + anti_denormal) - anti_denormal;
+        filter->bp_state2 = fast_tanh(bp2 + anti_denormal) - anti_denormal;
 
         final_lp = filter->lp_state2;
         final_bp = filter->bp_state2;
@@ -1952,9 +1958,12 @@ static float Filter_Process_Internal(Filter* filter, float input_sample) {
     }
 }
 
-static float Filter_Process_Oversampled(Filter *filter, float input_sample) {
-    float y0 = Filter_Process_Internal(filter, input_sample);
-    float y1 = Filter_Process_Internal(filter, input_sample);
+static float Filter_Process_Oversampled(Filter *filter, float input_sample, float amp) {
+    // Apply filter, then scale, then clip at the 2x rate
+    float y0 = soft_clip(Filter_Process_Internal(filter, input_sample) * amp);
+    float y1 = soft_clip(Filter_Process_Internal(filter, input_sample) * amp);
+
+    // FIR decimation safely removes the clipping harmonics
     float out = (HB[0] * filter->os_x2) + (HB[1] * filter->os_x1) + (HB[2] * y0) + (HB[3] * y1);
     filter->os_x2 = filter->os_x1;
     filter->os_x1 = y0;
@@ -3560,10 +3569,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 v->update_countdown += v->samples_per_update;
             }
 
-            float filtered_sample_l = Filter_Process_Oversampled(&v->filter_instance, voice_mixed_l);
-            float filtered_sample_r = Filter_Process_Oversampled(&v->filter_instance_r, voice_mixed_r);
-            float final_sample_l = soft_clip(filtered_sample_l * final_amp_with_lfo);
-            float final_sample_r = soft_clip(filtered_sample_r * final_amp_with_lfo);
+            float final_sample_l = Filter_Process_Oversampled(&v->filter_instance, voice_mixed_l, final_amp_with_lfo);
+            float final_sample_r = Filter_Process_Oversampled(&v->filter_instance_r, voice_mixed_r, final_amp_with_lfo);
 
             float current_pan = s->patch.voice_pan_setting + lfo_pan_env_input;
             current_pan = fmaxf(-1.f, fminf(1.f, current_pan));

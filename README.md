@@ -3,9 +3,13 @@
 </div>
 
 # Polysonix
-**Version 1.8.10 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
+**Version 1.8.11 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
 
 A single-header polyphonic synthesizer engine.
+
+### What's New in v1.8.11
+- **Fix: Soft Clip Aliasing:** The soft clipper is now applied inside the 2x oversampling loop (before decimation) to prevent harmonics from folding back into the audible spectrum.
+- **Optimization: Fast Tanh:** Replaced expensive standard library `tanhf` calls in the filter with a fast polynomial approximation (`fast_tanh`), yielding significant CPU performance improvements.
 
 ### What's New in v1.8.10
 - **Fix: Command Queue Spinlock:** Replaced the spinlock-based CommandQueue implementation with a true lock-free Multi-Producer Single-Consumer (MPSC) design using atomic flags. This prevents priority inversion and infinite spinning if the UI thread is preempted while pushing a command.
