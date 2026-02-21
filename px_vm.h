@@ -451,64 +451,114 @@ static void vm_error(VM *vm_ptr, const char *format, ...) {
     // exit(1); // Removed to prevent process termination in audio thread
 }
 
-// --- Function IDs (for OP_CALL) ---
-// Must correspond to the order/logic in the VM execution
+// --- Bytecode Definitions ---
 typedef enum {
-    FUNC_ID_SIN,
-    FUNC_ID_COS,
-    FUNC_ID_TAN,
-    FUNC_ID_ASIN,
-    FUNC_ID_ACOS,
-    FUNC_ID_ATAN,
-    FUNC_ID_ABS,
-    FUNC_ID_TANH,
-    FUNC_ID_EXP,
-    FUNC_ID_LOG,
-    FUNC_ID_LOG10,
-    FUNC_ID_FLOOR,
-    FUNC_ID_CEIL,
-    FUNC_ID_MIN,
-    FUNC_ID_MAX,
-    FUNC_ID_SQRT,
-    FUNC_ID_POW,
-    FUNC_ID_RAND,
-    FUNC_ID_LFSR_VAL,    // New LFSR functions
-    FUNC_ID_LFSR_NOISE,
-    FUNC_ID_LFSR_CLOCK,
-    // Add others if needed
-    FUNC_ID_COUNT // Total number of standard functions
-} FunctionID;
+    // --- Stack Manipulation ---
+    OP_PUSH_CONST     = 0x00, // Operand: uint16_t const_pool_index
+    OP_PUSH_VAR_X     = 0x01, // No operand
+    OP_PUSH_VAR_FREQ  = 0x02, // No operand - NEW
+    OP_PUSH_VAR_RAND  = 0x03, // No operand
+    OP_PUSH_VAR_MOD_A = 0x04, // No operand
+    OP_PUSH_VAR_MOD_B = 0x05, // No operand
+    OP_PUSH_VAR_MOD_C = 0x06, // No operand
+    OP_POP            = 0x07, // No operand
 
-// Map function names to IDs (used during compilation)
+    // --- Arithmetic ---
+    OP_ADD            = 0x08, // No operand
+    OP_SUB            = 0x09, // No operand
+    OP_MUL            = 0x0A, // No operand
+    OP_DIV            = 0x0B, // No operand
+    OP_MOD            = 0x0C, // No operand
+    OP_NEGATE         = 0x0D, // No operand (Unary minus)
+
+    // --- Logical / Comparison ---
+    OP_NOT            = 0x0E, // No operand (Unary !)
+    OP_CMP_EQ         = 0x0F, // No operand (==)
+    OP_CMP_NE         = 0x10, // No operand (!=)
+    OP_CMP_GT         = 0x11, // No operand (>)
+    OP_CMP_GE         = 0x12, // No operand (>=)
+    OP_CMP_LT         = 0x13, // No operand (<)
+    OP_CMP_LE         = 0x14, // No operand (<=)
+    // Logical AND/OR handled via jumps
+
+    // --- Control Flow ---
+    OP_JUMP           = 0x15, // Operand: int16_t relative_offset
+    OP_JUMP_IF_FALSE  = 0x16, // Operand: int16_t relative_offset (pops condition)
+
+    // --- Functions ---
+    OP_CALL_DEPRECATED = 0x17, // Was OP_CALL
+
+    // --- Sigma (Specialized) ---
+    OP_SIGMA_SETUP    = 0x18, // Deprecated
+    OP_PUSH_LOOP_VAR  = 0x19, // Operand: uint8_t var_name_id
+    OP_SIGMA_EXEC     = 0x1A, // Operands: uint8_t name_idx, uint16_t start_idx, uint16_t end_idx, uint16_t step_idx, uint16_t body_idx
+
+    // --- Iterative Sigma ---
+    OP_SIGMA_INIT     = 0x1B, // Operand: uint8_t name_idx. Pops start, end, step. Pushes accumulator (0.0).
+    OP_SIGMA_CHECK    = 0x1C, // Operand: int16_t jump_offset. Checks loop condition.
+    OP_SIGMA_INC      = 0x1D, // No operand. Increments loop variable.
+
+    // --- Math & Utility Functions (Replaces OP_CALL) ---
+    OP_SIN            = 0x1E,
+    OP_COS            = 0x1F,
+    OP_TAN            = 0x20,
+    OP_ASIN           = 0x21,
+    OP_ACOS           = 0x22,
+    OP_ATAN           = 0x23,
+    OP_ABS            = 0x24,
+    OP_TANH           = 0x25,
+    OP_EXP            = 0x26,
+    OP_LOG            = 0x27,
+    OP_LOG10          = 0x28,
+    OP_FLOOR          = 0x29,
+    OP_CEIL           = 0x2A,
+    OP_MIN            = 0x2B,
+    OP_MAX            = 0x2C,
+    OP_SQRT           = 0x2D,
+    OP_POW            = 0x2E,
+    OP_RAND           = 0x2F,
+
+    // --- LFSR Functions ---
+    OP_LFSR_VAL       = 0x30,
+    OP_LFSR_NOISE     = 0x31,
+    OP_LFSR_CLOCK     = 0x32,
+
+    // --- End ---
+    OP_HALT           = 0x33  // Must be last (used for array sizes)
+} OpCode;
+#define VM_MAX_OPCODE OP_HALT
+#define VM_DISPATCH_TABLE_SIZE (VM_MAX_OPCODE + 1) // Important for computed goto table size
+
+// Map function names to OpCodes (used during compilation)
 typedef struct {
     const char* name;
-    FunctionID id;
+    OpCode opcode;
     int arity;
 } VmFunctionDef;
 
 static VmFunctionDef vm_functions[] = {
-    {"sin", FUNC_ID_SIN, 1},
-    {"cos", FUNC_ID_COS, 1},
-    {"tan", FUNC_ID_TAN, 1},
-    {"asin", FUNC_ID_ASIN, 1},
-    {"acos", FUNC_ID_ACOS, 1},
-    {"atan", FUNC_ID_ATAN, 1},
-    {"abs", FUNC_ID_ABS, 1},
-    {"tanh", FUNC_ID_TANH, 1},
-    {"exp", FUNC_ID_EXP, 1},
-    {"log", FUNC_ID_LOG, 1},
-    {"log10", FUNC_ID_LOG10, 1},
-    {"floor", FUNC_ID_FLOOR, 1},
-    {"ceil", FUNC_ID_CEIL, 1},
-    {"min", FUNC_ID_MIN, 2},
-    {"max", FUNC_ID_MAX, 2},
-    {"sqrt", FUNC_ID_SQRT, 1},
-    {"pow", FUNC_ID_POW, 2},
-    {"rand", FUNC_ID_RAND, 0},
-    {"lfsr_val", FUNC_ID_LFSR_VAL, 3},
-    {"lfsr_noise", FUNC_ID_LFSR_NOISE, 2},
-    {"lfsr_clock", FUNC_ID_LFSR_CLOCK, 2},
-    {NULL, (FunctionID)0, 0} // Terminator
+    {"sin", OP_SIN, 1},
+    {"cos", OP_COS, 1},
+    {"tan", OP_TAN, 1},
+    {"asin", OP_ASIN, 1},
+    {"acos", OP_ACOS, 1},
+    {"atan", OP_ATAN, 1},
+    {"abs", OP_ABS, 1},
+    {"tanh", OP_TANH, 1},
+    {"exp", OP_EXP, 1},
+    {"log", OP_LOG, 1},
+    {"log10", OP_LOG10, 1},
+    {"floor", OP_FLOOR, 1},
+    {"ceil", OP_CEIL, 1},
+    {"min", OP_MIN, 2},
+    {"max", OP_MAX, 2},
+    {"sqrt", OP_SQRT, 1},
+    {"pow", OP_POW, 2},
+    {"rand", OP_RAND, 0},
+    {"lfsr_val", OP_LFSR_VAL, 3},
+    {"lfsr_noise", OP_LFSR_NOISE, 2},
+    {"lfsr_clock", OP_LFSR_CLOCK, 2},
+    {NULL, (OpCode)0, 0} // Terminator
 };
 
 // --- Enhanced Interpreter Code ---
@@ -1443,58 +1493,6 @@ Node *parseFunctionArgs(Token *tokens, int *pos, const char* func_name, int expe
 #define C_E 2.71828182845904523536
 #define EPSILON 1e-6f
 
-// --- Bytecode Definitions ---
-typedef enum {
-    // --- Stack Manipulation ---
-    OP_PUSH_CONST     = 0x00, // Operand: uint16_t const_pool_index
-    OP_PUSH_VAR_X     = 0x01, // No operand
-    OP_PUSH_VAR_FREQ  = 0x02, // No operand - NEW
-    OP_PUSH_VAR_RAND  = 0x03, // No operand
-    OP_PUSH_VAR_MOD_A = 0x04, // No operand
-    OP_PUSH_VAR_MOD_B = 0x05, // No operand
-    OP_PUSH_VAR_MOD_C = 0x06, // No operand
-    OP_POP            = 0x07, // No operand
-
-    // --- Arithmetic ---
-    OP_ADD            = 0x08, // No operand
-    OP_SUB            = 0x09, // No operand
-    OP_MUL            = 0x0A, // No operand
-    OP_DIV            = 0x0B, // No operand
-    OP_MOD            = 0x0C, // No operand
-    OP_NEGATE         = 0x0D, // No operand (Unary minus)
-
-    // --- Logical / Comparison ---
-    OP_NOT            = 0x0E, // No operand (Unary !)
-    OP_CMP_EQ         = 0x0F, // No operand (==)
-    OP_CMP_NE         = 0x10, // No operand (!=)
-    OP_CMP_GT         = 0x11, // No operand (>)
-    OP_CMP_GE         = 0x12, // No operand (>=)
-    OP_CMP_LT         = 0x13, // No operand (<)
-    OP_CMP_LE         = 0x14, // No operand (<=)
-    // Logical AND/OR handled via jumps
-
-    // --- Control Flow ---
-    OP_JUMP           = 0x15, // Operand: int16_t relative_offset
-    OP_JUMP_IF_FALSE  = 0x16, // Operand: int16_t relative_offset (pops condition)
-
-    // --- Functions ---
-    OP_CALL           = 0x17, // Operands: uint8_t func_id, uint8_t arg_count
-
-    // --- Sigma (Specialized) ---
-    OP_SIGMA_SETUP    = 0x18, // Operands: (See compiler/VM) - Likely won't be used if only OP_SIGMA_EXEC emitted
-    OP_PUSH_LOOP_VAR  = 0x19, // Operand: uint8_t var_name_id
-    OP_SIGMA_EXEC     = 0x1A, // Operands: uint8_t name_idx, uint16_t start_idx, uint16_t end_idx, uint16_t step_idx, uint16_t body_idx
-
-    // --- Iterative Sigma ---
-    OP_SIGMA_INIT     = 0x1B, // Operand: uint8_t name_idx. Pops start, end, step. Pushes accumulator (0.0).
-    OP_SIGMA_CHECK    = 0x1C, // Operand: int16_t jump_offset. Checks loop condition.
-    OP_SIGMA_INC      = 0x1D, // No operand. Increments loop variable.
-
-    // --- End ---
-    OP_HALT           = 0x1E  // No operand - MUST BE LAST (used for array sizes)
-} OpCode;
-#define VM_MAX_OPCODE OP_HALT
-#define VM_DISPATCH_TABLE_SIZE (VM_MAX_OPCODE + 1) // Important for computed goto table size
 
 // Forward declaration
 // typedef struct BytecodeChunk BytecodeChunk; // Already defined
@@ -2057,18 +2055,20 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
 
             } else {
                 // --- Standard Function Call Compilation ---
-                // Find function ID and arity
-                FunctionID func_id = FUNC_ID_COUNT; // Invalid default
+                OpCode func_opcode = (OpCode)0;
                 int expected_arity = -1;
+                bool found = false;
+
                 for (int i = 0; vm_functions[i].name; ++i) {
                     if (strcmp(fname, vm_functions[i].name) == 0) {
-                        func_id = vm_functions[i].id;
+                        func_opcode = vm_functions[i].opcode;
                         expected_arity = vm_functions[i].arity;
+                        found = true;
                         break;
                     }
                 }
 
-                if (func_id == FUNC_ID_COUNT) {
+                if (!found) {
                     fprintf(stderr, "Compile Error: Function '%s' not supported by VM.\n", fname);
                     ok = false; break;
                 }
@@ -2090,10 +2090,8 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
                      ok = false; break;
                 }
 
-                // Emit CALL instruction
-                emit_byte(chunk, OP_CALL);
-                emit_byte(chunk, (uint8_t)func_id);
-                emit_byte(chunk, (uint8_t)arg_count);
+                // Emit the specific function opcode
+                emit_byte(chunk, func_opcode);
             }
             break; // End case TOKEN_FUNCTION
         } // End switch block for TOKEN_FUNCTION
@@ -2134,14 +2132,35 @@ const char* getOpCodeName(OpCode code) {
         /* 0x14 */ "OP_CMP_LE",
         /* 0x15 */ "OP_JUMP",
         /* 0x16 */ "OP_JUMP_IF_FALSE",
-        /* 0x17 */ "OP_CALL",
+        /* 0x17 */ "OP_CALL_DEPRECATED", // Was OP_CALL
         /* 0x18 */ "OP_SIGMA_SETUP",
         /* 0x19 */ "OP_PUSH_LOOP_VAR",
         /* 0x1A */ "OP_SIGMA_EXEC",
         /* 0x1B */ "OP_SIGMA_INIT",
         /* 0x1C */ "OP_SIGMA_CHECK",
         /* 0x1D */ "OP_SIGMA_INC",
-        /* 0x1E */ "OP_HALT"
+        /* 0x1E */ "OP_SIN",
+        /* 0x1F */ "OP_COS",
+        /* 0x20 */ "OP_TAN",
+        /* 0x21 */ "OP_ASIN",
+        /* 0x22 */ "OP_ACOS",
+        /* 0x23 */ "OP_ATAN",
+        /* 0x24 */ "OP_ABS",
+        /* 0x25 */ "OP_TANH",
+        /* 0x26 */ "OP_EXP",
+        /* 0x27 */ "OP_LOG",
+        /* 0x28 */ "OP_LOG10",
+        /* 0x29 */ "OP_FLOOR",
+        /* 0x2A */ "OP_CEIL",
+        /* 0x2B */ "OP_MIN",
+        /* 0x2C */ "OP_MAX",
+        /* 0x2D */ "OP_SQRT",
+        /* 0x2E */ "OP_POW",
+        /* 0x2F */ "OP_RAND",
+        /* 0x30 */ "OP_LFSR_VAL",
+        /* 0x31 */ "OP_LFSR_NOISE",
+        /* 0x32 */ "OP_LFSR_CLOCK",
+        /* 0x33 */ "OP_HALT"
     };
     // Basic bounds check using VM_MAX_OPCODE
     if (code >= 0 && code <= VM_MAX_OPCODE) {
@@ -2183,11 +2202,10 @@ int disassembleInstruction(BytecodeChunk *chunk, int offset) {
             instruction_size += 2; // Opcode + 2 bytes offset
             break;
         }
-        case OP_CALL: {
+        case OP_CALL_DEPRECATED: {
             uint8_t func_id = chunk->code[offset + 1];
             uint8_t arg_count = chunk->code[offset + 2];
-            // Optionally lookup function name from func_id if needed
-            printf("id:%u args:%u", func_id, arg_count);
+            printf("DEPRECATED id:%u args:%u", func_id, arg_count);
             instruction_size += 2; // Opcode + func_id + arg_count
             break;
         }
@@ -2766,14 +2784,35 @@ static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
         /* 0x14 OP_CMP_LE */           &&SUB_LABEL_OP_CMP_LE,
         /* 0x15 OP_JUMP */             &&SUB_LABEL_OP_JUMP,
         /* 0x16 OP_JUMP_IF_FALSE */   &&SUB_LABEL_OP_JUMP_IF_FALSE,
-        /* 0x17 OP_CALL */             &&SUB_LABEL_OP_CALL,
+        /* 0x17 OP_CALL_DEPRECATED */  &&SUB_LABEL_OP_CALL_DEPRECATED,
         /* 0x18 OP_SIGMA_SETUP */      &&SUB_LABEL_ERROR_SIGMA_SETUP_IN_SUB,
         /* 0x19 OP_PUSH_LOOP_VAR */    &&SUB_LABEL_OP_PUSH_LOOP_VAR,
         /* 0x1A OP_SIGMA_EXEC */       &&SUB_LABEL_ERROR_SIGMA_EXEC_IN_SUB,
         /* 0x1B OP_SIGMA_INIT */       &&SUB_LABEL_ERROR_SIGMA_INIT_IN_SUB,
         /* 0x1C OP_SIGMA_CHECK */      &&SUB_LABEL_ERROR_SIGMA_CHECK_IN_SUB,
         /* 0x1D OP_SIGMA_INC */        &&SUB_LABEL_ERROR_SIGMA_INC_IN_SUB,
-        /* 0x1E OP_HALT */             &&SUB_LABEL_OP_HALT
+        /* 0x1E OP_SIN */              &&SUB_LABEL_OP_SIN,
+        /* 0x1F OP_COS */              &&SUB_LABEL_OP_COS,
+        /* 0x20 OP_TAN */              &&SUB_LABEL_OP_TAN,
+        /* 0x21 OP_ASIN */             &&SUB_LABEL_OP_ASIN,
+        /* 0x22 OP_ACOS */             &&SUB_LABEL_OP_ACOS,
+        /* 0x23 OP_ATAN */             &&SUB_LABEL_OP_ATAN,
+        /* 0x24 OP_ABS */              &&SUB_LABEL_OP_ABS,
+        /* 0x25 OP_TANH */             &&SUB_LABEL_OP_TANH,
+        /* 0x26 OP_EXP */              &&SUB_LABEL_OP_EXP,
+        /* 0x27 OP_LOG */              &&SUB_LABEL_OP_LOG,
+        /* 0x28 OP_LOG10 */            &&SUB_LABEL_OP_LOG10,
+        /* 0x29 OP_FLOOR */            &&SUB_LABEL_OP_FLOOR,
+        /* 0x2A OP_CEIL */             &&SUB_LABEL_OP_CEIL,
+        /* 0x2B OP_MIN */              &&SUB_LABEL_OP_MIN,
+        /* 0x2C OP_MAX */              &&SUB_LABEL_OP_MAX,
+        /* 0x2D OP_SQRT */             &&SUB_LABEL_OP_SQRT,
+        /* 0x2E OP_POW */              &&SUB_LABEL_OP_POW,
+        /* 0x2F OP_RAND */             &&SUB_LABEL_OP_RAND,
+        /* 0x30 OP_LFSR_VAL */         &&SUB_LABEL_OP_LFSR_VAL,
+        /* 0x31 OP_LFSR_NOISE */       &&SUB_LABEL_OP_LFSR_NOISE,
+        /* 0x32 OP_LFSR_CLOCK */       &&SUB_LABEL_OP_LFSR_CLOCK,
+        /* 0x33 OP_HALT */             &&SUB_LABEL_OP_HALT
     };
 
     uint8_t instruction;
@@ -3084,171 +3123,128 @@ SUB_LABEL_OP_JUMP_IF_FALSE: {
     goto *sub_dispatch_table[instruction];
 }
 
-SUB_LABEL_OP_CALL: {
-    uint8_t func_id = *ip++;
-    uint8_t arg_count = *ip++;
+SUB_LABEL_OP_CALL_DEPRECATED: {
+    vm->ip = ip; vm->stack_top = sp;
+    vm_error(vm, "OP_CALL_DEPRECATED encountered.");
+    success = false;
+    goto sub_chunk_end;
+}
+
+SUB_LABEL_OP_SIN: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (sin)"); success=false; goto sub_chunk_end; } sp[-1] = sinf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_COS: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (cos)"); success=false; goto sub_chunk_end; } sp[-1] = cosf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_TAN: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (tan)"); success=false; goto sub_chunk_end; } sp[-1] = tanf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_ASIN: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (asin)"); success=false; goto sub_chunk_end; } sp[-1] = asinf(fmaxf(-1.0f, fminf(1.0f, sp[-1]))); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_ACOS: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (acos)"); success=false; goto sub_chunk_end; } sp[-1] = acosf(fmaxf(-1.0f, fminf(1.0f, sp[-1]))); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_ATAN: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (atan)"); success=false; goto sub_chunk_end; } sp[-1] = atanf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_ABS: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (abs)"); success=false; goto sub_chunk_end; } sp[-1] = fabsf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_TANH: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (tanh)"); success=false; goto sub_chunk_end; } sp[-1] = tanhf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_EXP: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (exp)"); success=false; goto sub_chunk_end; } sp[-1] = expf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_LOG: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (log)"); success=false; goto sub_chunk_end; } sp[-1] = (sp[-1] > 0) ? logf(sp[-1]) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_LOG10: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (log10)"); success=false; goto sub_chunk_end; } sp[-1] = (sp[-1] > 0) ? log10f(sp[-1]) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_FLOOR: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (floor)"); success=false; goto sub_chunk_end; } sp[-1] = floorf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_CEIL: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (ceil)"); success=false; goto sub_chunk_end; } sp[-1] = ceilf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_SQRT: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (sqrt)"); success=false; goto sub_chunk_end; } sp[-1] = (sp[-1] >= 0) ? sqrtf(sp[-1]) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_RAND: {
+    float r = 0.0f;
+    if (vm->params->rng_state_ptr) {
+        uint32_t val = px_rand(vm->params->rng_state_ptr);
+        r = (float)val / (float)UINT32_MAX;
+    }
+    if (PX_UNLIKELY(sp >= vm->stack + MAX_VM_STACK)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack overflow (rand)"); success=false; goto sub_chunk_end; }
+    *sp++ = r;
+    instruction=*ip++; goto *sub_dispatch_table[instruction];
+}
+
+// 2-argument functions
+SUB_LABEL_OP_MIN: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (min)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = fminf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_MAX: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (max)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = fmaxf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_POW: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (pow)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = powf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+
+// LFSR functions
+SUB_LABEL_OP_LFSR_VAL: {
+    if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (lfsr_val)"); success=false; goto sub_chunk_end; }
+    float seed_arg = *(--sp); float position_arg = *(--sp); float type_arg_float = sp[-1];
+    int type_id = (int)roundf(type_arg_float);
     float call_result = 0.0f;
 
-    // Check stack size BEFORE popping
-    if (PX_UNLIKELY((sp - vm->stack) < arg_count)) {
-        vm->ip = ip; vm->stack_top = sp;
-        vm_error(vm, "Stack underflow for OP_CALL in sub-chunk! Need %u args, have %td", arg_count, sp - vm->stack);
-        success = false;
-        *sp++ = 0.0f;
-    } else {
-        vm->stack_top = sp; // Sync for helper calls
-        vm->ip = ip; // Sync ip just in case
-
-        switch (func_id) {
-            case FUNC_ID_SIN: if (arg_count == 1) call_result = sinf(pop(vm)); else { vm_error(vm,"sin expects 1 arg"); success = false; } break;
-            case FUNC_ID_COS: if (arg_count == 1) call_result = cosf(pop(vm)); else { vm_error(vm,"cos expects 1 arg"); success = false; } break;
-            case FUNC_ID_TAN: if (arg_count == 1) call_result = tanf(pop(vm)); else { vm_error(vm,"tan expects 1 arg"); success = false; } break;
-            case FUNC_ID_ASIN: if (arg_count == 1) { float v=pop(vm); call_result = asinf(fmaxf(-1.0f, fminf(1.0f, v))); } else { vm_error(vm,"asin expects 1 arg"); success = false; } break;
-            case FUNC_ID_ACOS: if (arg_count == 1) { float v=pop(vm); call_result = acosf(fmaxf(-1.0f, fminf(1.0f, v))); } else { vm_error(vm,"acos expects 1 arg"); success = false; } break;
-            case FUNC_ID_ATAN: if (arg_count == 1) call_result = atanf(pop(vm)); else { vm_error(vm,"atan expects 1 arg"); success = false; } break;
-            case FUNC_ID_ABS: if (arg_count == 1) call_result = fabsf(pop(vm)); else { vm_error(vm,"abs expects 1 arg"); success = false; } break;
-            case FUNC_ID_TANH: if (arg_count == 1) call_result = tanhf(pop(vm)); else { vm_error(vm,"tanh expects 1 arg"); success = false; } break;
-            case FUNC_ID_EXP: if (arg_count == 1) call_result = expf(pop(vm)); else { vm_error(vm,"exp expects 1 arg"); success = false; } break;
-            case FUNC_ID_LOG: if (arg_count == 1) { float v=pop(vm); call_result=(v > 0) ? logf(v): 0.0f; } else { vm_error(vm,"log expects 1 arg"); success = false; } break;
-            case FUNC_ID_LOG10: if (arg_count == 1) { float v=pop(vm); call_result=(v > 0) ? log10f(v): 0.0f; } else { vm_error(vm,"log10 expects 1 arg"); success = false; } break;
-            case FUNC_ID_FLOOR: if (arg_count == 1) call_result = floorf(pop(vm)); else { vm_error(vm,"floor expects 1 arg"); success = false; } break;
-            case FUNC_ID_CEIL: if (arg_count == 1) call_result = ceilf(pop(vm)); else { vm_error(vm,"ceil expects 1 arg"); success = false; } break;
-            case FUNC_ID_MIN: if (arg_count == 2) { float b=pop(vm); float a=pop(vm); call_result=fminf(a,b); } else { vm_error(vm,"min expects 2 args"); success = false; } break;
-            case FUNC_ID_MAX: if (arg_count == 2) { float b=pop(vm); float a=pop(vm); call_result=fmaxf(a,b); } else { vm_error(vm,"max expects 2 args"); success = false; } break;
-            case FUNC_ID_SQRT: if (arg_count == 1) { float v=pop(vm); call_result=(v >= 0) ? sqrtf(v): 0.0f; } else { vm_error(vm,"sqrt expects 1 arg"); success = false; } break;
-            case FUNC_ID_POW: if (arg_count == 2) { float b=pop(vm); float a=pop(vm); call_result=powf(a,b); } else { vm_error(vm,"pow expects 2 args"); success = false; } break;
-            case FUNC_ID_RAND:
-                if (arg_count == 0) {
-                    if (vm->params->rng_state_ptr) {
-                        uint32_t r = px_rand(vm->params->rng_state_ptr);
-                        call_result = (float)r / (float)UINT32_MAX;
-                    } else {
-                        call_result = 0.0f; // Safe fallback if no RNG state provided
-                    }
-                } else { vm_error(vm,"rand expects 0 args"); success = false; }
-                break;
-
-            case FUNC_ID_LFSR_VAL:
-                if (arg_count == 3) {
-                    float seed_arg = pop(vm);
-                    float position_arg = pop(vm);
-                    float type_arg_float = pop(vm);
-                    int type_id = (int)roundf(type_arg_float);
-
-                    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
-                        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
-                        if (table->period > 0) {
-                            if (vm->params->lfsr_type == (LfsrType)type_id && vm->params->lfsr_state != 0) {
-                                advance_lfsr_state(vm->params);
-                                call_result = (vm->params->lfsr_state & 1) ? 1.0f : 0.0f;
-                            } else {
-                                float norm_pos = fmodf(position_arg, 1.0f);
-                                if (norm_pos < 0.0f) norm_pos += 1.0f;
-                                float norm_seed_offset = fmodf(seed_arg, 1.0f);
-                                if (norm_seed_offset < 0.0f) norm_seed_offset += 1.0f;
-                                float combined_norm_pos = fmodf(norm_pos + norm_seed_offset, 1.0f);
-                                uint32_t table_index = (uint32_t)(combined_norm_pos * table->period);
-                                if (table_index >= table->period) table_index = table->period - 1;
-                                call_result = lfsr_get_bit((LfsrType)type_id, table_index);
-                            }
-                        } else {
-                            vm_error(vm, "lfsr_val (sub): LFSR type %d (enum %s) has zero period.", type_id, lfsr_type_to_string((LfsrType)type_id));
-                            call_result = 0.0f;
-                            success = false;
-                        }
-                    } else {
-                        vm_error(vm, "lfsr_val (sub): Invalid or uninitialized LFSR type %d.", type_id);
-                        call_result = 0.0f;
-                        success = false;
-                    }
-                } else {
-                    vm_error(vm, "lfsr_val (sub) expects 3 arguments, got %u.", arg_count);
-                    for(uint8_t k = 0; k < arg_count; ++k) if(vm->stack_top > vm->stack) pop(vm);
-                    call_result = 0.0f;
-                    success = false;
-                }
-                break;
-
-            case FUNC_ID_LFSR_NOISE:
-                if (arg_count == 2) {
-                    float rate_arg = pop(vm);
-                    float type_arg_float = pop(vm);
-                    int type_id = (int)roundf(type_arg_float);
-                    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
-                        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
-                        if (table->period > 0) {
-                            if (vm->params->lfsr_type == (LfsrType)type_id && vm->params->lfsr_state != 0) {
-                                advance_lfsr_state(vm->params);
-                                call_result = ((vm->params->lfsr_state & 1) ? 1.0f : 0.0f) * 2.0f - 1.0f;
-                            } else {
-                                float normalized_lfsr_phase = fmodf((vm->params->x / C_TWO_PI) * rate_arg, 1.0f);
-                                if (normalized_lfsr_phase < 0.0f) normalized_lfsr_phase += 1.0f;
-                                uint32_t table_index = (uint32_t)(normalized_lfsr_phase * table->period);
-                                if (table_index >= table->period) table_index = table->period - 1;
-                                call_result = (lfsr_get_bit((LfsrType)type_id, table_index) * 2.0f) - 1.0f;
-                            }
-                        } else {
-                            vm_error(vm, "lfsr_noise (sub): LFSR type %d has zero period.", type_id);
-                            call_result = 0.0f;
-                            success = false;
-                        }
-                    } else {
-                        vm_error(vm, "lfsr_noise (sub): Invalid or uninitialized LFSR type %d.", type_id);
-                        call_result = 0.0f;
-                        success = false;
-                    }
-                } else {
-                    vm_error(vm, "lfsr_noise (sub) expects 2 arguments, got %u.", arg_count);
-                    for(uint8_t k = 0; k < arg_count; ++k) if(vm->stack_top > vm->stack) pop(vm);
-                    call_result = 0.0f;
-                    success = false;
-                }
-                break;
-
-            case FUNC_ID_LFSR_CLOCK:
-                if (arg_count == 2) {
-                    float density_arg = pop(vm);
-                    float type_arg_float = pop(vm);
-                    int type_id = (int)roundf(type_arg_float);
-                    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
-                        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
-                        if (table->period > 0) {
-                            float clamped_density = fmaxf(0.0f, fminf(1.0f, density_arg));
-                            if (vm->params->lfsr_type == (LfsrType)type_id && vm->params->lfsr_state != 0) {
-                                advance_lfsr_state(vm->params);
-                                float bit_val = (vm->params->lfsr_state & 1) ? 1.0f : 0.0f;
-                                call_result = (bit_val >= clamped_density) ? 1.0f : 0.0f;
-                            } else {
-                                call_result = lfsr_get_clock((LfsrType)type_id, vm->params->x, clamped_density);
-                            }
-                        } else {
-                            vm_error(vm, "lfsr_clock (sub): LFSR type %d has zero period.", type_id);
-                            call_result = 0.0f;
-                            success = false;
-                        }
-                    } else {
-                        vm_error(vm, "lfsr_clock (sub): Invalid or uninitialized LFSR type %d.", type_id);
-                        call_result = 0.0f;
-                        success = false;
-                    }
-                } else {
-                    vm_error(vm, "lfsr_clock (sub) expects 2 arguments, got %u.", arg_count);
-                    for(uint8_t k = 0; k < arg_count; ++k) if(vm->stack_top > vm->stack) pop(vm);
-                    call_result = 0.0f;
-                    success = false;
-                }
-                break;
-
-            default:
-                vm_error(vm, "Unknown function ID %d in OP_CALL (sub).", func_id);
-                success = false;
-                break;
+    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
+        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
+        if (table->period > 0) {
+            if (vm->params->lfsr_type == (LfsrType)type_id && vm->params->lfsr_state != 0) {
+                advance_lfsr_state(vm->params);
+                call_result = (vm->params->lfsr_state & 1) ? 1.0f : 0.0f;
+            } else {
+                float norm_pos = fmodf(position_arg, 1.0f); if (norm_pos < 0.0f) norm_pos += 1.0f;
+                float norm_seed_offset = fmodf(seed_arg, 1.0f); if (norm_seed_offset < 0.0f) norm_seed_offset += 1.0f;
+                float combined_norm_pos = fmodf(norm_pos + norm_seed_offset, 1.0f);
+                uint32_t table_index = (uint32_t)(combined_norm_pos * table->period);
+                if (table_index >= table->period) table_index = table->period - 1;
+                call_result = lfsr_get_bit((LfsrType)type_id, table_index);
+            }
+        } else {
+            vm->ip=ip; vm->stack_top=sp; vm_error(vm, "lfsr_val: LFSR type %d has zero period.", type_id);
         }
-        sp = vm->stack_top; // Sync back
-        *sp++ = call_result;
+    } else {
+        vm->ip=ip; vm->stack_top=sp; vm_error(vm, "lfsr_val: Invalid or uninitialized LFSR type %d.", type_id);
     }
-    instruction = *ip++;
-    goto *sub_dispatch_table[instruction];
+    sp[-1] = call_result;
+    instruction=*ip++; goto *sub_dispatch_table[instruction];
+}
+
+SUB_LABEL_OP_LFSR_NOISE: {
+    if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (lfsr_noise)"); success=false; goto sub_chunk_end; }
+    float rate_arg = *(--sp); float type_arg_float = sp[-1];
+    int type_id = (int)roundf(type_arg_float);
+    float call_result = 0.0f;
+
+    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
+        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
+        if (table->period > 0) {
+            if (vm->params->lfsr_type == (LfsrType)type_id && vm->params->lfsr_state != 0) {
+                advance_lfsr_state(vm->params);
+                call_result = ((vm->params->lfsr_state & 1) ? 1.0f : 0.0f) * 2.0f - 1.0f;
+            } else {
+                float normalized_lfsr_phase = fmodf((vm->params->x / C_TWO_PI) * rate_arg, 1.0f);
+                if (normalized_lfsr_phase < 0.0f) normalized_lfsr_phase += 1.0f;
+                uint32_t table_index = (uint32_t)(normalized_lfsr_phase * table->period);
+                if (table_index >= table->period) table_index = table->period - 1;
+                call_result = (lfsr_get_bit((LfsrType)type_id, table_index) * 2.0f) - 1.0f;
+            }
+        } else {
+            vm->ip=ip; vm->stack_top=sp; vm_error(vm, "lfsr_noise: LFSR type %d has zero period.", type_id);
+        }
+    } else {
+        vm->ip=ip; vm->stack_top=sp; vm_error(vm, "lfsr_noise: Invalid or uninitialized LFSR type %d.", type_id);
+    }
+    sp[-1] = call_result;
+    instruction=*ip++; goto *sub_dispatch_table[instruction];
+}
+
+SUB_LABEL_OP_LFSR_CLOCK: {
+    if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (lfsr_clock)"); success=false; goto sub_chunk_end; }
+    float density_arg = *(--sp); float type_arg_float = sp[-1];
+    int type_id = (int)roundf(type_arg_float);
+    float call_result = 0.0f;
+
+    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
+        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
+        if (table->period > 0) {
+            float clamped_density = fmaxf(0.0f, fminf(1.0f, density_arg));
+            if (vm->params->lfsr_type == (LfsrType)type_id && vm->params->lfsr_state != 0) {
+                advance_lfsr_state(vm->params);
+                float bit_val = (vm->params->lfsr_state & 1) ? 1.0f : 0.0f;
+                call_result = (bit_val >= clamped_density) ? 1.0f : 0.0f;
+            } else {
+                call_result = lfsr_get_clock((LfsrType)type_id, vm->params->x, clamped_density);
+            }
+        } else {
+            vm->ip=ip; vm->stack_top=sp; vm_error(vm, "lfsr_clock: LFSR type %d has zero period.", type_id);
+        }
+    } else {
+        vm->ip=ip; vm->stack_top=sp; vm_error(vm, "lfsr_clock: Invalid or uninitialized LFSR type %d.", type_id);
+    }
+    sp[-1] = call_result;
+    instruction=*ip++; goto *sub_dispatch_table[instruction];
 }
 
 SUB_LABEL_OP_PUSH_LOOP_VAR: {
@@ -3419,14 +3415,35 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
         /* 0x14 OP_CMP_LE */           &&LABEL_OP_CMP_LE,
         /* 0x15 OP_JUMP */             &&LABEL_OP_JUMP,
         /* 0x16 OP_JUMP_IF_FALSE */   &&LABEL_OP_JUMP_IF_FALSE,
-        /* 0x17 OP_CALL */             &&LABEL_OP_CALL,
+        /* 0x17 OP_CALL_DEPRECATED */  &&LABEL_OP_CALL_DEPRECATED,
         /* 0x18 OP_SIGMA_SETUP */      &&LABEL_OP_SIGMA_SETUP,
         /* 0x19 OP_PUSH_LOOP_VAR */    &&LABEL_OP_PUSH_LOOP_VAR,
         /* 0x1A OP_SIGMA_EXEC */       &&LABEL_OP_SIGMA_EXEC,
         /* 0x1B OP_SIGMA_INIT */       &&LABEL_OP_SIGMA_INIT,
         /* 0x1C OP_SIGMA_CHECK */      &&LABEL_OP_SIGMA_CHECK,
         /* 0x1D OP_SIGMA_INC */        &&LABEL_OP_SIGMA_INC,
-        /* 0x1E OP_HALT */             &&LABEL_OP_HALT
+        /* 0x1E OP_SIN */              &&LABEL_OP_SIN,
+        /* 0x1F OP_COS */              &&LABEL_OP_COS,
+        /* 0x20 OP_TAN */              &&LABEL_OP_TAN,
+        /* 0x21 OP_ASIN */             &&LABEL_OP_ASIN,
+        /* 0x22 OP_ACOS */             &&LABEL_OP_ACOS,
+        /* 0x23 OP_ATAN */             &&LABEL_OP_ATAN,
+        /* 0x24 OP_ABS */              &&LABEL_OP_ABS,
+        /* 0x25 OP_TANH */             &&LABEL_OP_TANH,
+        /* 0x26 OP_EXP */              &&LABEL_OP_EXP,
+        /* 0x27 OP_LOG */              &&LABEL_OP_LOG,
+        /* 0x28 OP_LOG10 */            &&LABEL_OP_LOG10,
+        /* 0x29 OP_FLOOR */            &&LABEL_OP_FLOOR,
+        /* 0x2A OP_CEIL */             &&LABEL_OP_CEIL,
+        /* 0x2B OP_MIN */              &&LABEL_OP_MIN,
+        /* 0x2C OP_MAX */              &&LABEL_OP_MAX,
+        /* 0x2D OP_SQRT */             &&LABEL_OP_SQRT,
+        /* 0x2E OP_POW */              &&LABEL_OP_POW,
+        /* 0x2F OP_RAND */             &&LABEL_OP_RAND,
+        /* 0x30 OP_LFSR_VAL */         &&LABEL_OP_LFSR_VAL,
+        /* 0x31 OP_LFSR_NOISE */       &&LABEL_OP_LFSR_NOISE,
+        /* 0x32 OP_LFSR_CLOCK */       &&LABEL_OP_LFSR_CLOCK,
+        /* 0x33 OP_HALT */             &&LABEL_OP_HALT
     };
 
     // --- Central Dispatch Loop ---
@@ -3514,105 +3531,127 @@ LABEL_OP_JUMP_IF_FALSE: {
     goto DISPATCH_LOOP;
 }
 
-LABEL_OP_CALL: {
-    uint8_t func_id = *ip++;
-    uint8_t arg_count = *ip++;
-    float call_result = 0.0f;
-    if (PX_UNLIKELY((sp - vm.stack) < arg_count)) {
-        vm.ip = ip; vm.stack_top = sp;
-        vm_error(&vm, "Stack underflow for OP_CALL! Need %u args, have %td", arg_count, sp - vm.stack);
-        success = false;
-        *sp++ = 0.0f;
-        goto execution_end;
-    } else {
-        vm.stack_top = sp; // Sync
-        vm.ip = ip; // Sync
+LABEL_OP_CALL_DEPRECATED: {
+    vm.ip = ip; vm.stack_top = sp;
+    vm_error(&vm, "OP_CALL_DEPRECATED encountered.");
+    success = false;
+    goto execution_end;
+}
 
-        switch (func_id) {
-        case FUNC_ID_SIN: if (arg_count == 1) call_result = sinf(pop(&vm)); else vm_error(&vm,"sin expects 1 arg"); break;
-        case FUNC_ID_COS: if (arg_count == 1) call_result = cosf(pop(&vm)); else vm_error(&vm,"cos expects 1 arg"); break;
-        case FUNC_ID_TAN: if (arg_count == 1) call_result = tanf(pop(&vm)); else vm_error(&vm,"tan expects 1 arg"); break;
-        case FUNC_ID_ASIN: if (arg_count == 1) { float v=pop(&vm); call_result = asinf(fmaxf(-1.0f, fminf(1.0f, v))); } else vm_error(&vm,"asin expects 1 arg"); break;
-        case FUNC_ID_ACOS: if (arg_count == 1) { float v=pop(&vm); call_result = acosf(fmaxf(-1.0f, fminf(1.0f, v))); } else vm_error(&vm,"acos expects 1 arg"); break;
-        case FUNC_ID_ATAN: if (arg_count == 1) call_result = atanf(pop(&vm)); else vm_error(&vm,"atan expects 1 arg"); break;
-        case FUNC_ID_ABS: if (arg_count == 1) call_result = fabsf(pop(&vm)); else vm_error(&vm,"abs expects 1 arg"); break;
-        case FUNC_ID_TANH: if (arg_count == 1) call_result = tanhf(pop(&vm)); else vm_error(&vm,"tanh expects 1 arg"); break;
-        case FUNC_ID_EXP: if (arg_count == 1) call_result = expf(pop(&vm)); else vm_error(&vm,"exp expects 1 arg"); break;
-        case FUNC_ID_LOG: if (arg_count == 1) { float v=pop(&vm); call_result=(v > 0) ? logf(v): 0.0f; } else vm_error(&vm,"log expects 1 arg"); break;
-        case FUNC_ID_LOG10: if (arg_count == 1) { float v=pop(&vm); call_result=(v > 0) ? log10f(v): 0.0f; } else vm_error(&vm,"log10 expects 1 arg"); break;
-        case FUNC_ID_FLOOR: if (arg_count == 1) call_result = floorf(pop(&vm)); else vm_error(&vm,"floor expects 1 arg"); break;
-        case FUNC_ID_CEIL: if (arg_count == 1) call_result = ceilf(pop(&vm)); else vm_error(&vm,"ceil expects 1 arg"); break;
-        case FUNC_ID_MIN: if (arg_count == 2) { float b=pop(&vm); float a=pop(&vm); call_result=fminf(a,b); } else vm_error(&vm,"min expects 2 args"); break;
-        case FUNC_ID_MAX: if (arg_count == 2) { float b=pop(&vm); float a=pop(&vm); call_result=fmaxf(a,b); } else vm_error(&vm,"max expects 2 args"); break;
-        case FUNC_ID_SQRT: if (arg_count == 1) { float v=pop(&vm); call_result=(v >= 0) ? sqrtf(v): 0.0f; } else vm_error(&vm,"sqrt expects 1 arg"); break;
-        case FUNC_ID_POW: if (arg_count == 2) { float b=pop(&vm); float a=pop(&vm); call_result=powf(a,b); } else vm_error(&vm,"pow expects 2 args"); break;
-        case FUNC_ID_RAND:
-            if (arg_count == 0) {
-                if (vm.params->rng_state_ptr) {
-                    uint32_t r = px_rand(vm.params->rng_state_ptr);
-                    call_result = (float)r / (float)UINT32_MAX;
-                } else {
-                    call_result = 0.0f;
-                }
-            } else vm_error(&vm,"rand expects 0 args");
-            break;
-        case FUNC_ID_LFSR_VAL:
-            if (arg_count == 3) {
-                float seed_arg = pop(&vm); float position_arg = pop(&vm); float type_arg_float = pop(&vm); int type_id = (int)roundf(type_arg_float);
-                if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
-                    LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
-                    if (table->period > 0) {
-                        if (vm.params->lfsr_type == (LfsrType)type_id && vm.params->lfsr_state != 0) {
-                            advance_lfsr_state(vm.params); call_result = (vm.params->lfsr_state & 1) ? 1.0f : 0.0f;
-                        } else {
-                            float norm_pos = fmodf(position_arg, 1.0f); if (norm_pos < 0.0f) norm_pos += 1.0f;
-                            float norm_seed_offset = fmodf(seed_arg, 1.0f); if (norm_seed_offset < 0.0f) norm_seed_offset += 1.0f;
-                            float combined_norm_pos = fmodf(norm_pos + norm_seed_offset, 1.0f);
-                            uint32_t table_index = (uint32_t)(combined_norm_pos * table->period);
-                            if (table_index >= table->period) table_index = table->period - 1;
-                            call_result = lfsr_get_bit((LfsrType)type_id, table_index);
-                        }
-                    } else { vm_error(&vm, "lfsr_val: LFSR type %d has zero period.", type_id); call_result = 0.0f; }
-                } else { vm_error(&vm, "lfsr_val: Invalid or uninitialized LFSR type %d.", type_id); call_result = 0.0f; }
-            } else { vm_error(&vm, "lfsr_val expects 3 arguments, got %u.", arg_count); for(uint8_t k = 0; k < arg_count; ++k) if(vm.stack_top > vm.stack) pop(&vm); call_result = 0.0f; success = false; }
-            break;
-        case FUNC_ID_LFSR_NOISE:
-            if (arg_count == 2) {
-                float rate_arg = pop(&vm); float type_arg_float = pop(&vm); int type_id = (int)roundf(type_arg_float);
-                if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
-                    LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
-                    if (table->period > 0) {
-                        if (vm.params->lfsr_type == (LfsrType)type_id && vm.params->lfsr_state != 0) {
-                            advance_lfsr_state(vm.params); call_result = ((vm.params->lfsr_state & 1) ? 1.0f : 0.0f) * 2.0f - 1.0f;
-                        } else {
-                            float normalized_lfsr_phase = fmodf((vm.params->x / C_TWO_PI) * rate_arg, 1.0f); if (normalized_lfsr_phase < 0.0f) normalized_lfsr_phase += 1.0f;
-                            uint32_t table_index = (uint32_t)(normalized_lfsr_phase * table->period);
-                            if (table_index >= table->period) table_index = table->period - 1;
-                            call_result = (lfsr_get_bit((LfsrType)type_id, table_index) * 2.0f) - 1.0f;
-                        }
-                    } else { vm_error(&vm, "lfsr_noise: LFSR type %d has zero period.", type_id); call_result = 0.0f; }
-                } else { vm_error(&vm, "lfsr_noise: Invalid or uninitialized LFSR type %d.", type_id); call_result = 0.0f; }
-            } else { vm_error(&vm, "lfsr_noise expects 2 arguments, got %u.", arg_count); for(uint8_t k = 0; k < arg_count; ++k) if(vm.stack_top > vm.stack) pop(&vm); call_result = 0.0f; success = false; }
-            break;
-        case FUNC_ID_LFSR_CLOCK:
-            if (arg_count == 2) {
-                float density_arg = pop(&vm); float type_arg_float = pop(&vm); int type_id = (int)roundf(type_arg_float);
-                if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
-                    LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
-                    if (table->period > 0) {
-                        float clamped_density = fmaxf(0.0f, fminf(1.0f, density_arg));
-                        if (vm.params->lfsr_type == (LfsrType)type_id && vm.params->lfsr_state != 0) {
-                            advance_lfsr_state(vm.params); float bit_val = (vm.params->lfsr_state & 1) ? 1.0f : 0.0f; call_result = (bit_val >= clamped_density) ? 1.0f : 0.0f;
-                        } else { call_result = lfsr_get_clock((LfsrType)type_id, vm.params->x, clamped_density); }
-                    } else { vm_error(&vm, "lfsr_clock: LFSR type %d has zero period.", type_id); call_result = 0.0f; }
-                } else { vm_error(&vm, "lfsr_clock: Invalid or uninitialized LFSR type %d.", type_id); call_result = 0.0f; }
-            } else { vm_error(&vm, "lfsr_clock expects 2 arguments, got %u.", arg_count); for(uint8_t k = 0; k < arg_count; ++k) if(vm.stack_top > vm.stack) pop(&vm); call_result = 0.0f; success = false; }
-            break;
-        default: vm_error(&vm, "Unknown function ID %d in OP_CALL.", func_id); break;
-        }
-        sp = vm.stack_top; // Sync back
-        *sp++ = call_result;
+LABEL_OP_SIN: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (sin)"); success=false; goto execution_end; } sp[-1] = sinf(sp[-1]); goto DISPATCH_LOOP; }
+LABEL_OP_COS: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (cos)"); success=false; goto execution_end; } sp[-1] = cosf(sp[-1]); goto DISPATCH_LOOP; }
+LABEL_OP_TAN: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (tan)"); success=false; goto execution_end; } sp[-1] = tanf(sp[-1]); goto DISPATCH_LOOP; }
+LABEL_OP_ASIN: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (asin)"); success=false; goto execution_end; } sp[-1] = asinf(fmaxf(-1.0f, fminf(1.0f, sp[-1]))); goto DISPATCH_LOOP; }
+LABEL_OP_ACOS: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (acos)"); success=false; goto execution_end; } sp[-1] = acosf(fmaxf(-1.0f, fminf(1.0f, sp[-1]))); goto DISPATCH_LOOP; }
+LABEL_OP_ATAN: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (atan)"); success=false; goto execution_end; } sp[-1] = atanf(sp[-1]); goto DISPATCH_LOOP; }
+LABEL_OP_ABS: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (abs)"); success=false; goto execution_end; } sp[-1] = fabsf(sp[-1]); goto DISPATCH_LOOP; }
+LABEL_OP_TANH: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (tanh)"); success=false; goto execution_end; } sp[-1] = tanhf(sp[-1]); goto DISPATCH_LOOP; }
+LABEL_OP_EXP: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (exp)"); success=false; goto execution_end; } sp[-1] = expf(sp[-1]); goto DISPATCH_LOOP; }
+LABEL_OP_LOG: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (log)"); success=false; goto execution_end; } sp[-1] = (sp[-1] > 0) ? logf(sp[-1]) : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_LOG10: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (log10)"); success=false; goto execution_end; } sp[-1] = (sp[-1] > 0) ? log10f(sp[-1]) : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_FLOOR: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (floor)"); success=false; goto execution_end; } sp[-1] = floorf(sp[-1]); goto DISPATCH_LOOP; }
+LABEL_OP_CEIL: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (ceil)"); success=false; goto execution_end; } sp[-1] = ceilf(sp[-1]); goto DISPATCH_LOOP; }
+LABEL_OP_SQRT: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (sqrt)"); success=false; goto execution_end; } sp[-1] = (sp[-1] >= 0) ? sqrtf(sp[-1]) : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_RAND: {
+    float r = 0.0f;
+    if (vm.params->rng_state_ptr) {
+        uint32_t val = px_rand(vm.params->rng_state_ptr);
+        r = (float)val / (float)UINT32_MAX;
     }
+    if (PX_UNLIKELY(sp >= vm.stack + MAX_VM_STACK)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack overflow (rand)"); success=false; goto execution_end; }
+    *sp++ = r;
+    goto DISPATCH_LOOP;
+}
+
+// 2-argument functions
+LABEL_OP_MIN: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (min)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = fminf(sp[-1], b); goto DISPATCH_LOOP; }
+LABEL_OP_MAX: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (max)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = fmaxf(sp[-1], b); goto DISPATCH_LOOP; }
+LABEL_OP_POW: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (pow)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = powf(sp[-1], b); goto DISPATCH_LOOP; }
+
+// LFSR functions
+LABEL_OP_LFSR_VAL: {
+    if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (lfsr_val)"); success=false; goto execution_end; }
+    float seed_arg = *(--sp); float position_arg = *(--sp); float type_arg_float = sp[-1];
+    int type_id = (int)roundf(type_arg_float);
+    float call_result = 0.0f;
+
+    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
+        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
+        if (table->period > 0) {
+            if (vm.params->lfsr_type == (LfsrType)type_id && vm.params->lfsr_state != 0) {
+                advance_lfsr_state(vm.params);
+                call_result = (vm.params->lfsr_state & 1) ? 1.0f : 0.0f;
+            } else {
+                float norm_pos = fmodf(position_arg, 1.0f); if (norm_pos < 0.0f) norm_pos += 1.0f;
+                float norm_seed_offset = fmodf(seed_arg, 1.0f); if (norm_seed_offset < 0.0f) norm_seed_offset += 1.0f;
+                float combined_norm_pos = fmodf(norm_pos + norm_seed_offset, 1.0f);
+                uint32_t table_index = (uint32_t)(combined_norm_pos * table->period);
+                if (table_index >= table->period) table_index = table->period - 1;
+                call_result = lfsr_get_bit((LfsrType)type_id, table_index);
+            }
+        } else {
+            vm.ip=ip; vm.stack_top=sp; vm_error(&vm, "lfsr_val: LFSR type %d has zero period.", type_id);
+        }
+    } else {
+        vm.ip=ip; vm.stack_top=sp; vm_error(&vm, "lfsr_val: Invalid or uninitialized LFSR type %d.", type_id);
+    }
+    sp[-1] = call_result;
+    goto DISPATCH_LOOP;
+}
+
+LABEL_OP_LFSR_NOISE: {
+    if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (lfsr_noise)"); success=false; goto execution_end; }
+    float rate_arg = *(--sp); float type_arg_float = sp[-1];
+    int type_id = (int)roundf(type_arg_float);
+    float call_result = 0.0f;
+
+    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
+        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
+        if (table->period > 0) {
+            if (vm.params->lfsr_type == (LfsrType)type_id && vm.params->lfsr_state != 0) {
+                advance_lfsr_state(vm.params);
+                call_result = ((vm.params->lfsr_state & 1) ? 1.0f : 0.0f) * 2.0f - 1.0f;
+            } else {
+                float normalized_lfsr_phase = fmodf((vm.params->x / C_TWO_PI) * rate_arg, 1.0f);
+                if (normalized_lfsr_phase < 0.0f) normalized_lfsr_phase += 1.0f;
+                uint32_t table_index = (uint32_t)(normalized_lfsr_phase * table->period);
+                if (table_index >= table->period) table_index = table->period - 1;
+                call_result = (lfsr_get_bit((LfsrType)type_id, table_index) * 2.0f) - 1.0f;
+            }
+        } else {
+            vm.ip=ip; vm.stack_top=sp; vm_error(&vm, "lfsr_noise: LFSR type %d has zero period.", type_id);
+        }
+    } else {
+        vm.ip=ip; vm.stack_top=sp; vm_error(&vm, "lfsr_noise: Invalid or uninitialized LFSR type %d.", type_id);
+    }
+    sp[-1] = call_result;
+    goto DISPATCH_LOOP;
+}
+
+LABEL_OP_LFSR_CLOCK: {
+    if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (lfsr_clock)"); success=false; goto execution_end; }
+    float density_arg = *(--sp); float type_arg_float = sp[-1];
+    int type_id = (int)roundf(type_arg_float);
+    float call_result = 0.0f;
+
+    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
+        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
+        if (table->period > 0) {
+            float clamped_density = fmaxf(0.0f, fminf(1.0f, density_arg));
+            if (vm.params->lfsr_type == (LfsrType)type_id && vm.params->lfsr_state != 0) {
+                advance_lfsr_state(vm.params);
+                float bit_val = (vm.params->lfsr_state & 1) ? 1.0f : 0.0f;
+                call_result = (bit_val >= clamped_density) ? 1.0f : 0.0f;
+            } else {
+                call_result = lfsr_get_clock((LfsrType)type_id, vm.params->x, clamped_density);
+            }
+        } else {
+            vm.ip=ip; vm.stack_top=sp; vm_error(&vm, "lfsr_clock: LFSR type %d has zero period.", type_id);
+        }
+    } else {
+        vm.ip=ip; vm.stack_top=sp; vm_error(&vm, "lfsr_clock: Invalid or uninitialized LFSR type %d.", type_id);
+    }
+    sp[-1] = call_result;
     goto DISPATCH_LOOP;
 }
 
@@ -3970,8 +4009,7 @@ static int get_instruction_size(const BytecodeChunk *chunk, int offset) {
         case OP_SIGMA_CHECK:
             size += 2;
             break;
-        // Instructions with 2 single-byte operands
-        case OP_CALL:
+        case OP_CALL_DEPRECATED:
              size += 2; // func_id + arg_count
              break;
         // Instructions with 1 single-byte operand
@@ -4005,6 +4043,14 @@ static int get_instruction_size(const BytecodeChunk *chunk, int offset) {
         case OP_CMP_LT:
         case OP_CMP_LE:
         case OP_SIGMA_INC:
+        case OP_SIN: case OP_COS: case OP_TAN:
+        case OP_ASIN: case OP_ACOS: case OP_ATAN:
+        case OP_ABS: case OP_TANH:
+        case OP_EXP: case OP_LOG: case OP_LOG10:
+        case OP_FLOOR: case OP_CEIL:
+        case OP_MIN: case OP_MAX:
+        case OP_SQRT: case OP_POW: case OP_RAND:
+        case OP_LFSR_VAL: case OP_LFSR_NOISE: case OP_LFSR_CLOCK:
         case OP_HALT:
             // Size remains 1
             break;

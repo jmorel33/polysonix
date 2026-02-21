@@ -3,9 +3,13 @@
 </div>
 
 # Polysonix
-**Version 1.8.12 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
+**Version 1.9.0 (January 2026) | **Author:** Jacques Morel | **Copyright (c) 2026**
 
 A single-header polyphonic synthesizer engine.
+
+### What's New in v1.9.0
+- **Refactor: Flat Math Opcodes:** Significantly optimized the `px_vm` by replacing the generic `OP_CALL` dispatch mechanism with specific, flat opcodes (e.g., `OP_SIN`, `OP_RAND`, `OP_POW`). This flattening reduces branch misprediction overhead in the interpreter loop and simplifies the bytecode structure.
+- **Optimization: Inline VM Stack:** Mathematical operations now perform inline stack checks and manipulation within the main dispatch loop, further reducing function call overhead.
 
 ### What's New in v1.8.12
 - **Fix: Unsafe Oscillator Phase Wrapping:** Implemented safe phase wrapping logic to handle large increments (e.g., during high-frequency synthesis or aggressive modulation), preventing phase values from exceeding the valid [0.0, 1.0) range.
