@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 8
-#define POLYSONIX_VERSION_PATCH 5
+#define POLYSONIX_VERSION_PATCH 6
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1541,6 +1541,7 @@ struct PxSynth {
     // --- THREAD-SAFE MEMBERS ---
     CommandQueue cmd_queue;
     UISnapshot ui_snapshot;
+    uint32_t rng_state; // Context-aware PRNG state for template/global logic
 };
 
 
@@ -1569,12 +1570,6 @@ static int find_inactive_voice(PxSynth* s);
 static int find_voice_to_steal(PxSynth* s);
 static inline float soft_clip(float x);
 static float cubic_interpolate(float y0, float y1, float y2, float y3, float t);
-
-// Simple LCG PRNG for audio thread safety
-static inline uint32_t px_rand(uint32_t* state) {
-    *state = *state * 1664525 + 1013904223;
-    return *state;
-}
 
 // --- Internal Helper Functions ---
 static void ADSR_SetParams(ADSR* adsr, const PxADSRParams* params, float sample_rate) {
@@ -2463,6 +2458,7 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     s->config = *config;
     // Seed global trigger counter with time for per-run variation
     s->global_trigger_counter = (uint64_t)time(NULL);
+    s->rng_state = (uint32_t)s->global_trigger_counter; // Seed global RNG
     s->time_per_sample = 1.0f / config->sample_rate;
     s->glide_coeff = 1.0f - expf(-1.0f / (0.05f * s->config.sample_rate));
     s->lfo_update_countdown = 1;
@@ -2511,6 +2507,7 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
 
     // 7. Allocate and initialize all per-voice internal arrays and structs.
     for (int i = 0; i < config->num_voices; ++i) {
+        s->voices[i].rng_state = (uint32_t)(s->global_trigger_counter + i * 2246822507U); // Initial seed
         s->voices[i].poly_aftertouch_pressure = 0.0f;
         s->voices[i].adsrs = (ADSR*)calloc(config->num_voice_adsrs, sizeof(ADSR));
         s->voices[i].lfo_instances = (LFOInstance*)calloc(config->num_lfos, sizeof(LFOInstance));
@@ -2526,13 +2523,20 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
         }
         Filter_Init(&s->voices[i].filter_instance);
         Filter_Init(&s->voices[i].filter_instance_r);
+        for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
+            s->voices[i].osc_vm_params[o].rng_state_ptr = &s->voices[i].rng_state;
+        }
         for (int j = 0; j < config->num_lfos; ++j) {
             LFOInstance_Init(&s->voices[i].lfo_instances[j], config->sample_rate);
+            s->voices[i].lfo_instances[j].lfo_vm_params.rng_state_ptr = &s->voices[i].rng_state;
         }
     }
 
     // 8. Initialize the template LFO instances (for UI display).
-    for (int i = 0; i < config->num_lfos; ++i) { LFOInstance_Init(&s->template_lfo_instances[i], config->sample_rate); }
+    for (int i = 0; i < config->num_lfos; ++i) {
+        LFOInstance_Init(&s->template_lfo_instances[i], config->sample_rate);
+        s->template_lfo_instances[i].lfo_vm_params.rng_state_ptr = &s->rng_state;
+    }
 
     // 9. Initialize GPU resources if requested and enabled
     if (s->config.use_gpu) {
@@ -4192,7 +4196,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
         v->osc_vm_params[o].x = 0.0f;
         v->osc_vm_params[o].frequency = v->frequency;
-        v->osc_vm_params[o].rand_offset = (float)rand() / RAND_MAX;
+        v->osc_vm_params[o].rand_offset = (float)px_rand(&v->rng_state) / (float)UINT32_MAX;
         v->osc_vm_params[o].modA = 0.0f;
         v->osc_vm_params[o].modB = 0.0f;
         v->osc_vm_params[o].modC = 0.0f;
