@@ -53,6 +53,10 @@ void px_vm_print_stats(void);
 #ifndef PX_WAVE_ROM_IMP_INCLUDED
 #define PX_WAVE_ROM_IMP_INCLUDED
 
+#ifdef PX_BENCHMARK_NATIVE_WAVES
+#include "px_wave_native.h"
+#endif
+
 WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
     // --- Bank 0: Analog & Basic Shapes (0-15) ---
 /*   0*/ { "Triangle Up", "1.0 - 2.0 * abs((x + MOD_C * 0.5) / PI - 1.0) + 1.0 * MOD_B * sin(2.0*x)" }, // MOD_A: Unused. MOD_B: Harmonic. MOD_C: Phase skew/bend.
@@ -811,6 +815,13 @@ BytecodeChunk* get_default_wave_bytecode(int wave_index) {
                 wave_index, wave->name, wave->expression);
         return NULL;
     }
+
+#ifdef PX_BENCHMARK_NATIVE_WAVES
+    // Link native implementation if available
+    if (wave_index >= 0 && wave_index < (int)(sizeof(native_waves)/sizeof(native_waves[0]))) {
+        wave->compiled_bytecode->native_func = native_waves[wave_index];
+    }
+#endif
 
     printf("  Successfully compiled wave %d (%d instructions)\n",
            wave_index, count_bytecode_instructions(wave->compiled_bytecode));

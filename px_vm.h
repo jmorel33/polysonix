@@ -379,35 +379,6 @@ float lfsr_get_noise(LfsrType type, float phase, float rate);
  */
 float lfsr_get_clock(LfsrType type, float phase, float density);
 
-typedef struct BytecodeChunk BytecodeChunk;
-
-// Structure to hold compiled bytecode and associated data
-struct BytecodeChunk {
-    uint8_t code[MAX_BYTECODE_SIZE]; // Array of raw bytes
-    int     code_count;              // How many bytes are used in 'code'
-    POLYSONIX_ALIGN(32) float   constants[MAX_CONSTANTS]; // Array of floats
-    int     constants_count;         // How many constants are used
-    char*   strings[MAX_STRINGS];     // Array of char pointers (to heap copies)
-    int     strings_count;            // How many strings are used
-    BytecodeChunk* sigma_sub_chunks[MAX_SIGMA_CHUNKS]; // Array of pointers
-    int sigma_sub_chunk_count;      // How many sub-chunks are used
-    bool has_error;                 // Error flag for compilation (e.g., overflow)
-};
-
-// Structure to hold loop variable info during sigma execution
-typedef struct {
-    const char* name;        // Points to the name string (e.g., "k") from the chunk's string pool
-    float       current_value; // The value of the loop variable in the current sigma iteration
-} LoopVarInfo;
-
-typedef struct {
-    const char *name;       // Human-readable name for the wave
-    const char *expression; // The mathematical expression string
-    BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
-} WaveDefinition;
-
-extern WaveDefinition default_waves[NUM_DEFAULT_WAVES];
-
 // Structure to hold runtime parameters for the VM - Enhanced with LFSR state fields
 typedef struct {
     float x;            // Phase (0 to 2*PI)
@@ -424,6 +395,42 @@ typedef struct {
     float lfsr_accum_phase; // New: Accumulator for fractional LFSR advances
     uint32_t* rng_state_ptr; // Pointer to the voice's RNG state
 } VmParams;
+
+#ifdef PX_BENCHMARK_NATIVE_WAVES
+typedef float (*NativeWaveFunc)(VmParams* p);
+#endif
+
+typedef struct BytecodeChunk BytecodeChunk;
+
+// Structure to hold compiled bytecode and associated data
+struct BytecodeChunk {
+    uint8_t code[MAX_BYTECODE_SIZE]; // Array of raw bytes
+    int     code_count;              // How many bytes are used in 'code'
+    POLYSONIX_ALIGN(32) float   constants[MAX_CONSTANTS]; // Array of floats
+    int     constants_count;         // How many constants are used
+    char*   strings[MAX_STRINGS];     // Array of char pointers (to heap copies)
+    int     strings_count;            // How many strings are used
+    BytecodeChunk* sigma_sub_chunks[MAX_SIGMA_CHUNKS]; // Array of pointers
+    int sigma_sub_chunk_count;      // How many sub-chunks are used
+    bool has_error;                 // Error flag for compilation (e.g., overflow)
+#ifdef PX_BENCHMARK_NATIVE_WAVES
+    NativeWaveFunc native_func;     // Pointer to native C implementation (if available - Benchmark ONLY)
+#endif
+};
+
+// Structure to hold loop variable info during sigma execution
+typedef struct {
+    const char* name;        // Points to the name string (e.g., "k") from the chunk's string pool
+    float       current_value; // The value of the loop variable in the current sigma iteration
+} LoopVarInfo;
+
+typedef struct {
+    const char *name;       // Human-readable name for the wave
+    const char *expression; // The mathematical expression string
+    BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+} WaveDefinition;
+
+extern WaveDefinition default_waves[NUM_DEFAULT_WAVES];
 
 
 // --- Updated VM Struct (now uses VmParams internally, or could just hold the pointer) ---
@@ -2335,6 +2342,9 @@ void init_bytecode_chunk(BytecodeChunk *chunk) {
         chunk->sigma_sub_chunks[i] = NULL;
     }
     chunk->has_error = false;
+#ifdef PX_BENCHMARK_NATIVE_WAVES
+    chunk->native_func = NULL;
+#endif
 }
 
 // Free a chunk's internal data, including sub-chunks it owns and duplicated strings
@@ -2738,6 +2748,81 @@ static uint8_t read_byte(VM *vm) {
 
 // Helper for logical truthiness in VM
 #define VM_IS_TRUE(f) (fabsf(f) > EPSILON)
+
+// --- VM Logic Helpers ---
+
+static inline float vm_rand(VmParams* params) {
+    if (params->rng_state_ptr) {
+        uint32_t val = px_rand(params->rng_state_ptr);
+        return (float)val / (float)UINT32_MAX;
+    }
+    return 0.0f;
+}
+
+static inline float vm_lfsr_val(VmParams* params, float type_arg, float position_arg, float seed_arg) {
+    int type_id = (int)roundf(type_arg);
+    float call_result = 0.0f;
+
+    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
+        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
+        if (table->period > 0) {
+            if (params->lfsr_type == (LfsrType)type_id && params->lfsr_state != 0) {
+                advance_lfsr_state(params);
+                call_result = (params->lfsr_state & 1) ? 1.0f : 0.0f;
+            } else {
+                float norm_pos = fmodf(position_arg, 1.0f); if (norm_pos < 0.0f) norm_pos += 1.0f;
+                float norm_seed_offset = fmodf(seed_arg, 1.0f); if (norm_seed_offset < 0.0f) norm_seed_offset += 1.0f;
+                float combined_norm_pos = fmodf(norm_pos + norm_seed_offset, 1.0f);
+                uint32_t table_index = (uint32_t)(combined_norm_pos * table->period);
+                if (table_index >= table->period) table_index = table->period - 1;
+                call_result = lfsr_get_bit((LfsrType)type_id, table_index);
+            }
+        }
+    }
+    return call_result;
+}
+
+static inline float vm_lfsr_noise(VmParams* params, float type_arg, float rate_arg) {
+    int type_id = (int)roundf(type_arg);
+    float call_result = 0.0f;
+
+    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
+        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
+        if (table->period > 0) {
+            if (params->lfsr_type == (LfsrType)type_id && params->lfsr_state != 0) {
+                advance_lfsr_state(params);
+                call_result = ((params->lfsr_state & 1) ? 1.0f : 0.0f) * 2.0f - 1.0f;
+            } else {
+                float normalized_lfsr_phase = fmodf((params->x / C_TWO_PI) * rate_arg, 1.0f);
+                if (normalized_lfsr_phase < 0.0f) normalized_lfsr_phase += 1.0f;
+                uint32_t table_index = (uint32_t)(normalized_lfsr_phase * table->period);
+                if (table_index >= table->period) table_index = table->period - 1;
+                call_result = (lfsr_get_bit((LfsrType)type_id, table_index) * 2.0f) - 1.0f;
+            }
+        }
+    }
+    return call_result;
+}
+
+static inline float vm_lfsr_clock(VmParams* params, float type_arg, float density_arg) {
+    int type_id = (int)roundf(type_arg);
+    float call_result = 0.0f;
+
+    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
+        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
+        if (table->period > 0) {
+            float clamped_density = fmaxf(0.0f, fminf(1.0f, density_arg));
+            if (params->lfsr_type == (LfsrType)type_id && params->lfsr_state != 0) {
+                advance_lfsr_state(params);
+                float bit_val = (params->lfsr_state & 1) ? 1.0f : 0.0f;
+                call_result = (bit_val >= clamped_density) ? 1.0f : 0.0f;
+            } else {
+                call_result = lfsr_get_clock((LfsrType)type_id, params->x, clamped_density);
+            }
+        }
+    }
+    return call_result;
+}
 
 // --- Sigma Sub-Execution Helper ---
 static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
@@ -3154,13 +3239,8 @@ SUB_LABEL_OP_FLOOR: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_t
 SUB_LABEL_OP_CEIL: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (ceil)"); success=false; goto sub_chunk_end; } sp[-1] = ceilf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_SQRT: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (sqrt)"); success=false; goto sub_chunk_end; } sp[-1] = (sp[-1] >= 0) ? sqrtf(sp[-1]) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_RAND: {
-    float r = 0.0f;
-    if (vm->params->rng_state_ptr) {
-        uint32_t val = px_rand(vm->params->rng_state_ptr);
-        r = (float)val / (float)UINT32_MAX;
-    }
     if (PX_UNLIKELY(sp >= vm->stack + MAX_VM_STACK)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack overflow (rand)"); success=false; goto sub_chunk_end; }
-    *sp++ = r;
+    *sp++ = vm_rand(vm->params);
     instruction=*ip++; goto *sub_dispatch_table[instruction];
 }
 
@@ -3173,86 +3253,21 @@ SUB_LABEL_OP_POW: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stac
 SUB_LABEL_OP_LFSR_VAL: {
     if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (lfsr_val)"); success=false; goto sub_chunk_end; }
     float seed_arg = *(--sp); float position_arg = *(--sp); float type_arg_float = sp[-1];
-    int type_id = (int)roundf(type_arg_float);
-    float call_result = 0.0f;
-
-    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
-        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
-        if (table->period > 0) {
-            if (vm->params->lfsr_type == (LfsrType)type_id && vm->params->lfsr_state != 0) {
-                advance_lfsr_state(vm->params);
-                call_result = (vm->params->lfsr_state & 1) ? 1.0f : 0.0f;
-            } else {
-                float norm_pos = fmodf(position_arg, 1.0f); if (norm_pos < 0.0f) norm_pos += 1.0f;
-                float norm_seed_offset = fmodf(seed_arg, 1.0f); if (norm_seed_offset < 0.0f) norm_seed_offset += 1.0f;
-                float combined_norm_pos = fmodf(norm_pos + norm_seed_offset, 1.0f);
-                uint32_t table_index = (uint32_t)(combined_norm_pos * table->period);
-                if (table_index >= table->period) table_index = table->period - 1;
-                call_result = lfsr_get_bit((LfsrType)type_id, table_index);
-            }
-        } else {
-            vm->ip=ip; vm->stack_top=sp; vm_error(vm, "lfsr_val: LFSR type %d has zero period.", type_id);
-        }
-    } else {
-        vm->ip=ip; vm->stack_top=sp; vm_error(vm, "lfsr_val: Invalid or uninitialized LFSR type %d.", type_id);
-    }
-    sp[-1] = call_result;
+    sp[-1] = vm_lfsr_val(vm->params, type_arg_float, position_arg, seed_arg);
     instruction=*ip++; goto *sub_dispatch_table[instruction];
 }
 
 SUB_LABEL_OP_LFSR_NOISE: {
     if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (lfsr_noise)"); success=false; goto sub_chunk_end; }
     float rate_arg = *(--sp); float type_arg_float = sp[-1];
-    int type_id = (int)roundf(type_arg_float);
-    float call_result = 0.0f;
-
-    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
-        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
-        if (table->period > 0) {
-            if (vm->params->lfsr_type == (LfsrType)type_id && vm->params->lfsr_state != 0) {
-                advance_lfsr_state(vm->params);
-                call_result = ((vm->params->lfsr_state & 1) ? 1.0f : 0.0f) * 2.0f - 1.0f;
-            } else {
-                float normalized_lfsr_phase = fmodf((vm->params->x / C_TWO_PI) * rate_arg, 1.0f);
-                if (normalized_lfsr_phase < 0.0f) normalized_lfsr_phase += 1.0f;
-                uint32_t table_index = (uint32_t)(normalized_lfsr_phase * table->period);
-                if (table_index >= table->period) table_index = table->period - 1;
-                call_result = (lfsr_get_bit((LfsrType)type_id, table_index) * 2.0f) - 1.0f;
-            }
-        } else {
-            vm->ip=ip; vm->stack_top=sp; vm_error(vm, "lfsr_noise: LFSR type %d has zero period.", type_id);
-        }
-    } else {
-        vm->ip=ip; vm->stack_top=sp; vm_error(vm, "lfsr_noise: Invalid or uninitialized LFSR type %d.", type_id);
-    }
-    sp[-1] = call_result;
+    sp[-1] = vm_lfsr_noise(vm->params, type_arg_float, rate_arg);
     instruction=*ip++; goto *sub_dispatch_table[instruction];
 }
 
 SUB_LABEL_OP_LFSR_CLOCK: {
     if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (lfsr_clock)"); success=false; goto sub_chunk_end; }
     float density_arg = *(--sp); float type_arg_float = sp[-1];
-    int type_id = (int)roundf(type_arg_float);
-    float call_result = 0.0f;
-
-    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
-        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
-        if (table->period > 0) {
-            float clamped_density = fmaxf(0.0f, fminf(1.0f, density_arg));
-            if (vm->params->lfsr_type == (LfsrType)type_id && vm->params->lfsr_state != 0) {
-                advance_lfsr_state(vm->params);
-                float bit_val = (vm->params->lfsr_state & 1) ? 1.0f : 0.0f;
-                call_result = (bit_val >= clamped_density) ? 1.0f : 0.0f;
-            } else {
-                call_result = lfsr_get_clock((LfsrType)type_id, vm->params->x, clamped_density);
-            }
-        } else {
-            vm->ip=ip; vm->stack_top=sp; vm_error(vm, "lfsr_clock: LFSR type %d has zero period.", type_id);
-        }
-    } else {
-        vm->ip=ip; vm->stack_top=sp; vm_error(vm, "lfsr_clock: Invalid or uninitialized LFSR type %d.", type_id);
-    }
-    sp[-1] = call_result;
+    sp[-1] = vm_lfsr_clock(vm->params, type_arg_float, density_arg);
     instruction=*ip++; goto *sub_dispatch_table[instruction];
 }
 
@@ -3380,6 +3395,13 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
     // --- Initial Checks ---
     if (PX_UNLIKELY(!chunk || chunk->code_count == 0)) { return 0.0f; }
     if (PX_UNLIKELY(!params)) { return 0.0f; }
+
+#ifdef PX_BENCHMARK_NATIVE_WAVES
+    // --- Native Execution Path (Benchmark Only) ---
+    if (chunk->native_func) {
+        return chunk->native_func(params);
+    }
+#endif
 
     // --- VM Setup ---
     VM vm;
@@ -3562,13 +3584,8 @@ LABEL_OP_FLOOR: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; 
 LABEL_OP_CEIL: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (ceil)"); success=false; goto execution_end; } sp[-1] = ceilf(sp[-1]); goto DISPATCH_LOOP; }
 LABEL_OP_SQRT: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (sqrt)"); success=false; goto execution_end; } sp[-1] = (sp[-1] >= 0) ? sqrtf(sp[-1]) : 0.0f; goto DISPATCH_LOOP; }
 LABEL_OP_RAND: {
-    float r = 0.0f;
-    if (vm.params->rng_state_ptr) {
-        uint32_t val = px_rand(vm.params->rng_state_ptr);
-        r = (float)val / (float)UINT32_MAX;
-    }
     if (PX_UNLIKELY(sp >= vm.stack + MAX_VM_STACK)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack overflow (rand)"); success=false; goto execution_end; }
-    *sp++ = r;
+    *sp++ = vm_rand(vm.params);
     goto DISPATCH_LOOP;
 }
 
@@ -3581,86 +3598,21 @@ LABEL_OP_POW: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=s
 LABEL_OP_LFSR_VAL: {
     if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (lfsr_val)"); success=false; goto execution_end; }
     float seed_arg = *(--sp); float position_arg = *(--sp); float type_arg_float = sp[-1];
-    int type_id = (int)roundf(type_arg_float);
-    float call_result = 0.0f;
-
-    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
-        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
-        if (table->period > 0) {
-            if (vm.params->lfsr_type == (LfsrType)type_id && vm.params->lfsr_state != 0) {
-                advance_lfsr_state(vm.params);
-                call_result = (vm.params->lfsr_state & 1) ? 1.0f : 0.0f;
-            } else {
-                float norm_pos = fmodf(position_arg, 1.0f); if (norm_pos < 0.0f) norm_pos += 1.0f;
-                float norm_seed_offset = fmodf(seed_arg, 1.0f); if (norm_seed_offset < 0.0f) norm_seed_offset += 1.0f;
-                float combined_norm_pos = fmodf(norm_pos + norm_seed_offset, 1.0f);
-                uint32_t table_index = (uint32_t)(combined_norm_pos * table->period);
-                if (table_index >= table->period) table_index = table->period - 1;
-                call_result = lfsr_get_bit((LfsrType)type_id, table_index);
-            }
-        } else {
-            vm.ip=ip; vm.stack_top=sp; vm_error(&vm, "lfsr_val: LFSR type %d has zero period.", type_id);
-        }
-    } else {
-        vm.ip=ip; vm.stack_top=sp; vm_error(&vm, "lfsr_val: Invalid or uninitialized LFSR type %d.", type_id);
-    }
-    sp[-1] = call_result;
+    sp[-1] = vm_lfsr_val(vm.params, type_arg_float, position_arg, seed_arg);
     goto DISPATCH_LOOP;
 }
 
 LABEL_OP_LFSR_NOISE: {
     if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (lfsr_noise)"); success=false; goto execution_end; }
     float rate_arg = *(--sp); float type_arg_float = sp[-1];
-    int type_id = (int)roundf(type_arg_float);
-    float call_result = 0.0f;
-
-    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
-        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
-        if (table->period > 0) {
-            if (vm.params->lfsr_type == (LfsrType)type_id && vm.params->lfsr_state != 0) {
-                advance_lfsr_state(vm.params);
-                call_result = ((vm.params->lfsr_state & 1) ? 1.0f : 0.0f) * 2.0f - 1.0f;
-            } else {
-                float normalized_lfsr_phase = fmodf((vm.params->x / C_TWO_PI) * rate_arg, 1.0f);
-                if (normalized_lfsr_phase < 0.0f) normalized_lfsr_phase += 1.0f;
-                uint32_t table_index = (uint32_t)(normalized_lfsr_phase * table->period);
-                if (table_index >= table->period) table_index = table->period - 1;
-                call_result = (lfsr_get_bit((LfsrType)type_id, table_index) * 2.0f) - 1.0f;
-            }
-        } else {
-            vm.ip=ip; vm.stack_top=sp; vm_error(&vm, "lfsr_noise: LFSR type %d has zero period.", type_id);
-        }
-    } else {
-        vm.ip=ip; vm.stack_top=sp; vm_error(&vm, "lfsr_noise: Invalid or uninitialized LFSR type %d.", type_id);
-    }
-    sp[-1] = call_result;
+    sp[-1] = vm_lfsr_noise(vm.params, type_arg_float, rate_arg);
     goto DISPATCH_LOOP;
 }
 
 LABEL_OP_LFSR_CLOCK: {
     if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (lfsr_clock)"); success=false; goto execution_end; }
     float density_arg = *(--sp); float type_arg_float = sp[-1];
-    int type_id = (int)roundf(type_arg_float);
-    float call_result = 0.0f;
-
-    if (type_id >= 0 && type_id < NUM_LFSR_TYPES && precomputed_lfsrs[type_id].initialized) {
-        LfsrPrecomputedTable* table = &precomputed_lfsrs[type_id];
-        if (table->period > 0) {
-            float clamped_density = fmaxf(0.0f, fminf(1.0f, density_arg));
-            if (vm.params->lfsr_type == (LfsrType)type_id && vm.params->lfsr_state != 0) {
-                advance_lfsr_state(vm.params);
-                float bit_val = (vm.params->lfsr_state & 1) ? 1.0f : 0.0f;
-                call_result = (bit_val >= clamped_density) ? 1.0f : 0.0f;
-            } else {
-                call_result = lfsr_get_clock((LfsrType)type_id, vm.params->x, clamped_density);
-            }
-        } else {
-            vm.ip=ip; vm.stack_top=sp; vm_error(&vm, "lfsr_clock: LFSR type %d has zero period.", type_id);
-        }
-    } else {
-        vm.ip=ip; vm.stack_top=sp; vm_error(&vm, "lfsr_clock: Invalid or uninitialized LFSR type %d.", type_id);
-    }
-    sp[-1] = call_result;
+    sp[-1] = vm_lfsr_clock(vm.params, type_arg_float, density_arg);
     goto DISPATCH_LOOP;
 }
 

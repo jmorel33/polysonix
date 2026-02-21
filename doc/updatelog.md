@@ -1,5 +1,20 @@
 # Update Log
 
+## v1.9.3 (2026/02/21)
+**Dev Tooling: Transpilation for Benchmarks**
+
+This release introduces new tooling to assist in performance optimization and debugging, focusing on the overhead of the VM interpreter vs. native C execution.
+
+*   **Native Waveform Transpiler:**
+    *   **New Tool:** Added `tools/transpile_waves.py`, a script that parses the mathematical expressions in the ROM (`px_wave_rom.h`) and generates equivalent, optimized native C functions (`px_wave_native.h`).
+    *   **Benchmarking Mode:** Added the `PX_BENCHMARK_NATIVE_WAVES` preprocessor definition. When enabled, the VM will bypass the bytecode interpreter and execute the transpiled C functions directly.
+    *   **Performance Insight:** Benchmarks run with this mode show an average performance improvement of ~61% across the factory library, with complex patches (using `sigma` loops or heavy modulation) seeing gains up to 90%. This validates the potential of Ahead-of-Time (AOT) compilation strategies for future versions.
+    *   **Safe Defaults:** In standard builds (without the benchmark flag), the engine continues to use the proven bytecode interpreter to ensure binary size remains small and behavior remains strictly dynamic.
+
+*   **Internal Refactoring (VM Logic):**
+    *   **Logic Extraction:** Core logic for Random Number Generation (`OP_RAND`) and LFSR operations (`OP_LFSR_*`) has been extracted into static inline helper functions within `px_vm.h` (`vm_rand`, `vm_lfsr_val`, etc.).
+    *   **Code Reuse:** These helpers are now shared between the interpreted path and the transpiled native functions, ensuring identical behavior across both execution modes and improving maintainability.
+
 ## v1.9.2 (2026/02/21)
 **Performance: Optimized Pitch Modulation**
 
