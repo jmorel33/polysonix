@@ -302,6 +302,12 @@ static inline uint32_t px_rand(uint32_t* state) {
     return *state;
 }
 
+// Fast polynomial approximation for tanh(x) for small values (Padé [2/2])
+static inline float vm_fast_tanh(float x) {
+    float x2 = x * x;
+    return x * (27.0f + x2) / (27.0f + 9.0f * x2);
+}
+
 /**
  * @brief Initializes and pre-computes the bit sequences for all LFSR types.
  *
@@ -3137,7 +3143,7 @@ SUB_LABEL_OP_ASIN: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_to
 SUB_LABEL_OP_ACOS: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (acos)"); success=false; goto sub_chunk_end; } sp[-1] = acosf(fmaxf(-1.0f, fminf(1.0f, sp[-1]))); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_ATAN: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (atan)"); success=false; goto sub_chunk_end; } sp[-1] = atanf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_ABS: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (abs)"); success=false; goto sub_chunk_end; } sp[-1] = fabsf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
-SUB_LABEL_OP_TANH: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (tanh)"); success=false; goto sub_chunk_end; } sp[-1] = tanhf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_TANH: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (tanh)"); success=false; goto sub_chunk_end; } sp[-1] = vm_fast_tanh(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_EXP: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (exp)"); success=false; goto sub_chunk_end; } sp[-1] = expf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_LOG: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (log)"); success=false; goto sub_chunk_end; } sp[-1] = (sp[-1] > 0) ? logf(sp[-1]) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_LOG10: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (log10)"); success=false; goto sub_chunk_end; } sp[-1] = (sp[-1] > 0) ? log10f(sp[-1]) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
@@ -3545,7 +3551,7 @@ LABEL_OP_ASIN: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; v
 LABEL_OP_ACOS: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (acos)"); success=false; goto execution_end; } sp[-1] = acosf(fmaxf(-1.0f, fminf(1.0f, sp[-1]))); goto DISPATCH_LOOP; }
 LABEL_OP_ATAN: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (atan)"); success=false; goto execution_end; } sp[-1] = atanf(sp[-1]); goto DISPATCH_LOOP; }
 LABEL_OP_ABS: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (abs)"); success=false; goto execution_end; } sp[-1] = fabsf(sp[-1]); goto DISPATCH_LOOP; }
-LABEL_OP_TANH: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (tanh)"); success=false; goto execution_end; } sp[-1] = tanhf(sp[-1]); goto DISPATCH_LOOP; }
+LABEL_OP_TANH: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (tanh)"); success=false; goto execution_end; } sp[-1] = vm_fast_tanh(sp[-1]); goto DISPATCH_LOOP; }
 LABEL_OP_EXP: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (exp)"); success=false; goto execution_end; } sp[-1] = expf(sp[-1]); goto DISPATCH_LOOP; }
 LABEL_OP_LOG: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (log)"); success=false; goto execution_end; } sp[-1] = (sp[-1] > 0) ? logf(sp[-1]) : 0.0f; goto DISPATCH_LOOP; }
 LABEL_OP_LOG10: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (log10)"); success=false; goto execution_end; } sp[-1] = (sp[-1] > 0) ? log10f(sp[-1]) : 0.0f; goto DISPATCH_LOOP; }
