@@ -4431,6 +4431,7 @@ typedef struct {
 
 typedef struct {
     uint32_t main_chunk_offset;
+    uint32_t bytecode_length;
     uint32_t sigma_offsets_0_3[4];
     uint32_t sigma_offsets_4_7[4];
     uint32_t sigma_offsets_8_11[4];
@@ -4545,6 +4546,7 @@ GpuWaveBuffers upload_wave_to_gpu(BytecodeChunk* chunk) {
 
     size_t size = 0;
     serialize_chunk_recursive(chunk, NULL, &size, NULL, true);
+    meta.bytecode_length = (uint32_t)size;
 
     uint8_t* code_bytes = (uint8_t*)calloc(1, size);
     size_t actual_size = 0;
