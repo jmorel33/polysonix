@@ -1,5 +1,11 @@
 # Update Log
 
+## v1.9.9 (2026/02/21)
+**Security Fix: Compute Shader Bounds Checking**
+
+*   **The Issue:** The `OP_JUMP` and `OP_JUMP_IF_FALSE` instructions in the `px_vm.comp` compute shader did not validate the target instruction pointer against the bytecode length. This could allow malicious bytecode to access memory outside the designated buffer.
+*   **The Fix:** Added runtime bounds checks in the shader. If a jump target is out of range, the shader now halts execution safely. This required updating `VmMetadataBuffer` to include the `bytecode_length` field.
+
 ## v1.9.8 (2026/02/21)
 **Fix: Oscillator Phase Wrapping & VM Security**
 
