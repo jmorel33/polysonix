@@ -1,5 +1,21 @@
 # Update Log
 
+## v1.9.10 (2026/02/21)
+**Fix: VM Comparison Logic & Native Accuracy**
+
+This release fixes critical discrepancies between the Bytecode VM and the Native Transpiler caused by inconsistent floating-point comparisons.
+
+*   **Standardized Comparisons:**
+    *   **The Issue:** The VM previously used an epsilon-based "fuzzy" logic for inequality operators (e.g., `GT` was `a > b + epsilon`). This caused it to return `false` for values very close to thresholds (e.g., `sin(x) > 0` near zero crossings), diverging from standard C behavior used in native code.
+    *   **The Fix:** Updated `px_vm.h` (CPU) and `px_vm.comp` (GPU) to use standard floating-point comparisons (`>`, `>=`, `<`, `<=`) for all inequality operators. Equality operators (`EQ`, `NE`) retain the fuzzy check for robustness.
+*   **Verification:**
+    *   **New Tool:** Added `tools/verify_all_waves.c` to rigorously compare the output of the bytecode interpreter against the native C implementation.
+    *   **Result:** Verified that all 256 factory waveforms now produce identical output across both execution modes.
+
+*   **Security Fix: Parser Stack Overflow**
+    *   **The Issue:** The expression parser (`parseExpression`) was recursively calling itself for parenthesized expressions without checking recursion depth. A malicious or overly complex script could trigger a C-stack overflow.
+    *   **The Fix:** Implemented a recursion depth counter and `MAX_PARSE_DEPTH` (default 200) limit. The parser now safely aborts with an error if the expression nesting exceeds this limit.
+
 ## v1.9.9 (2026/02/21)
 **Security Fix: Compute Shader Bounds Checking**
 
