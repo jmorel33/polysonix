@@ -442,10 +442,10 @@ void main() {
             case OP_NOT:    push(abs(pop()) < EPSILON ? 1.0 : 0.0); break;
             case OP_CMP_EQ: { float b = pop(); float a = pop(); push(abs(a - b) < EPSILON ? 1.0 : 0.0); break; }
             case OP_CMP_NE: { float b = pop(); float a = pop(); push(abs(a - b) >= EPSILON ? 1.0 : 0.0); break; }
-            case OP_CMP_GT: { float b = pop(); float a = pop(); push((a - b) > EPSILON ? 1.0 : 0.0); break; }
-            case OP_CMP_GE: { float b = pop(); float a = pop(); push((a - b) > -EPSILON ? 1.0 : 0.0); break; }
-            case OP_CMP_LT: { float b = pop(); float a = pop(); push((a - b) < -EPSILON ? 1.0 : 0.0); break; }
-            case OP_CMP_LE: { float b = pop(); float a = pop(); push((a - b) < EPSILON ? 1.0 : 0.0); break; }
+            case OP_CMP_GT: { float b = pop(); float a = pop(); push((a > b) ? 1.0 : 0.0); break; }
+            case OP_CMP_GE: { float b = pop(); float a = pop(); push((a >= b) ? 1.0 : 0.0); break; }
+            case OP_CMP_LT: { float b = pop(); float a = pop(); push((a < b) ? 1.0 : 0.0); break; }
+            case OP_CMP_LE: { float b = pop(); float a = pop(); push((a <= b) ? 1.0 : 0.0); break; }
 
             // --- Control Flow ---
             case OP_JUMP: {

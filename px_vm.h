@@ -3171,7 +3171,7 @@ SUB_LABEL_OP_CMP_GT: {
     } else {
         float b = *(--sp);
         float a = *(--sp);
-        *sp++ = (a - b) > EPSILON ? 1.0f : 0.0f;
+        *sp++ = (a > b) ? 1.0f : 0.0f;
     }
     instruction = *ip++;
     goto *sub_dispatch_table[instruction];
@@ -3186,7 +3186,7 @@ SUB_LABEL_OP_CMP_GE: {
     } else {
         float b = *(--sp);
         float a = *(--sp);
-        *sp++ = (a - b) > -EPSILON ? 1.0f : 0.0f;
+        *sp++ = (a >= b) ? 1.0f : 0.0f;
     }
     instruction = *ip++;
     goto *sub_dispatch_table[instruction];
@@ -3201,7 +3201,7 @@ SUB_LABEL_OP_CMP_LT: {
     } else {
         float b = *(--sp);
         float a = *(--sp);
-        *sp++ = (a - b) < -EPSILON ? 1.0f : 0.0f;
+        *sp++ = (a < b) ? 1.0f : 0.0f;
     }
     instruction = *ip++;
     goto *sub_dispatch_table[instruction];
@@ -3216,7 +3216,7 @@ SUB_LABEL_OP_CMP_LE: {
     } else {
         float b = *(--sp);
         float a = *(--sp);
-        *sp++ = (a - b) < EPSILON ? 1.0f : 0.0f;
+        *sp++ = (a <= b) ? 1.0f : 0.0f;
     }
     instruction = *ip++;
     goto *sub_dispatch_table[instruction];
@@ -3585,10 +3585,10 @@ LABEL_OP_NOT:    { sp[-1] = VM_IS_TRUE(sp[-1]) ? 0.0f : 1.0f; goto DISPATCH_LOOP
 
 LABEL_OP_CMP_EQ: { float b = *(--sp); float a = *(--sp); *sp++ = fabsf(a - b) < EPSILON ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
 LABEL_OP_CMP_NE: { float b = *(--sp); float a = *(--sp); *sp++ = fabsf(a - b) >= EPSILON ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
-LABEL_OP_CMP_GT: { float b = *(--sp); float a = *(--sp); *sp++ = (a - b) > EPSILON ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
-LABEL_OP_CMP_GE: { float b = *(--sp); float a = *(--sp); *sp++ = (a - b) > -EPSILON ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
-LABEL_OP_CMP_LT: { float b = *(--sp); float a = *(--sp); *sp++ = (a - b) < -EPSILON ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
-LABEL_OP_CMP_LE: { float b = *(--sp); float a = *(--sp); *sp++ = (a - b) < EPSILON ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_CMP_GT: { float b = *(--sp); float a = *(--sp); *sp++ = (a > b) ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_CMP_GE: { float b = *(--sp); float a = *(--sp); *sp++ = (a >= b) ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_CMP_LT: { float b = *(--sp); float a = *(--sp); *sp++ = (a < b) ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_CMP_LE: { float b = *(--sp); float a = *(--sp); *sp++ = (a <= b) ? 1.0f : 0.0f; goto DISPATCH_LOOP; }
 
 LABEL_OP_JUMP: {
     int16_t offset = (int16_t)((ip[0] << 8) | ip[1]);
