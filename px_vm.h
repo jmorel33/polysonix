@@ -799,11 +799,11 @@ void disassembleChunk(BytecodeChunk *chunk, const char *name);
 
 #if defined(_WIN32)
 #include <malloc.h>
-#endif
+#endif // _WIN32
 
 #ifdef __cplusplus
 extern "C" {
-#endif
+#endif // __cplusplus
 
 static void vm_error(VM *vm_ptr, const char *format, ...) {
     fprintf(stderr, "VM Runtime Error: ");
@@ -865,7 +865,7 @@ static void aligned_free(void* ptr) {
     // On POSIX systems (Linux, macOS), memory from posix_memalign/aligned_alloc
     // can be freed with the standard free().
     free(ptr);
-#endif
+#endif // _WIN32
 }
 
 // Helper that allocates aligned, zero-initialized memory
@@ -890,7 +890,7 @@ static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
 #else
     // Final fallback to standard malloc.
     ptr = malloc(total_size);
-#endif
+#endif // Allocation platform check
 
     // Zero the memory if allocation was successful
     if (ptr) {
@@ -900,6 +900,7 @@ static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
 }
 
 // --- Enhanced Tokenizer ---
+#ifdef PX_VM_IMPLEMENTATION
 int tokenize(const char *expression, Token *tokens, int maxTokens) {
     int tokenCount = 0;
     int pos = 0;
@@ -1027,6 +1028,7 @@ int tokenize(const char *expression, Token *tokens, int maxTokens) {
      }
      return tokenCount;
 }
+#endif // PX_VM_IMPLEMENTATION (Explicit guard for tokenize)
 
 // --- AST Node Management ---
 
