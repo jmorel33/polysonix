@@ -13,7 +13,7 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-#define EPSILON 1e-4f // Tolerance for float differences
+#define VERIFY_EPSILON 1e-4f // Tolerance for float differences
 
 int main() {
     // Initialize System (prints logs to stdout)
@@ -100,7 +100,7 @@ int main() {
         }
 
         // Output Row
-        if (max_diff > EPSILON) {
+        if (max_diff > VERIFY_EPSILON) {
             printf("| %d | %s | %.6f | **FAIL** |\n", i, name, max_diff);
             failures++;
         } else {

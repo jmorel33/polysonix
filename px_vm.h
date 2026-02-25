@@ -450,23 +450,6 @@ typedef struct {
 
 // Helper for VM Errors
 // Note: This uses vfprintf, requires <stdarg.h>
-static void vm_error(VM *vm_ptr, const char *format, ...) {
-    fprintf(stderr, "VM Runtime Error: ");
-    va_list args;
-    va_start(args, format);
-    vfprintf(stderr, format, args);
-    va_end(args);
-    // Optionally print state (e.g., stack size, approximate IP)
-    if (vm_ptr) {
-        fprintf(stderr, " (Stack size: %td)", vm_ptr->stack_top - vm_ptr->stack);
-        // Printing IP offset is hard without knowing the base address or having debug info
-    }
-    fprintf(stderr, "\n");
-    // In a real system, you might set an error flag in the VM struct
-    // or use longjmp for unrecoverable errors. For this demo, printing
-    // and potentially returning a default value (0.0) is sufficient.
-    // exit(1); // Removed to prevent process termination in audio thread
-}
 
 // --- Bytecode Definitions ---
 typedef enum {
@@ -547,36 +530,8 @@ typedef enum {
 #define VM_DISPATCH_TABLE_SIZE (VM_MAX_OPCODE + 1) // Important for computed goto table size
 
 // Map function names to OpCodes (used during compilation)
-typedef struct {
-    const char* name;
-    OpCode opcode;
-    int arity;
-} VmFunctionDef;
 
-static VmFunctionDef vm_functions[] = {
-    {"sin", OP_SIN, 1},
-    {"cos", OP_COS, 1},
-    {"tan", OP_TAN, 1},
-    {"asin", OP_ASIN, 1},
-    {"acos", OP_ACOS, 1},
-    {"atan", OP_ATAN, 1},
-    {"abs", OP_ABS, 1},
-    {"tanh", OP_TANH, 1},
-    {"exp", OP_EXP, 1},
-    {"log", OP_LOG, 1},
-    {"log10", OP_LOG10, 1},
-    {"floor", OP_FLOOR, 1},
-    {"ceil", OP_CEIL, 1},
-    {"min", OP_MIN, 2},
-    {"max", OP_MAX, 2},
-    {"sqrt", OP_SQRT, 1},
-    {"pow", OP_POW, 2},
-    {"rand", OP_RAND, 0},
-    {"lfsr_val", OP_LFSR_VAL, 3},
-    {"lfsr_noise", OP_LFSR_NOISE, 2},
-    {"lfsr_clock", OP_LFSR_CLOCK, 2},
-    {NULL, (OpCode)0, 0} // Terminator
-};
+
 
 // --- Enhanced Interpreter Code ---
 
@@ -587,31 +542,6 @@ typedef struct {
 } FunctionDef;
 
 // PI and E will be handled as constants, not functions
-static FunctionDef functions[] = {
-    {"sin", 3, 1},
-    {"cos", 3, 1},
-    {"tan", 3, 1},
-    {"asin", 4, 1},
-    {"acos", 4, 1},
-    {"atan", 4, 1},
-    {"abs", 3, 1},
-    {"tanh", 4, 1},
-    {"exp", 3, 1},
-    {"log", 3, 1},
-    {"log10", 5, 1},
-    {"floor", 5, 1},
-    {"ceil", 4, 1},
-    {"min", 3, 2},
-    {"max", 3, 2},
-    {"sqrt", 4, 1},
-    {"pow", 3, 2},
-    {"rand", 4, 0},
-    {"sigma", 5, 5},
-    {"lfsr_val", 8, 3},
-    {"lfsr_noise", 10, 2},
-    {"lfsr_clock", 10, 2},
-    {NULL, 0, 0}
-};
 
 // Expanded TokenType
 typedef enum {
@@ -774,47 +704,7 @@ Node *parseUnary(Token *tokens, int *pos, int depth);
  */
 Node *parsePrimary(Token *tokens, int *pos, int depth);
 
-// Helper for freeing memory allocated with aligned_calloc
-static void aligned_free(void* ptr) {
-#if defined(_WIN32)
-    _aligned_free(ptr);
-#else
-    // On POSIX systems (Linux, macOS), memory from posix_memalign/aligned_alloc
-    // can be freed with the standard free().
-    free(ptr);
-#endif
-}
 
-// Helper that allocates aligned, zero-initialized memory
-static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
-    void* ptr = NULL;
-    size_t total_size = num * size;
-    if (total_size == 0) {
-        return NULL;
-    }
-
-    // THE CHANGE IS HERE: Use _WIN32 to detect all Windows targets first.
-#if defined(_WIN32)
-    ptr = _aligned_malloc(total_size, alignment);
-#elif defined(__GNUC__) || defined(__clang__)
-    // This now correctly covers GCC/Clang on non-Windows (Linux, macOS).
-    if (posix_memalign(&ptr, alignment, total_size) != 0) {
-        ptr = NULL;
-    }
-#elif __STDC_VERSION__ >= 201112L
-    // C11 standard as a fallback for other compilers.
-    ptr = aligned_alloc(alignment, total_size);
-#else
-    // Final fallback to standard malloc.
-    ptr = malloc(total_size);
-#endif
-
-    // Zero the memory if allocation was successful
-    if (ptr) {
-        memset(ptr, 0, total_size);
-    }
-    return ptr;
-}
 
 // --- Parser, AST, and Tokenizer Functions ---
 
@@ -857,6 +747,157 @@ Node *createNode(TokenType type);
  * @return A pointer to the root node of the generated AST, or NULL on parsing failure.
  */
 Node *parseExpression(Token *tokens, int *pos);
+
+/**
+ * @brief Initializes a BytecodeChunk, setting all counters to zero and pointers to NULL.
+ * @param chunk Pointer to the BytecodeChunk to initialize.
+ */
+void init_bytecode_chunk(BytecodeChunk *chunk);
+/**
+ * @brief Frees all heap-allocated memory owned by a BytecodeChunk.
+ *
+ * This includes all duplicated strings in the string pool and any compiled
+ * sub-chunks (e.g., for sigma expressions).
+ *
+ * @param chunk Pointer to the BytecodeChunk to free.
+ */
+void free_bytecode_chunk(BytecodeChunk *chunk);
+/**
+ * @brief Executes compiled bytecode using a Virtual Machine (VM).
+ *
+ * @param chunk The compiled BytecodeChunk to execute.
+ * @param params A pointer to a VmParams struct containing runtime variables (x, frequency, mods, etc.).
+ * @return The final floating-point result from the VM stack. Returns 0.0 on error.
+ */
+float execute_bytecode(BytecodeChunk *chunk, VmParams* params);
+/**
+ * @brief Compiles an Abstract Syntax Tree (AST) into a BytecodeChunk.
+ *
+ * @param node The root node of the AST to compile.
+ * @param chunk A pointer to the BytecodeChunk to be filled with compiled code.
+ * @return `true` on successful compilation, `false` otherwise.
+ */
+bool compile_ast_to_bytecode(Node *node, BytecodeChunk *chunk);
+/**
+ * @brief Disassembles and prints the contents of a BytecodeChunk for debugging.
+ *
+ * This includes the bytecode instructions, constant pool, string pool, and any sub-chunks.
+ *
+ * @param chunk The BytecodeChunk to disassemble.
+ * @param name A descriptive name for the chunk to be printed in the output.
+ */
+void disassembleChunk(BytecodeChunk *chunk, const char *name);
+#ifdef __cplusplus
+}
+#endif
+
+#endif // PX_VM_H
+
+#ifdef PX_VM_IMPLEMENTATION
+#ifndef PX_VM_IMPLEMENTATION_DONE
+#define PX_VM_IMPLEMENTATION_DONE
+
+#if defined(_WIN32)
+#include <malloc.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+static void vm_error(VM *vm_ptr, const char *format, ...) {
+    fprintf(stderr, "VM Runtime Error: ");
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+    // Optionally print state (e.g., stack size, approximate IP)
+    if (vm_ptr) {
+        fprintf(stderr, " (Stack size: %td)", vm_ptr->stack_top - vm_ptr->stack);
+        // Printing IP offset is hard without knowing the base address or having debug info
+    }
+    fprintf(stderr, "\n");
+}
+
+typedef struct {
+    const char* name;
+    int len;
+    OpCode opcode;
+    int arity;
+} PxFunctionDef;
+
+static PxFunctionDef px_functions[] = {
+    {"sin", 3, OP_SIN, 1},
+    {"cos", 3, OP_COS, 1},
+    {"tan", 3, OP_TAN, 1},
+    {"asin", 4, OP_ASIN, 1},
+    {"acos", 4, OP_ACOS, 1},
+    {"atan", 4, OP_ATAN, 1},
+    {"abs", 3, OP_ABS, 1},
+    {"tanh", 4, OP_TANH, 1},
+    {"exp", 3, OP_EXP, 1},
+    {"log", 3, OP_LOG, 1},
+    {"log10", 5, OP_LOG10, 1},
+    {"floor", 5, OP_FLOOR, 1},
+    {"ceil", 4, OP_CEIL, 1},
+    {"min", 3, OP_MIN, 2},
+    {"max", 3, OP_MAX, 2},
+    {"sqrt", 4, OP_SQRT, 1},
+    {"pow", 3, OP_POW, 2},
+    {"rand", 4, OP_RAND, 0},
+    {"lfsr_val", 8, OP_LFSR_VAL, 3},
+    {"lfsr_noise", 10, OP_LFSR_NOISE, 2},
+    {"lfsr_clock", 10, OP_LFSR_CLOCK, 2},
+    {"sigma", 5, (OpCode)0, 5},
+    {NULL, 0, (OpCode)0, 0}
+};
+
+
+
+
+
+
+// Helper for freeing memory allocated with aligned_calloc
+static void aligned_free(void* ptr) {
+#if defined(_WIN32)
+    _aligned_free(ptr);
+#else
+    // On POSIX systems (Linux, macOS), memory from posix_memalign/aligned_alloc
+    // can be freed with the standard free().
+    free(ptr);
+#endif
+}
+
+// Helper that allocates aligned, zero-initialized memory
+static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
+    void* ptr = NULL;
+    size_t total_size = num * size;
+    if (total_size == 0) {
+        return NULL;
+    }
+
+    // THE CHANGE IS HERE: Use _WIN32 to detect all Windows targets first.
+#if defined(_WIN32)
+    ptr = _aligned_malloc(total_size, alignment);
+#elif defined(__GNUC__) || defined(__clang__)
+    // This now correctly covers GCC/Clang on non-Windows (Linux, macOS).
+    if (posix_memalign(&ptr, alignment, total_size) != 0) {
+        ptr = NULL;
+    }
+#elif __STDC_VERSION__ >= 201112L
+    // C11 standard as a fallback for other compilers.
+    ptr = aligned_alloc(alignment, total_size);
+#else
+    // Final fallback to standard malloc.
+    ptr = malloc(total_size);
+#endif
+
+    // Zero the memory if allocation was successful
+    if (ptr) {
+        memset(ptr, 0, total_size);
+    }
+    return ptr;
+}
 
 // --- Enhanced Tokenizer ---
 int tokenize(const char *expression, Token *tokens, int maxTokens) {
@@ -918,13 +959,13 @@ int tokenize(const char *expression, Token *tokens, int maxTokens) {
 
             // If it wasn't a specific keyword/constant/variable, check known functions
             bool funcFound = false;
-            for (int i = 0; functions[i].name; i++) {
+            for (int i = 0; px_functions[i].name; i++) {
                  // This part is fine - checks strncmp for known functions like sin, cos, sigma...
-                if (strncmp(&expression[pos], functions[i].name, functions[i].len) == 0 && !isalnum(expression[pos + functions[i].len]) && expression[pos + functions[i].len] != '_') {
+                if (strncmp(&expression[pos], px_functions[i].name, px_functions[i].len) == 0 && !isalnum(expression[pos + px_functions[i].len]) && expression[pos + px_functions[i].len] != '_') {
                     t->type = TOKEN_FUNCTION;
-                    strncpy(t->value, functions[i].name, 31);
+                    strncpy(t->value, px_functions[i].name, 31);
                     t->value[31] = '\0';
-                    pos += functions[i].len;
+                    pos += px_functions[i].len;
                     funcFound = true;
                     break; // Exit function check loop
                 }
@@ -1385,9 +1426,9 @@ Node *parsePrimary(Token *tokens, int *pos, int depth) {
         node->data.name[31] = '\0';
 
         int expected_args = -1;
-        for (int i = 0; functions[i].name; ++i) {
-            if (strcmp(functions[i].name, node->data.name) == 0) {
-                expected_args = functions[i].arity;
+        for (int i = 0; px_functions[i].name; ++i) {
+            if (strcmp(px_functions[i].name, node->data.name) == 0) {
+                expected_args = px_functions[i].arity;
                 break;
             }
         }
@@ -1545,49 +1586,10 @@ Node *parseFunctionArgs(Token *tokens, int *pos, const char* func_name, int expe
 
 // --- Bytecode, Compiler, and VM Functions ---
 
-/**
- * @brief Initializes a BytecodeChunk, setting all counters to zero and pointers to NULL.
- * @param chunk Pointer to the BytecodeChunk to initialize.
- */
-void init_bytecode_chunk(BytecodeChunk *chunk);
 
-/**
- * @brief Frees all heap-allocated memory owned by a BytecodeChunk.
- *
- * This includes all duplicated strings in the string pool and any compiled
- * sub-chunks (e.g., for sigma expressions).
- *
- * @param chunk Pointer to the BytecodeChunk to free.
- */
-void free_bytecode_chunk(BytecodeChunk *chunk);
 
-/**
- * @brief Executes compiled bytecode using a Virtual Machine (VM).
- *
- * @param chunk The compiled BytecodeChunk to execute.
- * @param params A pointer to a VmParams struct containing runtime variables (x, frequency, mods, etc.).
- * @return The final floating-point result from the VM stack. Returns 0.0 on error.
- */
-float execute_bytecode(BytecodeChunk *chunk, VmParams* params);
 
-/**
- * @brief Compiles an Abstract Syntax Tree (AST) into a BytecodeChunk.
- *
- * @param node The root node of the AST to compile.
- * @param chunk A pointer to the BytecodeChunk to be filled with compiled code.
- * @return `true` on successful compilation, `false` otherwise.
- */
-bool compile_ast_to_bytecode(Node *node, BytecodeChunk *chunk);
 
-/**
- * @brief Disassembles and prints the contents of a BytecodeChunk for debugging.
- *
- * This includes the bytecode instructions, constant pool, string pool, and any sub-chunks.
- *
- * @param chunk The BytecodeChunk to disassemble.
- * @param name A descriptive name for the chunk to be printed in the output.
- */
-void disassembleChunk(BytecodeChunk *chunk, const char *name);
 
 static void advance_lfsr_state(VmParams *params);
 
@@ -2105,10 +2107,10 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
                 int expected_arity = -1;
                 bool found = false;
 
-                for (int i = 0; vm_functions[i].name; ++i) {
-                    if (strcmp(fname, vm_functions[i].name) == 0) {
-                        func_opcode = vm_functions[i].opcode;
-                        expected_arity = vm_functions[i].arity;
+                for (int i = 0; px_functions[i].name; ++i) {
+                    if (strcmp(fname, px_functions[i].name) == 0) {
+                        func_opcode = px_functions[i].opcode;
+                        expected_arity = px_functions[i].arity;
                         found = true;
                         break;
                     }
@@ -4621,8 +4623,10 @@ void dispatch_wave_gpu(SituationCommandBuffer cmd, GpuWaveBuffers bufs, VmParams
 
 #endif // POLYSONIX_USE_GPU
 
+
+
 #ifdef __cplusplus
 }
 #endif
-
-#endif // PX_VM_H
+#endif // PX_VM_IMPLEMENTATION_DONE
+#endif // PX_VM_IMPLEMENTATION
