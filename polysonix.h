@@ -1037,6 +1037,8 @@ PX_API const char* PX_GetADSRStateName(PxADSRState state);
 #endif // POLYSONIX_H
 
 #ifdef POLYSONIX_IMPLEMENTATION
+#define PX_VM_IMPLEMENTATION
+#include "px_vm.h"
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
