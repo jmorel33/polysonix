@@ -1,5 +1,20 @@
 # Update Log
 
+## v1.9.11 (2026/02/21)
+**Refactor: Single-Header Compliance & Code Health**
+
+This release focuses on strict adherence to the single-header library pattern and improving the maintainability of the `px_vm` core.
+
+*   **Single-Header Architecture:**
+    *   **The Issue:** `px_vm.h` previously exposed function definitions in the header without a guard, leading to potential multiple-definition errors when included in multiple translation units.
+    *   **The Fix:** Split `px_vm.h` into a declarative header section (guarded by `PX_VM_H`) and an implementation section (guarded by `PX_VM_IMPLEMENTATION`).
+    *   **Integration:** `polysonix.h` automatically defines `PX_VM_IMPLEMENTATION` before including `px_vm.h` inside its own implementation block, ensuring seamless integration.
+
+*   **Code Health:**
+    *   **Merged Function Tables:** Consolidated the redundant `vm_functions` (compiler) and `functions` (parser) arrays into a single `px_functions` table, reducing code duplication and maintenance overhead.
+    *   **API Visibility:** Explicitly declared public API functions (like `tokenize`, `execute_bytecode`) in the header section to ensure proper visibility for external consumers.
+    *   **Safety:** Added regression tests to verify that the library can be linked against multiple client units without symbol conflicts.
+
 ## v1.9.10 (2026/02/21)
 **Fix: VM Comparison Logic & Native Accuracy**
 
