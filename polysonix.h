@@ -1260,6 +1260,11 @@ typedef struct {
     float cached_pan_r;
     float last_pan_effective;
 
+    // Cache for bitcrush optimization
+    float last_bitcrush_bits[PX_MAX_OSC_PER_VOICE];
+    float cached_bitcrush_levels[PX_MAX_OSC_PER_VOICE];
+    float cached_bitcrush_inv_levels[PX_MAX_OSC_PER_VOICE];
+
     uint32_t rng_state;         // Context-aware PRNG state (Shared)
 } Voice;
 
@@ -2570,6 +2575,7 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
         Filter_Init(&s->voices[i].filter_instance_r);
         for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
             s->voices[i].osc_vm_params[o].rng_state_ptr = &s->voices[i].rng_state;
+            s->voices[i].last_bitcrush_bits[o] = -1.0f;
         }
         for (int j = 0; j < config->num_lfos; ++j) {
             LFOInstance_Init(&s->voices[i].lfo_instances[j], config->sample_rate);
@@ -3434,14 +3440,21 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
                 if (do_bitcrush) {
                     if (effective_bits < 1.0f) effective_bits = 1.0f;
-                    float levels = exp2f(effective_bits);
+                    if (effective_bits != v->last_bitcrush_bits[o]) {
+                        v->cached_bitcrush_levels[o] = exp2f(effective_bits);
+                        v->cached_bitcrush_inv_levels[o] = 1.0f / v->cached_bitcrush_levels[o];
+                        v->last_bitcrush_bits[o] = effective_bits;
+                    }
+                    float levels = v->cached_bitcrush_levels[o];
+                    float inv_levels = v->cached_bitcrush_inv_levels[o];
+
                     // Optional: Dither for low bit depths (from WSEQ logic)
                     if (effective_bits < 8.0f) {
-                        float dither = ((float)(px_rand(&v->rng_state) % 1000) / 1000.0f) * 2.0f - 1.0f;
-                        dither *= (1.0f / levels);
+                        float dither = ((float)(px_rand(&v->rng_state) % 1000) * 0.001f) * 2.0f - 1.0f;
+                        dither *= inv_levels;
                         raw_sample += dither;
                     }
-                    raw_sample = roundf(raw_sample * levels) / levels;
+                    raw_sample = roundf(raw_sample * levels) * inv_levels;
                 }
 
                 // Cache Output for Next Osc
@@ -4266,6 +4279,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
 
                  v->current_osc_coarse_semitones[o] = s->patch.osc[o].coarse_semitones;
                  v->current_osc_fine_cents[o] = s->patch.osc[o].fine_cents;
+                 v->last_bitcrush_bits[o] = -1.0f;
             }
 
             v->original_frequency = get_midi_frequency(midi_note); // Set new base
@@ -4317,6 +4331,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
         v->current_osc_coarse_semitones[o] = s->patch.osc[o].coarse_semitones;
         v->current_osc_fine_cents[o] = s->patch.osc[o].fine_cents;
         v->osc_phase[o] = 0.0f; // Reset phase
+        v->last_bitcrush_bits[o] = -1.0f;
     }
 
     v->original_frequency = get_midi_frequency(midi_note);
