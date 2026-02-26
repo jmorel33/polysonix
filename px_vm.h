@@ -535,13 +535,6 @@ typedef enum {
 
 // --- Enhanced Interpreter Code ---
 
-typedef struct {
-    const char *name;
-    int len;
-    int arity; // Expected number of arguments (-1 for variable args, maybe?)
-} FunctionDef;
-
-// PI and E will be handled as constants, not functions
 
 // Expanded TokenType
 typedef enum {
