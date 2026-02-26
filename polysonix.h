@@ -2233,12 +2233,6 @@ static void PX_ProcessCommands(PxSynth* s) {
             case PX_CMD_CHANNEL_AFTERTOUCH:
                 s->channel_aftertouch_pressure = fmaxf(0.0f, fminf(1.0f, cmd.data.aftertouch.pressure));
                 break;
-            case PX_CMD_SET_VELOCITY_TO_AMP:             break; // Removed in v1.3
-            case PX_CMD_SET_VELOCITY_TO_FILTER_CUTOFF:   break; // Removed in v1.3
-            case PX_CMD_SET_VELOCITY_ATTACK_SCALING:     break; // Removed in v1.3
-            case PX_CMD_SET_VELOCITY_TO_PARAM1:          break; // Removed in v1.3
-            case PX_CMD_SET_AFTERTOUCH_TO_FILTER_CUTOFF: break; // Removed in v1.3
-            case PX_CMD_SET_AFTERTOUCH_TO_VIBRATO:       break; // Removed in v1.3
             case PX_CMD_SET_MOD_MATRIX_SLOT:
                 if (cmd.data.mod_slot.slot >= 0 && cmd.data.mod_slot.slot < PX_MOD_MATRIX_SLOTS) {
                     int src = cmd.data.mod_slot.src;
@@ -2424,6 +2418,7 @@ static void PX_ProcessCommands(PxSynth* s) {
                 memset(s->patch.name, 0, PX_PATCH_NAME_LEN);
                 strncpy(s->patch.name, cmd.data.patch_name.name, PX_PATCH_NAME_LEN - 1);
                 break;
+            default: break;
         }
     }
 }
@@ -3692,23 +3687,23 @@ PX_API void PX_ChannelAftertouch(PxSynth* s, float pressure) {
     PUSH_CMD_VOID(PX_CMD_CHANNEL_AFTERTOUCH, .aftertouch = {pressure});
 }
 
-PX_API void PX_SetVelocityToAmp(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_VELOCITY_TO_AMP, .param_float = {v}); }
-PX_API float PX_GetVelocityToAmp(PxSynth* s) { return 0.0f; }
+PX_API void PX_SetVelocityToAmp(PxSynth* s, float v) { (void)s; (void)v; }
+PX_API float PX_GetVelocityToAmp(PxSynth* s) { (void)s; return 0.0f; }
 
-PX_API void PX_SetVelocityToFilterCutoff(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_VELOCITY_TO_FILTER_CUTOFF, .param_float = {v}); }
-PX_API float PX_GetVelocityToFilterCutoff(PxSynth* s) { return 0.0f; }
+PX_API void PX_SetVelocityToFilterCutoff(PxSynth* s, float v) { (void)s; (void)v; }
+PX_API float PX_GetVelocityToFilterCutoff(PxSynth* s) { (void)s; return 0.0f; }
 
-PX_API void PX_SetVelocityAttackScaling(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_VELOCITY_ATTACK_SCALING, .param_float = {v}); }
-PX_API float PX_GetVelocityAttackScaling(PxSynth* s) { return 0.0f; }
+PX_API void PX_SetVelocityAttackScaling(PxSynth* s, float v) { (void)s; (void)v; }
+PX_API float PX_GetVelocityAttackScaling(PxSynth* s) { (void)s; return 0.0f; }
 
-PX_API void PX_SetVelocityToParam1(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_VELOCITY_TO_PARAM1, .param_float = {v}); }
-PX_API float PX_GetVelocityToParam1(PxSynth* s) { return 0.0f; }
+PX_API void PX_SetVelocityToParam1(PxSynth* s, float v) { (void)s; (void)v; }
+PX_API float PX_GetVelocityToParam1(PxSynth* s) { (void)s; return 0.0f; }
 
-PX_API void PX_SetAftertouchToFilterCutoff(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_AFTERTOUCH_TO_FILTER_CUTOFF, .param_float = {v}); }
-PX_API float PX_GetAftertouchToFilterCutoff(PxSynth* s) { return 0.0f; }
+PX_API void PX_SetAftertouchToFilterCutoff(PxSynth* s, float v) { (void)s; (void)v; }
+PX_API float PX_GetAftertouchToFilterCutoff(PxSynth* s) { (void)s; return 0.0f; }
 
-PX_API void PX_SetAftertouchToVibrato(PxSynth* s, float v) { PUSH_CMD_VOID(PX_CMD_SET_AFTERTOUCH_TO_VIBRATO, .param_float = {v}); }
-PX_API float PX_GetAftertouchToVibrato(PxSynth* s) { return 0.0f; }
+PX_API void PX_SetAftertouchToVibrato(PxSynth* s, float v) { (void)s; (void)v; }
+PX_API float PX_GetAftertouchToVibrato(PxSynth* s) { (void)s; return 0.0f; }
 
 PX_API void PX_NoteOff(PxSynth* s, int key_id) { PUSH_CMD_VOID(PX_CMD_NOTE_OFF, .note_off = {key_id}); }
 PX_API void PX_SetVoiceADSRParam(PxSynth* s, int idx, PxADSRParamType p, float v) { PUSH_CMD_VOID(PX_CMD_SET_VOICE_ADSR_PARAM, .param_idx_enum_float = {idx, (int)p, v}); }
