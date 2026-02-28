@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 9
-#define POLYSONIX_VERSION_PATCH 11
+#define POLYSONIX_VERSION_PATCH 12
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -2913,8 +2913,20 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         float effective_freq = tplfo->frequency * exp2f(freq_mod * 4.0f);
                         effective_freq = fmaxf(0.01f, effective_freq);
 
-                        vlfo->phase = fmodf(vlfo->phase + (effective_freq * lfo_update_delta_time), 1.0f);
-                        if (vlfo->phase < 0.0f) vlfo->phase += 1.0f;
+                        // Optimized phase wrapping: avoid expensive fmodf for typical case
+                        vlfo->phase += effective_freq * lfo_update_delta_time;
+                        if (PX_UNLIKELY(vlfo->phase >= 1.0f)) {
+                            vlfo->phase -= 1.0f;
+                            // Fallback for high frequency modulation
+                            if (PX_UNLIKELY(vlfo->phase >= 1.0f)) vlfo->phase = fmodf(vlfo->phase, 1.0f);
+                        } else if (PX_UNLIKELY(vlfo->phase < 0.0f)) {
+                            vlfo->phase += 1.0f;
+                            // Fallback for negative frequencies
+                            if (PX_UNLIKELY(vlfo->phase < 0.0f)) {
+                                vlfo->phase = fmodf(vlfo->phase, 1.0f);
+                                if (vlfo->phase < 0.0f) vlfo->phase += 1.0f;
+                            }
+                        }
                         float raw_val = GenerateLFOValue(vlfo);
 
                         // Matrix Mod: Depth
