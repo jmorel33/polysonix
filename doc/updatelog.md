@@ -1,5 +1,9 @@
 # Update Log
 
+## v1.9.13 (2026/02/28)
+* **Optimization**: Replaced the division operation `progress / total_phase` in the oscillator interpolation logic with a precomputed multiplication `progress * v->osc_inv_total_phase[o]`, yielding a ~16% speedup in the simulated interpolation hot path.
+* **Optimization**: Converted several safe divisions by constants (e.g., `(float)UINT32_MAX`) and explicitly computed variables in `PX_Process` to equivalent multiplication-by-reciprocal operations to avoid DSP pipeline stalls.
+
 ## v1.9.12 (2026/02/24)
 **Performance: Optimized LFO Phase Wrapping**
 
