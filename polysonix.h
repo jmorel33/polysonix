@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 9
-#define POLYSONIX_VERSION_PATCH 12
+#define POLYSONIX_VERSION_PATCH 13
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1229,6 +1229,7 @@ typedef struct {
     float osc_interp_samples[PX_MAX_OSC_PER_VOICE][4];
     float osc_phase_at_interp_start[PX_MAX_OSC_PER_VOICE];
     float osc_phase_at_interp_end[PX_MAX_OSC_PER_VOICE];
+    float osc_inv_total_phase[PX_MAX_OSC_PER_VOICE];
 
     // --- v1.6: Per-Oscillator Sequencer State ---
     PxSeqState seq_states[PX_MAX_OSC_PER_VOICE];
@@ -3258,7 +3259,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         }
 
                         if (effective_duration > 0.5f) {
-                            float t = ((float)sq->cycles_counter + v->osc_phase[o]) / effective_duration;
+                            float t = ((float)sq->cycles_counter + v->osc_phase[o]) * (1.0f / effective_duration);
                             t = fmaxf(0.0f, fminf(1.0f, t));
 
                             // v1.7.1: Curve Selection
@@ -3341,13 +3342,16 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         v->osc_interp_samples[o][3] = execute_bytecode(chunk, &v->osc_vm_params[o]);
                         v->osc_phase_at_interp_start[o] = v->osc_phase_at_interp_end[o];
                         v->osc_phase_at_interp_end[o] = v->osc_phase[o];
+
+                        float total_phase = v->osc_phase_at_interp_end[o] - v->osc_phase_at_interp_start[o];
+                        if (total_phase < 0.0f) total_phase += 1.0f;
+                        if (total_phase < 1e-9f) total_phase = 1e-9f;
+                        v->osc_inv_total_phase[o] = 1.0f / total_phase;
                     }
-                    float total_phase = v->osc_phase_at_interp_end[o] - v->osc_phase_at_interp_start[o];
-                    if (total_phase < 0.0f) total_phase += 1.0f;
-                    if (total_phase < 1e-9f) total_phase = 1e-9f;
+
                     float progress = v->osc_phase[o] - v->osc_phase_at_interp_start[o];
                     if (progress < 0.0f) progress += 1.0f;
-                    float t = fmaxf(0.0f, fminf(1.0f, progress / total_phase));
+                    float t = fmaxf(0.0f, fminf(1.0f, progress * v->osc_inv_total_phase[o]));
                     raw_sample = cubic_interpolate(v->osc_interp_samples[o][0], v->osc_interp_samples[o][1], v->osc_interp_samples[o][2], v->osc_interp_samples[o][3], t);
                 }
 
@@ -3361,7 +3365,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         // v1.8: Use Cached Target Cycles
                         float dur = (float)sq->current_step_target_cycles;
                         if (dur < 1.0f) dur = 1.0f;
-                        t = ((float)sq->cycles_counter + sq->cycle_accumulator) / dur;
+                        t = ((float)sq->cycles_counter + sq->cycle_accumulator) * (1.0f / dur);
                         t = fmaxf(0.0f, fminf(1.0f, t));
 
                         float amp_scalar = 1.0f;
@@ -3611,7 +3615,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                             sq->step_amp_mod_val = 1.0f;
                             if (sq->step_flags & PX_WSEQ_AMP_MOD) {
                                 if (sq->current_sequence->amp_mod_type == PX_WSEQ_AMP_RANDOM) {
-                                    sq->step_amp_mod_val = (float)px_rand(&v->rng_state) / UINT32_MAX;
+                                    sq->step_amp_mod_val = (float)px_rand(&v->rng_state) * (1.0f / (float)UINT32_MAX);
                                 }
                             }
 
@@ -4401,7 +4405,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
         v->osc_vm_params[o].x = 0.0f;
         v->osc_vm_params[o].frequency = v->frequency;
-        v->osc_vm_params[o].rand_offset = (float)px_rand(&v->rng_state) / (float)UINT32_MAX;
+        v->osc_vm_params[o].rand_offset = (float)px_rand(&v->rng_state) * (1.0f / (float)UINT32_MAX);
         v->osc_vm_params[o].modA = 0.0f;
         v->osc_vm_params[o].modB = 0.0f;
         v->osc_vm_params[o].modC = 0.0f;
@@ -4440,7 +4444,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
             vlfo->phase = 0.0f;
             vlfo->lfo_vm_params.x = 0.0f;
             vlfo->lfo_vm_params.frequency = 0.0f;
-            vlfo->lfo_vm_params.rand_offset = (float)px_rand(&v->rng_state) / UINT32_MAX;
+            vlfo->lfo_vm_params.rand_offset = (float)px_rand(&v->rng_state) * (1.0f / (float)UINT32_MAX);
             vlfo->lfo_vm_params.modA = 0.0f;
             vlfo->lfo_vm_params.modB = 0.0f;
             vlfo->lfo_vm_params.modC = 0.0f;
@@ -4460,6 +4464,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
         for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
             v->osc_phase_at_interp_start[o] = 0.0f;
             v->osc_phase_at_interp_end[o] = 0.0f;
+            v->osc_inv_total_phase[o] = 1e9f;
             VmParams temp_params = v->osc_vm_params[o];
             temp_params.x = 0.0f;
             // Use wave index 0 for default init if not set, or whatever works
@@ -4498,7 +4503,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
             // Initialize Random Amp Mod
             sq->step_amp_mod_val = 1.0f;
             if (sq->current_sequence->amp_mod_type == PX_WSEQ_AMP_RANDOM) {
-                sq->step_amp_mod_val = (float)px_rand(&v->rng_state) / UINT32_MAX;
+                sq->step_amp_mod_val = (float)px_rand(&v->rng_state) * (1.0f / (float)UINT32_MAX);
             }
 
             // Reset LFOs
