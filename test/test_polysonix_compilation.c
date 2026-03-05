@@ -31,7 +31,7 @@ int main() {
 
     // Verify pointers
     for(int i=0; i<config.num_voices; ++i) {
-        if (synth->voices[i].osc_vm_params[0].rng_state_ptr != &synth->voices[i].rng_state) {
+        if (synth->voices[i].osc[0].vm_params.rng_state_ptr != &synth->voices[i].rng_state) {
              fprintf(stderr, "Voice %d osc 0 rng_state_ptr mismatch.\n", i);
              return 1;
         }

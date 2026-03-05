@@ -51,29 +51,35 @@ typedef struct PxLFOInfo PxLFOInfo;
  * @struct PxOscillator
  * @brief Configuration for a single oscillator in a voice.
  */
+#if defined(__GNUC__) || defined(__clang__)
+#define PX_ALIGN_64 __attribute__((aligned(64)))
+#else
+#define PX_ALIGN_64
+#endif
+
 typedef struct {
-    bool  enabled;
-    int   wave_idx;         /**< Bytecode waveform index. */
     float coarse_semitones; /**< Tuning offset in semitones (-24 to +24). */
     float fine_cents;       /**< Fine tuning offset in cents (-100 to +100). */
     float mix_level;        /**< Output mix level (0.0 to 1.0). */
     float pan;              /**< Stereo pan position (-1.0 to 1.0). */
+
+    float cross_mod_depth;      /**< Osc n modulates n-1 depth */
+    float phase_dist_amount;    /**< Phase Distortion warp factor */
+    float osc_sync_softness;    /**< 0.0 (hard) to 1.0 (soft) */
+    float ring_mod_depth;       /**< Ring mod depth */
+    float bitcrush_depth;       /**< Bitcrush depth */
+
+    int   wave_idx;         /**< Bytecode waveform index. */
     int   sequence_id;      /**< Wave Sequence ID (-1 = Disabled/Static, 0-127 = Active). */
 
-    // v1.7 Features
+    bool  enabled;
     bool  cross_mod_enabled;    /**< Osc n modulates n-1 */
-    float cross_mod_depth;      /**< 0.0–1.0 (matrix modulatable) */
     bool  phase_dist_enabled;   /**< Phase Distortion on/off */
-    float phase_dist_amount;    /**< 0.0–1.0 (warp factor) */
     bool  osc_sync_enabled;     /**< Sync to previous osc */
-    float osc_sync_softness;    /**< 0.0 (hard) to 1.0 (soft) */
     bool  ring_mod_enabled;     /**< Ring mod with previous osc */
-    float ring_mod_depth;       /**< 0.0–1.0 */
-
-    // v1.7.1 Features
     bool  bitcrush_enabled;
-    float bitcrush_depth;       /**< 0.0–1.0 (matrix modulatable) */
-} PxOscillator;
+    char  _pad[10];             /**< Pad to exactly 64 bytes */
+} PX_ALIGN_64 PxOscillator;
 
 /**
  * @enum PxOscillatorType
@@ -1172,69 +1178,82 @@ typedef struct {
 } PxSeqState;
 
 typedef struct {
+    // Phase & interpolation
+    float phase;
+    float phase_at_interp_start;
+    float phase_at_interp_end;
+    float inv_total_phase;
+    float interp_samples[4];
+
+    // Status and parameters
+    int   wave_indices;
+    float current_coarse_semitones;
+    float current_fine_cents;
+    float output;
+
+    // Complex state
+    VmParams vm_params;
+    PxSeqState seq_state;
+
+    // Caches
+    float last_bitcrush_bits;
+    float cached_bitcrush_levels;
+    float cached_bitcrush_inv_levels;
+
+    // Flags
+    bool  cycle_completed;
+} VoiceOscState;
+
+typedef struct Voice {
+    // Cache Line 0 (0-63 bytes): Hot data read/written every sample
     bool active;
+    bool is_sliding;
     int midi_note;
-    float frequency, original_frequency;
+    int key_id;
 
-    // v1.6: Per-oscillator state
-    float osc_phase[PX_MAX_OSC_PER_VOICE];
-    int   osc_wave_indices[PX_MAX_OSC_PER_VOICE];
-
-    // v1.7: Per-oscillator output cache & Sync
-    float osc_output[PX_MAX_OSC_PER_VOICE];
-    bool  osc_cycle_completed[PX_MAX_OSC_PER_VOICE]; // Track reset for sync
-
-    // NOTE: frequency and original_frequency track the "Base Note" pitch.
-    // Per-oscillator frequency is calculated on the fly: base * tuning_ratio.
-
+    float frequency;
+    float original_frequency;
     float pan_position;
 
-    ADSR* adsrs;
-    float* adsr_mod_amounts; // Points into s->patch.template_voice_adsr_mod_amounts
+    float update_countdown;
+    float samples_per_update;
+    uint32_t rng_state;
 
-    Filter filter_instance;
-    Filter filter_instance_r; // v1.6: Stereo Filter
     float filter_cutoff_hz;
     float filter_resonance_q;
-    PxFilterMode filter_mode;
     float filter_env_amount_hz;
+    PxFilterMode filter_mode;
 
-    int key_id;
+    // Remaining space on line 0
+    float initial_velocity;
+    float poly_aftertouch_pressure;
+
+    // -------------------------------------------------------------
+    // Inner structure arrays (AoS instead of SoA)
+    // -------------------------------------------------------------
+    VoiceOscState osc[PX_MAX_OSC_PER_VOICE];
+
+    // -------------------------------------------------------------
+    // Complex objects
+    // -------------------------------------------------------------
+    Filter filter_instance;
+    Filter filter_instance_r; // v1.6: Stereo Filter
+
+    // -------------------------------------------------------------
+    // Pointers & Less frequently accessed data (per-block or LFO rate)
+    // -------------------------------------------------------------
+    ADSR* adsrs;
+    float* adsr_mod_amounts;
+    LFOInstance* lfo_instances;
+    float* lfo_mod_amounts_snapshot;
     uint64_t trigger_sequence_number;
 
-    LFOInstance* lfo_instances;
-    float* lfo_mod_amounts_snapshot; // 2D array flattened
+    // Slide / Unilegato
+    float slide_target_freq;
+    float slide_start_freq;
+    float slide_progress;
 
-    VmParams osc_vm_params[PX_MAX_OSC_PER_VOICE];
-
-    // --- Unilegato State Members
-    bool is_sliding;              // True if this voice is currently pitch sliding.
-    float slide_target_freq;      // The frequency (in Hz) this voice is sliding towards.
-    float slide_start_freq;       // The frequency where the slide began.
-    float slide_progress;         // A value from 0.0 to 1.0 tracking the slide's completion.
-
-    float initial_velocity;                // Velocity stored at note-on (0.0 to 1.0)
-
-    float poly_aftertouch_pressure;  // v1.4.1: 0.0 to 1.0, default 0.0
-
-    // v1.6: Cached tuning for active oscillators
-    float current_osc_coarse_semitones[PX_MAX_OSC_PER_VOICE];
-    float current_osc_fine_cents[PX_MAX_OSC_PER_VOICE];
-
-    // --- State for oscillator update throttling (Per Oscillator)
-    float update_countdown;         // Samples remaining until the next real calculation (Shared timing for now?)
-    float samples_per_update;       // How many samples to wait between calculations.
-
-    // Per-oscillator interpolation state
-    float osc_interp_samples[PX_MAX_OSC_PER_VOICE][4];
-    float osc_phase_at_interp_start[PX_MAX_OSC_PER_VOICE];
-    float osc_phase_at_interp_end[PX_MAX_OSC_PER_VOICE];
-    float osc_inv_total_phase[PX_MAX_OSC_PER_VOICE];
-
-    // --- v1.6: Per-Oscillator Sequencer State ---
-    PxSeqState seq_states[PX_MAX_OSC_PER_VOICE];
-
-    // Smooth LFO Modulations (v1.8.8 Zipper Noise Fix)
+    // Smooth LFO Modulations
     float lfo_pitch_mod_val;
     float lfo_pitch_mod_step;
     float lfo_cutoff_mod_val;
@@ -1250,24 +1269,16 @@ typedef struct {
     float lfo_param3_mod_val;
     float lfo_param3_mod_step;
 
-    // Cache for filter optimization
+    // Caches
     float last_filter_cutoff_hz;
     float last_filter_resonance_q;
-    PxFilterMode last_filter_mode;
     int last_filter_poles;
+    PxFilterMode last_filter_mode;
 
-    // Cache for pan optimization
     float cached_pan_l;
     float cached_pan_r;
     float last_pan_effective;
-
-    // Cache for bitcrush optimization
-    float last_bitcrush_bits[PX_MAX_OSC_PER_VOICE];
-    float cached_bitcrush_levels[PX_MAX_OSC_PER_VOICE];
-    float cached_bitcrush_inv_levels[PX_MAX_OSC_PER_VOICE];
-
-    uint32_t rng_state;         // Context-aware PRNG state (Shared)
-} Voice;
+} PX_ALIGN_64 Voice;
 
 /**
  * @section mod_matrix Modulation Matrix Usage
@@ -2332,7 +2343,7 @@ static void PX_ProcessCommands(PxSynth* s) {
                 if (cmd.data.osc_int.osc_idx >= 0 && cmd.data.osc_int.osc_idx < PX_MAX_OSC_PER_VOICE) {
                     s->patch.osc[cmd.data.osc_int.osc_idx].wave_idx = cmd.data.osc_int.int_val;
                     for (int i = 0; i < s->config.num_voices; i++) {
-                        if (s->voices[i].active) s->voices[i].osc_wave_indices[cmd.data.osc_int.osc_idx] = cmd.data.osc_int.int_val;
+                        if (s->voices[i].active) s->voices[i].osc[cmd.data.osc_int.osc_idx].wave_indices = cmd.data.osc_int.int_val;
                     }
                 }
                 break;
@@ -2340,7 +2351,7 @@ static void PX_ProcessCommands(PxSynth* s) {
                 if (cmd.data.osc_val.osc_idx >= 0 && cmd.data.osc_val.osc_idx < PX_MAX_OSC_PER_VOICE) {
                     s->patch.osc[cmd.data.osc_val.osc_idx].coarse_semitones = cmd.data.osc_val.value;
                     for (int i = 0; i < s->config.num_voices; i++) {
-                        if (s->voices[i].active) s->voices[i].current_osc_coarse_semitones[cmd.data.osc_val.osc_idx] = cmd.data.osc_val.value;
+                        if (s->voices[i].active) s->voices[i].osc[cmd.data.osc_val.osc_idx].current_coarse_semitones = cmd.data.osc_val.value;
                     }
                 }
                 break;
@@ -2348,7 +2359,7 @@ static void PX_ProcessCommands(PxSynth* s) {
                 if (cmd.data.osc_val.osc_idx >= 0 && cmd.data.osc_val.osc_idx < PX_MAX_OSC_PER_VOICE) {
                     s->patch.osc[cmd.data.osc_val.osc_idx].fine_cents = cmd.data.osc_val.value;
                     for (int i = 0; i < s->config.num_voices; i++) {
-                        if (s->voices[i].active) s->voices[i].current_osc_fine_cents[cmd.data.osc_val.osc_idx] = cmd.data.osc_val.value;
+                        if (s->voices[i].active) s->voices[i].osc[cmd.data.osc_val.osc_idx].current_fine_cents = cmd.data.osc_val.value;
                     }
                 }
                 break;
@@ -2570,8 +2581,8 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
         Filter_Init(&s->voices[i].filter_instance);
         Filter_Init(&s->voices[i].filter_instance_r);
         for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
-            s->voices[i].osc_vm_params[o].rng_state_ptr = &s->voices[i].rng_state;
-            s->voices[i].last_bitcrush_bits[o] = -1.0f;
+            s->voices[i].osc[o].vm_params.rng_state_ptr = &s->voices[i].rng_state;
+            s->voices[i].osc[o].last_bitcrush_bits = -1.0f;
         }
         for (int j = 0; j < config->num_lfos; ++j) {
             LFOInstance_Init(&s->voices[i].lfo_instances[j], config->sample_rate);
@@ -3224,11 +3235,11 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             // 5.3 Oscillator Loop (Independent Sequencing)
             for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
                 if (!s->patch.osc[o].enabled) {
-                    v->osc_output[o] = 0.0f; // Cache silence
-                    v->osc_cycle_completed[o] = false;
+                    v->osc[o].output = 0.0f; // Cache silence
+                    v->osc[o].cycle_completed = false;
                     continue;
                 }
-                PxSeqState* sq = &v->seq_states[o];
+                PxSeqState* sq = &v->osc[o].seq_state;
 
                 // A. Calculate Seq Pitch & Glide
                 float seq_pitch_mult = 1.0f;
@@ -3259,7 +3270,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         }
 
                         if (effective_duration > 0.5f) {
-                            float t = ((float)sq->cycles_counter + v->osc_phase[o]) * (1.0f / effective_duration);
+                            float t = ((float)sq->cycles_counter + v->osc[o].phase) * (1.0f / effective_duration);
                             t = fmaxf(0.0f, fminf(1.0f, t));
 
                             // v1.7.1: Curve Selection
@@ -3288,30 +3299,30 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 // If Sync enabled and o > 0, check if o-1 reset.
                 bool do_sync = false;
                 if (o > 0 && s->patch.osc[o].osc_sync_enabled) {
-                    if (v->osc_cycle_completed[o-1]) do_sync = true;
+                    if (v->osc[o-1].cycle_completed) do_sync = true;
                 }
                 if (do_sync) {
                     float softness = s->patch.osc[o].osc_sync_softness;
                     if (softness < 0.01f) {
-                        v->osc_phase[o] = 0.0f; // Hard Sync
+                        v->osc[o].phase = 0.0f; // Hard Sync
                     } else {
                         // Soft pull to master reset (Exponential pull)
                         // softness: 0.0 (Hard) -> 1.0 (Soft/No Sync)
                         // strength = 1.0 - softness
-                        v->osc_phase[o] += (1.0f - softness) * (0.0f - v->osc_phase[o]);
+                        v->osc[o].phase += (1.0f - softness) * (0.0f - v->osc[o].phase);
                     }
                 }
 
                 // Standard Pitch Calc
                 float osc_pitch_mod = dest_mod[PX_MOD_DEST_OSC1_PITCH + o * PX_OSC_MOD_PARAM_COUNT];
-                float tuning_st = v->current_osc_coarse_semitones[o] + (v->current_osc_fine_cents[o] / 100.0f) + osc_pitch_mod * 12.0f;
+                float tuning_st = v->osc[o].current_coarse_semitones + (v->osc[o].current_fine_cents / 100.0f) + osc_pitch_mod * 12.0f;
                 float osc_freq = effective_voice_freq * exp2f(tuning_st / 12.0f) * seq_pitch_mult;
-                v->osc_vm_params[o].frequency = osc_freq;
+                v->osc[o].vm_params.frequency = osc_freq;
 
                 int base_dest = PX_MOD_DEST_OSC1_MODA + o * PX_OSC_MOD_PARAM_COUNT;
-                v->osc_vm_params[o].modA = lfo_bytecode_mod_a + adsr_total_param1_mod + dest_mod[PX_MOD_DEST_OSC_MODA] * 10.0f + dest_mod[base_dest] * 10.0f;
-                v->osc_vm_params[o].modB = lfo_bytecode_mod_b + adsr_total_param2_mod + dest_mod[PX_MOD_DEST_OSC_MODB] * 10.0f + dest_mod[base_dest + 1] * 10.0f;
-                v->osc_vm_params[o].modC = lfo_bytecode_mod_c + adsr_total_param3_mod + dest_mod[PX_MOD_DEST_OSC_MODC] * 10.0f + dest_mod[base_dest + 2] * 10.0f;
+                v->osc[o].vm_params.modA = lfo_bytecode_mod_a + adsr_total_param1_mod + dest_mod[PX_MOD_DEST_OSC_MODA] * 10.0f + dest_mod[base_dest] * 10.0f;
+                v->osc[o].vm_params.modB = lfo_bytecode_mod_b + adsr_total_param2_mod + dest_mod[PX_MOD_DEST_OSC_MODB] * 10.0f + dest_mod[base_dest + 1] * 10.0f;
+                v->osc[o].vm_params.modC = lfo_bytecode_mod_c + adsr_total_param3_mod + dest_mod[PX_MOD_DEST_OSC_MODC] * 10.0f + dest_mod[base_dest + 2] * 10.0f;
 
                 // v1.7: Phase Distortion
                 float pd_amount = s->patch.osc[o].phase_dist_amount;
@@ -3319,40 +3330,40 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     pd_amount += dest_mod[PX_MOD_DEST_OSC1_PHASE_DIST + o * PX_OSC_MOD_PARAM_COUNT];
                     pd_amount = fmaxf(0.0f, fminf(1.0f, pd_amount));
                 }
-                float effective_phase = v->osc_phase[o];
+                float effective_phase = v->osc[o].phase;
                 if (pd_amount > 0.001f) {
                     // Simple PD: phase + sin(phase) * amount
                     // Casio-style often uses piecewise lines, but sin is smoother and "analog".
                     effective_phase += sinf(effective_phase * 2.0f * PI) * pd_amount * 0.5f;
                     // Wrap if needed, though sin is periodic so it might just warp safely.
                 }
-                v->osc_vm_params[o].x = effective_phase * 2.f * PI;
+                v->osc[o].vm_params.x = effective_phase * 2.f * PI;
 
-                BytecodeChunk* chunk = default_waves[v->osc_wave_indices[o]].compiled_bytecode;
+                BytecodeChunk* chunk = default_waves[v->osc[o].wave_indices].compiled_bytecode;
                 float raw_sample = 0.0f;
 
                 // C. Generation (CPU)
                 if (s->config.osc_update_mode == PX_OSC_UPDATE_MODE_PER_SAMPLE) {
-                    raw_sample = execute_bytecode(chunk, &v->osc_vm_params[o]);
+                    raw_sample = execute_bytecode(chunk, &v->osc[o].vm_params);
                 } else {
                     if (v->update_countdown <= 0.0f) {
-                        v->osc_interp_samples[o][0] = v->osc_interp_samples[o][1];
-                        v->osc_interp_samples[o][1] = v->osc_interp_samples[o][2];
-                        v->osc_interp_samples[o][2] = v->osc_interp_samples[o][3];
-                        v->osc_interp_samples[o][3] = execute_bytecode(chunk, &v->osc_vm_params[o]);
-                        v->osc_phase_at_interp_start[o] = v->osc_phase_at_interp_end[o];
-                        v->osc_phase_at_interp_end[o] = v->osc_phase[o];
+                        v->osc[o].interp_samples[0] = v->osc[o].interp_samples[1];
+                        v->osc[o].interp_samples[1] = v->osc[o].interp_samples[2];
+                        v->osc[o].interp_samples[2] = v->osc[o].interp_samples[3];
+                        v->osc[o].interp_samples[3] = execute_bytecode(chunk, &v->osc[o].vm_params);
+                        v->osc[o].phase_at_interp_start = v->osc[o].phase_at_interp_end;
+                        v->osc[o].phase_at_interp_end = v->osc[o].phase;
 
-                        float total_phase = v->osc_phase_at_interp_end[o] - v->osc_phase_at_interp_start[o];
+                        float total_phase = v->osc[o].phase_at_interp_end - v->osc[o].phase_at_interp_start;
                         if (total_phase < 0.0f) total_phase += 1.0f;
                         if (total_phase < 1e-9f) total_phase = 1e-9f;
-                        v->osc_inv_total_phase[o] = 1.0f / total_phase;
+                        v->osc[o].inv_total_phase = 1.0f / total_phase;
                     }
 
-                    float progress = v->osc_phase[o] - v->osc_phase_at_interp_start[o];
+                    float progress = v->osc[o].phase - v->osc[o].phase_at_interp_start;
                     if (progress < 0.0f) progress += 1.0f;
-                    float t = fmaxf(0.0f, fminf(1.0f, progress * v->osc_inv_total_phase[o]));
-                    raw_sample = cubic_interpolate(v->osc_interp_samples[o][0], v->osc_interp_samples[o][1], v->osc_interp_samples[o][2], v->osc_interp_samples[o][3], t);
+                    float t = fmaxf(0.0f, fminf(1.0f, progress * v->osc[o].inv_total_phase));
+                    raw_sample = cubic_interpolate(v->osc[o].interp_samples[0], v->osc[o].interp_samples[1], v->osc[o].interp_samples[2], v->osc[o].interp_samples[3], t);
                 }
 
                 // D. FX
@@ -3383,7 +3394,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     }
 
                     if (sq->step_flags & PX_WSEQ_RING_MOD) {
-                        float ring_mod_src = sinf(v->osc_phase[o] * 4.0f * PI);
+                        float ring_mod_src = sinf(v->osc[o].phase * 4.0f * PI);
                         float depth = sq->current_sequence->ring_mod_depth;
                         if (sq->current_sequence->ring_mod_mod_src >= 0) depth += mod_sources[sq->current_sequence->ring_mod_mod_src];
                         depth = fmaxf(0.0f, fminf(1.0f, depth));
@@ -3395,9 +3406,9 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     if (sq->step_flags & PX_WSEQ_XMOD) {
                         float xmod = sq->current_sequence->xmod_depth;
                         if (sq->current_sequence->xmod_mod_src >= 0) xmod += mod_sources[sq->current_sequence->xmod_mod_src];
-                        v->osc_phase[o] += raw_sample * xmod * 0.1f;
-                        if (v->osc_phase[o] >= 1.0f) v->osc_phase[o] -= (float)((int)v->osc_phase[o]);
-                        else if (v->osc_phase[o] < 0.0f) v->osc_phase[o] += (float)((int)(-v->osc_phase[o]) + 1);
+                        v->osc[o].phase += raw_sample * xmod * 0.1f;
+                        if (v->osc[o].phase >= 1.0f) v->osc[o].phase -= (float)((int)v->osc[o].phase);
+                        else if (v->osc[o].phase < 0.0f) v->osc[o].phase += (float)((int)(-v->osc[o].phase) + 1);
                     }
                 }
 
@@ -3408,10 +3419,10 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     if (xm_depth > 0.001f) {
                         // Modulate previous oscillator's phase for NEXT cycle (Feedback FM)
                         // Scaling: raw_sample is +/-1.
-                        v->osc_phase[o-1] += raw_sample * xm_depth * 0.5f;
+                        v->osc[o-1].phase += raw_sample * xm_depth * 0.5f;
                         // Wrap
-                        if (v->osc_phase[o-1] >= 1.0f) v->osc_phase[o-1] -= (float)((int)v->osc_phase[o-1]);
-                        else if (v->osc_phase[o-1] < 0.0f) v->osc_phase[o-1] += (float)((int)(-v->osc_phase[o-1]) + 1);
+                        if (v->osc[o-1].phase >= 1.0f) v->osc[o-1].phase -= (float)((int)v->osc[o-1].phase);
+                        else if (v->osc[o-1].phase < 0.0f) v->osc[o-1].phase += (float)((int)(-v->osc[o-1].phase) + 1);
                     }
                 }
 
@@ -3420,7 +3431,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     float rm_depth = s->patch.osc[o].ring_mod_depth + dest_mod[PX_MOD_DEST_OSC1_RING_MOD_DEPTH + o * PX_OSC_MOD_PARAM_COUNT];
                     rm_depth = fmaxf(0.0f, fminf(1.0f, rm_depth));
                     if (rm_depth > 0.001f) {
-                        float wet = raw_sample * v->osc_output[o-1];
+                        float wet = raw_sample * v->osc[o-1].output;
                         raw_sample = raw_sample * (1.0f - rm_depth) + wet * rm_depth;
                     }
                 }
@@ -3451,13 +3462,13 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
                 if (do_bitcrush) {
                     if (effective_bits < 1.0f) effective_bits = 1.0f;
-                    if (effective_bits != v->last_bitcrush_bits[o]) {
-                        v->cached_bitcrush_levels[o] = exp2f(effective_bits);
-                        v->cached_bitcrush_inv_levels[o] = 1.0f / v->cached_bitcrush_levels[o];
-                        v->last_bitcrush_bits[o] = effective_bits;
+                    if (effective_bits != v->osc[o].last_bitcrush_bits) {
+                        v->osc[o].cached_bitcrush_levels = exp2f(effective_bits);
+                        v->osc[o].cached_bitcrush_inv_levels = 1.0f / v->osc[o].cached_bitcrush_levels;
+                        v->osc[o].last_bitcrush_bits = effective_bits;
                     }
-                    float levels = v->cached_bitcrush_levels[o];
-                    float inv_levels = v->cached_bitcrush_inv_levels[o];
+                    float levels = v->osc[o].cached_bitcrush_levels;
+                    float inv_levels = v->osc[o].cached_bitcrush_inv_levels;
 
                     // Optional: Dither for low bit depths (from WSEQ logic)
                     if (effective_bits < 8.0f) {
@@ -3469,7 +3480,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 }
 
                 // Cache Output for Next Osc
-                v->osc_output[o] = raw_sample;
+                v->osc[o].output = raw_sample;
 
                 // E. Mix
                 float level = s->patch.osc[o].mix_level + dest_mod[PX_MOD_DEST_OSC1_MIX + o * PX_OSC_MOD_PARAM_COUNT];
@@ -3487,26 +3498,26 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
                 // Add increment (can be highly positive or highly negative)
                 if (sq->current_sequence && (sq->step_flags & PX_WSEQ_REVERSE_PLAY)) {
-                    v->osc_phase[o] -= phase_inc;
+                    v->osc[o].phase -= phase_inc;
                 } else {
-                    v->osc_phase[o] += phase_inc;
+                    v->osc[o].phase += phase_inc;
                 }
 
                 // Safely wrap positive out-of-bounds
-                if (PX_UNLIKELY(v->osc_phase[o] >= 1.0f)) {
+                if (PX_UNLIKELY(v->osc[o].phase >= 1.0f)) {
                     // Fast float-to-int cast strips the integer part (e.g., 2.3 -> 2)
-                    int wraps = (int)v->osc_phase[o];
-                    v->osc_phase[o] -= (float)wraps;
+                    int wraps = (int)v->osc[o].phase;
+                    v->osc[o].phase -= (float)wraps;
                     cycle_completed = true;
                 }
                 // Safely wrap negative out-of-bounds (Reverse play or heavy negative FM)
-                else if (PX_UNLIKELY(v->osc_phase[o] < 0.0f)) {
+                else if (PX_UNLIKELY(v->osc[o].phase < 0.0f)) {
                     // e.g., -1.3 -> int(-1.3) is -1. We subtract (-1) and add 1 to wrap properly.
-                    int wraps = (int)(v->osc_phase[o]) - 1;
-                    v->osc_phase[o] -= (float)wraps;
+                    int wraps = (int)(v->osc[o].phase) - 1;
+                    v->osc[o].phase -= (float)wraps;
                     cycle_completed = true;
                 }
-                v->osc_cycle_completed[o] = cycle_completed; // Cache for next osc sync check
+                v->osc[o].cycle_completed = cycle_completed; // Cache for next osc sync check
 
                 if (sq->current_sequence && !sq->finished) {
                     sq->cycle_accumulator += phase_inc;
@@ -3581,9 +3592,9 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                             // Load Wave
                             if (next_step->flags & PX_WSEQ_USE_RND_WAVE) {
                                 uint16_t range = sq->current_sequence->rnd_wave_high - sq->current_sequence->rnd_wave_low;
-                                if (range > 0) v->osc_wave_indices[o] = sq->current_sequence->rnd_wave_low + (px_rand(&v->rng_state) % (range + 1));
+                                if (range > 0) v->osc[o].wave_indices = sq->current_sequence->rnd_wave_low + (px_rand(&v->rng_state) % (range + 1));
                             } else {
-                                v->osc_wave_indices[o] = next_step->wave_idx;
+                                v->osc[o].wave_indices = next_step->wave_idx;
                             }
 
                             // Load Pitch
@@ -3649,7 +3660,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                                     float src_val = mod_sources[sq->current_sequence->lock_phase_mod_src];
                                     if (src_val <= 0.0f) do_lock = false;
                                 }
-                                if (do_lock) v->osc_phase[o] = 0.0f;
+                                if (do_lock) v->osc[o].phase = 0.0f;
                             }
                         }
                     }
@@ -4285,12 +4296,12 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
 
             // Update Oscillator Configs
             for(int o=0; o<PX_MAX_OSC_PER_VOICE; ++o) {
-                 if (o == 0) v->osc_wave_indices[o] = wave_idx;
-                 else v->osc_wave_indices[o] = s->patch.osc[o].wave_idx;
+                 if (o == 0) v->osc[o].wave_indices = wave_idx;
+                 else v->osc[o].wave_indices = s->patch.osc[o].wave_idx;
 
-                 v->current_osc_coarse_semitones[o] = s->patch.osc[o].coarse_semitones;
-                 v->current_osc_fine_cents[o] = s->patch.osc[o].fine_cents;
-                 v->last_bitcrush_bits[o] = -1.0f;
+                 v->osc[o].current_coarse_semitones = s->patch.osc[o].coarse_semitones;
+                 v->osc[o].current_fine_cents = s->patch.osc[o].fine_cents;
+                 v->osc[o].last_bitcrush_bits = -1.0f;
             }
 
             v->original_frequency = get_midi_frequency(midi_note); // Set new base
@@ -4336,13 +4347,13 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
 
     // v1.6: Initialize Oscillators
     for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
-        if (o == 0) v->osc_wave_indices[o] = wave_idx; // Override Osc 1 with NoteOn wave
-        else v->osc_wave_indices[o] = s->patch.osc[o].wave_idx;
+        if (o == 0) v->osc[o].wave_indices = wave_idx; // Override Osc 1 with NoteOn wave
+        else v->osc[o].wave_indices = s->patch.osc[o].wave_idx;
 
-        v->current_osc_coarse_semitones[o] = s->patch.osc[o].coarse_semitones;
-        v->current_osc_fine_cents[o] = s->patch.osc[o].fine_cents;
-        v->osc_phase[o] = 0.0f; // Reset phase
-        v->last_bitcrush_bits[o] = -1.0f;
+        v->osc[o].current_coarse_semitones = s->patch.osc[o].coarse_semitones;
+        v->osc[o].current_fine_cents = s->patch.osc[o].fine_cents;
+        v->osc[o].phase = 0.0f; // Reset phase
+        v->osc[o].last_bitcrush_bits = -1.0f;
     }
 
     v->original_frequency = get_midi_frequency(midi_note);
@@ -4403,16 +4414,16 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     v->rng_state = (uint32_t)(s->global_trigger_counter * 1664525 + 1013904223 + midi_note * 2246822507U);
 
     for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
-        v->osc_vm_params[o].x = 0.0f;
-        v->osc_vm_params[o].frequency = v->frequency;
-        v->osc_vm_params[o].rand_offset = (float)px_rand(&v->rng_state) * (1.0f / (float)UINT32_MAX);
-        v->osc_vm_params[o].modA = 0.0f;
-        v->osc_vm_params[o].modB = 0.0f;
-        v->osc_vm_params[o].modC = 0.0f;
-        v->osc_vm_params[o].lfsr_type = LFSR_16BIT;
-        v->osc_vm_params[o].lfsr_state = px_rand(&v->rng_state) | 1;
-        v->osc_vm_params[o].lfsr_position = 0;
-        v->osc_vm_params[o].lfsr_seed = v->osc_vm_params[o].lfsr_state;
+        v->osc[o].vm_params.x = 0.0f;
+        v->osc[o].vm_params.frequency = v->frequency;
+        v->osc[o].vm_params.rand_offset = (float)px_rand(&v->rng_state) * (1.0f / (float)UINT32_MAX);
+        v->osc[o].vm_params.modA = 0.0f;
+        v->osc[o].vm_params.modB = 0.0f;
+        v->osc[o].vm_params.modC = 0.0f;
+        v->osc[o].vm_params.lfsr_type = LFSR_16BIT;
+        v->osc[o].vm_params.lfsr_state = px_rand(&v->rng_state) | 1;
+        v->osc[o].vm_params.lfsr_position = 0;
+        v->osc[o].vm_params.lfsr_seed = v->osc[o].vm_params.lfsr_state;
     }
 
     for (int i = 0; i < s->config.num_voice_adsrs; ++i) {
@@ -4462,23 +4473,23 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
     }
     if (s->config.osc_update_mode != PX_OSC_UPDATE_MODE_PER_SAMPLE) {
         for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
-            v->osc_phase_at_interp_start[o] = 0.0f;
-            v->osc_phase_at_interp_end[o] = 0.0f;
-            v->osc_inv_total_phase[o] = 1e9f;
-            VmParams temp_params = v->osc_vm_params[o];
+            v->osc[o].phase_at_interp_start = 0.0f;
+            v->osc[o].phase_at_interp_end = 0.0f;
+            v->osc[o].inv_total_phase = 1e9f;
+            VmParams temp_params = v->osc[o].vm_params;
             temp_params.x = 0.0f;
             // Use wave index 0 for default init if not set, or whatever works
             // In PX_NoteOn we'll set it properly.
             BytecodeChunk* chunk = default_waves[0].compiled_bytecode;
             float initial_value = chunk ? execute_bytecode(chunk, &temp_params) : 0.0f;
-            for (int j = 0; j < 4; j++) v->osc_interp_samples[o][j] = initial_value;
+            for (int j = 0; j < 4; j++) v->osc[o].interp_samples[j] = initial_value;
         }
     }
 
     // --- v1.6 Per-Oscillator Sequence Initialization ---
     for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
         int seq_id = s->patch.osc[o].sequence_id;
-        PxSeqState* sq = &v->seq_states[o];
+        PxSeqState* sq = &v->osc[o].seq_state;
 
         if (seq_id >= 0 && seq_id < PX_NUM_WSEQ_BANKS) {
             sq->seq_id = seq_id;
@@ -4515,7 +4526,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
             const PxWaveSeqStep* step = &sq->current_sequence->steps[0];
 
             // Override Static Wave with Sequence Wave
-            v->osc_wave_indices[o] = step->wave_idx;
+            v->osc[o].wave_indices = step->wave_idx;
 
             sq->step_pitch_ratio = exp2f(step->pitch_offset / 1200.0f);
             sq->target_pitch_ratio = sq->step_pitch_ratio;
@@ -4541,7 +4552,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
 
             if (sq->step_flags & PX_WSEQ_USE_RND_WAVE) {
                  uint16_t range = sq->current_sequence->rnd_wave_high - sq->current_sequence->rnd_wave_low;
-                 if (range > 0) v->osc_wave_indices[o] = sq->current_sequence->rnd_wave_low + (px_rand(&v->rng_state) % (range + 1));
+                 if (range > 0) v->osc[o].wave_indices = sq->current_sequence->rnd_wave_low + (px_rand(&v->rng_state) % (range + 1));
             }
 
             if (sq->step_flags & PX_WSEQ_USE_RND_OCTAVE) {
@@ -4565,7 +4576,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
                     }
                     if (src_val <= 0.0f) do_lock = false;
                 }
-                if (do_lock) v->osc_phase[o] = 0.0f;
+                if (do_lock) v->osc[o].phase = 0.0f;
             }
 
         } else {
@@ -4596,7 +4607,7 @@ static void PX_NoteOff_internal(PxSynth* s, int key_id) {
         if (s->voices[i].active && s->voices[i].key_id == key_id) {
             s->voices[i].is_sliding = false;
             s->voices[i].frequency = s->voices[i].original_frequency;
-            for(int o=0; o<PX_MAX_OSC_PER_VOICE; ++o) s->voices[i].osc_vm_params[o].frequency = s->voices[i].frequency;
+            for(int o=0; o<PX_MAX_OSC_PER_VOICE; ++o) s->voices[i].osc[o].vm_params.frequency = s->voices[i].frequency;
             s->voices[i].slide_progress = 0.0f;
             for (int j = 0; j < s->config.num_voice_adsrs; j++) if (s->voices[i].adsrs[j].enabled) ADSR_TriggerRelease(&s->voices[i].adsrs[j]);
             for (int k = 0; k < s->config.num_lfos; k++) if (s->patch.template_lfos[k].adsr.enabled) ADSR_TriggerRelease(&s->voices[i].lfo_instances[k].adsr);
@@ -4623,7 +4634,7 @@ static PxVoiceInfo PX_GetVoiceInfo_internal(PxSynth* s, int idx) {
         info.lfo_outputs[i] = v->lfo_instances[i].current_output_value;
     }
     for (int i = 0; i < PX_MAX_OSC_PER_VOICE; ++i) {
-        info.active_wave_indices[i] = v->osc_wave_indices[i];
+        info.active_wave_indices[i] = v->osc[i].wave_indices;
     }
     float amp = 0.0f;
     bool amp_targeted = false;
