@@ -22,10 +22,10 @@ double get_time_ns() {
 }
 
 int main() {
-    printf("# Polysonix VM v1.9.0 Performance Report\n\n");
-    printf("This report compares the execution time of the new Flat Opcode VM (v1.9.0) against the v1.8.10 baseline.\n");
+    printf("# Polysonix VM v1.10.0 (FMA) Performance Report\n\n");
+    printf("This report compares the execution time of the new Flat Opcode VM (v1.10.0 (FMA)) against the v1.8.10 baseline.\n");
     printf("Both sets of measurements were taken on this cloud environment for direct comparison.\n\n");
-    printf("| Patch ID | Name | v1.8.10 (Before) (ns) | v1.9.7 (After) (ns) | Improvement |\n");
+    printf("| Patch ID | Name | v1.8.10 (Before) (ns) | v1.10.0 (After) (ns) | Improvement |\n");
     printf("| :--- | :--- | :--- | :--- | :--- |\n");
 
     // Initialize Global Tables
@@ -125,7 +125,7 @@ int main() {
     printf("\n## Summary\n\n");
     printf("* **Total Patches Benchmarked:** %d\n", valid_patches);
     printf("* **Average Time per Sample (v1.8.10):** %.2f ns\n", total_baseline_time / valid_patches);
-    printf("* **Average Time per Sample (v1.9.0):** %.2f ns\n", total_avg_time / valid_patches);
+    printf("* **Average Time per Sample (v1.10.0 (FMA)):** %.2f ns\n", total_avg_time / valid_patches);
     printf("* **Overall Performance Improvement:** **%.2f%%**\n", overall_improvement);
 
     // Cleanup

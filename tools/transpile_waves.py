@@ -42,7 +42,7 @@ FUNCTIONS = {
     "abs": (1, "fabsf"), "tanh": (1, "vm_fast_tanh"), # Use fast tanh from vm
     "exp": (1, "expf"), "log": (1, "logf"), "log10": (1, "log10f"),
     "floor": (1, "floorf"), "ceil": (1, "ceilf"),
-    "min": (2, "fminf"), "max": (2, "fmaxf"),
+    "min": (2, "fminf"), "max": (2, "fmaxf"), "fma": (3, "fmaf"),
     "sqrt": (1, "sqrtf"), "pow": (2, "powf"),
     "rand": (0, "vm_rand"),
     "sigma": (5, "sigma"), # Special handling
