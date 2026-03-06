@@ -13,7 +13,7 @@
 #endif
 
 #define FAST_TRIG_TABLE_BITS   15
-#define FAST_TRIG_TABLE_SIZE   (1u << FAST_TRIG_TABLE_BITS)   // 32768 - optimal cache
+#define FAST_TRIG_TABLE_SIZE   (1u << FAST_TRIG_TABLE_BITS)   // 32768 — optimal cache
 #define FAST_TRIG_TABLE_MASK   (FAST_TRIG_TABLE_SIZE - 1)
 
 extern int16_t sin_table[FAST_TRIG_TABLE_SIZE];
@@ -27,7 +27,7 @@ extern void InitFastDSP(void);
 extern void FreeFastDSP(void);
 
 // ===================================================================
-// FAST SCALAR TRIG — corrected & optimized
+// FAST SCALAR TRIG — using FMA for speed & precision
 static inline float fastsin(float x)
 {
     const float two_pi = 6.283185307179586f;
@@ -41,14 +41,14 @@ static inline float fastsin(float x)
     if (quadrant == 1 || quadrant == 3)
         phase = 1.5707963267948966f - phase;
 
-    float t = phase * 20860.224f; // phase * 32767 / (pi/2)
+    float t = phase * (FAST_TRIG_TABLE_SIZE - 1);
     uint32_t idx = (uint32_t)t;
     float frac = t - idx;
 
     int16_t a = sin_table[idx & FAST_TRIG_TABLE_MASK];
     int16_t b = sin_table[(idx + 1) & FAST_TRIG_TABLE_MASK];
 
-    float val = (a + frac * (b - a)) * 0.00003051850947599719f;
+    float val = fmaf(frac, (b - a), a) * 0.00003051850947599719f;
 
     if (quadrant >= 2) val = -val;
     if (x < 0.0f) val = -val;
@@ -58,7 +58,6 @@ static inline float fastsin(float x)
 
 static inline float fastcos(float x) { return fastsin(x + 1.5707963267948966f); }
 
-// fasttan, fastasin, fastacos, fastatan
 static inline float fasttan(float x)
 {
     const float pi = 3.141592653589793f;
@@ -79,7 +78,7 @@ static inline float fasttan(float x)
     int16_t a = tan_table[idx & FAST_TRIG_TABLE_MASK];
     int16_t b = tan_table[(idx + 1) & FAST_TRIG_TABLE_MASK];
 
-    float val = (a + frac * (b - a)) * 0.003051850947599719f;
+    float val = fmaf(frac, (b - a), a) * 0.003051850947599719f;
     return (quadrant & 1) ? -val : val;
 }
 
@@ -95,7 +94,7 @@ static inline float fastasin(float x) {
     int16_t a = asin_table[idx & FAST_TRIG_TABLE_MASK];
     int16_t b = asin_table[(idx + 1) & FAST_TRIG_TABLE_MASK];
 
-    float val = (a + frac * (b - a)) * 0.00004793689f;
+    float val = fmaf(frac, (b - a), a) * 0.00004793689f;
     return is_neg ? -val : val;
 }
 
@@ -111,7 +110,7 @@ static inline float fastacos(float x) {
     int16_t a = acos_table[idx & FAST_TRIG_TABLE_MASK];
     int16_t b = acos_table[(idx + 1) & FAST_TRIG_TABLE_MASK];
 
-    float val = (a + frac * (b - a)) * 0.00004793689f;
+    float val = fmaf(frac, (b - a), a) * 0.00004793689f;
     return is_neg ? (M_PI - val) : val;
 }
 
@@ -127,12 +126,12 @@ static inline float fastatan(float x) {
     int16_t a = atan_table[idx & FAST_TRIG_TABLE_MASK];
     int16_t b = atan_table[(idx + 1) & FAST_TRIG_TABLE_MASK];
 
-    float val = (a + frac * (b - a)) * 0.00004793689f;
+    float val = fmaf(frac, (b - a), a) * 0.00004793689f;
     return is_neg ? -val : val;
 }
 
 // ===================================================================
-// SSE4.1
+// SSE4.1 PATH — using FMA
 #if defined(PX_USE_SSE41) && defined(__SSE4_1__)
 static inline __m128 fastsin_sse(__m128 x)
 {
@@ -140,7 +139,7 @@ static inline __m128 fastsin_sse(__m128 x)
     const __m128 inv_twopi = _mm_set1_ps(0.15915494309189535f);
     const __m128 inv_pi2 = _mm_set1_ps(0.6366197723675813f);
     const __m128 one = _mm_set1_ps(1.0f);
-    const __m128 scale = _mm_set1_ps(20860.224f);
+    const __m128 scale = _mm_set1_ps((float)(FAST_TRIG_TABLE_SIZE - 1));
 
     __m128 sign_mask = _mm_set1_ps(-0.0f);
     __m128 is_neg = _mm_and_ps(x, sign_mask);
@@ -166,7 +165,7 @@ static inline __m128 fastsin_sse(__m128 x)
     __m128i idx = _mm_cvttps_epi32(t);
     __m128 frac = _mm_sub_ps(t, _mm_cvtepi32_ps(idx));
 
-    uint32_t i[4] __attribute__((aligned(16)));
+    alignas(16) uint32_t i[4];
     _mm_storeu_si128((__m128i*)i, idx);
 
     __m128 a = _mm_set_ps((float)sin_table[(i[3]+1)&FAST_TRIG_TABLE_MASK],
@@ -179,7 +178,7 @@ static inline __m128 fastsin_sse(__m128 x)
                           (float)sin_table[i[1]&FAST_TRIG_TABLE_MASK],
                           (float)sin_table[i[0]&FAST_TRIG_TABLE_MASK]);
 
-    __m128 val = _mm_add_ps(b, _mm_mul_ps(frac, _mm_sub_ps(a, b)));
+    __m128 val = _mm_fmadd_ps(frac, _mm_sub_ps(a, b), b);
     val = _mm_mul_ps(val, _mm_set1_ps(0.00003051850947599719f));
 
     __m128i q_ge_2 = _mm_cmpgt_epi32(q, _mm_set1_epi32(1));
@@ -195,10 +194,12 @@ static inline __m128 fastcos_sse(__m128 x) {
 #endif
 
 // ===================================================================
-// FFT (dedicated twiddles)
+// FAST FFT (dedicated twiddle table)
 typedef struct { float re; float im; } Complex;
+
 extern Complex* twiddles[13];
 extern int fast_dsp_ref_count;
+
 extern void FastFFT(float* real, float* imag, int n);
 
 static inline int fast_log2_32(uint32_t n) {
@@ -216,8 +217,6 @@ static inline int fast_log2_32(uint32_t n) {
 #endif // DSP_MATH_H
 
 #ifdef DSP_MATH_IMPLEMENTATION
-#ifndef DSP_MATH_IMPLEMENTATION_DONE
-#define DSP_MATH_IMPLEMENTATION_DONE
 #include <stdlib.h>
 
 int16_t sin_table[FAST_TRIG_TABLE_SIZE];
@@ -238,7 +237,6 @@ void InitFastDSP(void)
     const float step_trig = (M_PI / 2.0f) / (FAST_TRIG_TABLE_SIZE - 1);
     const float step_linear = 1.0f / (FAST_TRIG_TABLE_SIZE - 1);
 
-
     for (uint32_t i = 0; i < FAST_TRIG_TABLE_SIZE; ++i) {
         float x_trig = i * step_trig;
         float x_lin = i * step_linear;
@@ -257,7 +255,6 @@ void InitFastDSP(void)
         float actual_x = mapped / (1.0f - mapped + 1e-6f);
         atan_table[i] = (int16_t)((atanf(actual_x) / 1.5707963267948966f) * 32767.0f);
     }
-
 
     for (int log2n = 8; log2n <= 12; ++log2n) {
         int n = 1 << log2n;
@@ -314,5 +311,4 @@ void FastFFT(float* real, float* imag, int n)
     }
 }
 
-#endif // DSP_MATH_IMPLEMENTATION_DONE
 #endif // DSP_MATH_IMPLEMENTATION

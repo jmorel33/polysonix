@@ -1,5 +1,15 @@
 # Update Log
 
+## v1.9.16 (2026/03/10)
+**Performance Optimization: Titanium FMA DSP & New VM Instructions**
+
+*   **Optimization:**
+    *   Refactored `dsp_math.h` with the "Titanium" version, leveraging heavily inlined `fmaf` and vectorized `_mm_fmadd_ps` calls for faster scalar and SSE4.1 execution of fast trigonometric approximations.
+    *   Enhanced mathematical boundary safety by decoupling linear and trigonometric mappings during `InitFastDSP` table initialization, preventing `NaN` pollution in inverse trig routines.
+*   **Virtual Machine Additions:**
+    *   Added new `OP_FMS`, `OP_FNMADD`, and `OP_FNMSUB` instructions to the `px_vm` stack machine execution loop.
+    *   These new functions compile directly to standard FMA scalar instructions without requiring unsupported non-ISO `<math.h>` dependencies.
+
 ## v1.9.15 (2026/03/10)
 **Performance Optimization: Fused Multiply-Add (FMA)**
 

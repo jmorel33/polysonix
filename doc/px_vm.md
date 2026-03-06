@@ -201,6 +201,18 @@ These functions operate on radians.
   Computes `(a * b) + c` as a single operation (Fused Multiply-Add). This is often faster and more precise than performing multiplication and addition separately.
   - **Example**: `fma(sin(x), 0.5, 0.5)` scales a sine wave by half and shifts it up by half, resulting in a wave from 0.0 to 1.0.
 
+- **`fms(a, b, c)`**
+  Computes `(a * b) - c` as a single operation (Fused Multiply-Subtract). This is often faster and more precise than performing multiplication and subtraction separately.
+  - **Example**: `fms(sin(x), 0.5, 0.5)` scales a sine wave by half and shifts it down by half, resulting in a wave from -1.0 to 0.0.
+
+- **`fnmadd(a, b, c)`**
+  Computes `-(a * b) + c` as a single operation (Fused Negative Multiply-Add).
+  - **Example**: `fnmadd(x, 2.0, 1.0)` evaluates to `-2.0*x + 1.0`.
+
+- **`fnmsub(a, b, c)`**
+  Computes `-(a * b) - c` as a single operation (Fused Negative Multiply-Subtract).
+  - **Example**: `fnmsub(x, 2.0, 1.0)` evaluates to `-2.0*x - 1.0`.
+
 
 - **`abs(value)`**
   Returns the absolute value of `value`.
