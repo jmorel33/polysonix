@@ -26,8 +26,9 @@ This guide provides a comprehensive overview of the language, from its basic syn
   - [3.5. Functions](#35-functions)
     - [3.5.1. Trigonometric Functions](#351-trigonometric-functions)
     - [3.5.2. Mathematical Functions](#352-mathematical-functions)
-    - [3.5.3. LFSR (Linear-Feedback Shift Register) Functions](#353-lfsr-linear-feedback-shift-register-functions)
-    - [3.5.4. Summation Function (sigma)](#354-summation-function-sigma)
+    - [3.5.3. Probability Function (prob)](#353-probability-function-prob)
+    - [3.5.4. LFSR (Linear-Feedback Shift Register) Functions](#354-lfsr-linear-feedback-shift-register-functions)
+    - [3.5.5. Summation Function (sigma)](#355-summation-function-sigma)
 - [4. The Compilation and Execution Model](#4-the-compilation-and-execution-model)
   - [4.1. Overview](#41-overview)
   - [4.2. Tokenizer](#42-tokenizer)
@@ -320,7 +321,16 @@ These functions operate on radians.
   Returns a new pseudo-random floating-point value between 0.0 and 1.0 every time it is executed. Unlike `RAND_OFFSET`, this function is not constant for the duration of a note.
   - **Example**: `(rand() - 0.5) * 0.1` adds a small amount of random noise to the signal.
 
-#### 3.5.3. LFSR (Linear-Feedback Shift Register) Functions
+#### 3.5.3. Probability Function (prob)
+
+- **`prob(chance, true_expr, false_expr)`**
+  Evaluates to `true_expr` with the probability given by `chance` (a value between 0.0 and 1.0), otherwise evaluates to `false_expr`. The probability is calculated against the per-wave `RAND_OFFSET` to ensure deterministic execution within a single cycle, preventing unwanted audio artifacts that true per-sample randomness might introduce inside continuous waveforms.
+  - `chance`: The probability threshold (0.0 to 1.0).
+  - `true_expr`: The expression to evaluate if the random check passes.
+  - `false_expr`: The expression to evaluate if the random check fails.
+  - **Example**: `prob(0.5, sin(x), cos(x))` has a 50% chance of behaving as a sine wave or a cosine wave for the duration of the current cycle.
+
+#### 3.5.4. LFSR (Linear-Feedback Shift Register) Functions
 
 LFSRs are powerful tools for generating pseudo-random sequences, useful for creating noise, random triggers, or complex, evolving textures. The LFSR functions can operate in two distinct modes, determined by the C environment:
 
@@ -346,7 +356,7 @@ LFSRs are powerful tools for generating pseudo-random sequences, useful for crea
   - `density`: A threshold from 0.0 to 1.0. A pulse is generated if the LFSR value is greater than or equal to the density.
   - **Example**: `sin(x) * lfsr_clock(LFSR_7BIT, 0.75)` creates a gated sine wave that plays in a pseudo-random rhythmic pattern.
 
-#### 3.5.4. Summation Function (sigma)
+#### 3.5.5. Summation Function (sigma)
 
 The `sigma` function provides a powerful way to perform summations, which is fundamental to additive synthesis and creating complex harmonic structures.
 

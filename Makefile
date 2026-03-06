@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -I. -Wall -Wextra -O2
 LIBS = -lm
 
-TESTS = test_vm_div_zero test_vm_jump_bounds test_vm_compliance test_lfsr test_security_wave_idx
+TESTS = test_vm_div_zero test_vm_jump_bounds test_vm_compliance test_lfsr test_security_wave_idx test_vm_prob
 
 .PHONY: all clean run_tests
 
@@ -25,6 +25,9 @@ test_vm_compliance: test/test_px_vm_impl.c test/test_px_vm_client.c px_vm.h
 test_lfsr: test/test_lfsr.c px_vm.h
 	$(CC) $(CFLAGS) -DPX_VM_IMPLEMENTATION $< -o $@ $(LIBS)
 
+test_vm_prob: test/test_vm_prob.c px_vm.h
+	$(CC) $(CFLAGS) -DPX_VM_IMPLEMENTATION $< -o $@ $(LIBS)
+
 run_tests: $(TESTS)
 	@echo "Running test_vm_div_zero..."
 	@./test_vm_div_zero > /dev/null
@@ -36,6 +39,8 @@ run_tests: $(TESTS)
 	@./test_lfsr > /dev/null
 	@echo "Running test_security_wave_idx..."
 	@./test_security_wave_idx > /dev/null
+	@echo "Running test_vm_prob..."
+	@./test_vm_prob > /dev/null
 	@echo "All tests passed!"
 
 clean:

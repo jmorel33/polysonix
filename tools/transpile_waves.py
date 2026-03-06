@@ -51,6 +51,7 @@ FUNCTIONS = {
     "nan": (0, "NAN_WRAPPER"), "inf": (0, "INFINITY_WRAPPER"), "lgamma": (1, "lgammaf"),
     "tgamma": (1, "tgammaf"),
     "rand": (0, "vm_rand"),
+    "prob": (3, "prob"),
     "sigma": (5, "sigma"), # Special handling
     "lfsr_val": (3, "vm_lfsr_val"),
     "lfsr_noise": (2, "vm_lfsr_noise"),
@@ -273,6 +274,9 @@ class FuncNode(Node):
 
         if self.name == "rand":
             return f"vm_rand(params)"
+
+        if self.name == "prob":
+            return f"((params->rand_offset < ({arg_strs[0]})) ? ({arg_strs[1]}) : ({arg_strs[2]}))"
 
         if self.name in ["lfsr_val", "lfsr_noise", "lfsr_clock"]:
             # Need to pass params first
