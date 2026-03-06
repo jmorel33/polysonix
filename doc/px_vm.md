@@ -197,6 +197,11 @@ These functions operate on radians.
 
 #### 3.5.2. Mathematical Functions
 
+- **`fma(a, b, c)`**
+  Computes `(a * b) + c` as a single operation (Fused Multiply-Add). This is often faster and more precise than performing multiplication and addition separately.
+  - **Example**: `fma(sin(x), 0.5, 0.5)` scales a sine wave by half and shifts it up by half, resulting in a wave from 0.0 to 1.0.
+
+
 - **`abs(value)`**
   Returns the absolute value of `value`.
   - **Example**: `abs(sin(x))` creates a rectified sine wave, with all values being positive.

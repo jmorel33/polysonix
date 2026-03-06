@@ -839,10 +839,10 @@ static PxFunctionDef px_functions[] = {
     {"sqrt", 4, OP_SQRT, 1},
     {"pow", 3, OP_POW, 2},
     {"rand", 4, OP_RAND, 0},
-    {"fma", 3, OP_FMA, 3},
     {"lfsr_val", 8, OP_LFSR_VAL, 3},
     {"lfsr_noise", 10, OP_LFSR_NOISE, 2},
     {"lfsr_clock", 10, OP_LFSR_CLOCK, 2},
+    {"fma", 3, OP_FMA, 3},
     {"sigma", 5, (OpCode)0, 5},
     {NULL, 0, (OpCode)0, 0}
 };
