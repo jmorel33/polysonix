@@ -41,7 +41,7 @@ static inline float fastsin(float x)
     if (quadrant == 1 || quadrant == 3)
         phase = 1.5707963267948966f - phase;
 
-    float t = phase * 20860.224f; // phase * 32767 / (pi/2)
+    float t = phase * (FAST_TRIG_TABLE_SIZE - 1);
     uint32_t idx = (uint32_t)t;
     float frac = t - idx;
 
@@ -139,7 +139,7 @@ static inline __m128 fastsin_sse(__m128 x)
     const __m128 inv_twopi = _mm_set1_ps(0.15915494309189535f);
     const __m128 inv_pi2 = _mm_set1_ps(0.6366197723675813f);
     const __m128 one = _mm_set1_ps(1.0f);
-    const __m128 scale = _mm_set1_ps(20860.224f); // 32767 / (pi/2)
+    const __m128 scale = _mm_set1_ps((float)(FAST_TRIG_TABLE_SIZE - 1));
 
     __m128 sign_mask = _mm_set1_ps(-0.0f);
     __m128 is_neg = _mm_and_ps(x, sign_mask);
@@ -165,7 +165,7 @@ static inline __m128 fastsin_sse(__m128 x)
     __m128i idx = _mm_cvttps_epi32(t);
     __m128 frac = _mm_sub_ps(t, _mm_cvtepi32_ps(idx));
 
-    uint32_t i[4] __attribute__((aligned(16)));
+    alignas(16) uint32_t i[4];
     _mm_storeu_si128((__m128i*)i, idx);
 
     __m128 a = _mm_set_ps((float)sin_table[(i[3]+1)&FAST_TRIG_TABLE_MASK],
