@@ -1,5 +1,13 @@
 # Update Log
 
+## v1.9.14 (2026/03/05)
+**Security Fix: Oscillator Wave Index Validation**
+
+*   **Vulnerability Fix:**
+    *   **The Issue:** During preset deserialization, the oscillator `wave_idx` was loaded from the file without any bounds checking. A malicious or corrupted preset could specify an index larger than the number of valid waveforms. Since this index is used directly in the audio processing loop to access the waveform data array, it could lead to out-of-bounds memory access, causing a crash or potential information leakage.
+    *   **The Fix:** Added a robust bounds check in `px_patching.h`. Any loaded `wave_idx` that exceeds or equals `NUM_WAVEFORMS` (256) is now automatically clamped to `0` (a safe default waveform).
+    *   **Verification:** Added a dedicated security test `test/test_security_wave_idx.c` that confirms the fix by attempting to load a corrupted preset with an invalid index.
+
 ## v1.9.13 (2026/02/28)
 * **Optimization**: Replaced the division operation `progress / total_phase` in the oscillator interpolation logic with a precomputed multiplication `progress * v->osc_inv_total_phase[o]`, yielding a ~16% speedup in the simulated interpolation hot path.
 * **Optimization**: Converted several safe divisions by constants (e.g., `(float)UINT32_MAX`) and explicitly computed variables in `PX_Process` to equivalent multiplication-by-reciprocal operations to avoid DSP pipeline stalls.
