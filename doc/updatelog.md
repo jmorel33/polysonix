@@ -1,5 +1,13 @@
 # Update Log
 
+## v1.9.15 (2026/03/10)
+**Performance Optimization: Fused Multiply-Add (FMA)**
+
+*   **Optimization:**
+    *   Replaced numerous instances of `(a * b) + c` and `a + (b * c)` with the `fmaf(a, b, c)` function across the `polysonix.h` and `px_vm.h` core processing paths.
+    *   This leverages hardware-accelerated Fused Multiply-Add instructions (like FMA3 or FMA4) on supported architectures, resulting in faster execution and improved precision due to single rounding.
+    *   Affected areas include: SVF filter processing, enhanced limiter envelope calculation, ADSR envelope levels, cubic interpolation (Horner's method), and soft clipping Padé approximations.
+
 ## v1.9.14 (2026/03/05)
 **Security Fix: Oscillator Wave Index Validation**
 
