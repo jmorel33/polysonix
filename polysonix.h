@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 9
-#define POLYSONIX_VERSION_PATCH 14
+#define POLYSONIX_VERSION_PATCH 15
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1708,7 +1708,7 @@ static void ADSR_Update(ADSR* adsr, float time_delta, float sample_rate) {
                 // Calculate how many samples have passed and apply the multiplier exponentially.
                 int num_steps = (int)(time_delta * sample_rate);
                 if (num_steps > 0) {
-                     adsr->level = (adsr->level - adsr->sustain_level) * powf(adsr->decay_multiplier, (float)num_steps) + adsr->sustain_level;
+                     adsr->level = fmaf(adsr->level - adsr->sustain_level, powf(adsr->decay_multiplier, (float)num_steps), adsr->sustain_level);
                 }
             }
             if (adsr->level <= adsr->sustain_level) {
@@ -1807,9 +1807,9 @@ static void ProcessEnhancedLimiter(EnhancedLimiter* limiter, float *input_l, flo
 
     // Envelope follower with attack/release
     if (detection_level > limiter->envelope) {
-        limiter->envelope = detection_level + (limiter->envelope - detection_level) * limiter->attack_coeff;
+        limiter->envelope = fmaf(limiter->envelope - detection_level, limiter->attack_coeff, detection_level);
     } else {
-        limiter->envelope = detection_level + (limiter->envelope - detection_level) * limiter->release_coeff;
+        limiter->envelope = fmaf(limiter->envelope - detection_level, limiter->release_coeff, detection_level);
     }
 
     // Calculate gain reduction
@@ -1827,7 +1827,7 @@ static void ProcessEnhancedLimiter(EnhancedLimiter* limiter, float *input_l, flo
     // Smooth gain changes to prevent clicks
     limiter->target_gain = gain_reduction;
     float gain_smooth_coeff = 0.99f;
-    limiter->smooth_gain = limiter->target_gain + (limiter->smooth_gain - limiter->target_gain) * gain_smooth_coeff;
+    limiter->smooth_gain = fmaf(limiter->smooth_gain - limiter->target_gain, gain_smooth_coeff, limiter->target_gain);
 
     // Apply limiting with makeup gain
     float final_gain = limiter->smooth_gain * limiter->makeup_gain;
@@ -1890,7 +1890,7 @@ static void Filter_SetCoefficients(Filter* filter, float cutoff_hz, float resona
 // Clamping is mandatory to enforce the [-1.0, 1.0] saturation range of real tanh.
 static inline float fast_tanh(float x) {
     float x2 = x * x;
-    float y = x * (27.0f + x2) / (27.0f + 9.0f * x2);
+    float y = x * (27.0f + x2) / fmaf(9.0f, x2, 27.0f);
     return fmaxf(-1.0f, fminf(1.0f, y));
 }
 
@@ -1933,9 +1933,9 @@ static float Filter_Process_Internal(Filter* filter, float input_sample) {
     // --- Stage 1: 12dB SVF (Always runs) ---
     // These are the raw 12dB outputs, calculated fresh each sample.
     float notch1 = driven_input - filter->q_inv_coeff * filter->bp_state1;
-    float lp1 = filter->lp_state1 + filter->f_coeff * filter->bp_state1;
+    float lp1 = fmaf(filter->f_coeff, filter->bp_state1, filter->lp_state1);
     float hp1 = notch1 - lp1;
-    float bp1 = filter->bp_state1 + filter->f_coeff * hp1;
+    float bp1 = fmaf(filter->f_coeff, hp1, filter->bp_state1);
 
     // Update the state variables for the next sample.
     const float anti_denormal = 1e-25f;
@@ -1966,9 +1966,9 @@ static float Filter_Process_Internal(Filter* filter, float input_sample) {
         // --- Correct 24dB Logic ---
         float stage2_input = filter->lp_state1;
         float notch2 = stage2_input - filter->q_inv_coeff * filter->bp_state2;
-        float lp2 = filter->lp_state2 + filter->f_coeff * filter->bp_state2;
+        float lp2 = fmaf(filter->f_coeff, filter->bp_state2, filter->lp_state2);
         float hp2 = notch2 - lp2;
-        float bp2 = filter->bp_state2 + filter->f_coeff * hp2;
+        float bp2 = fmaf(filter->f_coeff, hp2, filter->bp_state2);
 
         filter->lp_state2 = fast_tanh(lp2 + anti_denormal) - anti_denormal;
         filter->bp_state2 = fast_tanh(bp2 + anti_denormal) - anti_denormal;
@@ -1998,7 +1998,7 @@ static float Filter_Process_Oversampled(Filter *filter, float input_sample, floa
     float y1 = soft_clip(Filter_Process_Internal(filter, input_sample) * amp);
 
     // FIR decimation safely removes the clipping harmonics
-    float out = (HB[0] * filter->os_x2) + (HB[1] * filter->os_x1) + (HB[2] * y0) + (HB[3] * y1);
+    float out = fmaf(HB[0], filter->os_x2, fmaf(HB[1], filter->os_x1, fmaf(HB[2], y0, HB[3] * y1)));
     filter->os_x2 = filter->os_x1;
     filter->os_x1 = y0;
     return out;
@@ -2106,8 +2106,8 @@ static inline float soft_clip(float x) {
     // This is transformed to avoid per-sample scaling and branches where possible.
     float x2 = x * x;
     float x4 = x2 * x2;
-    float num = x * (945.0f + (105.0f * SOFTCLIP_K2) * x2 + SOFTCLIP_K4 * x4);
-    float den = 945.0f + (420.0f * SOFTCLIP_K2) * x2 + (15.0f * SOFTCLIP_K4) * x4;
+    float num = x * fmaf(SOFTCLIP_K4, x4, fmaf(105.0f * SOFTCLIP_K2, x2, 945.0f));
+    float den = fmaf(15.0f * SOFTCLIP_K4, x4, fmaf(420.0f * SOFTCLIP_K2, x2, 945.0f));
     float result = num / den;
 
     // Clamping handles the divergence of the Pade approximant at large x
@@ -2121,7 +2121,7 @@ static float cubic_interpolate(float y0, float y1, float y2, float y3, float t) 
     float a1 = y0 - y1 - a0;
     float a2 = y2 - y0;
     float a3 = y1;
-    return a0 * t * t * t + a1 * t * t + a2 * t + a3;
+    return fmaf(fmaf(fmaf(a0, t, a1), t, a2), t, a3);
 }
 
 // --- COMMAND QUEUE HELPERS ---

@@ -308,7 +308,7 @@ static inline uint32_t px_rand(uint32_t* state) {
 // Clamping is mandatory to enforce the [-1.0, 1.0] saturation range of real tanh.
 static inline float vm_fast_tanh(float x) {
     float x2 = x * x;
-    float y = x * (27.0f + x2) / (27.0f + 9.0f * x2);
+    float y = x * (27.0f + x2) / fmaf(9.0f, x2, 27.0f);
     return fmaxf(-1.0f, fminf(1.0f, y));
 }
 
@@ -522,9 +522,10 @@ typedef enum {
     OP_LFSR_VAL       = 0x30,
     OP_LFSR_NOISE     = 0x31,
     OP_LFSR_CLOCK     = 0x32,
+    OP_FMA            = 0x33,
 
     // --- End ---
-    OP_HALT           = 0x33  // Must be last (used for array sizes)
+    OP_HALT           = 0x34  // Must be last (used for array sizes)
 } OpCode;
 #define VM_MAX_OPCODE OP_HALT
 #define VM_DISPATCH_TABLE_SIZE (VM_MAX_OPCODE + 1) // Important for computed goto table size
@@ -841,6 +842,7 @@ static PxFunctionDef px_functions[] = {
     {"lfsr_val", 8, OP_LFSR_VAL, 3},
     {"lfsr_noise", 10, OP_LFSR_NOISE, 2},
     {"lfsr_clock", 10, OP_LFSR_CLOCK, 2},
+    {"fma", 3, OP_FMA, 3},
     {"sigma", 5, (OpCode)0, 5},
     {NULL, 0, (OpCode)0, 0}
 };
@@ -2203,7 +2205,8 @@ const char* getOpCodeName(OpCode code) {
         /* 0x30 */ "OP_LFSR_VAL",
         /* 0x31 */ "OP_LFSR_NOISE",
         /* 0x32 */ "OP_LFSR_CLOCK",
-        /* 0x33 */ "OP_HALT"
+        /* 0x33 */ "OP_FMA",
+        /* 0x34 */ "OP_HALT"
     };
     // Basic bounds check using VM_MAX_OPCODE
     if (code >= 0 && code <= VM_MAX_OPCODE) {
@@ -2933,7 +2936,8 @@ static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
         /* 0x30 OP_LFSR_VAL */         &&SUB_LABEL_OP_LFSR_VAL,
         /* 0x31 OP_LFSR_NOISE */       &&SUB_LABEL_OP_LFSR_NOISE,
         /* 0x32 OP_LFSR_CLOCK */       &&SUB_LABEL_OP_LFSR_CLOCK,
-        /* 0x33 OP_HALT */             &&SUB_LABEL_OP_HALT
+        /* 0x33 OP_FMA */              &&SUB_LABEL_OP_FMA,
+        /* 0x34 OP_HALT */             &&SUB_LABEL_OP_HALT
     };
 
     uint8_t instruction;
@@ -3278,6 +3282,9 @@ SUB_LABEL_OP_LOG10: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_t
 SUB_LABEL_OP_FLOOR: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (floor)"); success=false; goto sub_chunk_end; } sp[-1] = floorf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_CEIL: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (ceil)"); success=false; goto sub_chunk_end; } sp[-1] = ceilf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_SQRT: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (sqrt)"); success=false; goto sub_chunk_end; } sp[-1] = (sp[-1] >= 0) ? sqrtf(sp[-1]) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+
+SUB_LABEL_OP_FMA: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fma)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(sp[-1], b, c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+
 SUB_LABEL_OP_RAND: {
     if (PX_UNLIKELY(sp >= vm->stack + MAX_VM_STACK)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack overflow (rand)"); success=false; goto sub_chunk_end; }
     *sp++ = vm_rand(vm->params);
@@ -3514,7 +3521,8 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
         /* 0x30 OP_LFSR_VAL */         &&LABEL_OP_LFSR_VAL,
         /* 0x31 OP_LFSR_NOISE */       &&LABEL_OP_LFSR_NOISE,
         /* 0x32 OP_LFSR_CLOCK */       &&LABEL_OP_LFSR_CLOCK,
-        /* 0x33 OP_HALT */             &&LABEL_OP_HALT
+        /* 0x33 OP_FMA */              &&LABEL_OP_FMA,
+        /* 0x34 OP_HALT */             &&LABEL_OP_HALT
     };
 
     // --- Central Dispatch Loop ---
@@ -3642,6 +3650,9 @@ LABEL_OP_LOG10: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; 
 LABEL_OP_FLOOR: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (floor)"); success=false; goto execution_end; } sp[-1] = floorf(sp[-1]); goto DISPATCH_LOOP; }
 LABEL_OP_CEIL: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (ceil)"); success=false; goto execution_end; } sp[-1] = ceilf(sp[-1]); goto DISPATCH_LOOP; }
 LABEL_OP_SQRT: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (sqrt)"); success=false; goto execution_end; } sp[-1] = (sp[-1] >= 0) ? sqrtf(sp[-1]) : 0.0f; goto DISPATCH_LOOP; }
+
+LABEL_OP_FMA: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fma)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(sp[-1], b, c); goto DISPATCH_LOOP; }
+
 LABEL_OP_RAND: {
     if (PX_UNLIKELY(sp >= vm.stack + MAX_VM_STACK)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack overflow (rand)"); success=false; goto execution_end; }
     *sp++ = vm_rand(vm.params);
@@ -4076,7 +4087,7 @@ static int get_instruction_size(const BytecodeChunk *chunk, int offset) {
         case OP_EXP: case OP_LOG: case OP_LOG10:
         case OP_FLOOR: case OP_CEIL:
         case OP_MIN: case OP_MAX:
-        case OP_SQRT: case OP_POW: case OP_RAND:
+        case OP_SQRT: case OP_POW: case OP_RAND: case OP_FMA:
         case OP_LFSR_VAL: case OP_LFSR_NOISE: case OP_LFSR_CLOCK:
         case OP_HALT:
             // Size remains 1

@@ -3,7 +3,7 @@
 </div>
 
 # Polysonix
-**Version 1.9.14 (March 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
+**Version 1.9.15 (March 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
 
 A single-header polyphonic synthesizer engine.
 
@@ -729,7 +729,7 @@ The language supports the following operators:
 
 ### Functions
 - **Trigonometric**: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`
-- **Numeric**: `abs`, `tanh`, `exp`, `log`, `log10`, `floor`, `ceil`, `min`, `max`, `sqrt`, `pow`, `rand`
+- **Numeric**: `fma`, `abs`, `tanh`, `exp`, `log`, `log10`, `floor`, `ceil`, `min`, `max`, `sqrt`, `pow`, `rand`
 - **Summation**: `sigma(k, start, end, step, expr)`
 - **LFSR**: `lfsr_val`, `lfsr_noise`, `lfsr_clock`
 
