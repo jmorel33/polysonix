@@ -27,7 +27,7 @@ extern void InitFastDSP(void);
 extern void FreeFastDSP(void);
 
 // ===================================================================
-// FAST SCALAR TRIG (no fmodf, integer reduction, cache-friendly)
+// FAST SCALAR TRIG — corrected & optimized
 static inline float fastsin(float x)
 {
     const float two_pi = 6.283185307179586f;
@@ -38,9 +38,10 @@ static inline float fastsin(float x)
     int quadrant = (int)(wrapped * 0.6366197723675813f);
     float phase = wrapped - quadrant * 1.5707963267948966f;
 
-    if (quadrant == 1 || quadrant == 3) phase = 1.5707963267948966f - phase;
+    if (quadrant == 1 || quadrant == 3)
+        phase = 1.5707963267948966f - phase;
 
-    float t = phase * 0.6366197723675813f * (FAST_TRIG_TABLE_SIZE - 1);
+    float t = phase * (FAST_TRIG_TABLE_SIZE - 1);   // ← FIXED: removed extra factor
     uint32_t idx = (uint32_t)t;
     float frac = t - idx;
 
@@ -131,7 +132,7 @@ static inline float fastatan(float x) {
 }
 
 // ===================================================================
-// SSE4.1 PATH (fastsin + fastcos)
+// SSE4.1 (cleaned up)
 #if defined(PX_USE_SSE41) && defined(__SSE4_1__)
 static inline __m128 fastsin_sse(__m128 x)
 {
@@ -139,7 +140,7 @@ static inline __m128 fastsin_sse(__m128 x)
     const __m128 inv_twopi = _mm_set1_ps(0.15915494309189535f);
     const __m128 inv_pi2 = _mm_set1_ps(0.6366197723675813f);
     const __m128 one = _mm_set1_ps(1.0f);
-    const __m128 scale = _mm_set1_ps(0.6366197723675813f * (FAST_TRIG_TABLE_SIZE - 1));
+    const __m128 scale = _mm_set1_ps((float)(FAST_TRIG_TABLE_SIZE - 1));
 
     __m128 sign_mask = _mm_set1_ps(-0.0f);
     __m128 is_neg = _mm_and_ps(x, sign_mask);
@@ -194,12 +195,10 @@ static inline __m128 fastcos_sse(__m128 x) {
 #endif
 
 // ===================================================================
-// FAST FFT (dedicated twiddle table)
+// FFT (dedicated twiddles — already correct in your version)
 typedef struct { float re; float im; } Complex;
-
 extern Complex* twiddles[13];
 extern int fast_dsp_ref_count;
-
 extern void FastFFT(float* real, float* imag, int n);
 
 static inline int fast_log2_32(uint32_t n) {
@@ -258,7 +257,6 @@ void InitFastDSP(void)
         atan_table[i] = (int16_t)((atanf(actual_x) / 1.5707963267948966f) * 32767.0f);
     }
 
-    // FFT twiddles
     for (int log2n = 8; log2n <= 12; ++log2n) {
         int n = 1 << log2n;
         twiddles[log2n] = (Complex*)malloc((n/2) * sizeof(Complex));
@@ -275,10 +273,7 @@ void FreeFastDSP(void)
     if (fast_dsp_ref_count > 0) fast_dsp_ref_count--;
     if (fast_dsp_ref_count == 0) {
         for (int i = 8; i <= 12; ++i) {
-            if (twiddles[i]) {
-                free(twiddles[i]);
-                twiddles[i] = NULL;
-            }
+            if (twiddles[i]) free(twiddles[i]);
         }
     }
 }
