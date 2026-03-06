@@ -729,9 +729,23 @@ The language supports the following operators:
 
 ### Functions
 - **Trigonometric**: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`
-- **Numeric**: `fma`, `abs`, `tanh`, `exp`, `log`, `log10`, `floor`, `ceil`, `min`, `max`, `sqrt`, `pow`, `rand`
+- **Numeric**: `fma`, `abs`, `tanh`, `exp`, `log`, `log10`, `floor`, `ceil`, `min`, `max`, `sqrt`, `pow`, `rand`, `exp2`, `log2`, `expm1`, `log1p`, `hypot`, `copysign`, `scalbn`
 - **Summation**: `sigma(k, start, end, step, expr)`
 - **LFSR**: `lfsr_val`, `lfsr_noise`, `lfsr_clock`
+
+### Advanced Math Functions
+The VM provides several optimized, advanced math functions, useful for shaping signals and calculating pitch or amplitude scaling accurately.
+
+| Function | What it does | Why it's useful in a synth | Example |
+| :--- | :--- | :--- | :--- |
+| `fma(frac, b, a)` | Fused Multiply-Add | Faster + more accurate than a*b + c | `fma(frac, (b-a), a)` |
+| `exp2(x)` | 2^x (very fast) | Octave/pitch calculations, exponential envelopes | `exp2(pitch)` |
+| `log2(x)` | log₂(x) | Frequency → MIDI note, log scaling | `log2(freq / 440.0) * 12.0` |
+| `expm1(x)` | e^x - 1 (accurate near 0) | Envelopes, small exponential curves | `expm1(-time * decay)` |
+| `log1p(x)` | log(1+x) (accurate near 0) | Logarithmic controls, dB calculations | `20.0 * log1p(gain)` |
+| `hypot(x, y)` | √(x² + y²) without overflow | Stereo panning, vector length | `hypot(left, right)` |
+| `copysign(mag, sgn)` | Copy sign from one value to another | Phase, direction, bipolar signals | `copysign(1.0, velocity)` |
+| `scalbn(x, exp)` | x × 2^exp (extremely fast) | Fast pitch shifting, octave jumps | `scalbn(freq, octave)` |
 
 ### Examples
 

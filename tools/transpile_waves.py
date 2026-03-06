@@ -44,6 +44,9 @@ FUNCTIONS = {
     "floor": (1, "floorf"), "ceil": (1, "ceilf"),
     "min": (2, "fminf"), "max": (2, "fmaxf"), "fma": (3, "fmaf"),
     "sqrt": (1, "sqrtf"), "pow": (2, "powf"),
+    "exp2": (1, "exp2f"), "log2": (1, "log2f"), "expm1": (1, "expm1f"),
+    "log1p": (1, "log1pf"), "hypot": (2, "hypotf"), "copysign": (2, "copysignf"),
+    "scalbn": (2, "scalbnf"),
     "rand": (0, "vm_rand"),
     "sigma": (5, "sigma"), # Special handling
     "lfsr_val": (3, "vm_lfsr_val"),

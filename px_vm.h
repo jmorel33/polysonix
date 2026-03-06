@@ -527,8 +527,17 @@ typedef enum {
     OP_FNMADD           = 0x35,
     OP_FNMSUB           = 0x36,
 
+    // --- Advanced Math ---
+    OP_EXP2           = 0x37,
+    OP_LOG2           = 0x38,
+    OP_EXPM1          = 0x39,
+    OP_LOG1P          = 0x3A,
+    OP_HYPOT          = 0x3B,
+    OP_COPYSIGN       = 0x3C,
+    OP_SCALBN         = 0x3D,
+
     // --- End ---
-    OP_HALT           = 0x37  // Must be last (used for array sizes)
+    OP_HALT           = 0x3E  // Must be last (used for array sizes)
 } OpCode;
 #define VM_MAX_OPCODE OP_HALT
 #define VM_DISPATCH_TABLE_SIZE (VM_MAX_OPCODE + 1) // Important for computed goto table size
@@ -849,6 +858,13 @@ static PxFunctionDef px_functions[] = {
     {"fms", 3, OP_FMS, 3},
     {"fnmadd", 6, OP_FNMADD, 3},
     {"fnmsub", 6, OP_FNMSUB, 3},
+    {"exp2", 4, OP_EXP2, 1},
+    {"log2", 4, OP_LOG2, 1},
+    {"expm1", 5, OP_EXPM1, 1},
+    {"log1p", 5, OP_LOG1P, 1},
+    {"hypot", 5, OP_HYPOT, 2},
+    {"copysign", 8, OP_COPYSIGN, 2},
+    {"scalbn", 6, OP_SCALBN, 2},
     {"sigma", 5, (OpCode)0, 5},
     {NULL, 0, (OpCode)0, 0}
 };
@@ -2215,7 +2231,14 @@ const char* getOpCodeName(OpCode code) {
         /* 0x34 */ "OP_FMS",
         /* 0x35 */ "OP_FNMADD",
         /* 0x36 */ "OP_FNMSUB",
-        /* 0x37 */ "OP_HALT"
+        /* 0x37 */ "OP_EXP2",
+        /* 0x38 */ "OP_LOG2",
+        /* 0x39 */ "OP_EXPM1",
+        /* 0x3A */ "OP_LOG1P",
+        /* 0x3B */ "OP_HYPOT",
+        /* 0x3C */ "OP_COPYSIGN",
+        /* 0x3D */ "OP_SCALBN",
+        /* 0x3E */ "OP_HALT"
     };
     // Basic bounds check using VM_MAX_OPCODE
     if (code >= 0 && code <= VM_MAX_OPCODE) {
@@ -2320,6 +2343,7 @@ int disassembleInstruction(BytecodeChunk *chunk, int offset) {
         case OP_CMP_EQ: case OP_CMP_NE: case OP_CMP_GT: case OP_CMP_GE: case OP_CMP_LT: case OP_CMP_LE:
         case OP_SIGMA_INC:
         case OP_SIGMA_SETUP: // Has operands, but getOpCodeName handles it, so no specific print needed here for operands if disassembleInstruction logic is followed correctly for size
+        case OP_EXP2: case OP_LOG2: case OP_EXPM1: case OP_LOG1P: case OP_HYPOT: case OP_COPYSIGN: case OP_SCALBN:
         case OP_HALT:
             // No operands, size is 1, or operands handled by get_instruction_size for OP_SIGMA_SETUP
             if (instruction == OP_SIGMA_SETUP) instruction_size += 1 + 2+2+2+2; // name_id + 4*ushort
@@ -2949,7 +2973,14 @@ static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
         /* 0x34 OP_FMS */              &&SUB_LABEL_OP_FMS,
         /* 0x35 OP_FNMADD */             &&SUB_LABEL_OP_FNMADD,
         /* 0x36 OP_FNMSUB */             &&SUB_LABEL_OP_FNMSUB,
-        /* 0x37 OP_HALT */             &&SUB_LABEL_OP_HALT
+        /* 0x37 OP_EXP2 */             &&SUB_LABEL_OP_EXP2,
+        /* 0x38 OP_LOG2 */             &&SUB_LABEL_OP_LOG2,
+        /* 0x39 OP_EXPM1 */            &&SUB_LABEL_OP_EXPM1,
+        /* 0x3A OP_LOG1P */            &&SUB_LABEL_OP_LOG1P,
+        /* 0x3B OP_HYPOT */            &&SUB_LABEL_OP_HYPOT,
+        /* 0x3C OP_COPYSIGN */         &&SUB_LABEL_OP_COPYSIGN,
+        /* 0x3D OP_SCALBN */           &&SUB_LABEL_OP_SCALBN,
+        /* 0x3E OP_HALT */             &&SUB_LABEL_OP_HALT
     };
 
     uint8_t instruction;
@@ -3300,6 +3331,14 @@ SUB_LABEL_OP_FMS: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stac
 SUB_LABEL_OP_FNMADD: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fnmadd)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(-sp[-1], b, c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_FNMSUB: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fnmsub)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(-sp[-1], b, -c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 
+SUB_LABEL_OP_EXP2: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (exp2)"); success=false; goto sub_chunk_end; } sp[-1] = exp2f(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_LOG2: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (log2)"); success=false; goto sub_chunk_end; } sp[-1] = (sp[-1] > 0) ? log2f(sp[-1]) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_EXPM1: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (expm1)"); success=false; goto sub_chunk_end; } sp[-1] = expm1f(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_LOG1P: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (log1p)"); success=false; goto sub_chunk_end; } sp[-1] = (sp[-1] > -1.0f) ? log1pf(sp[-1]) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_HYPOT: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (hypot)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = hypotf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_COPYSIGN: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (copysign)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = copysignf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_SCALBN: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (scalbn)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = scalbnf(sp[-1], (int)b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+
 SUB_LABEL_OP_RAND: {
     if (PX_UNLIKELY(sp >= vm->stack + MAX_VM_STACK)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack overflow (rand)"); success=false; goto sub_chunk_end; }
     *sp++ = vm_rand(vm->params);
@@ -3540,7 +3579,14 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
         /* 0x34 OP_FMS */              &&LABEL_OP_FMS,
         /* 0x35 OP_FNMADD */             &&LABEL_OP_FNMADD,
         /* 0x36 OP_FNMSUB */             &&LABEL_OP_FNMSUB,
-        /* 0x37 OP_HALT */             &&LABEL_OP_HALT
+        /* 0x37 OP_EXP2 */             &&LABEL_OP_EXP2,
+        /* 0x38 OP_LOG2 */             &&LABEL_OP_LOG2,
+        /* 0x39 OP_EXPM1 */            &&LABEL_OP_EXPM1,
+        /* 0x3A OP_LOG1P */            &&LABEL_OP_LOG1P,
+        /* 0x3B OP_HYPOT */            &&LABEL_OP_HYPOT,
+        /* 0x3C OP_COPYSIGN */         &&LABEL_OP_COPYSIGN,
+        /* 0x3D OP_SCALBN */           &&LABEL_OP_SCALBN,
+        /* 0x3E OP_HALT */             &&LABEL_OP_HALT
     };
 
     // --- Central Dispatch Loop ---
@@ -3673,6 +3719,14 @@ LABEL_OP_FMA: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=s
 LABEL_OP_FMS: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fms)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(sp[-1], b, -c); goto DISPATCH_LOOP; }
 LABEL_OP_FNMADD: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fnmadd)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(-sp[-1], b, c); goto DISPATCH_LOOP; }
 LABEL_OP_FNMSUB: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fnmsub)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(-sp[-1], b, -c); goto DISPATCH_LOOP; }
+
+LABEL_OP_EXP2: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (exp2)"); success=false; goto execution_end; } sp[-1] = exp2f(sp[-1]); goto DISPATCH_LOOP; }
+LABEL_OP_LOG2: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (log2)"); success=false; goto execution_end; } sp[-1] = (sp[-1] > 0) ? log2f(sp[-1]) : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_EXPM1: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (expm1)"); success=false; goto execution_end; } sp[-1] = expm1f(sp[-1]); goto DISPATCH_LOOP; }
+LABEL_OP_LOG1P: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (log1p)"); success=false; goto execution_end; } sp[-1] = (sp[-1] > -1.0f) ? log1pf(sp[-1]) : 0.0f; goto DISPATCH_LOOP; }
+LABEL_OP_HYPOT: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (hypot)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = hypotf(sp[-1], b); goto DISPATCH_LOOP; }
+LABEL_OP_COPYSIGN: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (copysign)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = copysignf(sp[-1], b); goto DISPATCH_LOOP; }
+LABEL_OP_SCALBN: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (scalbn)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = scalbnf(sp[-1], (int)b); goto DISPATCH_LOOP; }
 
 LABEL_OP_RAND: {
     if (PX_UNLIKELY(sp >= vm.stack + MAX_VM_STACK)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack overflow (rand)"); success=false; goto execution_end; }
@@ -4110,6 +4164,7 @@ static int get_instruction_size(const BytecodeChunk *chunk, int offset) {
         case OP_MIN: case OP_MAX:
         case OP_SQRT: case OP_POW: case OP_RAND: case OP_FMA: case OP_FMS: case OP_FNMADD: case OP_FNMSUB:
         case OP_LFSR_VAL: case OP_LFSR_NOISE: case OP_LFSR_CLOCK:
+        case OP_EXP2: case OP_LOG2: case OP_EXPM1: case OP_LOG1P: case OP_HYPOT: case OP_COPYSIGN: case OP_SCALBN:
         case OP_HALT:
             // Size remains 1
             break;
