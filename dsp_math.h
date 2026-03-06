@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <math.h>
-#include <stdalign.h>
 
 #if defined(PX_USE_SSE41) && defined(__SSE4_1__)
 #include <smmintrin.h>
@@ -166,7 +165,7 @@ static inline __m128 fastsin_sse(__m128 x)
     __m128i idx = _mm_cvttps_epi32(t);
     __m128 frac = _mm_sub_ps(t, _mm_cvtepi32_ps(idx));
 
-    alignas(16) uint32_t i[4];
+    uint32_t i[4] __attribute__((aligned(16)));
     _mm_storeu_si128((__m128i*)i, idx);
 
     __m128 a = _mm_set_ps((float)sin_table[(i[3]+1)&FAST_TRIG_TABLE_MASK],

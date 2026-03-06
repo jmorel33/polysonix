@@ -523,9 +523,9 @@ typedef enum {
     OP_LFSR_NOISE     = 0x31,
     OP_LFSR_CLOCK     = 0x32,
     OP_FMA            = 0x33,
-    OP_FMS            = 0x34,
-    OP_FNMA           = 0x35,
-    OP_FNMS           = 0x36,
+    OP_FMSUB            = 0x34,
+    OP_FNMADD           = 0x35,
+    OP_FNMSUB           = 0x36,
 
     // --- End ---
     OP_HALT           = 0x37  // Must be last (used for array sizes)
@@ -846,9 +846,9 @@ static PxFunctionDef px_functions[] = {
     {"lfsr_noise", 10, OP_LFSR_NOISE, 2},
     {"lfsr_clock", 10, OP_LFSR_CLOCK, 2},
     {"fma", 3, OP_FMA, 3},
-    {"fms", 3, OP_FMS, 3},
-    {"fnma", 3, OP_FNMA, 3},
-    {"fnms", 3, OP_FNMS, 3},
+    {"fmsub", 5, OP_FMSUB, 3},
+    {"fnmadd", 6, OP_FNMADD, 3},
+    {"fnmsub", 6, OP_FNMSUB, 3},
     {"sigma", 5, (OpCode)0, 5},
     {NULL, 0, (OpCode)0, 0}
 };
@@ -2212,9 +2212,9 @@ const char* getOpCodeName(OpCode code) {
         /* 0x31 */ "OP_LFSR_NOISE",
         /* 0x32 */ "OP_LFSR_CLOCK",
         /* 0x33 */ "OP_FMA",
-        /* 0x34 */ "OP_FMS",
-        /* 0x35 */ "OP_FNMA",
-        /* 0x36 */ "OP_FNMS",
+        /* 0x34 */ "OP_FMSUB",
+        /* 0x35 */ "OP_FNMADD",
+        /* 0x36 */ "OP_FNMSUB",
         /* 0x37 */ "OP_HALT"
     };
     // Basic bounds check using VM_MAX_OPCODE
@@ -2946,9 +2946,9 @@ static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
         /* 0x31 OP_LFSR_NOISE */       &&SUB_LABEL_OP_LFSR_NOISE,
         /* 0x32 OP_LFSR_CLOCK */       &&SUB_LABEL_OP_LFSR_CLOCK,
         /* 0x33 OP_FMA */              &&SUB_LABEL_OP_FMA,
-        /* 0x34 OP_FMS */              &&SUB_LABEL_OP_FMS,
-        /* 0x35 OP_FNMA */             &&SUB_LABEL_OP_FNMA,
-        /* 0x36 OP_FNMS */             &&SUB_LABEL_OP_FNMS,
+        /* 0x34 OP_FMSUB */              &&SUB_LABEL_OP_FMSUB,
+        /* 0x35 OP_FNMADD */             &&SUB_LABEL_OP_FNMADD,
+        /* 0x36 OP_FNMSUB */             &&SUB_LABEL_OP_FNMSUB,
         /* 0x37 OP_HALT */             &&SUB_LABEL_OP_HALT
     };
 
@@ -3296,9 +3296,9 @@ SUB_LABEL_OP_CEIL: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_to
 SUB_LABEL_OP_SQRT: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (sqrt)"); success=false; goto sub_chunk_end; } sp[-1] = (sp[-1] >= 0) ? sqrtf(sp[-1]) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 
 SUB_LABEL_OP_FMA: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fma)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(sp[-1], b, c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
-SUB_LABEL_OP_FMS: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fms)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = (sp[-1] * b) - c; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
-SUB_LABEL_OP_FNMA: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fnma)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = -(sp[-1] * b) + c; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
-SUB_LABEL_OP_FNMS: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fnms)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = -(sp[-1] * b) - c; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_FMSUB: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fmsub)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(sp[-1], b, -c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_FNMADD: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fnmadd)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(-sp[-1], b, c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_FNMSUB: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fnmsub)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(-sp[-1], b, -c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 
 SUB_LABEL_OP_RAND: {
     if (PX_UNLIKELY(sp >= vm->stack + MAX_VM_STACK)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack overflow (rand)"); success=false; goto sub_chunk_end; }
@@ -3537,9 +3537,9 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
         /* 0x31 OP_LFSR_NOISE */       &&LABEL_OP_LFSR_NOISE,
         /* 0x32 OP_LFSR_CLOCK */       &&LABEL_OP_LFSR_CLOCK,
         /* 0x33 OP_FMA */              &&LABEL_OP_FMA,
-        /* 0x34 OP_FMS */              &&LABEL_OP_FMS,
-        /* 0x35 OP_FNMA */             &&LABEL_OP_FNMA,
-        /* 0x36 OP_FNMS */             &&LABEL_OP_FNMS,
+        /* 0x34 OP_FMSUB */              &&LABEL_OP_FMSUB,
+        /* 0x35 OP_FNMADD */             &&LABEL_OP_FNMADD,
+        /* 0x36 OP_FNMSUB */             &&LABEL_OP_FNMSUB,
         /* 0x37 OP_HALT */             &&LABEL_OP_HALT
     };
 
@@ -3670,9 +3670,9 @@ LABEL_OP_CEIL: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; v
 LABEL_OP_SQRT: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (sqrt)"); success=false; goto execution_end; } sp[-1] = (sp[-1] >= 0) ? sqrtf(sp[-1]) : 0.0f; goto DISPATCH_LOOP; }
 
 LABEL_OP_FMA: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fma)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(sp[-1], b, c); goto DISPATCH_LOOP; }
-LABEL_OP_FMS: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fms)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = (sp[-1] * b) - c; goto DISPATCH_LOOP; }
-LABEL_OP_FNMA: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fnma)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = -(sp[-1] * b) + c; goto DISPATCH_LOOP; }
-LABEL_OP_FNMS: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fnms)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = -(sp[-1] * b) - c; goto DISPATCH_LOOP; }
+LABEL_OP_FMSUB: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fmsub)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(sp[-1], b, -c); goto DISPATCH_LOOP; }
+LABEL_OP_FNMADD: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fnmadd)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(-sp[-1], b, c); goto DISPATCH_LOOP; }
+LABEL_OP_FNMSUB: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fnmsub)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(-sp[-1], b, -c); goto DISPATCH_LOOP; }
 
 LABEL_OP_RAND: {
     if (PX_UNLIKELY(sp >= vm.stack + MAX_VM_STACK)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack overflow (rand)"); success=false; goto execution_end; }
@@ -4108,7 +4108,7 @@ static int get_instruction_size(const BytecodeChunk *chunk, int offset) {
         case OP_EXP: case OP_LOG: case OP_LOG10:
         case OP_FLOOR: case OP_CEIL:
         case OP_MIN: case OP_MAX:
-        case OP_SQRT: case OP_POW: case OP_RAND: case OP_FMA: case OP_FMS: case OP_FNMA: case OP_FNMS:
+        case OP_SQRT: case OP_POW: case OP_RAND: case OP_FMA: case OP_FMSUB: case OP_FNMADD: case OP_FNMSUB:
         case OP_LFSR_VAL: case OP_LFSR_NOISE: case OP_LFSR_CLOCK:
         case OP_HALT:
             // Size remains 1
