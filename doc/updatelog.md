@@ -1,6 +1,6 @@
 # Update Log
 
-## v1.9.18 (2026/03/10)
+## v1.9.17 (2026/03/10)
 **Feature: Advanced Math Functions for VM**
 
 *   **Virtual Machine Additions:**
