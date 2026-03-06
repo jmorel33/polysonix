@@ -1,0 +1,26 @@
+Polysonix Math Benchmark Report
+===============================
+Iterations per test: 10000000
+
+sinf()     : 0.11402 seconds
+fastsin()  : 0.26351 seconds (0.43x speedup)
+
+cosf()     : 0.11193 seconds
+fastcos()  : 0.25363 seconds (0.44x speedup)
+
+tanf()     : 0.27530 seconds
+fasttan()  : 0.23936 seconds (1.15x speedup)
+
+asinf()    : 0.15181 seconds
+fastasin() : 0.11153 seconds (1.36x speedup)
+
+acosf()    : 0.15085 seconds
+fastacos() : 0.10667 seconds (1.41x speedup)
+
+atanf()    : 0.15981 seconds
+fastatan() : 0.08139 seconds (1.96x speedup)
+
+--- SSE4.1 Paths ---
+
+fastsin_sse() : 0.00000 seconds
+fastcos_sse() : 0.00000 seconds

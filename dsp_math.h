@@ -31,17 +31,22 @@ extern void FreeFastDSP(void);
 static inline float fastsin(float x)
 {
     const float two_pi = 6.283185307179586f;
-    int k = (int)(x * 0.15915494309189535f);
+    const float inv_two_pi = 0.15915494309189535f;
+
+    // Quick wrap
+    int k = (int)(x * inv_two_pi);
     float wrapped = x - (float)k * two_pi;
     if (wrapped < 0.0f) wrapped += two_pi;
 
+    // Use directly without quadrant reduction for speed if table covers [0, 2pi]
+    // But table only covers [0, pi/2]. Let's keep the reduction but make it simpler.
     int quadrant = (int)(wrapped * 0.6366197723675813f);
     float phase = wrapped - quadrant * 1.5707963267948966f;
 
     if (quadrant == 1 || quadrant == 3)
         phase = 1.5707963267948966f - phase;
 
-    float t = phase * (FAST_TRIG_TABLE_SIZE - 1);   // ← FIXED: removed extra factor
+    float t = phase * 20860.279f; // 32767 / (pi/2)
     uint32_t idx = (uint32_t)t;
     float frac = t - idx;
 
