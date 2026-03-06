@@ -1,5 +1,8 @@
 # Update Log
 
+## v1.9.18 (2026/03/10)
+- Added `OP_PROB` opcode to VM for probabilistic ternary operations (`prob(chance, true_expr, false_expr)`).
+
 ## v1.9.17 (2026/03/10)
 **Feature: Advanced Math Functions for VM**
 
