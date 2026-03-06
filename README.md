@@ -729,7 +729,7 @@ The language supports the following operators:
 
 ### Functions
 - **Trigonometric**: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`
-- **Numeric**: `abs`, `tanh`, `exp`, `log`, `log10`, `floor`, `ceil`, `min`, `max`, `sqrt`, `pow`, `rand`
+- **Numeric**: `fma`, `abs`, `tanh`, `exp`, `log`, `log10`, `floor`, `ceil`, `min`, `max`, `sqrt`, `pow`, `rand`
 - **Summation**: `sigma(k, start, end, step, expr)`
 - **LFSR**: `lfsr_val`, `lfsr_noise`, `lfsr_clock`
 
