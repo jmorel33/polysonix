@@ -28,17 +28,37 @@ extern void FreeFastDSP(void);
 
 // ===================================================================
 // FAST SCALAR TRIG — corrected & optimized
+static inline float fastsin(float x)
+{
+    const float two_pi = 6.283185307179586f;
+    int k = (int)(x * 0.15915494309189535f);
+    float wrapped = x - (float)k * two_pi;
+    if (wrapped < 0.0f) wrapped += two_pi;
 
-// The scalar versions of fastsin and fastcos were benchmarked to be ~2x SLOWER than
-// native sinf and cosf on modern hardware because modern ALUs have highly optimized
-// fsin/fcos instructions that beat branching table lookups.
-// Therefore, we fall back to the standard library for the scalar path,
-// but retain the tables for the vectorized SSE path.
-#define fastsin sinf
-#define fastcos cosf
+    int quadrant = (int)(wrapped * 0.6366197723675813f);
+    float phase = wrapped - quadrant * 1.5707963267948966f;
 
+    if (quadrant == 1 || quadrant == 3)
+        phase = 1.5707963267948966f - phase;
 
-// fasttan, fastasin, fastacos, fastatan (kept functional and clean)
+    float t = phase * 20860.224f; // phase * 32767 / (pi/2)
+    uint32_t idx = (uint32_t)t;
+    float frac = t - idx;
+
+    int16_t a = sin_table[idx & FAST_TRIG_TABLE_MASK];
+    int16_t b = sin_table[(idx + 1) & FAST_TRIG_TABLE_MASK];
+
+    float val = (a + frac * (b - a)) * 0.00003051850947599719f;
+
+    if (quadrant >= 2) val = -val;
+    if (x < 0.0f) val = -val;
+
+    return val;
+}
+
+static inline float fastcos(float x) { return fastsin(x + 1.5707963267948966f); }
+
+// fasttan, fastasin, fastacos, fastatan
 static inline float fasttan(float x)
 {
     const float pi = 3.141592653589793f;
@@ -112,7 +132,7 @@ static inline float fastatan(float x) {
 }
 
 // ===================================================================
-// SSE4.1 (cleaned up)
+// SSE4.1
 #if defined(PX_USE_SSE41) && defined(__SSE4_1__)
 static inline __m128 fastsin_sse(__m128 x)
 {
@@ -120,7 +140,7 @@ static inline __m128 fastsin_sse(__m128 x)
     const __m128 inv_twopi = _mm_set1_ps(0.15915494309189535f);
     const __m128 inv_pi2 = _mm_set1_ps(0.6366197723675813f);
     const __m128 one = _mm_set1_ps(1.0f);
-    const __m128 scale = _mm_set1_ps((float)(FAST_TRIG_TABLE_SIZE - 1));
+    const __m128 scale = _mm_set1_ps(20860.224f);
 
     __m128 sign_mask = _mm_set1_ps(-0.0f);
     __m128 is_neg = _mm_and_ps(x, sign_mask);
@@ -175,7 +195,7 @@ static inline __m128 fastcos_sse(__m128 x) {
 #endif
 
 // ===================================================================
-// FFT (dedicated twiddles — already correct in your version)
+// FFT (dedicated twiddles)
 typedef struct { float re; float im; } Complex;
 extern Complex* twiddles[13];
 extern int fast_dsp_ref_count;
@@ -218,6 +238,7 @@ void InitFastDSP(void)
     const float step_trig = (M_PI / 2.0f) / (FAST_TRIG_TABLE_SIZE - 1);
     const float step_linear = 1.0f / (FAST_TRIG_TABLE_SIZE - 1);
 
+
     for (uint32_t i = 0; i < FAST_TRIG_TABLE_SIZE; ++i) {
         float x_trig = i * step_trig;
         float x_lin = i * step_linear;
@@ -236,6 +257,7 @@ void InitFastDSP(void)
         float actual_x = mapped / (1.0f - mapped + 1e-6f);
         atan_table[i] = (int16_t)((atanf(actual_x) / 1.5707963267948966f) * 32767.0f);
     }
+
 
     for (int log2n = 8; log2n <= 12; ++log2n) {
         int n = 1 << log2n;
@@ -263,7 +285,6 @@ void FastFFT(float* real, float* imag, int n)
     if (n < 256 || n > 4096 || (n & (n-1)) != 0) return;
     int log2n = fast_log2_32(n);
 
-    // Bit reversal
     for (int i = 1, j = 0; i < n; ++i) {
         int bit = n >> 1;
         for (; j >= bit; bit >>= 1) j -= bit;
