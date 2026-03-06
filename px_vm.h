@@ -214,16 +214,6 @@ Example WaveDefinition (C struct storing the script string):
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-
-#ifndef fmsub
-#define fmsub(x, y, z) fmaf(x, y, -(z))
-#endif
-#ifndef fnmadd
-#define fnmadd(x, y, z) fmaf(-(x), y, z)
-#endif
-#ifndef fnmsub
-#define fnmsub(x, y, z) fmaf(-(x), y, -(z))
-#endif
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -3306,9 +3296,9 @@ SUB_LABEL_OP_CEIL: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_to
 SUB_LABEL_OP_SQRT: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (sqrt)"); success=false; goto sub_chunk_end; } sp[-1] = (sp[-1] >= 0) ? sqrtf(sp[-1]) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 
 SUB_LABEL_OP_FMA: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fma)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(sp[-1], b, c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
-SUB_LABEL_OP_FMS: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fms)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmsub(sp[-1], b, c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
-SUB_LABEL_OP_FNMADD: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fnmadd)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fnmadd(sp[-1], b, c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
-SUB_LABEL_OP_FNMSUB: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fnmsub)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fnmsub(sp[-1], b, c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_FMS: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fms)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(sp[-1], b, -c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_FNMADD: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fnmadd)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(-sp[-1], b, c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_FNMSUB: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fnmsub)"); success=false; goto sub_chunk_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(-sp[-1], b, -c); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 
 SUB_LABEL_OP_RAND: {
     if (PX_UNLIKELY(sp >= vm->stack + MAX_VM_STACK)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack overflow (rand)"); success=false; goto sub_chunk_end; }
@@ -3680,9 +3670,9 @@ LABEL_OP_CEIL: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; v
 LABEL_OP_SQRT: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (sqrt)"); success=false; goto execution_end; } sp[-1] = (sp[-1] >= 0) ? sqrtf(sp[-1]) : 0.0f; goto DISPATCH_LOOP; }
 
 LABEL_OP_FMA: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fma)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(sp[-1], b, c); goto DISPATCH_LOOP; }
-LABEL_OP_FMS: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fms)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmsub(sp[-1], b, c); goto DISPATCH_LOOP; }
-LABEL_OP_FNMADD: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fnmadd)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fnmadd(sp[-1], b, c); goto DISPATCH_LOOP; }
-LABEL_OP_FNMSUB: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fnmsub)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fnmsub(sp[-1], b, c); goto DISPATCH_LOOP; }
+LABEL_OP_FMS: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fms)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(sp[-1], b, -c); goto DISPATCH_LOOP; }
+LABEL_OP_FNMADD: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fnmadd)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(-sp[-1], b, c); goto DISPATCH_LOOP; }
+LABEL_OP_FNMSUB: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fnmsub)"); success=false; goto execution_end; } float c=*(--sp); float b=*(--sp); sp[-1] = fmaf(-sp[-1], b, -c); goto DISPATCH_LOOP; }
 
 LABEL_OP_RAND: {
     if (PX_UNLIKELY(sp >= vm.stack + MAX_VM_STACK)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack overflow (rand)"); success=false; goto execution_end; }
