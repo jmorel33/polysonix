@@ -1,5 +1,16 @@
 # Update Log
 
+## v1.9.17 (2026/03/10)
+**Feature: Advanced Math Functions for VM**
+
+*   **Virtual Machine Additions:**
+    *   Expanded the Polysonix Waveform Scripting Language with 14 new advanced mathematical functions.
+    *   Added functions: `exp2`, `log2`, `expm1`, `log1p`, `hypot`, `copysign`, `scalbn`, `remquo`, `nextafter`, `fdim`, `nan`, `inf`, `lgamma`, `tgamma`.
+    *   Mapped new functions directly to their underlying C `<math.h>` equivalents for optimal execution.
+    *   Special handling added in `tools/transpile_waves.py` to seamlessly convert 0-arity functions (`nan()`, `inf()`) and functions utilizing pointer returns (`remquo`) to native C implementations.
+*   **Documentation:**
+    *   Updated `README.md` and `doc/px_vm.md` with comprehensive explanations and practical synthesizer use-cases for each new mathematical operation.
+
 ## v1.9.16 (2026/03/10)
 **Performance Optimization: Titanium FMA DSP & New VM Instructions**
 
