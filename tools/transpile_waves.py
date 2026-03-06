@@ -47,6 +47,9 @@ FUNCTIONS = {
     "exp2": (1, "exp2f"), "log2": (1, "log2f"), "expm1": (1, "expm1f"),
     "log1p": (1, "log1pf"), "hypot": (2, "hypotf"), "copysign": (2, "copysignf"),
     "scalbn": (2, "scalbnf"),
+    "remquo": (2, "px_remquof_wrapper"), "nextafter": (2, "nextafterf"), "fdim": (2, "fdimf"),
+    "nan": (0, "NAN_WRAPPER"), "inf": (0, "INFINITY_WRAPPER"), "lgamma": (1, "lgammaf"),
+    "tgamma": (1, "tgammaf"),
     "rand": (0, "vm_rand"),
     "sigma": (5, "sigma"), # Special handling
     "lfsr_val": (3, "vm_lfsr_val"),
@@ -231,6 +234,11 @@ class FuncNode(Node):
         c_func = FUNCTIONS[self.name][1]
         arg_strs = [a.to_c(ctx) for a in self.args]
 
+        if self.name == "nan":
+            return "(NAN)"
+        if self.name == "inf":
+            return "(INFINITY)"
+
         if self.name == "sigma":
             # Extract sigma
             # sigma(k, start, end, step, body)
@@ -270,6 +278,8 @@ class FuncNode(Node):
             # Need to pass params first
             return f"{c_func}(params, {', '.join(arg_strs)})"
 
+        if self.name == "remquo":
+            return f"(px_remquof_wrapper({arg_strs[0]}, {arg_strs[1]}))"
         return f"{c_func}({', '.join(arg_strs)})"
 
 # --- Parser ---

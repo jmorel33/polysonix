@@ -312,6 +312,11 @@ static inline float vm_fast_tanh(float x) {
     return fmaxf(-1.0f, fminf(1.0f, y));
 }
 
+static inline float px_remquof_wrapper(float x, float y) {
+    int q;
+    return remquof(x, y, &q);
+}
+
 /**
  * @brief Initializes and pre-computes the bit sequences for all LFSR types.
  *
@@ -535,9 +540,16 @@ typedef enum {
     OP_HYPOT          = 0x3B,
     OP_COPYSIGN       = 0x3C,
     OP_SCALBN         = 0x3D,
+    OP_REMQUO         = 0x3E,
+    OP_NEXTAFTER      = 0x3F,
+    OP_FDIM           = 0x40,
+    OP_NAN            = 0x41,
+    OP_INF            = 0x42,
+    OP_LGAMMA         = 0x43,
+    OP_TGAMMA         = 0x44,
 
     // --- End ---
-    OP_HALT           = 0x3E  // Must be last (used for array sizes)
+    OP_HALT           = 0x45  // Must be last (used for array sizes)
 } OpCode;
 #define VM_MAX_OPCODE OP_HALT
 #define VM_DISPATCH_TABLE_SIZE (VM_MAX_OPCODE + 1) // Important for computed goto table size
@@ -865,6 +877,13 @@ static PxFunctionDef px_functions[] = {
     {"hypot", 5, OP_HYPOT, 2},
     {"copysign", 8, OP_COPYSIGN, 2},
     {"scalbn", 6, OP_SCALBN, 2},
+    {"remquo", 6, OP_REMQUO, 2},
+    {"nextafter", 9, OP_NEXTAFTER, 2},
+    {"fdim", 4, OP_FDIM, 2},
+    {"nan", 3, OP_NAN, 0},
+    {"inf", 3, OP_INF, 0},
+    {"lgamma", 6, OP_LGAMMA, 1},
+    {"tgamma", 6, OP_TGAMMA, 1},
     {"sigma", 5, (OpCode)0, 5},
     {NULL, 0, (OpCode)0, 0}
 };
@@ -2238,7 +2257,14 @@ const char* getOpCodeName(OpCode code) {
         /* 0x3B */ "OP_HYPOT",
         /* 0x3C */ "OP_COPYSIGN",
         /* 0x3D */ "OP_SCALBN",
-        /* 0x3E */ "OP_HALT"
+        /* 0x3E */ "OP_REMQUO",
+        /* 0x3F */ "OP_NEXTAFTER",
+        /* 0x40 */ "OP_FDIM",
+        /* 0x41 */ "OP_NAN",
+        /* 0x42 */ "OP_INF",
+        /* 0x43 */ "OP_LGAMMA",
+        /* 0x44 */ "OP_TGAMMA",
+        /* 0x45 */ "OP_HALT"
     };
     // Basic bounds check using VM_MAX_OPCODE
     if (code >= 0 && code <= VM_MAX_OPCODE) {
@@ -2344,6 +2370,7 @@ int disassembleInstruction(BytecodeChunk *chunk, int offset) {
         case OP_SIGMA_INC:
         case OP_SIGMA_SETUP: // Has operands, but getOpCodeName handles it, so no specific print needed here for operands if disassembleInstruction logic is followed correctly for size
         case OP_EXP2: case OP_LOG2: case OP_EXPM1: case OP_LOG1P: case OP_HYPOT: case OP_COPYSIGN: case OP_SCALBN:
+        case OP_REMQUO: case OP_NEXTAFTER: case OP_FDIM: case OP_NAN: case OP_INF: case OP_LGAMMA: case OP_TGAMMA:
         case OP_HALT:
             // No operands, size is 1, or operands handled by get_instruction_size for OP_SIGMA_SETUP
             if (instruction == OP_SIGMA_SETUP) instruction_size += 1 + 2+2+2+2; // name_id + 4*ushort
@@ -2980,7 +3007,14 @@ static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
         /* 0x3B OP_HYPOT */            &&SUB_LABEL_OP_HYPOT,
         /* 0x3C OP_COPYSIGN */         &&SUB_LABEL_OP_COPYSIGN,
         /* 0x3D OP_SCALBN */           &&SUB_LABEL_OP_SCALBN,
-        /* 0x3E OP_HALT */             &&SUB_LABEL_OP_HALT
+        /* 0x3E OP_REMQUO */           &&SUB_LABEL_OP_REMQUO,
+        /* 0x3F OP_NEXTAFTER */        &&SUB_LABEL_OP_NEXTAFTER,
+        /* 0x40 OP_FDIM */             &&SUB_LABEL_OP_FDIM,
+        /* 0x41 OP_NAN */              &&SUB_LABEL_OP_NAN,
+        /* 0x42 OP_INF */              &&SUB_LABEL_OP_INF,
+        /* 0x43 OP_LGAMMA */           &&SUB_LABEL_OP_LGAMMA,
+        /* 0x44 OP_TGAMMA */           &&SUB_LABEL_OP_TGAMMA,
+        /* 0x45 OP_HALT */             &&SUB_LABEL_OP_HALT
     };
 
     uint8_t instruction;
@@ -3338,6 +3372,13 @@ SUB_LABEL_OP_LOG1P: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_t
 SUB_LABEL_OP_HYPOT: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (hypot)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = hypotf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_COPYSIGN: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (copysign)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = copysignf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_SCALBN: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (scalbn)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = scalbnf(sp[-1], (int)b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_REMQUO: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (remquo)"); success=false; goto sub_chunk_end; } float b=*(--sp); int q; sp[-1] = remquof(sp[-1], b, &q); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_NEXTAFTER: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (nextafter)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = nextafterf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_FDIM: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (fdim)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = fdimf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_NAN: { if (PX_UNLIKELY(sp >= vm->stack + MAX_VM_STACK)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack overflow (nan)"); success=false; goto sub_chunk_end; } *sp++ = NAN; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_INF: { if (PX_UNLIKELY(sp >= vm->stack + MAX_VM_STACK)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack overflow (inf)"); success=false; goto sub_chunk_end; } *sp++ = INFINITY; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_LGAMMA: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (lgamma)"); success=false; goto sub_chunk_end; } sp[-1] = lgammaf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_TGAMMA: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (tgamma)"); success=false; goto sub_chunk_end; } sp[-1] = tgammaf(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 
 SUB_LABEL_OP_RAND: {
     if (PX_UNLIKELY(sp >= vm->stack + MAX_VM_STACK)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack overflow (rand)"); success=false; goto sub_chunk_end; }
@@ -3586,7 +3627,14 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
         /* 0x3B OP_HYPOT */            &&LABEL_OP_HYPOT,
         /* 0x3C OP_COPYSIGN */         &&LABEL_OP_COPYSIGN,
         /* 0x3D OP_SCALBN */           &&LABEL_OP_SCALBN,
-        /* 0x3E OP_HALT */             &&LABEL_OP_HALT
+        /* 0x3E OP_REMQUO */           &&LABEL_OP_REMQUO,
+        /* 0x3F OP_NEXTAFTER */        &&LABEL_OP_NEXTAFTER,
+        /* 0x40 OP_FDIM */             &&LABEL_OP_FDIM,
+        /* 0x41 OP_NAN */              &&LABEL_OP_NAN,
+        /* 0x42 OP_INF */              &&LABEL_OP_INF,
+        /* 0x43 OP_LGAMMA */           &&LABEL_OP_LGAMMA,
+        /* 0x44 OP_TGAMMA */           &&LABEL_OP_TGAMMA,
+        /* 0x45 OP_HALT */             &&LABEL_OP_HALT
     };
 
     // --- Central Dispatch Loop ---
@@ -3727,6 +3775,13 @@ LABEL_OP_LOG1P: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; 
 LABEL_OP_HYPOT: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (hypot)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = hypotf(sp[-1], b); goto DISPATCH_LOOP; }
 LABEL_OP_COPYSIGN: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (copysign)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = copysignf(sp[-1], b); goto DISPATCH_LOOP; }
 LABEL_OP_SCALBN: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (scalbn)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = scalbnf(sp[-1], (int)b); goto DISPATCH_LOOP; }
+LABEL_OP_REMQUO: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (remquo)"); success=false; goto execution_end; } float b=*(--sp); int q; sp[-1] = remquof(sp[-1], b, &q); goto DISPATCH_LOOP; }
+LABEL_OP_NEXTAFTER: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (nextafter)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = nextafterf(sp[-1], b); goto DISPATCH_LOOP; }
+LABEL_OP_FDIM: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (fdim)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = fdimf(sp[-1], b); goto DISPATCH_LOOP; }
+LABEL_OP_NAN: { if (PX_UNLIKELY(sp >= vm.stack + MAX_VM_STACK)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack overflow (nan)"); success=false; goto execution_end; } *sp++ = NAN; goto DISPATCH_LOOP; }
+LABEL_OP_INF: { if (PX_UNLIKELY(sp >= vm.stack + MAX_VM_STACK)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack overflow (inf)"); success=false; goto execution_end; } *sp++ = INFINITY; goto DISPATCH_LOOP; }
+LABEL_OP_LGAMMA: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (lgamma)"); success=false; goto execution_end; } sp[-1] = lgammaf(sp[-1]); goto DISPATCH_LOOP; }
+LABEL_OP_TGAMMA: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (tgamma)"); success=false; goto execution_end; } sp[-1] = tgammaf(sp[-1]); goto DISPATCH_LOOP; }
 
 LABEL_OP_RAND: {
     if (PX_UNLIKELY(sp >= vm.stack + MAX_VM_STACK)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack overflow (rand)"); success=false; goto execution_end; }
@@ -4165,6 +4220,7 @@ static int get_instruction_size(const BytecodeChunk *chunk, int offset) {
         case OP_SQRT: case OP_POW: case OP_RAND: case OP_FMA: case OP_FMS: case OP_FNMADD: case OP_FNMSUB:
         case OP_LFSR_VAL: case OP_LFSR_NOISE: case OP_LFSR_CLOCK:
         case OP_EXP2: case OP_LOG2: case OP_EXPM1: case OP_LOG1P: case OP_HYPOT: case OP_COPYSIGN: case OP_SCALBN:
+        case OP_REMQUO: case OP_NEXTAFTER: case OP_FDIM: case OP_NAN: case OP_INF: case OP_LGAMMA: case OP_TGAMMA:
         case OP_HALT:
             // Size remains 1
             break;

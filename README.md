@@ -746,6 +746,13 @@ The VM provides several optimized, advanced math functions, useful for shaping s
 | `hypot(x, y)` | √(x² + y²) without overflow | Stereo panning, vector length | `hypot(left, right)` |
 | `copysign(mag, sgn)` | Copy sign from one value to another | Phase, direction, bipolar signals | `copysign(1.0, velocity)` |
 | `scalbn(x, exp)` | x × 2^exp (extremely fast) | Fast pitch shifting, octave jumps | `scalbn(freq, octave)` |
+| `remquo(x, y)` | Remainder (fast modulo) | Phase wrapping | `remquo(phase, PI)` |
+| `nextafter(x, y)` | Next representable float | Smooth ramps, anti-aliasing | `nextafter(signal, 1.0)` |
+| `fdim(x, y)` | Positive difference | max(0, x-y) without branching | `fdim(signal, threshold)` |
+| `nan()` | Create NaN | Safe state signaling | `nan()` |
+| `inf()` | Create Infinity | Extreme value signaling | `inf()` |
+| `lgamma(x)` | log(|Gamma(x)|) | Advanced synthesis | `lgamma(x)` |
+| `tgamma(x)` | Gamma function | Complex nonlinearities | `tgamma(x)` |
 
 ### Examples
 
