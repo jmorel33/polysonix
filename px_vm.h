@@ -547,9 +547,10 @@ typedef enum {
     OP_INF            = 0x42,
     OP_LGAMMA         = 0x43,
     OP_TGAMMA         = 0x44,
+    OP_PROB           = 0x45,
 
     // --- End ---
-    OP_HALT           = 0x45  // Must be last (used for array sizes)
+    OP_HALT           = 0x46  // Must be last (used for array sizes)
 } OpCode;
 #define VM_MAX_OPCODE OP_HALT
 #define VM_DISPATCH_TABLE_SIZE (VM_MAX_OPCODE + 1) // Important for computed goto table size
@@ -850,6 +851,7 @@ static PxFunctionDef px_functions[] = {
     {"tan", 3, OP_TAN, 1},
     {"asin", 4, OP_ASIN, 1},
     {"acos", 4, OP_ACOS, 1},
+    {"prob", 4, OP_PROB, 3},
     {"atan", 4, OP_ATAN, 1},
     {"abs", 3, OP_ABS, 1},
     {"tanh", 4, OP_TANH, 1},
@@ -2264,7 +2266,8 @@ const char* getOpCodeName(OpCode code) {
         /* 0x42 */ "OP_INF",
         /* 0x43 */ "OP_LGAMMA",
         /* 0x44 */ "OP_TGAMMA",
-        /* 0x45 */ "OP_HALT"
+        /* 0x45 */ "OP_PROB",
+        /* 0x46 */ "OP_HALT"
     };
     // Basic bounds check using VM_MAX_OPCODE
     if (code >= 0 && code <= VM_MAX_OPCODE) {
@@ -2371,6 +2374,7 @@ int disassembleInstruction(BytecodeChunk *chunk, int offset) {
         case OP_SIGMA_SETUP: // Has operands, but getOpCodeName handles it, so no specific print needed here for operands if disassembleInstruction logic is followed correctly for size
         case OP_EXP2: case OP_LOG2: case OP_EXPM1: case OP_LOG1P: case OP_HYPOT: case OP_COPYSIGN: case OP_SCALBN:
         case OP_REMQUO: case OP_NEXTAFTER: case OP_FDIM: case OP_NAN: case OP_INF: case OP_LGAMMA: case OP_TGAMMA:
+        case OP_PROB:
         case OP_HALT:
             // No operands, size is 1, or operands handled by get_instruction_size for OP_SIGMA_SETUP
             if (instruction == OP_SIGMA_SETUP) instruction_size += 1 + 2+2+2+2; // name_id + 4*ushort
@@ -3014,7 +3018,8 @@ static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
         /* 0x42 OP_INF */              &&SUB_LABEL_OP_INF,
         /* 0x43 OP_LGAMMA */           &&SUB_LABEL_OP_LGAMMA,
         /* 0x44 OP_TGAMMA */           &&SUB_LABEL_OP_TGAMMA,
-        /* 0x45 OP_HALT */             &&SUB_LABEL_OP_HALT
+        /* 0x45 OP_PROB */             &&SUB_LABEL_OP_PROB,
+        /* 0x46 OP_HALT */             &&SUB_LABEL_OP_HALT
     };
 
     uint8_t instruction;
@@ -3472,6 +3477,7 @@ SUB_LABEL_ERROR_SIGMA_INC_IN_SUB: {
     goto sub_chunk_end;
 }
 
+SUB_LABEL_OP_PROB: { if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (prob)"); success=false; goto sub_chunk_end; } float f=*(--sp); float t=*(--sp); float c=*(--sp); *sp++ = (vm->params->rand_offset < c) ? t : f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_HALT: {
     // CRITICAL FIX: Always leave exactly one result on stack for caller
     if (PX_LIKELY(success && sp > vm->stack)) {
@@ -3634,7 +3640,8 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
         /* 0x42 OP_INF */              &&LABEL_OP_INF,
         /* 0x43 OP_LGAMMA */           &&LABEL_OP_LGAMMA,
         /* 0x44 OP_TGAMMA */           &&LABEL_OP_TGAMMA,
-        /* 0x45 OP_HALT */             &&LABEL_OP_HALT
+        /* 0x45 OP_PROB */             &&LABEL_OP_PROB,
+        /* 0x46 OP_HALT */             &&LABEL_OP_HALT
     };
 
     // --- Central Dispatch Loop ---
@@ -4000,6 +4007,7 @@ LABEL_OP_SIGMA_INC: {
     goto DISPATCH_LOOP;
 }
 
+LABEL_OP_PROB: { if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (prob)"); success=false; goto execution_end; } float f=*(--sp); float t=*(--sp); float c=*(--sp); *sp++ = (vm.params->rand_offset < c) ? t : f; goto DISPATCH_LOOP; }
 LABEL_OP_HALT: {
     goto execution_end;
 }
