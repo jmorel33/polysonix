@@ -434,7 +434,9 @@ static bool px_deserialize_patch_impl(PxPatch* p, const PxConfig* c, const uint8
     for (int i = 0; i < PX_MAX_OSC_PER_VOICE; i++) {
         PxOscillator* o = &p->osc[i];
         RD_BOOL(&o->enabled);
-        uint32_t u_wave; RD_U32(&u_wave); o->wave_idx = (int)u_wave;
+        uint32_t u_wave; RD_U32(&u_wave);
+        if (u_wave >= NUM_WAVEFORMS) u_wave = 0; // Security Fix: Clamp to valid waveform index
+        o->wave_idx = (int)u_wave;
         RD_F32(&o->coarse_semitones);
         RD_F32(&o->fine_cents);
         RD_F32(&o->mix_level);
