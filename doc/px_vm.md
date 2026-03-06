@@ -226,10 +226,28 @@ These functions operate on radians.
   Computes *e* raised to the power of `value`.
   - **Example**: `exp(x)` can create exponentially rising curves.
 
+- **`exp2(value)`**
+  Computes 2 raised to the power of `value` (very fast).
+  - **Example**: `exp2(pitch)` can be used for octave/pitch calculations or exponential envelopes.
+
+- **`expm1(value)`**
+  Computes *e* raised to the power of `value`, minus 1. This is accurate near 0.
+  - **Example**: `expm1(-time * decay)` is useful for envelopes and small exponential curves.
+
 - **`log(value)`**
   Computes the natural logarithm of `value`.
   - `value`: Must be greater than 0.
   - **Example**: Useful for logarithmic shaping of envelopes or other parameters.
+
+- **`log2(value)`**
+  Computes the base-2 logarithm of `value`.
+  - `value`: Must be greater than 0.
+  - **Example**: `log2(freq / 440.0) * 12.0` can be used for Frequency to MIDI note conversion and log scaling.
+
+- **`log1p(value)`**
+  Computes the natural logarithm of `1 + value`. This is accurate near 0.
+  - `value`: Must be greater than -1.0.
+  - **Example**: `20.0 * log1p(gain)` is useful for logarithmic controls and dB calculations.
 
 - **`log10(value)`**
   Computes the base-10 logarithm of `value`.
@@ -257,6 +275,46 @@ These functions operate on radians.
 - **`pow(base, exponent)`**
   Computes `base` raised to the power of `exponent`.
   - **Example**: `pow(x / TWO_PI, 2.0)` creates a parabolic curve, useful for shaping envelopes.
+
+- **`hypot(x, y)`**
+  Computes the square root of the sum of the squares of `x` and `y` (`sqrt(x*x + y*y)`), without undue overflow or underflow at intermediate stages of the computation.
+  - **Example**: `hypot(left, right)` calculates the vector length for stereo panning.
+
+- **`copysign(mag, sgn)`**
+  Returns a value with the magnitude of `mag` and the sign of `sgn`.
+  - **Example**: `copysign(1.0, velocity)` can be used to set phase direction or for bipolar signals.
+
+- **`scalbn(value, exp)`**
+  Multiplies a floating-point number `value` by `2^exp`. This is an extremely fast operation, useful for pitch shifting or octave jumps.
+  - **Example**: `scalbn(freq, octave)`.
+
+- **`remquo(value, divisor)`**
+  Computes the floating-point remainder of `value / divisor`. Useful as a fast modulo operation.
+  - **Example**: `remquo(phase, PI)` for phase wrapping.
+
+- **`nextafter(x, y)`**
+  Returns the next representable floating-point value of `x` in the direction of `y`.
+  - **Example**: `nextafter(signal, 1.0)` is useful for smooth ramps and anti-aliasing.
+
+- **`fdim(x, y)`**
+  Returns the positive difference between `x` and `y` (i.e., `max(0, x - y)`), without branching.
+  - **Example**: `fdim(signal, threshold)`.
+
+- **`nan()`**
+  Creates a NaN (Not-a-Number) value.
+  - **Example**: `nan()` safely signals invalid or missing states.
+
+- **`inf()`**
+  Creates an Infinity value.
+  - **Example**: `inf()` safely signals extreme values or boundaries.
+
+- **`lgamma(value)`**
+  Computes the natural logarithm of the absolute value of the gamma function of `value`.
+  - **Example**: `lgamma(x)` can be used in advanced synthesis algorithms.
+
+- **`tgamma(value)`**
+  Computes the gamma function of `value`.
+  - **Example**: `tgamma(x)` can be used for complex nonlinearities.
 
 - **`rand()`**
   Returns a new pseudo-random floating-point value between 0.0 and 1.0 every time it is executed. Unlike `RAND_OFFSET`, this function is not constant for the duration of a note.
