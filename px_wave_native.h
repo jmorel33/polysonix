@@ -8,103 +8,103 @@
 // --- Native Wave Functions ---
 
 static float px_wave_native_0(VmParams* params) {
-    return ((1.0f - (2.0f * fabsf((((params->x + (params->modC * 0.5f)) / 3.14159265358979323846f) - 1.0f)))) + ((1.0f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((1.0f * params->modB), sinf((2.0f * params->x)), (1.0f - (2.0f * fabsf(((fmaf(params->modC, 0.5f, params->x) / 3.14159265358979323846f) - 1.0f)))));
 }
 
 static float px_wave_native_1(VmParams* params) {
-    return (((2.0f * fabsf((((params->x + (params->modC * 0.5f)) / 3.14159265358979323846f) - 1.0f))) - 1.0f) + ((1.0f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((1.0f * params->modB), sinf((2.0f * params->x)), fmaf(2.0f, fabsf(((fmaf(params->modC, 0.5f, params->x) / 3.14159265358979323846f) - 1.0f)), (-1.0f)));
 }
 
 static float px_wave_native_2(VmParams* params) {
-    return ((((1.0f - (0.5f * (params->modA + 1.0f))) * sinf((params->x + (params->modC * 0.25f)))) + ((0.5f * (params->modA + 1.0f)) * vm_fast_tanh((5.0f * sinf((params->x + (params->modC * 0.25f))))))) + ((1.0f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((1.0f * params->modB), sinf((2.0f * params->x)), fmaf((1.0f - (0.5f * (params->modA + 1.0f))), sinf(fmaf(params->modC, 0.25f, params->x)), ((0.5f * (params->modA + 1.0f)) * vm_fast_tanh((5.0f * sinf(fmaf(params->modC, 0.25f, params->x)))))));
 }
 
 static float px_wave_native_3(VmParams* params) {
-    return ((((1.0f - (0.5f * (params->modA + 1.0f))) * (-sinf((params->x + (params->modC * 0.25f))))) + ((0.5f * (params->modA + 1.0f)) * (-vm_fast_tanh((5.0f * sinf((params->x + (params->modC * 0.25f)))))))) + ((1.0f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((1.0f * params->modB), sinf((2.0f * params->x)), fmaf((1.0f - (0.5f * (params->modA + 1.0f))), (-sinf(fmaf(params->modC, 0.25f, params->x))), ((0.5f * (params->modA + 1.0f)) * (-vm_fast_tanh((5.0f * sinf(fmaf(params->modC, 0.25f, params->x))))))));
 }
 
 static float px_wave_native_4(VmParams* params) {
-    return (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.5f + (0.4f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) + ((2.0f * params->modB) * sinf(((2.0f * params->x) + (params->modC * 3.14159265358979323846f)))));
+    return fmaf((2.0f * params->modB), sinf(fmaf(2.0f, params->x, (params->modC * 3.14159265358979323846f))), ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.4f, params->modA, 0.5f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))));
 }
 
 static float px_wave_native_5(VmParams* params) {
-    return (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.5f + (0.4f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (1.0f)) + ((2.0f * params->modB) * sinf(((2.0f * params->x) + (params->modC * 3.14159265358979323846f)))));
+    return fmaf((2.0f * params->modB), sinf(fmaf(2.0f, params->x, (params->modC * 3.14159265358979323846f))), ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.4f, params->modA, 0.5f))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (1.0f)));
 }
 
 static float px_wave_native_6(VmParams* params) {
-    return ((((1.0f - (0.5f + (0.5f * params->modA))) * (((params->x + ((params->x * params->modC) * 0.5f)) / 3.14159265358979323846f) - 1.0f)) + ((0.5f + (0.5f * params->modA)) * ((fabsf(((params->x > 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))))) + ((2.0f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((2.0f * params->modB), sinf((2.0f * params->x)), fmaf((1.0f - fmaf(0.5f, params->modA, 0.5f)), ((fmaf((params->x * params->modC), 0.5f, params->x) / 3.14159265358979323846f) - 1.0f), (fmaf(0.5f, params->modA, 0.5f) * ((fabsf(((params->x > 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))))));
 }
 
 static float px_wave_native_7(VmParams* params) {
-    return ((((1.0f - (0.5f + (0.5f * params->modA))) * (1.0f - ((params->x + ((params->x * params->modC) * 0.5f)) / 3.14159265358979323846f))) + ((0.5f + (0.5f * params->modA)) * ((fabsf(((params->x > 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (1.0f)))) + ((2.0f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((2.0f * params->modB), sinf((2.0f * params->x)), fmaf((1.0f - fmaf(0.5f, params->modA, 0.5f)), (1.0f - (fmaf((params->x * params->modC), 0.5f, params->x) / 3.14159265358979323846f)), (fmaf(0.5f, params->modA, 0.5f) * ((fabsf(((params->x > 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (1.0f)))));
 }
 
 static float px_wave_native_8(VmParams* params) {
-    return (((1.0f - (0.5f * (params->modA + 1.0f))) * ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (((params->x / (3.14159265358979323846f / 2.0f)) - 1.0f)) : (sinf((params->x + (3.14159265358979323846f * params->modB)))))) + ((0.5f * (params->modA + 1.0f)) * vm_fast_tanh((6.0f * ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (((params->x / (3.14159265358979323846f / 2.0f)) - 1.0f)) : (sinf((params->x + (3.14159265358979323846f * params->modB)))))))));
+    return fmaf((1.0f - (0.5f * (params->modA + 1.0f))), ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (((params->x / (3.14159265358979323846f / 2.0f)) - 1.0f)) : (sinf(fmaf(3.14159265358979323846f, params->modB, params->x)))), ((0.5f * (params->modA + 1.0f)) * vm_fast_tanh((6.0f * ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (((params->x / (3.14159265358979323846f / 2.0f)) - 1.0f)) : (sinf(fmaf(3.14159265358979323846f, params->modB, params->x))))))));
 }
 
 static float px_wave_native_9(VmParams* params) {
-    return (((1.0f - (0.5f * (params->modA + 1.0f))) * ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? ((-sinf((params->x + (3.14159265358979323846f * params->modB))))) : ((1.0f - ((params->x - 3.14159265358979323846f) / (3.14159265358979323846f / 2.0f)))))) + ((0.5f * (params->modA + 1.0f)) * vm_fast_tanh((6.0f * ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? ((-sinf((params->x + (3.14159265358979323846f * params->modB))))) : ((1.0f - ((params->x - 3.14159265358979323846f) / (3.14159265358979323846f / 2.0f)))))))));
+    return fmaf((1.0f - (0.5f * (params->modA + 1.0f))), ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? ((-sinf(fmaf(3.14159265358979323846f, params->modB, params->x)))) : ((1.0f - ((params->x - 3.14159265358979323846f) / (3.14159265358979323846f / 2.0f))))), ((0.5f * (params->modA + 1.0f)) * vm_fast_tanh((6.0f * ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? ((-sinf(fmaf(3.14159265358979323846f, params->modB, params->x)))) : ((1.0f - ((params->x - 3.14159265358979323846f) / (3.14159265358979323846f / 2.0f)))))))));
 }
 
 static float px_wave_native_10(VmParams* params) {
-    return (((1.0f - (0.5f * (params->modA + 1.0f))) * ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (sinf((params->x + (3.14159265358979323846f * params->modB)))))) + ((0.5f * (params->modA + 1.0f)) * vm_fast_tanh((6.0f * ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (sinf((params->x + (3.14159265358979323846f * params->modB)))))))));
+    return fmaf((1.0f - (0.5f * (params->modA + 1.0f))), ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (sinf(fmaf(3.14159265358979323846f, params->modB, params->x)))), ((0.5f * (params->modA + 1.0f)) * vm_fast_tanh((6.0f * ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (sinf(fmaf(3.14159265358979323846f, params->modB, params->x))))))));
 }
 
 static float px_wave_native_11(VmParams* params) {
-    return (((1.0f - (0.5f * (params->modA + 1.0f))) * ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (sinf((params->x + (3.14159265358979323846f * params->modB)))) : ((-1.0f)))) + ((0.5f * (params->modA + 1.0f)) * vm_fast_tanh((6.0f * ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (sinf((params->x + (3.14159265358979323846f * params->modB)))) : ((-1.0f)))))));
+    return fmaf((1.0f - (0.5f * (params->modA + 1.0f))), ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (sinf(fmaf(3.14159265358979323846f, params->modB, params->x))) : ((-1.0f))), ((0.5f * (params->modA + 1.0f)) * vm_fast_tanh((6.0f * ((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (sinf(fmaf(3.14159265358979323846f, params->modB, params->x))) : ((-1.0f)))))));
 }
 
 static float px_wave_native_12(VmParams* params) {
-    return ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * ((0.5f + (0.25f * params->modA)) + (0.1f * params->modB)))) ? 1.0f : 0.0f)) > 1e-6f) ? (((params->x / (3.14159265358979323846f / 2.0f)) - 1.0f)) : (((fabsf((((params->x - 3.14159265358979323846f) < (3.14159265358979323846f / 2.0f)) ? 1.0f : 0.0f)) > 1e-6f) ? (((params->x - 3.14159265358979323846f) / (3.14159265358979323846f / 2.0f))) : ((1.0f - (((params->x - 3.14159265358979323846f) - (3.14159265358979323846f / 2.0f)) / (3.14159265358979323846f / 2.0f)))))));
+    return ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.1f, params->modB, fmaf(0.25f, params->modA, 0.5f)))) ? 1.0f : 0.0f)) > 1e-6f) ? (((params->x / (3.14159265358979323846f / 2.0f)) - 1.0f)) : (((fabsf((((params->x - 3.14159265358979323846f) < (3.14159265358979323846f / 2.0f)) ? 1.0f : 0.0f)) > 1e-6f) ? (((params->x - 3.14159265358979323846f) / (3.14159265358979323846f / 2.0f))) : ((1.0f - (((params->x - 3.14159265358979323846f) - (3.14159265358979323846f / 2.0f)) / (3.14159265358979323846f / 2.0f)))))));
 }
 
 static float px_wave_native_13(VmParams* params) {
-    return ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * ((0.5f + (0.25f * params->modA)) + (0.1f * params->modB)))) ? 1.0f : 0.0f)) > 1e-6f) ? (((-2.0f) * fabsf(((params->x / 3.14159265358979323846f) - 0.5f)))) : ((3.0f - ((2.0f * params->x) / 3.14159265358979323846f))));
+    return ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.1f, params->modB, fmaf(0.25f, params->modA, 0.5f)))) ? 1.0f : 0.0f)) > 1e-6f) ? (((-2.0f) * fabsf(((params->x / 3.14159265358979323846f) - 0.5f)))) : ((3.0f - ((2.0f * params->x) / 3.14159265358979323846f))));
 }
 
 static float px_wave_native_14(VmParams* params) {
-    return (((1.0f - (0.5f * (params->modA + 1.0f))) * ((2.0f * (1.0f - fabsf(((params->x / (3.14159265358979323846f / 2.0f)) - 1.0f)))) - 1.0f)) + ((0.5f * (params->modA + 1.0f)) * sinf((params->x + (3.14159265358979323846f * params->modB)))));
+    return fmaf((1.0f - (0.5f * (params->modA + 1.0f))), fmaf(2.0f, (1.0f - fabsf(((params->x / (3.14159265358979323846f / 2.0f)) - 1.0f))), (-1.0f)), ((0.5f * (params->modA + 1.0f)) * sinf(fmaf(3.14159265358979323846f, params->modB, params->x))));
 }
 
 static float px_wave_native_15(VmParams* params) {
-    return (((1.0f - (0.5f * (params->modA + 1.0f))) * cosf(((params->x + 3.14159265358979323846f) + (3.14159265358979323846f * params->modB)))) + ((0.5f * (params->modA + 1.0f)) * (((-2.0f) * fabsf((((params->x - 3.14159265358979323846f) / 3.14159265358979323846f) - 0.5f))) + 0.5f)));
+    return fmaf((1.0f - (0.5f * (params->modA + 1.0f))), cosf(fmaf(3.14159265358979323846f, params->modB, (params->x + 3.14159265358979323846f))), ((0.5f * (params->modA + 1.0f)) * fmaf((-2.0f), fabsf((((params->x - 3.14159265358979323846f) / 3.14159265358979323846f) - 0.5f)), 0.5f)));
 }
 
 static float px_wave_native_16(VmParams* params) {
-    return (fminf((0.5f + (0.5f * params->modB)), fmaxf(((-0.5f) - (0.5f * params->modB)), sinf((params->x + (0.3f * params->modA))))) * 2.0f);
+    return (fminf(fmaf(0.5f, params->modB, 0.5f), fmaxf(((-0.5f) - (0.5f * params->modB)), sinf(fmaf(0.3f, params->modA, params->x)))) * 2.0f);
 }
 
 static float px_wave_native_17(VmParams* params) {
-    return (((fabsf(sinf((params->x + (0.4f * params->modA)))) * 2.0f) - 1.0f) + ((1.0f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((1.0f * params->modB), sinf((2.0f * params->x)), fmaf(fabsf(sinf(fmaf(0.4f, params->modA, params->x))), 2.0f, (-1.0f)));
 }
 
 static float px_wave_native_18(VmParams* params) {
-    return ((sinf((params->x + (0.3f * params->modA))) * (vm_fast_tanh(params->x) * 3.14159265358979323846f)) + ((0.5f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf(sinf(fmaf(0.3f, params->modA, params->x)), (vm_fast_tanh(params->x) * 3.14159265358979323846f), ((0.5f * params->modB) * sinf((2.0f * params->x))));
 }
 
 static float px_wave_native_19(VmParams* params) {
-    return (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.2f + (0.2f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.4f + (0.2f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.6f + (0.2f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.5f) : ((((1.0f - (params->x / (2.0f * 3.14159265358979323846f))) * 1.5f) - 0.5f))))))) + ((1.0f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((1.0f * params->modB), sinf((2.0f * params->x)), ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.2f, params->modA, 0.2f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.2f, params->modA, 0.4f))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.2f, params->modA, 0.6f))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.5f) : (fmaf((1.0f - (params->x / (2.0f * 3.14159265358979323846f))), 1.5f, (-0.5f)))))))));
 }
 
 static float px_wave_native_20(VmParams* params) {
-    return fminf(1.0f, fmaxf((-1.0f), ((1.2f * ((params->x / 3.14159265358979323846f) - 1.0f)) * sinf(((((3.0f * params->x) + params->rand_offset) + (0.3f * params->modA)) + (3.14159265358979323846f * params->modB))))));
+    return fminf(1.0f, fmaxf((-1.0f), ((1.2f * ((params->x / 3.14159265358979323846f) - 1.0f)) * sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(0.3f, params->modA, fmaf(3.0f, params->x, params->rand_offset)))))));
 }
 
 static float px_wave_native_21(VmParams* params) {
-    return (fminf(0.5f, fmaxf((-0.5f), (1.5f * ((fabsf(((params->x < (3.14159265358979323846f / 2.0f)) ? 1.0f : 0.0f)) > 1e-6f) ? ((params->x / (3.14159265358979323846f / 2.0f))) : (((fabsf(((params->x < (3.0f * 3.14159265358979323846f / 2.0f)) ? 1.0f : 0.0f)) > 1e-6f) ? ((1.0f - ((params->x - (3.14159265358979323846f / 2.0f)) / (3.14159265358979323846f / 2.0f)))) : (((-1.0f) + ((params->x - (3.0f * 3.14159265358979323846f / 2.0f)) / (3.14159265358979323846f / 2.0f)))))))))) * sinf((((4.0f * params->x) + (0.4f * params->modA)) + (3.14159265358979323846f * params->modB))));
+    return (fminf(0.5f, fmaxf((-0.5f), (1.5f * ((fabsf(((params->x < (3.14159265358979323846f / 2.0f)) ? 1.0f : 0.0f)) > 1e-6f) ? ((params->x / (3.14159265358979323846f / 2.0f))) : (((fabsf(((params->x < (3.0f * 3.14159265358979323846f / 2.0f)) ? 1.0f : 0.0f)) > 1e-6f) ? ((1.0f - ((params->x - (3.14159265358979323846f / 2.0f)) / (3.14159265358979323846f / 2.0f)))) : (((-1.0f) + ((params->x - (3.0f * 3.14159265358979323846f / 2.0f)) / (3.14159265358979323846f / 2.0f)))))))))) * sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(4.0f, params->x, (0.4f * params->modA)))));
 }
 
 static float px_wave_native_22(VmParams* params) {
-    return ((asinf((sinf(((params->x * (1.0f + (params->frequency / 1000.0f))) + (params->modB * 3.14159265358979323846f))) * (1.0f + (fabsf(params->modA) * 5.0f)))) / (3.14159265358979323846f / 2.0f)) * 0.8f);
+    return ((asinf((sinf(fmaf(params->x, (1.0f + (params->frequency / 1000.0f)), (params->modB * 3.14159265358979323846f))) * fmaf(fabsf(params->modA), 5.0f, 1.0f))) / (3.14159265358979323846f / 2.0f)) * 0.8f);
 }
 
 static float px_wave_native_23(VmParams* params) {
-    return ((fabsf(sinf((params->x + (params->modA * sinf(params->x))))) * 2.0f) - 1.0f);
+    return fmaf(fabsf(sinf(fmaf(params->modA, sinf(params->x), params->x))), 2.0f, (-1.0f));
 }
 
 static float px_wave_native_24(VmParams* params) {
-    return vm_fast_tanh((sinf(params->x) * (1.0f + (params->modA * 10.0f))));
+    return vm_fast_tanh((sinf(params->x) * fmaf(params->modA, 10.0f, 1.0f)));
 }
 
 static float px_wave_native_25(VmParams* params) {
@@ -112,11 +112,11 @@ static float px_wave_native_25(VmParams* params) {
 }
 
 static float px_wave_native_26(VmParams* params) {
-    return ((fabsf(sinf(params->x)) * 2.0f) - 1.0f);
+    return fmaf(fabsf(sinf(params->x)), 2.0f, (-1.0f));
 }
 
 static float px_wave_native_27(VmParams* params) {
-    return (sinf(((params->x * params->modA) * 10.0f)) / (((params->x * params->modA) * 10.0f) + 0.01f));
+    return (sinf(((params->x * params->modA) * 10.0f)) / fmaf((params->x * params->modA), 10.0f, 0.01f));
 }
 
 static float px_wave_native_28(VmParams* params) {
@@ -124,59 +124,59 @@ static float px_wave_native_28(VmParams* params) {
 }
 
 static float px_wave_native_29(VmParams* params) {
-    return fminf(1.0f, fmaxf((-1.0f), (1.1f * (((params->x / 3.14159265358979323846f) - 1.0f) + ((0.2f * params->modA) * sinf(((2.0f * params->x) + (3.14159265358979323846f * params->modB))))))));
+    return fminf(1.0f, fmaxf((-1.0f), (1.1f * fmaf((0.2f * params->modA), sinf(fmaf(2.0f, params->x, (3.14159265358979323846f * params->modB))), ((params->x / 3.14159265358979323846f) - 1.0f)))));
 }
 
 static float px_wave_native_30(VmParams* params) {
-    return (((params->x / 3.14159265358979323846f) - 1.0f) * sinf((((2.0f * params->x) + (0.5f * params->modA)) + (3.14159265358979323846f * params->modB))));
+    return (((params->x / 3.14159265358979323846f) - 1.0f) * sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(2.0f, params->x, (0.5f * params->modA)))));
 }
 
 static float px_wave_native_31(VmParams* params) {
-    return (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.05f + (0.02f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.1f + (0.02f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (((params->x / 3.14159265358979323846f) - 1.0f))))) + ((0.5f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((0.5f * params->modB), sinf((2.0f * params->x)), ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.02f, params->modA, 0.05f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.02f, params->modA, 0.1f))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (((params->x / 3.14159265358979323846f) - 1.0f))))));
 }
 
 static float px_wave_native_32(VmParams* params) {
-    return (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.25f + (0.25f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) + ((1.0f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((1.0f * params->modB), sinf((2.0f * params->x)), ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.25f, params->modA, 0.25f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))));
 }
 
 static float px_wave_native_33(VmParams* params) {
-    return (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.75f + (0.25f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) + ((1.0f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((1.0f * params->modB), sinf((2.0f * params->x)), ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.25f, params->modA, 0.75f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))));
 }
 
 static float px_wave_native_34(VmParams* params) {
-    return (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.125f + (0.05f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-0.75f)) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.25f + (0.05f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-0.25f)) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.375f + (0.05f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.25f) : (0.75f)))))) + ((0.5f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((0.5f * params->modB), sinf((2.0f * params->x)), ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.05f, params->modA, 0.125f))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-0.75f)) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.05f, params->modA, 0.25f))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-0.25f)) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.05f, params->modA, 0.375f))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.25f) : (0.75f)))))));
 }
 
 static float px_wave_native_35(VmParams* params) {
-    return (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.4f + (0.1f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fmodf(floorf(((params->x - ((2.0f * 3.14159265358979323846f) * (0.4f + (0.1f * params->modA)))) / ((2.0f * 3.14159265358979323846f) / 10.0f))), 4.0f) - 2.0f) * 0.5f))) + ((0.5f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((0.5f * params->modB), sinf((2.0f * params->x)), ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.1f, params->modA, 0.4f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fmodf(floorf(((params->x - ((2.0f * 3.14159265358979323846f) * fmaf(0.1f, params->modA, 0.4f))) / ((2.0f * 3.14159265358979323846f) / 10.0f))), 4.0f) - 2.0f) * 0.5f))));
 }
 
 static float px_wave_native_36(VmParams* params) {
-    return fminf(1.0f, fmaxf((-1.0f), (((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) + sinf(((((2.0f * params->x) + params->rand_offset) + (0.5f * params->modA)) + (3.14159265358979323846f * params->modB))))));
+    return fminf(1.0f, fmaxf((-1.0f), (((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) + sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(0.5f, params->modA, fmaf(2.0f, params->x, params->rand_offset)))))));
 }
 
 static float px_wave_native_37(VmParams* params) {
-    return (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.1f + (0.03f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.15f + (0.03f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.3f + (0.03f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.5f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.35f + (0.03f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-0.5f)) : (0.0f)))))))) + ((0.2f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((0.2f * params->modB), sinf((2.0f * params->x)), ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.03f, params->modA, 0.1f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.03f, params->modA, 0.15f))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.03f, params->modA, 0.3f))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.5f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.03f, params->modA, 0.35f))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-0.5f)) : (0.0f)))))))));
 }
 
 static float px_wave_native_38(VmParams* params) {
-    return ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.2f + (0.1f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * ((0.5f + (0.05f * params->modA)) + (0.1f * params->modB)))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (0.0f))));
+    return ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.1f, params->modA, 0.2f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.1f, params->modB, fmaf(0.05f, params->modA, 0.5f)))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (0.0f))));
 }
 
 static float px_wave_native_39(VmParams* params) {
-    return (floorf((((((params->x / 3.14159265358979323846f) - 1.0f) + (0.25f * params->modA)) + (0.5f * params->modB)) * 4.0f)) * 0.25f);
+    return (floorf((fmaf(0.5f, params->modB, fmaf(0.25f, params->modA, ((params->x / 3.14159265358979323846f) - 1.0f))) * 4.0f)) * 0.25f);
 }
 
 static float px_wave_native_40(VmParams* params) {
-    return (((((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.05f + (0.9f * fabsf(params->modA))))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) * (1.0f - (0.5f * fabsf(params->modB)))) + ((sinf((params->x * 0.5f)) * 0.5f) * fabsf(params->modB))) * 0.7f);
+    return (fmaf(((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.9f, fabsf(params->modA), 0.05f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))), (1.0f - (0.5f * fabsf(params->modB))), ((sinf((params->x * 0.5f)) * 0.5f) * fabsf(params->modB))) * 0.7f);
 }
 
 static float px_wave_native_41(VmParams* params) {
-    return (((fabsf(((fabsf(((params->x < (3.14159265358979323846f + (params->modB * (3.14159265358979323846f / 2.0f)))) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modA > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) * 0.8f);
+    return (((fabsf(((fabsf(((params->x < fmaf(params->modB, (3.14159265358979323846f / 2.0f), 3.14159265358979323846f)) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modA > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) * 0.8f);
 }
 
 static float px_wave_native_42(VmParams* params) {
-    return (((fabsf(((fabsf(((params->modA > 0.1f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modB < (-0.1f)) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? ((sinf(params->x) + (0.5f * sinf((3.0f * params->x))))) : ((sinf(params->x) + (0.3f * cosf(((2.0f * params->x) + (3.14159265358979323846f * 0.25f))))))) * 0.7f);
+    return (((fabsf(((fabsf(((params->modA > 0.1f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modB < (-0.1f)) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? (fmaf(0.5f, sinf((3.0f * params->x)), sinf(params->x))) : (fmaf(0.3f, cosf(fmaf(2.0f, params->x, (3.14159265358979323846f * 0.25f))), sinf(params->x)))) * 0.7f);
 }
 
 static float px_wave_native_43(VmParams* params) {
@@ -184,15 +184,15 @@ static float px_wave_native_43(VmParams* params) {
 }
 
 static float px_wave_native_44(VmParams* params) {
-    return (floorf((params->x * (2.0f + (params->modA * 14.0f)))) / (2.0f + (params->modA * 14.0f)));
+    return (floorf((params->x * fmaf(params->modA, 14.0f, 2.0f))) / fmaf(params->modA, 14.0f, 2.0f));
 }
 
 static float px_wave_native_45(VmParams* params) {
-    return ((fmodf((floorf(((params->x * 32.0f) / (2.0f * 3.14159265358979323846f))) + floorf((((params->x * params->modA) * 32.0f) / (2.0f * 3.14159265358979323846f)))), 2.0f) * 2.0f) - 1.0f);
+    return fmaf(fmodf((floorf(((params->x * 32.0f) / (2.0f * 3.14159265358979323846f))) + floorf((((params->x * params->modA) * 32.0f) / (2.0f * 3.14159265358979323846f)))), 2.0f), 2.0f, (-1.0f));
 }
 
 static float px_wave_native_46(VmParams* params) {
-    return (floorf((sinf(params->x) * (2.0f + (params->modA * 6.0f)))) / (2.0f + (params->modA * 6.0f)));
+    return (floorf((sinf(params->x) * fmaf(params->modA, 6.0f, 2.0f))) / fmaf(params->modA, 6.0f, 2.0f));
 }
 
 static float px_wave_native_47(VmParams* params) {
@@ -200,123 +200,123 @@ static float px_wave_native_47(VmParams* params) {
 }
 
 static float px_wave_native_48(VmParams* params) {
-    return ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * 0.7f)) ? 1.0f : 0.0f)) > 1e-6f) ? (((params->x / (3.14159265358979323846f / 2.0f)) - 1.0f)) : (sinf((((5.0f * params->x) + (0.5f * params->modA)) + (3.14159265358979323846f * params->modB)))));
+    return ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * 0.7f)) ? 1.0f : 0.0f)) > 1e-6f) ? (((params->x / (3.14159265358979323846f / 2.0f)) - 1.0f)) : (sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(5.0f, params->x, (0.5f * params->modA))))));
 }
 
 static float px_wave_native_49(VmParams* params) {
-    return sinf(((params->x + (0.3f * sinf(((4.0f * params->x) + params->modA)))) + (3.14159265358979323846f * params->modB)));
+    return sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(0.3f, sinf(fmaf(4.0f, params->x, params->modA)), params->x)));
 }
 
 static float px_wave_native_50(VmParams* params) {
-    return fminf(1.0f, fmaxf((-1.0f), (((params->x / 3.14159265358979323846f) - 1.0f) * sinf(((((3.0f * params->x) + params->rand_offset) + (0.4f * params->modA)) + (3.14159265358979323846f * params->modB))))));
+    return fminf(1.0f, fmaxf((-1.0f), (((params->x / 3.14159265358979323846f) - 1.0f) * sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(0.4f, params->modA, fmaf(3.0f, params->x, params->rand_offset)))))));
 }
 
 static float px_wave_native_51(VmParams* params) {
-    return ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.2f + (0.05f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.4f + (0.05f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (cosf((((4.0f * params->x) + (0.4f * params->modA)) + (3.14159265358979323846f * params->modB)))) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.6f + (0.05f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : ((sinf(((6.0f * params->x) + (0.4f * params->modA))) * 0.7f)))))));
+    return ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.05f, params->modA, 0.2f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.05f, params->modA, 0.4f))) ? 1.0f : 0.0f)) > 1e-6f) ? (cosf(fmaf(3.14159265358979323846f, params->modB, fmaf(4.0f, params->x, (0.4f * params->modA))))) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.05f, params->modA, 0.6f))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : ((sinf(fmaf(6.0f, params->x, (0.4f * params->modA))) * 0.7f)))))));
 }
 
 static float px_wave_native_52(VmParams* params) {
-    return fminf(0.8f, fmaxf((-0.8f), (2.0f * (((params->x / 3.14159265358979323846f) - 1.0f) + ((0.2f * params->modA) * sinf(((3.0f * params->x) + (3.14159265358979323846f * params->modB))))))));
+    return fminf(0.8f, fmaxf((-0.8f), (2.0f * fmaf((0.2f * params->modA), sinf(fmaf(3.0f, params->x, (3.14159265358979323846f * params->modB))), ((params->x / 3.14159265358979323846f) - 1.0f)))));
 }
 
 static float px_wave_native_53(VmParams* params) {
-    return ((sinf(((params->x + (0.5f * params->modA)) + (3.14159265358979323846f * params->modB))) + ((fabsf((( (fabsf(((params->x > ((2.0f * 3.14159265358979323846f) * 0.2f)) ? 1.0f : 0.0f)) > 1e-6f) && (fabsf(((params->x < (3.14159265358979323846f / 2.0f)) ? 1.0f : 0.0f)) > 1e-6f) ) ? 1.0f : 0.0f)) > 1e-6f) ? ((-0.5f)) : (0.0f))) + ((fabsf((( (fabsf(((params->x > ((2.0f * 3.14159265358979323846f) * 0.6f)) ? 1.0f : 0.0f)) > 1e-6f) && (fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * 0.65f)) ? 1.0f : 0.0f)) > 1e-6f) ) ? 1.0f : 0.0f)) > 1e-6f) ? (0.5f) : (0.0f)));
+    return ((sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(0.5f, params->modA, params->x))) + ((fabsf((( (fabsf(((params->x > ((2.0f * 3.14159265358979323846f) * 0.2f)) ? 1.0f : 0.0f)) > 1e-6f) && (fabsf(((params->x < (3.14159265358979323846f / 2.0f)) ? 1.0f : 0.0f)) > 1e-6f) ) ? 1.0f : 0.0f)) > 1e-6f) ? ((-0.5f)) : (0.0f))) + ((fabsf((( (fabsf(((params->x > ((2.0f * 3.14159265358979323846f) * 0.6f)) ? 1.0f : 0.0f)) > 1e-6f) && (fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * 0.65f)) ? 1.0f : 0.0f)) > 1e-6f) ) ? 1.0f : 0.0f)) > 1e-6f) ? (0.5f) : (0.0f)));
 }
 
 static float px_wave_native_54(VmParams* params) {
-    return ((-1.0f) + ((fabsf(((params->x < (3.14159265358979323846f / 2.0f)) ? 1.0f : 0.0f)) > 1e-6f) ? ((1.0f * sinf((2.0f * ((params->x + (0.2f * params->modA)) + (3.14159265358979323846f * params->modB)))))) : (((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? ((1.5f * sinf((2.0f * (params->x - (3.14159265358979323846f / 2.0f)))))) : (((fabsf(((params->x < (3.0f * 3.14159265358979323846f / 2.0f)) ? 1.0f : 0.0f)) > 1e-6f) ? ((1.75f * sinf((2.0f * (params->x - 3.14159265358979323846f))))) : ((0.75f * sinf((2.0f * (params->x - (3.0f * 3.14159265358979323846f / 2.0f))))))))))));
+    return ((-1.0f) + ((fabsf(((params->x < (3.14159265358979323846f / 2.0f)) ? 1.0f : 0.0f)) > 1e-6f) ? ((1.0f * sinf((2.0f * fmaf(3.14159265358979323846f, params->modB, fmaf(0.2f, params->modA, params->x)))))) : (((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? ((1.5f * sinf((2.0f * (params->x - (3.14159265358979323846f / 2.0f)))))) : (((fabsf(((params->x < (3.0f * 3.14159265358979323846f / 2.0f)) ? 1.0f : 0.0f)) > 1e-6f) ? ((1.75f * sinf((2.0f * (params->x - 3.14159265358979323846f))))) : ((0.75f * sinf((2.0f * (params->x - (3.0f * 3.14159265358979323846f / 2.0f))))))))))));
 }
 
 static float px_wave_native_55(VmParams* params) {
-    return (sinf((params->x + (0.5f * params->modA))) * (0.5f + (0.5f * sinf(((5.0f * params->x) + (3.14159265358979323846f * params->modB))))));
+    return (sinf(fmaf(0.5f, params->modA, params->x)) * fmaf(0.5f, sinf(fmaf(5.0f, params->x, (3.14159265358979323846f * params->modB))), 0.5f));
 }
 
 static float px_wave_native_56(VmParams* params) {
-    return (sinf((params->x + ((((((fabsf(((params->x / 3.14159265358979323846f) - 1.0f)) * 2.0f) - 1.0f) * (1.0f + (params->modB * 0.5f))) * 3.14159265358979323846f) * fabsf(params->modA)) * (1.0f + (params->frequency / 600.0f))))) * 0.9f);
+    return (sinf(fmaf((((fmaf(fabsf(((params->x / 3.14159265358979323846f) - 1.0f)), 2.0f, (-1.0f)) * fmaf(params->modB, 0.5f, 1.0f)) * 3.14159265358979323846f) * fabsf(params->modA)), (1.0f + (params->frequency / 600.0f)), params->x)) * 0.9f);
 }
 
 static float px_wave_native_57(VmParams* params) {
-    return sinf((params->x + ((sinf((params->x * (1.0f + (fabsf(params->modA) * 8.0f)))) * fabsf(params->modB)) * 3.0f)));
+    return sinf(fmaf((sinf((params->x * fmaf(fabsf(params->modA), 8.0f, 1.0f))) * fabsf(params->modB)), 3.0f, params->x));
 }
 
 static float px_wave_native_58(VmParams* params) {
-    return sinf((params->x + ((((fabsf(((params->modA > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->x > 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f) * (3.14159265358979323846f / 2.0f)) * (0.5f + (0.5f * params->modB)))));
+    return sinf(fmaf((((fabsf(((params->modA > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->x > 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f) * (3.14159265358979323846f / 2.0f)), fmaf(0.5f, params->modB, 0.5f), params->x));
 }
 
 static float px_wave_native_59(VmParams* params) {
-    return ((sinf(((params->x + ((sinf(((params->x * 0.5f) + (params->modA * 3.14159265358979323846f))) * params->modB) * 4.0f)) + (vm_lfsr_noise(params, 2, 1.0f) * 0.1f))) * (1.0f + (0.5f * sinf(((params->x * 0.25f) + (params->rand_offset * 3.14159265358979323846f)))))) + ((vm_fast_tanh((sinf(((params->x * 2.0f) + (params->modA * (3.14159265358979323846f / 2.0f)))) * 3.0f)) * 0.2f) * fabsf(params->modB)));
+    return fmaf(sinf(fmaf(vm_lfsr_noise(params, 2, 1.0f), 0.1f, fmaf((sinf(fmaf(params->x, 0.5f, (params->modA * 3.14159265358979323846f))) * params->modB), 4.0f, params->x))), fmaf(0.5f, sinf(fmaf(params->x, 0.25f, (params->rand_offset * 3.14159265358979323846f))), 1.0f), ((vm_fast_tanh((sinf(fmaf(params->x, 2.0f, (params->modA * (3.14159265358979323846f / 2.0f)))) * 3.0f)) * 0.2f) * fabsf(params->modB)));
 }
 
 static float px_wave_native_60(VmParams* params) {
-    return sinf((params->x + ((sinf(params->x) * params->modA) * 3.0f)));
+    return sinf(fmaf((sinf(params->x) * params->modA), 3.0f, params->x));
 }
 
 static float px_wave_native_61(VmParams* params) {
-    return sinf((params->x * (1.0f + (params->modA * sinf(params->x)))));
+    return sinf((params->x * fmaf(params->modA, sinf(params->x), 1.0f)));
 }
 
 static float px_wave_native_62(VmParams* params) {
-    return sinf((params->x + (((fabsf(((params->x > 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) * params->modA)));
+    return sinf(fmaf(((fabsf(((params->x > 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))), params->modA, params->x));
 }
 
 static float px_wave_native_63(VmParams* params) {
-    return (sinf(params->x) * sinf((params->x * (1.0f + (params->modA * 10.0f)))));
+    return (sinf(params->x) * sinf((params->x * fmaf(params->modA, 10.0f, 1.0f))));
 }
 
 static float px_wave_native_64(VmParams* params) {
-    return ((sinf((params->x + ((sinf(((params->x * 2.0f) + (0.01f * params->modB))) * (1.0f + (5.0f * fabsf(params->modA)))) * (params->frequency / 440.0f)))) + ((sinf(params->x) * 0.1f) * fabsf(params->modB))) / 1.1f);
+    return (fmaf((sinf(params->x) * 0.1f), fabsf(params->modB), sinf(fmaf((sinf(fmaf(params->x, 2.0f, (0.01f * params->modB))) * fmaf(5.0f, fabsf(params->modA), 1.0f)), (params->frequency / 440.0f), params->x))) / 1.1f);
 }
 
 static float px_wave_native_65(VmParams* params) {
-    return (vm_fast_tanh((sinf((params->x + (((sinf(((params->x * 0.5f) + (0.05f * params->modB))) * params->modB) * 3.0f) * (1.0f + (params->frequency / 200.0f))))) * (1.0f + (fabsf(params->modA) * 2.0f)))) * 0.9f);
+    return (vm_fast_tanh((sinf(fmaf(((sinf(fmaf(params->x, 0.5f, (0.05f * params->modB))) * params->modB) * 3.0f), (1.0f + (params->frequency / 200.0f)), params->x)) * fmaf(fabsf(params->modA), 2.0f, 1.0f))) * 0.9f);
 }
 
 static float px_wave_native_66(VmParams* params) {
-    return sinf(((params->x * (1.0f + (params->modA * (params->frequency / 440.0f)))) + ((sinf((params->x * 1.5f)) * fabsf(params->modB)) * 3.0f)));
+    return sinf(fmaf(params->x, fmaf(params->modA, (params->frequency / 440.0f), 1.0f), ((sinf((params->x * 1.5f)) * fabsf(params->modB)) * 3.0f)));
 }
 
 static float px_wave_native_67(VmParams* params) {
-    return sinf((params->x + ((sinf((params->x * (1.0f + (fabsf(params->modB) * 4.0f)))) * (params->frequency / 220.0f)) * (1.0f + (params->modA * 3.0f)))));
+    return sinf(fmaf((sinf((params->x * fmaf(fabsf(params->modB), 4.0f, 1.0f))) * (params->frequency / 220.0f)), fmaf(params->modA, 3.0f, 1.0f), params->x));
 }
 
 static float px_wave_native_68(VmParams* params) {
-    return ((sinf(((params->x * (1.0f + ((0.001f * params->frequency) / 100.0f))) + ((sinf((params->x * ((fabsf(((fabsf(((params->modA > 0.2f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modB < (-0.2f)) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? ((3.5f + (params->modA * 2.0f))) : ((1.5f - (params->modB * 1.0f)))))) * ((1.5f + (2.0f * fabsf(params->modA))) + (1.0f * fabsf(params->modB)))) * expf(((-params->x) * (2.0f + (fabsf(params->modB) * 3.0f))))))) * 0.9f) * expf(((-params->x) * 0.3f)));
+    return ((sinf(fmaf(params->x, (1.0f + ((0.001f * params->frequency) / 100.0f)), ((sinf((params->x * ((fabsf(((fabsf(((params->modA > 0.2f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modB < (-0.2f)) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? (fmaf(params->modA, 2.0f, 3.5f)) : ((1.5f - (params->modB * 1.0f)))))) * fmaf(1.0f, fabsf(params->modB), fmaf(2.0f, fabsf(params->modA), 1.5f))) * expf(((-params->x) * fmaf(fabsf(params->modB), 3.0f, 2.0f)))))) * 0.9f) * expf(((-params->x) * 0.3f)));
 }
 
 static float px_wave_native_69(VmParams* params) {
-    return (vm_fast_tanh((sinf(((params->x * params->frequency) + ((2.0f + (params->modA * 3.0f)) * sinf(((params->x * params->frequency) * ((1.414f + (params->modB * 0.5f)) + (params->rand_offset * 0.05f))))))) * (1.0f + (params->modA * 0.5f)))) * 0.9f);
+    return (vm_fast_tanh((sinf(fmaf(params->x, params->frequency, (fmaf(params->modA, 3.0f, 2.0f) * sinf(((params->x * params->frequency) * fmaf(params->rand_offset, 0.05f, fmaf(params->modB, 0.5f, 1.414f))))))) * fmaf(params->modA, 0.5f, 1.0f))) * 0.9f);
 }
 
 static float px_wave_native_70(VmParams* params) {
-    return ((sinf((params->x + (sinf((params->x * (1.5f + (params->modA * 1.5f)))) * (2.0f + (params->modB * 2.0f))))) + (0.5f * sinf(((params->x * 2.0f) + (sinf(((params->x * 2.0f) * (1.5f + (params->modA * 1.5f)))) * (2.0f + (params->modB * 2.0f))))))) + (0.33f * sinf(((params->x * 3.0f) + (sinf(((params->x * 3.0f) * (1.5f + (params->modA * 1.5f)))) * (2.0f + (params->modB * 2.0f)))))));
+    return fmaf(0.33f, sinf(fmaf(params->x, 3.0f, (sinf(((params->x * 3.0f) * fmaf(params->modA, 1.5f, 1.5f))) * fmaf(params->modB, 2.0f, 2.0f)))), fmaf(0.5f, sinf(fmaf(params->x, 2.0f, (sinf(((params->x * 2.0f) * fmaf(params->modA, 1.5f, 1.5f))) * fmaf(params->modB, 2.0f, 2.0f)))), sinf(fmaf(sinf((params->x * fmaf(params->modA, 1.5f, 1.5f))), fmaf(params->modB, 2.0f, 2.0f), params->x))));
 }
 
 static float px_wave_native_71(VmParams* params) {
-    return sinf(((params->x * (1.0f + (params->rand_offset * 0.005f))) + (sinf(((params->x * (3.01f + (params->rand_offset * 0.01f))) + (sinf((params->x * (7.03f + (params->rand_offset * 0.02f)))) * (0.4f + (params->modA * 0.6f))))) * (1.0f + (params->modB * 1.5f)))));
+    return sinf(fmaf(params->x, fmaf(params->rand_offset, 0.005f, 1.0f), (sinf(fmaf(params->x, fmaf(params->rand_offset, 0.01f, 3.01f), (sinf((params->x * fmaf(params->rand_offset, 0.02f, 7.03f))) * fmaf(params->modA, 0.6f, 0.4f)))) * fmaf(params->modB, 1.5f, 1.0f))));
 }
 
 static float px_wave_native_72(VmParams* params) {
-    return sinf(((params->x + ((sinf((params->x * 2.0f)) * (2.0f + (3.0f * params->modA))) * expf(((-params->x) * 2.0f)))) + (sinf((params->x * (3.0f + (2.0f * params->modC)))) * (1.5f * params->modB))));
+    return sinf(fmaf(sinf((params->x * fmaf(2.0f, params->modC, 3.0f))), (1.5f * params->modB), fmaf((sinf((params->x * 2.0f)) * fmaf(3.0f, params->modA, 2.0f)), expf(((-params->x) * 2.0f)), params->x)));
 }
 
 static float px_wave_native_73(VmParams* params) {
-    return sinf((params->x + (sinf(((params->x * (1.5f + params->modC)) + (sinf((params->x * (1.5f + params->modC))) * params->modB))) * (1.0f + (4.0f * params->modA)))));
+    return sinf(fmaf(sinf(fmaf(params->x, (1.5f + params->modC), (sinf((params->x * (1.5f + params->modC))) * params->modB))), fmaf(4.0f, params->modA, 1.0f), params->x));
 }
 
 static float px_wave_native_74(VmParams* params) {
-    return (sinf(params->x) + (0.5f * sinf(((params->x * 0.5f) + params->modA))));
+    return fmaf(0.5f, sinf(fmaf(params->x, 0.5f, params->modA)), sinf(params->x));
 }
 
 static float px_wave_native_75(VmParams* params) {
-    return sinf((params->x * (1.0f + (sinf((params->x * 5.0f)) * params->modA))));
+    return sinf((params->x * fmaf(sinf((params->x * 5.0f)), params->modA, 1.0f)));
 }
 
 static float px_wave_native_76(VmParams* params) {
-    return sinf(((params->x + (sinf(params->x) * params->modA)) + ((sinf(params->x) * sinf(params->x)) * params->modB)));
+    return sinf(fmaf((sinf(params->x) * sinf(params->x)), params->modB, fmaf(sinf(params->x), params->modA, params->x)));
 }
 
 static float px_wave_native_77(VmParams* params) {
-    return sinf((params->x + (sinf(((params->x * 2.0f) + (sinf((params->x * 4.0f)) * params->modB))) * params->modA)));
+    return sinf(fmaf(sinf(fmaf(params->x, 2.0f, (sinf((params->x * 4.0f)) * params->modB))), params->modA, params->x));
 }
 
 static float px_wave_native_78(VmParams* params) {
@@ -324,63 +324,63 @@ static float px_wave_native_78(VmParams* params) {
 }
 
 static float px_wave_native_79(VmParams* params) {
-    return sinf((((params->x * (1.0f + (params->modC * 0.01f))) + (sinf((params->x * 0.25f)) * (2.0f + (2.0f * params->modA)))) + (sinf((params->x * 13.0f)) * params->modB)));
+    return sinf(fmaf(sinf((params->x * 13.0f)), params->modB, fmaf(params->x, fmaf(params->modC, 0.01f, 1.0f), (sinf((params->x * 0.25f)) * fmaf(2.0f, params->modA, 2.0f)))));
 }
 
 static float px_wave_native_80(VmParams* params) {
-    return (sinf((params->x + ((sinf((params->x * ((4.03f + (params->modB * 2.0f)) + (params->rand_offset * 0.02f)))) * (3.0f + (fabsf(params->modA) * 4.0f))) * expf(((-params->x) * (2.0f + (fabsf(params->modA) * 8.0f))))))) * expf(((-params->x) * 0.5f)));
+    return (sinf(fmaf((sinf((params->x * fmaf(params->rand_offset, 0.02f, fmaf(params->modB, 2.0f, 4.03f)))) * fmaf(fabsf(params->modA), 4.0f, 3.0f)), expf(((-params->x) * fmaf(fabsf(params->modA), 8.0f, 2.0f))), params->x)) * expf(((-params->x) * 0.5f)));
 }
 
 static float px_wave_native_81(VmParams* params) {
-    return (((sinf((params->x + (sinf((params->x * 0.75f)) * 3.5f))) * (1.0f - fabsf(params->modA))) + (sinf((params->x + (sinf((params->x * (2.5f + (params->modB * 2.0f)))) * 1.5f))) * fabsf(params->modA))) * 0.7f);
+    return (fmaf(sinf(fmaf(sinf((params->x * 0.75f)), 3.5f, params->x)), (1.0f - fabsf(params->modA)), (sinf(fmaf(sinf((params->x * fmaf(params->modB, 2.0f, 2.5f))), 1.5f, params->x)) * fabsf(params->modA))) * 0.7f);
 }
 
 static float px_wave_native_82(VmParams* params) {
-    return (sinf((params->x + (tanf((params->x * ((10.0f + (params->modA * 20.0f)) + (params->x * 5.0f)))) * (0.5f + (fabsf(params->modB) * 2.5f))))) * 0.8f);
+    return (sinf(fmaf(tanf((params->x * fmaf(params->x, 5.0f, fmaf(params->modA, 20.0f, 10.0f)))), fmaf(fabsf(params->modB), 2.5f, 0.5f), params->x)) * 0.8f);
 }
 
 static float px_wave_native_83(VmParams* params) {
-    return ((sinf((params->x + (sinf((params->x * 1.99f)) * (0.5f + (params->modA * 1.5f))))) + sinf(((params->x * (1.0f + (((params->rand_offset - 0.5f) * 0.002f) * fabsf(params->modB)))) + (sinf(((params->x * 1.99f) * (1.0f + (((params->rand_offset - 0.5f) * 0.003f) * fabsf(params->modB))))) * (0.5f + (params->modA * 1.5f)))))) * 0.45f);
+    return ((sinf(fmaf(sinf((params->x * 1.99f)), fmaf(params->modA, 1.5f, 0.5f), params->x)) + sinf(fmaf(params->x, fmaf(((params->rand_offset - 0.5f) * 0.002f), fabsf(params->modB), 1.0f), (sinf(((params->x * 1.99f) * fmaf(((params->rand_offset - 0.5f) * 0.003f), fabsf(params->modB), 1.0f))) * fmaf(params->modA, 1.5f, 0.5f))))) * 0.45f);
 }
 
 static float px_wave_native_84(VmParams* params) {
-    return ((sinf(((params->x + (sinf((params->x * (3.0f + (params->modA * 2.5f)))) * (1.5f + ((params->modB * ((fabsf(((params->modB > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.3f))) * 2.0f)))) + ((fabsf(((params->modB < (-0.1f)) ? 1.0f : 0.0f)) > 1e-6f) ? ((sinf((params->x * 0.49f)) * (fabsf(params->modB) * 2.5f))) : (0.0f)))) * 0.75f) * (1.0f - (fabsf(params->modA) * 0.2f)));
+    return ((sinf((fmaf(sinf((params->x * fmaf(params->modA, 2.5f, 3.0f))), fmaf((params->modB * ((fabsf(((params->modB > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.3f))), 2.0f, 1.5f), params->x) + ((fabsf(((params->modB < (-0.1f)) ? 1.0f : 0.0f)) > 1e-6f) ? ((sinf((params->x * 0.49f)) * (fabsf(params->modB) * 2.5f))) : (0.0f)))) * 0.75f) * (1.0f - (fabsf(params->modA) * 0.2f)));
 }
 
 static float px_wave_native_85(VmParams* params) {
-    return (vm_fast_tanh((sinf(((params->x + (sinf((params->x * (1.414f + (params->modB * 1.5f)))) * (1.0f + (fabsf(params->modB) * 2.0f)))) + (sinf((params->x * 4.75f)) * (((params->modA + 1.0f) * 0.5f) * 1.5f)))) * (1.0f + (((params->modA + 1.0f) * 0.5f) * 0.3f)))) * 0.85f);
+    return (vm_fast_tanh((sinf(fmaf(sinf((params->x * 4.75f)), (((params->modA + 1.0f) * 0.5f) * 1.5f), fmaf(sinf((params->x * fmaf(params->modB, 1.5f, 1.414f))), fmaf(fabsf(params->modB), 2.0f, 1.0f), params->x))) * fmaf(((params->modA + 1.0f) * 0.5f), 0.3f, 1.0f))) * 0.85f);
 }
 
 static float px_wave_native_86(VmParams* params) {
-    return sinf((params->x + (vm_lfsr_noise(params, 0, 10.0f) * params->modA)));
+    return sinf(fmaf(vm_lfsr_noise(params, 0, 10.0f), params->modA, params->x));
 }
 
 static float px_wave_native_87(VmParams* params) {
-    return (sinf(((params->x + (sinf((params->x * (1.5f + (sinf(((params->x * 0.05f) + params->rand_offset)) * (1.0f + (params->modA * 2.0f)))))) * 2.0f)) + (sinf((params->x * (6.0f + (params->rand_offset * 0.1f)))) * (fabsf(params->modB) * 1.5f)))) * 0.75f);
+    return (sinf(fmaf(sinf((params->x * fmaf(params->rand_offset, 0.1f, 6.0f))), (fabsf(params->modB) * 1.5f), fmaf(sinf((params->x * fmaf(sinf(fmaf(params->x, 0.05f, params->rand_offset)), fmaf(params->modA, 2.0f, 1.0f), 1.5f))), 2.0f, params->x))) * 0.75f);
 }
 
 static float px_wave_native_88(VmParams* params) {
-    return sinf((params->x + (sinf(((params->x * (2.414f + (params->modC * 2.0f))) + (sinf((params->x * (5.75f - (params->modC * 3.0f)))) * (1.0f + (2.0f * params->modB))))) * (4.0f * expf(((-params->x) * (1.5f + (4.0f * params->modA))))))));
+    return sinf(fmaf(sinf(fmaf(params->x, fmaf(params->modC, 2.0f, 2.414f), (sinf((params->x * (5.75f - (params->modC * 3.0f)))) * fmaf(2.0f, params->modB, 1.0f)))), (4.0f * expf(((-params->x) * fmaf(4.0f, params->modA, 1.5f)))), params->x));
 }
 
 static float px_wave_native_89(VmParams* params) {
-    return sinf((params->x + (sinf(((params->x * (1.0f + (15.0f * params->modC))) + (floorf((sinf((params->x * 27.0f)) * (8.0f * params->modB))) / 8.0f))) * (5.0f * params->modA))));
+    return sinf(fmaf(sinf(fmaf(params->x, fmaf(15.0f, params->modC, 1.0f), (floorf((sinf((params->x * 27.0f)) * (8.0f * params->modB))) / 8.0f))), (5.0f * params->modA), params->x));
 }
 
 static float px_wave_native_90(VmParams* params) {
-    return sinf((params->x + ((sinf((params->x * 1.414f)) * params->modA) * 5.0f)));
+    return sinf(fmaf((sinf((params->x * 1.414f)) * params->modA), 5.0f, params->x));
 }
 
 static float px_wave_native_91(VmParams* params) {
-    return sinf((params->x + ((sinf((params->x * 2.718f)) * params->modA) * 5.0f)));
+    return sinf(fmaf((sinf((params->x * 2.718f)) * params->modA), 5.0f, params->x));
 }
 
 static float px_wave_native_92(VmParams* params) {
-    return (sinf(params->x) * sinf((params->x * (1.0f + (params->modA * 100.0f)))));
+    return (sinf(params->x) * sinf((params->x * fmaf(params->modA, 100.0f, 1.0f))));
 }
 
 static float px_wave_native_93(VmParams* params) {
-    return (((((((params->x / 3.14159265358979323846f) - 1.0f) + (0.3f * sinf(((params->x * 11.0f) + (params->rand_offset * 3.14159265358979323846f))))) * 0.6f) + (((fabsf(((fabsf(((params->modA > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modB > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? (((fabsf((((params->x * 0.5f) < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (0.4f) : ((-0.4f)))) : ((sinf(((params->x * 0.5f) + (params->modB * (3.14159265358979323846f / 2.0f)))) * 0.4f))) * (0.5f + (0.5f * fabsf(params->modA))))) * (0.4f + (0.6f * (0.5f + (0.5f * vm_fast_tanh((3.0f * (((params->modA * 0.8f) - (params->modB * 0.6f)) - cosf((params->x * (0.5f + ((fabsf(((fabsf(((params->modA > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modB < 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.5f) : (0.5f))))))))))))) * 0.7f);
+    return ((fmaf(fmaf(0.3f, sinf(fmaf(params->x, 11.0f, (params->rand_offset * 3.14159265358979323846f))), ((params->x / 3.14159265358979323846f) - 1.0f)), 0.6f, (((fabsf(((fabsf(((params->modA > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modB > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? (((fabsf((((params->x * 0.5f) < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (0.4f) : ((-0.4f)))) : ((sinf(fmaf(params->x, 0.5f, (params->modB * (3.14159265358979323846f / 2.0f)))) * 0.4f))) * fmaf(0.5f, fabsf(params->modA), 0.5f))) * fmaf(0.6f, fmaf(0.5f, vm_fast_tanh((3.0f * (fmaf(params->modA, 0.8f, (-(params->modB * 0.6f))) - cosf((params->x * (0.5f + ((fabsf(((fabsf(((params->modA > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modB < 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.5f) : (0.5f)))))))), 0.5f), 0.4f)) * 0.7f);
 }
 
 static float px_wave_native_94(VmParams* params) {
@@ -392,43 +392,43 @@ static float px_wave_native_94(VmParams* params) {
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += ((sinf(((params->x * k) * ((1.0f + (k * 0.14159f)) + ((params->modA * 0.1f) * k)))) * expf((((-params->x) * k) * (0.3f + (params->modB * 0.7f))))) / k);
+            sigma_0 += ((sinf(((params->x * k) * fmaf((params->modA * 0.1f), k, fmaf(k, 0.14159f, 1.0f)))) * expf((((-params->x) * k) * fmaf(params->modB, 0.7f, 0.3f)))) / k);
         }
     }
 
-    return ((sigma_0 * (1.0f + (0.3f * sinf(((params->x * 0.5f) + (params->rand_offset * 3.14159265358979323846f)))))) * 0.4f);
+    return ((sigma_0 * fmaf(0.3f, sinf(fmaf(params->x, 0.5f, (params->rand_offset * 3.14159265358979323846f))), 1.0f)) * 0.4f);
 }
 
 static float px_wave_native_95(VmParams* params) {
-    return ((((vm_lfsr_val(params, 7, (((params->x / (2.0f * 3.14159265358979323846f)) * 2.0f) + params->modA), params->rand_offset) * 2.0f) - 1.0f) + (sinf((params->x * (1.0f + (vm_lfsr_noise(params, 4, 4.0f) * 0.5f)))) * (0.5f + (0.5f * vm_lfsr_clock(params, 3, (0.4f + (params->modB * 0.4f))))))) + (vm_lfsr_noise(params, 0, 16.0f) * 0.2f));
+    return fmaf(vm_lfsr_noise(params, 0, 16.0f), 0.2f, fmaf(sinf((params->x * fmaf(vm_lfsr_noise(params, 4, 4.0f), 0.5f, 1.0f))), fmaf(0.5f, vm_lfsr_clock(params, 3, fmaf(params->modB, 0.4f, 0.4f)), 0.5f), fmaf(vm_lfsr_val(params, 7, fmaf((params->x / (2.0f * 3.14159265358979323846f)), 2.0f, params->modA), params->rand_offset), 2.0f, (-1.0f))));
 }
 
 static float px_wave_native_96(VmParams* params) {
-    return (0.5f * (((sinf(params->x) + ((0.5f + (0.3f * params->modA)) * sinf((2.0f * params->x)))) + (0.3f * sinf((3.0f * params->x)))) + ((0.5f * params->modB) * sinf((4.0f * params->x)))));
+    return (0.5f * fmaf((0.5f * params->modB), sinf((4.0f * params->x)), fmaf(0.3f, sinf((3.0f * params->x)), fmaf(fmaf(0.3f, params->modA, 0.5f), sinf((2.0f * params->x)), sinf(params->x)))));
 }
 
 static float px_wave_native_97(VmParams* params) {
-    return (0.5f * (((sinf((2.0f * params->x)) + sinf(((4.6f * params->x) + params->rand_offset))) + (params->modA * sinf(((7.85f * params->x) - (params->rand_offset * 2.0f))))) + ((0.5f * params->modB) * sinf((3.0f * params->x)))));
+    return (0.5f * fmaf((0.5f * params->modB), sinf((3.0f * params->x)), fmaf(params->modA, sinf(fmaf(7.85f, params->x, (-(params->rand_offset * 2.0f)))), (sinf((2.0f * params->x)) + sinf(fmaf(4.6f, params->x, params->rand_offset))))));
 }
 
 static float px_wave_native_98(VmParams* params) {
-    return (0.3f * (((((sinf(params->x) + (0.8f * sinf(((2.0f * params->x) + (0.3f * params->modA))))) + (0.6f * sinf((3.0f * params->x)))) + (0.5f * sinf(((4.0f * params->x) + (3.14159265358979323846f * params->modB))))) + (0.4f * sinf((5.0f * params->x)))) + (0.3f * sinf((6.0f * params->x)))));
+    return (0.3f * fmaf(0.3f, sinf((6.0f * params->x)), fmaf(0.4f, sinf((5.0f * params->x)), fmaf(0.5f, sinf(fmaf(4.0f, params->x, (3.14159265358979323846f * params->modB))), fmaf(0.6f, sinf((3.0f * params->x)), fmaf(0.8f, sinf(fmaf(2.0f, params->x, (0.3f * params->modA))), sinf(params->x)))))));
 }
 
 static float px_wave_native_99(VmParams* params) {
-    return (0.5f * (((((sinf(params->x) + (sinf((2.0f * params->x)) / 2.0f)) + (((0.5f + (0.3f * params->modA)) * sinf((3.0f * params->x))) / 3.0f)) + (sinf(((4.0f * params->x) + (3.14159265358979323846f * params->modB))) / 4.0f)) + (sinf((5.0f * params->x)) / 5.0f)) + (sinf((6.0f * params->x)) / 6.0f)));
+    return (0.5f * (((((sinf(params->x) + (sinf((2.0f * params->x)) / 2.0f)) + ((fmaf(0.3f, params->modA, 0.5f) * sinf((3.0f * params->x))) / 3.0f)) + (sinf(fmaf(4.0f, params->x, (3.14159265358979323846f * params->modB))) / 4.0f)) + (sinf((5.0f * params->x)) / 5.0f)) + (sinf((6.0f * params->x)) / 6.0f)));
 }
 
 static float px_wave_native_100(VmParams* params) {
-    return (0.8f * (((sinf(params->x) + (sinf((3.0f * params->x)) / 3.0f)) + ((params->modA * sinf(((5.0f * params->x) + (3.14159265358979323846f * params->modB)))) / 5.0f)) + (sinf((7.0f * params->x)) / 7.0f)));
+    return (0.8f * (((sinf(params->x) + (sinf((3.0f * params->x)) / 3.0f)) + ((params->modA * sinf(fmaf(5.0f, params->x, (3.14159265358979323846f * params->modB)))) / 5.0f)) + (sinf((7.0f * params->x)) / 7.0f)));
 }
 
 static float px_wave_native_101(VmParams* params) {
-    return (0.6f * (((sinf(params->x) + (0.5f * sinf((((3.0f * params->x) + (0.3f * params->modA)) + (3.14159265358979323846f * params->modB))))) + (0.25f * sinf((5.0f * params->x)))) + (0.125f * sinf((7.0f * params->x)))));
+    return (0.6f * fmaf(0.125f, sinf((7.0f * params->x)), fmaf(0.25f, sinf((5.0f * params->x)), fmaf(0.5f, sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(3.0f, params->x, (0.3f * params->modA)))), sinf(params->x)))));
 }
 
 static float px_wave_native_102(VmParams* params) {
-    return (0.7f * (((sinf(params->x) + ((0.5f + (0.25f * params->modA)) * sinf(((2.0f * params->x) + (3.14159265358979323846f * params->modB))))) + (0.25f * sinf((3.0f * params->x)))) + (0.125f * sinf((4.0f * params->x)))));
+    return (0.7f * fmaf(0.125f, sinf((4.0f * params->x)), fmaf(0.25f, sinf((3.0f * params->x)), fmaf(fmaf(0.25f, params->modA, 0.5f), sinf(fmaf(2.0f, params->x, (3.14159265358979323846f * params->modB))), sinf(params->x)))));
 }
 
 static float px_wave_native_103(VmParams* params) {
@@ -436,7 +436,7 @@ static float px_wave_native_103(VmParams* params) {
     float sigma_0 = 0.0f;
     {
         float _start = 1.0f;
-        float _end = (1.0f + (8.0f * fabsf(params->modA)));
+        float _end = fmaf(8.0f, fabsf(params->modA), 1.0f);
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
@@ -452,11 +452,11 @@ static float px_wave_native_104(VmParams* params) {
     float sigma_0 = 0.0f;
     {
         float _start = 1.0f;
-        float _end = (2.0f + (6.0f * fabsf(params->modB)));
+        float _end = fmaf(6.0f, fabsf(params->modB), 2.0f);
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += (sinf(((params->x * k) + (((params->modA * params->rand_offset) * k) * 3.14159265358979323846f))) / k);
+            sigma_0 += (sinf(fmaf(params->x, k, (((params->modA * params->rand_offset) * k) * 3.14159265358979323846f))) / k);
         }
     }
 
@@ -468,7 +468,7 @@ static float px_wave_native_105(VmParams* params) {
     float sigma_0 = 0.0f;
     {
         float _start = 1.0f;
-        float _end = (3.0f + (4.0f * fabsf(params->modB)));
+        float _end = fmaf(4.0f, fabsf(params->modB), 3.0f);
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
@@ -476,43 +476,43 @@ static float px_wave_native_105(VmParams* params) {
         }
     }
 
-    return (vm_fast_tanh((sigma_0 * (1.0f + (fabsf(params->modA) * 2.0f)))) * 0.8f);
+    return (vm_fast_tanh((sigma_0 * fmaf(fabsf(params->modA), 2.0f, 1.0f))) * 0.8f);
 }
 
 static float px_wave_native_106(VmParams* params) {
-    return ((((sinf(params->x) + (sinf((((params->x * 1.189207f) * (1.0f + (params->modA * 0.005f))) + (params->rand_offset * 0.05f))) * 0.8f)) + (sinf((((params->x * 1.498307f) * (1.0f - (params->modA * 0.004f))) + (params->rand_offset * 0.07f))) * 0.7f)) * (0.33f / (1.0f + fabsf((params->modB * 0.5f))))) + ((fabsf(((params->modB > 0.5f) ? 1.0f : 0.0f)) > 1e-6f) ? ((sinf((params->x * 1.781797f)) * 0.2f)) : (0.0f)));
+    return fmaf(fmaf(sinf(fmaf((params->x * 1.498307f), (1.0f - (params->modA * 0.004f)), (params->rand_offset * 0.07f))), 0.7f, fmaf(sinf(fmaf((params->x * 1.189207f), fmaf(params->modA, 0.005f, 1.0f), (params->rand_offset * 0.05f))), 0.8f, sinf(params->x))), (0.33f / (1.0f + fabsf((params->modB * 0.5f)))), ((fabsf(((params->modB > 0.5f) ? 1.0f : 0.0f)) > 1e-6f) ? ((sinf((params->x * 1.781797f)) * 0.2f)) : (0.0f)));
 }
 
 static float px_wave_native_107(VmParams* params) {
-    return (((sinf(params->x) + (0.5f * sinf((params->x * 2.0f)))) + (0.25f * sinf((params->x * 3.0f)))) + (0.125f * sinf((params->x * 4.0f))));
+    return fmaf(0.125f, sinf((params->x * 4.0f)), fmaf(0.25f, sinf((params->x * 3.0f)), fmaf(0.5f, sinf((params->x * 2.0f)), sinf(params->x))));
 }
 
 static float px_wave_native_108(VmParams* params) {
-    return (((sinf(params->x) + (0.3f * sinf((params->x * 3.0f)))) + (0.2f * sinf((params->x * 5.0f)))) + (0.1f * sinf((params->x * 7.0f))));
+    return fmaf(0.1f, sinf((params->x * 7.0f)), fmaf(0.2f, sinf((params->x * 5.0f)), fmaf(0.3f, sinf((params->x * 3.0f)), sinf(params->x))));
 }
 
 static float px_wave_native_109(VmParams* params) {
-    return ((sinf(params->x) + (0.5f * sinf((params->x * 2.5f)))) + (0.3f * sinf((params->x * 4.2f))));
+    return fmaf(0.3f, sinf((params->x * 4.2f)), fmaf(0.5f, sinf((params->x * 2.5f)), sinf(params->x)));
 }
 
 static float px_wave_native_110(VmParams* params) {
-    return (((sinf(params->x) + (0.5f * sinf((params->x * 2.0f)))) + (0.2f * sinf((params->x * 4.0f)))) + (0.1f * sinf((params->x * 8.0f))));
+    return fmaf(0.1f, sinf((params->x * 8.0f)), fmaf(0.2f, sinf((params->x * 4.0f)), fmaf(0.5f, sinf((params->x * 2.0f)), sinf(params->x))));
 }
 
 static float px_wave_native_111(VmParams* params) {
-    return ((sinf(params->x) + sinf(((params->x * 2.0f) + params->modA))) + sinf(((params->x * 3.0f) + params->modB)));
+    return ((sinf(params->x) + sinf(fmaf(params->x, 2.0f, params->modA))) + sinf(fmaf(params->x, 3.0f, params->modB)));
 }
 
 static float px_wave_native_112(VmParams* params) {
-    return (0.33f * ((sinf((2.0f * params->x)) + sinf(((3.0f * params->x) + (0.4f * params->modA)))) + sinf(((5.0f * params->x) + (3.14159265358979323846f * params->modB)))));
+    return (0.33f * ((sinf((2.0f * params->x)) + sinf(fmaf(3.0f, params->x, (0.4f * params->modA)))) + sinf(fmaf(5.0f, params->x, (3.14159265358979323846f * params->modB)))));
 }
 
 static float px_wave_native_113(VmParams* params) {
-    return (0.35f * (((((0.6f * sinf(params->x)) + (0.8f * sinf((2.0f * params->x)))) + sinf((3.0f * params->x))) + (0.9f * sinf((((5.0f * params->x) + (0.3f * params->modA)) + (3.14159265358979323846f * params->modB))))) + (0.2f * sinf((10.0f * params->x)))));
+    return (0.35f * fmaf(0.2f, sinf((10.0f * params->x)), fmaf(0.9f, sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(5.0f, params->x, (0.3f * params->modA)))), (fmaf(0.6f, sinf(params->x), (0.8f * sinf((2.0f * params->x)))) + sinf((3.0f * params->x))))));
 }
 
 static float px_wave_native_114(VmParams* params) {
-    return (((((params->x / 3.14159265358979323846f) - 1.0f) + (0.7f * sinf((params->x * (2.0f + (fabsf(params->modA) * 5.0f)))))) * 0.4f) * (1.0f + vm_fast_tanh((3.0f * (params->modB - (cosf(params->x) * (1.0f - (params->frequency / 1500.0f))))))));
+    return ((fmaf(0.7f, sinf((params->x * fmaf(fabsf(params->modA), 5.0f, 2.0f))), ((params->x / 3.14159265358979323846f) - 1.0f)) * 0.4f) * (1.0f + vm_fast_tanh((3.0f * (params->modB - (cosf(params->x) * (1.0f - (params->frequency / 1500.0f))))))));
 }
 
 static float px_wave_native_115(VmParams* params) {
@@ -528,27 +528,27 @@ static float px_wave_native_115(VmParams* params) {
         }
     }
 
-    return ((0.4f * sigma_0) * (1.0f + (0.1f * (params->frequency / 1000.0f))));
+    return ((0.4f * sigma_0) * fmaf(0.1f, (params->frequency / 1000.0f), 1.0f));
 }
 
 static float px_wave_native_116(VmParams* params) {
-    return (((fabsf(((sinf((params->x * (1.0f + (5.0f * fabsf(params->modA))))) > (params->modB * 0.9f)) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) * 0.6f);
+    return (((fabsf(((sinf((params->x * fmaf(5.0f, fabsf(params->modA), 1.0f))) > (params->modB * 0.9f)) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) * 0.6f);
 }
 
 static float px_wave_native_117(VmParams* params) {
-    return ((((fabsf(((sinf((params->x * (1.0f + (5.0f * fabsf(params->modA))))) > (params->modB * 0.9f)) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) * 0.6f) + (cosf(params->x) * 0.3f));
+    return fmaf(((fabsf(((sinf((params->x * fmaf(5.0f, fabsf(params->modA), 1.0f))) > (params->modB * 0.9f)) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))), 0.6f, (cosf(params->x) * 0.3f));
 }
 
 static float px_wave_native_118(VmParams* params) {
-    return ((vm_fast_tanh((10.0f * (sinf((params->x * (1.0f + (5.0f * fabsf(params->modA))))) - (params->modB * 0.9f)))) * 0.7f) + (((params->x / 3.14159265358979323846f) - 1.0f) * 0.2f));
+    return fmaf(vm_fast_tanh((10.0f * (sinf((params->x * fmaf(5.0f, fabsf(params->modA), 1.0f))) - (params->modB * 0.9f)))), 0.7f, (((params->x / 3.14159265358979323846f) - 1.0f) * 0.2f));
 }
 
 static float px_wave_native_119(VmParams* params) {
-    return ((((fabsf(((sinf((params->x * (1.0f + (2.5f * fabsf(params->modA))))) > (params->modB * 0.9f)) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) * 0.6f) + (((params->x / 3.14159265358979323846f) - 1.0f) * 0.3f));
+    return fmaf(((fabsf(((sinf((params->x * fmaf(2.5f, fabsf(params->modA), 1.0f))) > (params->modB * 0.9f)) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))), 0.6f, (((params->x / 3.14159265358979323846f) - 1.0f) * 0.3f));
 }
 
 static float px_wave_native_120(VmParams* params) {
-    return ((((fabsf(((sinf((params->x * (1.0f + (5.0f * fabsf(params->modA))))) > (params->modB * 0.9f)) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) * 0.6f) + (((params->x / 3.14159265358979323846f) - 1.0f) * 0.3f));
+    return fmaf(((fabsf(((sinf((params->x * fmaf(5.0f, fabsf(params->modA), 1.0f))) > (params->modB * 0.9f)) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))), 0.6f, (((params->x / 3.14159265358979323846f) - 1.0f) * 0.3f));
 }
 
 static float px_wave_native_121(VmParams* params) {
@@ -556,15 +556,15 @@ static float px_wave_native_121(VmParams* params) {
     float sigma_0 = 0.0f;
     {
         float _start = 1.0f;
-        float _end = (8.0f + (4.0f * fabsf(params->modB)));
+        float _end = fmaf(4.0f, fabsf(params->modB), 8.0f);
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += ((sinf(((params->x * k) + ((params->rand_offset * 0.1f) * k))) * ((1.0f / (1.0f + powf(((k - (2.5f + (params->modA * 1.5f))) / (0.8f + fabsf((params->modA * 0.3f)))), 2.0f))) + (0.7f / (1.0f + powf(((k - ((fabsf(((fabsf(((params->modA > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modB > 0.3f) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? ((6.0f - (params->modA * 2.0f))) : ((5.0f + (params->modA * 1.0f))))) / 1.2f), 2.0f))))) / powf(k, (0.7f + (0.2f * fabsf(params->modB)))));
+            sigma_0 += ((sinf(fmaf(params->x, k, ((params->rand_offset * 0.1f) * k))) * ((1.0f / (1.0f + powf(((k - fmaf(params->modA, 1.5f, 2.5f)) / (0.8f + fabsf((params->modA * 0.3f)))), 2.0f))) + (0.7f / (1.0f + powf(((k - ((fabsf(((fabsf(((params->modA > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modB > 0.3f) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? ((6.0f - (params->modA * 2.0f))) : (fmaf(params->modA, 1.0f, 5.0f)))) / 1.2f), 2.0f))))) / powf(k, fmaf(0.2f, fabsf(params->modB), 0.7f)));
         }
     }
 
-    return ((sigma_0 * 0.25f) * (1.0f + (0.15f * sinf(((params->x * 6.0f) + (params->rand_offset * 3.14159265358979323846f))))));
+    return ((sigma_0 * 0.25f) * fmaf(0.15f, sinf(fmaf(params->x, 6.0f, (params->rand_offset * 3.14159265358979323846f))), 1.0f));
 }
 
 static float px_wave_native_122(VmParams* params) {
@@ -572,15 +572,15 @@ static float px_wave_native_122(VmParams* params) {
 }
 
 static float px_wave_native_123(VmParams* params) {
-    return (sinf((params->x * (1.0f + (params->modA * 3.0f)))) * (1.0f - (params->x / (2.0f * 3.14159265358979323846f))));
+    return (sinf((params->x * fmaf(params->modA, 3.0f, 1.0f))) * (1.0f - (params->x / (2.0f * 3.14159265358979323846f))));
 }
 
 static float px_wave_native_124(VmParams* params) {
-    return sinf((params->x + (sinf(((params->x * 3.0f) + (sinf((params->x * 9.0f)) * params->modA))) * params->modB)));
+    return sinf(fmaf(sinf(fmaf(params->x, 3.0f, (sinf((params->x * 9.0f)) * params->modA))), params->modB, params->x));
 }
 
 static float px_wave_native_125(VmParams* params) {
-    return (sinf(((params->x * (1.0f + ((sinf(((params->x * 0.2f) + (params->rand_offset * (2.0f * 3.14159265358979323846f)))) * 0.005f) * fabsf(params->modB)))) + ((sinf((params->x * 2.95f)) + ((((vm_rand(params) * 2.0f) - 1.0f) * fabsf(params->modA)) * 0.7f)) * 1.2f))) * 0.8f);
+    return (sinf(fmaf(params->x, fmaf((sinf(fmaf(params->x, 0.2f, (params->rand_offset * (2.0f * 3.14159265358979323846f)))) * 0.005f), fabsf(params->modB), 1.0f), (fmaf((fmaf(vm_rand(params), 2.0f, (-1.0f)) * fabsf(params->modA)), 0.7f, sinf((params->x * 2.95f))) * 1.2f))) * 0.8f);
 }
 
 static float px_wave_native_126(VmParams* params) {
@@ -616,39 +616,39 @@ static float px_wave_native_127(VmParams* params) {
 }
 
 static float px_wave_native_128(VmParams* params) {
-    return (0.6f * ((sinf((params->x + (0.3f * params->modA))) + (0.4f * sinf((2.0f * params->x)))) + (0.2f * sinf(((3.0f * params->x) + (3.14159265358979323846f * params->modB))))));
+    return (0.6f * fmaf(0.2f, sinf(fmaf(3.0f, params->x, (3.14159265358979323846f * params->modB))), fmaf(0.4f, sinf((2.0f * params->x)), sinf(fmaf(0.3f, params->modA, params->x)))));
 }
 
 static float px_wave_native_129(VmParams* params) {
-    return (fminf(1.0f, fmaxf((-1.0f), ((sinf((((5.0f * params->x) + (0.5f * params->modA)) + (3.14159265358979323846f * params->modB))) + sinf((7.5f * params->x))) * 2.0f))) * (1.0f - (params->x / ((2.0f * 3.14159265358979323846f) * 1.27f))));
+    return (fminf(1.0f, fmaxf((-1.0f), ((sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(5.0f, params->x, (0.5f * params->modA)))) + sinf((7.5f * params->x))) * 2.0f))) * (1.0f - (params->x / ((2.0f * 3.14159265358979323846f) * 1.27f))));
 }
 
 static float px_wave_native_130(VmParams* params) {
-    return (fminf(1.0f, fmaxf((-1.0f), (((sinf((4.0f * params->x)) + sinf((((6.0f * params->x) + (0.4f * params->modA)) + (3.14159265358979323846f * params->modB)))) + sinf((8.0f * params->x))) * 1.5f))) * (1.0f - (params->x / ((2.0f * 3.14159265358979323846f) * 1.6f))));
+    return (fminf(1.0f, fmaxf((-1.0f), (((sinf((4.0f * params->x)) + sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(6.0f, params->x, (0.4f * params->modA))))) + sinf((8.0f * params->x))) * 1.5f))) * (1.0f - (params->x / ((2.0f * 3.14159265358979323846f) * 1.6f))));
 }
 
 static float px_wave_native_131(VmParams* params) {
-    return (0.7f * ((sinf(((params->x + (0.3f * params->modA)) + (3.14159265358979323846f * params->modB))) + (0.3f * sinf((2.0f * params->x)))) + (0.1f * sinf((3.0f * params->x)))));
+    return (0.7f * fmaf(0.1f, sinf((3.0f * params->x)), fmaf(0.3f, sinf((2.0f * params->x)), sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(0.3f, params->modA, params->x))))));
 }
 
 static float px_wave_native_132(VmParams* params) {
-    return (0.25f * (((sinf(params->x) + sinf((1.57f * params->x))) + sinf((2.25f * params->x))) + (params->modA * sinf(((3.14f * params->x) + (3.14159265358979323846f * params->modB))))));
+    return (0.25f * fmaf(params->modA, sinf(fmaf(3.14f, params->x, (3.14159265358979323846f * params->modB))), ((sinf(params->x) + sinf((1.57f * params->x))) + sinf((2.25f * params->x)))));
 }
 
 static float px_wave_native_133(VmParams* params) {
-    return fmaxf((-1.0f), (((0.7f * (sinf(params->x) + (0.8f * sinf(((1.1f * params->x) + params->rand_offset))))) * (1.0f - (params->x / (2.0f * 3.14159265358979323846f)))) + (0.5f * (sinf((2.0f * params->x)) + (params->modA * sinf((((2.2f * params->x) + params->rand_offset) + (3.14159265358979323846f * params->modB))))))));
+    return fmaxf((-1.0f), fmaf((0.7f * fmaf(0.8f, sinf(fmaf(1.1f, params->x, params->rand_offset)), sinf(params->x))), (1.0f - (params->x / (2.0f * 3.14159265358979323846f))), (0.5f * fmaf(params->modA, sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(2.2f, params->x, params->rand_offset))), sinf((2.0f * params->x))))));
 }
 
 static float px_wave_native_134(VmParams* params) {
-    return (0.25f * (((sinf(params->x) + sinf((((1.25f * params->x) + (0.5f * params->modA)) + (3.14159265358979323846f * params->modB)))) + sinf((1.85f * params->x))) + sinf((2.1f * params->x))));
+    return (0.25f * (((sinf(params->x) + sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(1.25f, params->x, (0.5f * params->modA))))) + sinf((1.85f * params->x))) + sinf((2.1f * params->x))));
 }
 
 static float px_wave_native_135(VmParams* params) {
-    return (0.5f * (((sinf((params->x + (3.14159265358979323846f * params->modB))) + (0.5f * sinf(((1.05f * params->x) + (0.4f * params->modA))))) + (0.3f * sinf((1.6f * params->x)))) + (0.2f * sinf((2.15f * params->x)))));
+    return (0.5f * fmaf(0.2f, sinf((2.15f * params->x)), fmaf(0.3f, sinf((1.6f * params->x)), fmaf(0.5f, sinf(fmaf(1.05f, params->x, (0.4f * params->modA))), sinf(fmaf(3.14159265358979323846f, params->modB, params->x))))));
 }
 
 static float px_wave_native_136(VmParams* params) {
-    return (0.25f * (((sinf(params->x) + sinf((1.5f * params->x))) + (params->modA * sinf(((2.5f * params->x) + (3.14159265358979323846f * params->modB))))) + sinf((3.5f * params->x))));
+    return (0.25f * (fmaf(params->modA, sinf(fmaf(2.5f, params->x, (3.14159265358979323846f * params->modB))), (sinf(params->x) + sinf((1.5f * params->x)))) + sinf((3.5f * params->x))));
 }
 
 static float px_wave_native_137(VmParams* params) {
@@ -660,23 +660,23 @@ static float px_wave_native_137(VmParams* params) {
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += (sinf(((params->x * k) * (1.0f + ((0.2f * k) * fabsf(params->modB))))) / (k + 1.0f));
+            sigma_0 += (sinf(((params->x * k) * fmaf((0.2f * k), fabsf(params->modB), 1.0f))) / (k + 1.0f));
         }
     }
 
-    return ((sigma_0 * expf(((((-params->x) * 2.0f) * (1.0f + (fabsf(params->modA) * 4.0f))) / (1.0f + (params->frequency / 300.0f))))) * 0.7f);
+    return ((sigma_0 * expf(((((-params->x) * 2.0f) * fmaf(fabsf(params->modA), 4.0f, 1.0f)) / (1.0f + (params->frequency / 300.0f))))) * 0.7f);
 }
 
 static float px_wave_native_138(VmParams* params) {
-    return (((((fmodf((((params->x * params->frequency) * (15.0f + (params->modA * 10.0f))) * (1.0f + (params->rand_offset * 0.1f))), (1.0f + (fabsf(params->modB) * 0.3f))) - 0.5f) * (0.6f + (0.4f * ((fabsf(((fabsf(((params->modA > 0.1f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modB > 0.1f) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? (sinf((((params->x * params->frequency) * (23.0f - (params->modA * 5.0f))) * (1.0f - (params->rand_offset * 0.05f))))) : (cosf(((params->x * params->frequency) * (7.0f + (params->modB * 3.0f))))))))) + ((fabsf(((params->modB < (-0.2f)) ? 1.0f : 0.0f)) > 1e-6f) ? (((fmodf(((params->x * params->frequency) * (37.0f + (params->modA * 3.0f))), 0.8f) - 0.4f) * 0.3f)) : (0.0f))) * 0.55f) * (1.0f - (fabsf(params->modA) * 0.1f)));
+    return ((fmaf((fmodf((((params->x * params->frequency) * fmaf(params->modA, 10.0f, 15.0f)) * fmaf(params->rand_offset, 0.1f, 1.0f)), fmaf(fabsf(params->modB), 0.3f, 1.0f)) - 0.5f), fmaf(0.4f, ((fabsf(((fabsf(((params->modA > 0.1f) ? 1.0f : 0.0f)) > 1e-6f) != (fabsf(((params->modB > 0.1f) ? 1.0f : 0.0f)) > 1e-6f) ? 1.0f : 0.0f)) > 1e-6f) ? (sinf((((params->x * params->frequency) * (23.0f - (params->modA * 5.0f))) * (1.0f - (params->rand_offset * 0.05f))))) : (cosf(((params->x * params->frequency) * fmaf(params->modB, 3.0f, 7.0f))))), 0.6f), ((fabsf(((params->modB < (-0.2f)) ? 1.0f : 0.0f)) > 1e-6f) ? (((fmodf(((params->x * params->frequency) * fmaf(params->modA, 3.0f, 37.0f)), 0.8f) - 0.4f) * 0.3f)) : (0.0f))) * 0.55f) * (1.0f - (fabsf(params->modA) * 0.1f)));
 }
 
 static float px_wave_native_139(VmParams* params) {
-    return (((floorf((fmodf(((params->x * params->frequency) * (8.0f + (params->modA * 24.0f))), ((1.0f + (fabsf(params->modA) * 0.7f)) + ((params->rand_offset * 0.1f) * ((fabsf(((params->modA < 0.1f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.0f))))) * (2.5f + (fabsf(params->modB) * 1.5f)))) / (2.0f + (fabsf(params->modB) * 1.0f))) * (1.0f + ((params->modB * 0.15f) * sinf(((params->x * params->frequency) * (31.0f + (params->modA * 5.0f))))))) * 0.7f);
+    return (((floorf((fmodf(((params->x * params->frequency) * fmaf(params->modA, 24.0f, 8.0f)), fmaf((params->rand_offset * 0.1f), ((fabsf(((params->modA < 0.1f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.0f)), fmaf(fabsf(params->modA), 0.7f, 1.0f))) * fmaf(fabsf(params->modB), 1.5f, 2.5f))) / fmaf(fabsf(params->modB), 1.0f, 2.0f)) * fmaf((params->modB * 0.15f), sinf(((params->x * params->frequency) * fmaf(params->modA, 5.0f, 31.0f))), 1.0f)) * 0.7f);
 }
 
 static float px_wave_native_140(VmParams* params) {
-    return ((((((vm_rand(params) * 2.0f) - 1.0f) * 0.4f) + ((((vm_rand(params) * 2.0f) - 1.0f) * sinf(((params->x * 0.1f) + (params->rand_offset * (2.0f * 3.14159265358979323846f))))) * 0.3f)) + ((((vm_rand(params) * 2.0f) - 1.0f) * sinf(((params->x * 0.5f) + ((params->rand_offset * (2.0f * 3.14159265358979323846f)) * 0.5f)))) * 0.2f)) * (1.0f + (params->modA * 0.5f)));
+    return (fmaf((fmaf(vm_rand(params), 2.0f, (-1.0f)) * sinf(fmaf(params->x, 0.5f, ((params->rand_offset * (2.0f * 3.14159265358979323846f)) * 0.5f)))), 0.2f, fmaf(fmaf(vm_rand(params), 2.0f, (-1.0f)), 0.4f, ((fmaf(vm_rand(params), 2.0f, (-1.0f)) * sinf(fmaf(params->x, 0.1f, (params->rand_offset * (2.0f * 3.14159265358979323846f))))) * 0.3f))) * fmaf(params->modA, 0.5f, 1.0f));
 }
 
 static float px_wave_native_141(VmParams* params) {
@@ -688,19 +688,19 @@ static float px_wave_native_141(VmParams* params) {
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += (((vm_rand(params) * 2.0f) - 1.0f) * powf((0.6f + (params->modA * 0.35f)), k));
+            sigma_0 += (fmaf(vm_rand(params), 2.0f, (-1.0f)) * powf(fmaf(params->modA, 0.35f, 0.6f), k));
         }
     }
 
-    return ((sigma_0 * 0.125f) + (((((vm_rand(params) * 2.0f) - 1.0f) * sinf(((params->x * (100.0f + (params->modB * 900.0f))) / (params->frequency + 0.01f)))) * params->modB) * 0.2f));
+    return fmaf(sigma_0, 0.125f, (((fmaf(vm_rand(params), 2.0f, (-1.0f)) * sinf(((params->x * fmaf(params->modB, 900.0f, 100.0f)) / (params->frequency + 0.01f)))) * params->modB) * 0.2f));
 }
 
 static float px_wave_native_142(VmParams* params) {
-    return (0.7f * (((sinf((params->x + (0.2f * params->modA))) + (0.5f * sinf((2.0f * params->x)))) + (0.25f * sinf(((3.0f * params->x) + (3.14159265358979323846f * params->modB))))) + (0.125f * sinf((4.0f * params->x)))));
+    return (0.7f * fmaf(0.125f, sinf((4.0f * params->x)), fmaf(0.25f, sinf(fmaf(3.0f, params->x, (3.14159265358979323846f * params->modB))), fmaf(0.5f, sinf((2.0f * params->x)), sinf(fmaf(0.2f, params->modA, params->x))))));
 }
 
 static float px_wave_native_143(VmParams* params) {
-    return (((vm_lfsr_clock(params, 4, 0.8f) * sinf(((params->x * (1.0f + (vm_lfsr_noise(params, 8, 32.0f) * 2.0f))) + (vm_lfsr_val(params, 12, (params->x / 3.14159265358979323846f), params->modA) * 3.14159265358979323846f)))) * expf(((-params->x) * (2.0f + (params->modB * 8.0f))))) + ((vm_lfsr_clock(params, 0, 0.5f) * 0.3f) * expf(((-params->x) * 12.0f))));
+    return fmaf((vm_lfsr_clock(params, 4, 0.8f) * sinf(fmaf(params->x, fmaf(vm_lfsr_noise(params, 8, 32.0f), 2.0f, 1.0f), (vm_lfsr_val(params, 12, (params->x / 3.14159265358979323846f), params->modA) * 3.14159265358979323846f)))), expf(((-params->x) * fmaf(params->modB, 8.0f, 2.0f))), ((vm_lfsr_clock(params, 0, 0.5f) * 0.3f) * expf(((-params->x) * 12.0f))));
 }
 
 static float px_wave_native_144(VmParams* params) {
@@ -708,7 +708,7 @@ static float px_wave_native_144(VmParams* params) {
     float sigma_0 = 0.0f;
     {
         float _start = 1.0f;
-        float _end = (3.0f + (4.0f * fabsf(params->modB)));
+        float _end = fmaf(4.0f, fabsf(params->modB), 3.0f);
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
@@ -724,11 +724,11 @@ static float px_wave_native_145(VmParams* params) {
     float sigma_0 = 0.0f;
     {
         float _start = 1.0f;
-        float _end = (1.0f + (fabsf(params->modA) * 5.0f));
+        float _end = fmaf(fabsf(params->modA), 5.0f, 1.0f);
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += (sinf((params->x * k)) / (powf(k, (1.0f + (fabsf(params->modB) * 2.0f))) + 0.1f));
+            sigma_0 += (sinf((params->x * k)) / (powf(k, fmaf(fabsf(params->modB), 2.0f, 1.0f)) + 0.1f));
         }
     }
 
@@ -748,7 +748,7 @@ static float px_wave_native_146(VmParams* params) {
         }
     }
 
-    return ((((sigma_0 * (1.0f - fabsf(params->modA))) + (((vm_rand(params) - 0.5f) * 1.5f) * fabsf(params->modA))) * (0.5f + (0.5f * vm_fast_tanh((3.0f * (1.0f - (fabsf(params->modB) * (1.0f - (params->frequency / 1000.0f))))))))) * 0.6f);
+    return ((fmaf(sigma_0, (1.0f - fabsf(params->modA)), (((vm_rand(params) - 0.5f) * 1.5f) * fabsf(params->modA))) * fmaf(0.5f, vm_fast_tanh((3.0f * (1.0f - (fabsf(params->modB) * (1.0f - (params->frequency / 1000.0f)))))), 0.5f)) * 0.6f);
 }
 
 static float px_wave_native_147(VmParams* params) {
@@ -756,15 +756,15 @@ static float px_wave_native_147(VmParams* params) {
     float sigma_0 = 0.0f;
     {
         float _start = 1.0f;
-        float _end = (5.0f + (3.0f * fabsf(params->modB)));
+        float _end = fmaf(3.0f, fabsf(params->modB), 5.0f);
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += (((sinf(((params->x * k) + (((params->modA * 0.02f) * k) * params->rand_offset))) + sinf((((params->x * k) * (1.0f + (params->modA * 0.005f))) + (((params->modA * 0.03f) * k) * (k * 0.1f))))) + sinf((((params->x * k) * (1.0f - (params->modA * 0.005f))) - (((params->modA * 0.025f) * k) * (k * 0.13f))))) / powf(k, (1.1f + (0.3f * fabsf(params->modB)))));
+            sigma_0 += (((sinf(fmaf(params->x, k, (((params->modA * 0.02f) * k) * params->rand_offset))) + sinf(fmaf((params->x * k), fmaf(params->modA, 0.005f, 1.0f), (((params->modA * 0.03f) * k) * (k * 0.1f))))) + sinf(fmaf((params->x * k), (1.0f - (params->modA * 0.005f)), (-(((params->modA * 0.025f) * k) * (k * 0.13f)))))) / powf(k, fmaf(0.3f, fabsf(params->modB), 1.1f)));
         }
     }
 
-    return ((sigma_0 * 0.15f) * (1.0f + (0.2f * sinf(((params->x * 0.5f) + (3.14159265358979323846f / 2.0f))))));
+    return ((sigma_0 * 0.15f) * fmaf(0.2f, sinf(fmaf(params->x, 0.5f, (3.14159265358979323846f / 2.0f))), 1.0f));
 }
 
 static float px_wave_native_148(VmParams* params) {
@@ -772,15 +772,15 @@ static float px_wave_native_148(VmParams* params) {
     float sigma_0 = 0.0f;
     {
         float _start = 1.0f;
-        float _end = (4.0f + (2.0f * fabsf(params->modA)));
+        float _end = fmaf(2.0f, fabsf(params->modA), 4.0f);
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += ((sinf(((params->x * k) + ((params->modB * 0.02f) * sinf((params->x * 7.0f))))) * ((1.0f - (0.2f * k)) + (fabsf(params->modA) * ((0.1f * k) - 0.05f)))) / powf(k, (0.8f + (0.4f * (1.0f - fabsf(params->modA))))));
+            sigma_0 += ((sinf(fmaf(params->x, k, ((params->modB * 0.02f) * sinf((params->x * 7.0f))))) * fmaf(fabsf(params->modA), fmaf(0.1f, k, (-0.05f)), (1.0f - (0.2f * k)))) / powf(k, fmaf(0.4f, (1.0f - fabsf(params->modA)), 0.8f)));
         }
     }
 
-    return (vm_fast_tanh((sigma_0 * (0.6f + (0.3f * fabsf(params->modA))))) * 0.85f);
+    return (vm_fast_tanh((sigma_0 * fmaf(0.3f, fabsf(params->modA), 0.6f))) * 0.85f);
 }
 
 static float px_wave_native_149(VmParams* params) {
@@ -788,19 +788,19 @@ static float px_wave_native_149(VmParams* params) {
     float sigma_0 = 0.0f;
     {
         float _start = 1.0f;
-        float _end = (4.0f + (fabsf(params->modA) * 4.0f));
+        float _end = fmaf(fabsf(params->modA), 4.0f, 4.0f);
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += (sinf((((params->x * params->frequency) * (k + (((params->modB * 0.05f) * (k - 1.0f)) * ((fabsf(((fmodf(k, 2.0f) == 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (1.0f))))) + (((params->rand_offset * 0.2f) * k) * ((fabsf(((fmodf(k, 3.0f) == 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (0.5f) : (0.1f))))) * ((1.0f / (k + (fabsf(params->modB) * 0.5f))) * (0.8f + ((params->rand_offset * 0.2f) * params->modA))));
+            sigma_0 += (sinf(fmaf((params->x * params->frequency), fmaf(((params->modB * 0.05f) * (k - 1.0f)), ((fabsf(((fmodf(k, 2.0f) == 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (1.0f)), k), (((params->rand_offset * 0.2f) * k) * ((fabsf(((fmodf(k, 3.0f) == 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (0.5f) : (0.1f))))) * ((1.0f / fmaf(fabsf(params->modB), 0.5f, k)) * fmaf((params->rand_offset * 0.2f), params->modA, 0.8f)));
         }
     }
 
-    return (sigma_0 * (0.6f / (1.0f + (fabsf(params->modA) * 0.5f))));
+    return (sigma_0 * (0.6f / fmaf(fabsf(params->modA), 0.5f, 1.0f)));
 }
 
 static float px_wave_native_150(VmParams* params) {
-    return (((sinf((params->x + (vm_lfsr_noise(params, 8, (8.0f + (params->modA * 16.0f))) * (0.5f + (params->modB * 1.5f))))) * vm_lfsr_clock(params, 4, (0.3f + (params->modA * 0.4f)))) + (vm_lfsr_val(params, 12, ((params->x / (2.0f * 3.14159265358979323846f)) + params->rand_offset), (params->modB * 0.5f)) * 0.3f)) - 0.15f);
+    return (fmaf(sinf(fmaf(vm_lfsr_noise(params, 8, fmaf(params->modA, 16.0f, 8.0f)), fmaf(params->modB, 1.5f, 0.5f), params->x)), vm_lfsr_clock(params, 4, fmaf(params->modA, 0.4f, 0.3f)), (vm_lfsr_val(params, 12, ((params->x / (2.0f * 3.14159265358979323846f)) + params->rand_offset), (params->modB * 0.5f)) * 0.3f)) - 0.15f);
 }
 
 static float px_wave_native_151(VmParams* params) {
@@ -812,7 +812,7 @@ static float px_wave_native_151(VmParams* params) {
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += ((sinf(((params->x * k) + (((sinf(((params->x * k) * 0.25f)) * params->modA) * k) * 0.1f))) * ((fabsf(((params->modB > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? ((1.0f / (k + (fabsf(params->modB) * 8.0f)))) : (expf((((-k) * fabsf(params->modB)) * 0.5f))))) * (1.0f + (0.2f * sinf((((params->x * k) * 3.0f) + (params->rand_offset * k))))));
+            sigma_0 += ((sinf(fmaf(params->x, k, (((sinf(((params->x * k) * 0.25f)) * params->modA) * k) * 0.1f))) * ((fabsf(((params->modB > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? ((1.0f / fmaf(fabsf(params->modB), 8.0f, k))) : (expf((((-k) * fabsf(params->modB)) * 0.5f))))) * fmaf(0.2f, sinf(fmaf((params->x * k), 3.0f, (params->rand_offset * k))), 1.0f));
         }
     }
 
@@ -820,11 +820,11 @@ static float px_wave_native_151(VmParams* params) {
 }
 
 static float px_wave_native_152(VmParams* params) {
-    return (((((sinf(params->x) + (sinf((params->x * 1.498f)) * 0.7f)) + (sinf((params->x * 2.006f)) * 0.5f)) * (0.6f + (0.4f * sinf(((params->x * 0.125f) + (params->modA * 3.14159265358979323846f)))))) * (1.0f + ((params->modB * 0.3f) * sinf(((params->x * 0.0625f) + (params->rand_offset * (2.0f * 3.14159265358979323846f))))))) + (vm_lfsr_noise(params, 0, 0.5f) * 0.05f));
+    return fmaf((fmaf(sinf((params->x * 2.006f)), 0.5f, fmaf(sinf((params->x * 1.498f)), 0.7f, sinf(params->x))) * fmaf(0.4f, sinf(fmaf(params->x, 0.125f, (params->modA * 3.14159265358979323846f))), 0.6f)), fmaf((params->modB * 0.3f), sinf(fmaf(params->x, 0.0625f, (params->rand_offset * (2.0f * 3.14159265358979323846f)))), 1.0f), (vm_lfsr_noise(params, 0, 0.5f) * 0.05f));
 }
 
 static float px_wave_native_153(VmParams* params) {
-    return (vm_fast_tanh(((sinf((params->x + (sinf(((params->x * 1.618f) + (params->modA * 3.14159265358979323846f))) * 0.5f))) + (sinf(((params->x * 0.618f) + (params->modB * (3.14159265358979323846f / 2.0f)))) * 0.7f)) * (2.0f + (params->modA * 3.0f)))) * (0.8f + (0.2f * vm_lfsr_val(params, 3, ((params->x / (2.0f * 3.14159265358979323846f)) * 3.0f), params->rand_offset))));
+    return (vm_fast_tanh((fmaf(sinf(fmaf(params->x, 0.618f, (params->modB * (3.14159265358979323846f / 2.0f)))), 0.7f, sinf(fmaf(sinf(fmaf(params->x, 1.618f, (params->modA * 3.14159265358979323846f))), 0.5f, params->x))) * fmaf(params->modA, 3.0f, 2.0f))) * fmaf(0.2f, vm_lfsr_val(params, 3, ((params->x / (2.0f * 3.14159265358979323846f)) * 3.0f), params->rand_offset), 0.8f));
 }
 
 static float px_wave_native_154(VmParams* params) {
@@ -836,7 +836,7 @@ static float px_wave_native_154(VmParams* params) {
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += ((sinf(((params->x * powf(2.0f, (floorf((k + (params->modA * 4.0f))) * 0.33333f))) + ((params->rand_offset * k) * 0.1f))) * expf((((-params->x) * k) * (0.8f + (params->modB * 1.2f))))) * vm_lfsr_clock(params, 1, (0.6f + (k * 0.05f))));
+            sigma_0 += ((sinf(fmaf(params->x, powf(2.0f, (floorf(fmaf(params->modA, 4.0f, k)) * 0.33333f)), ((params->rand_offset * k) * 0.1f))) * expf((((-params->x) * k) * fmaf(params->modB, 1.2f, 0.8f)))) * vm_lfsr_clock(params, 1, fmaf(k, 0.05f, 0.6f)));
         }
     }
 
@@ -844,15 +844,15 @@ static float px_wave_native_154(VmParams* params) {
 }
 
 static float px_wave_native_155(VmParams* params) {
-    return (sinf((params->x * (1.0f + params->modA))) + (sinf((params->x * (2.0f + params->modA))) * 0.5f));
+    return fmaf(sinf((params->x * (2.0f + params->modA))), 0.5f, sinf((params->x * (1.0f + params->modA))));
 }
 
 static float px_wave_native_156(VmParams* params) {
-    return ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * 0.05f)) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (((sinf(((((params->x - ((2.0f * 3.14159265358979323846f) * 0.05f)) * 5.0f) + (1.0f * params->modA)) + (3.14159265358979323846f * params->modB))) * 0.6f) * expf(((-(params->x - ((2.0f * 3.14159265358979323846f) * 0.05f))) * 0.5f)))));
+    return ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * 0.05f)) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : (((sinf(fmaf(3.14159265358979323846f, params->modB, fmaf((params->x - ((2.0f * 3.14159265358979323846f) * 0.05f)), 5.0f, (1.0f * params->modA)))) * 0.6f) * expf(((-(params->x - ((2.0f * 3.14159265358979323846f) * 0.05f))) * 0.5f)))));
 }
 
 static float px_wave_native_157(VmParams* params) {
-    return (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.15f + (0.05f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.25f + (0.05f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-0.5f)) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.35f + (0.05f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.7f) : (((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : ((sinf(((3.0f * params->x) + (0.4f * params->modA))) * 0.6f))))))))) + ((0.5f * params->modB) * sinf((2.0f * params->x))));
+    return fmaf((0.5f * params->modB), sinf((2.0f * params->x)), ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.05f, params->modA, 0.15f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.05f, params->modA, 0.25f))) ? 1.0f : 0.0f)) > 1e-6f) ? ((-0.5f)) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.05f, params->modA, 0.35f))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.7f) : (((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? ((-1.0f)) : ((sinf(fmaf(3.0f, params->x, (0.4f * params->modA))) * 0.6f))))))))));
 }
 
 static float px_wave_native_158(VmParams* params) {
@@ -860,11 +860,11 @@ static float px_wave_native_158(VmParams* params) {
 }
 
 static float px_wave_native_159(VmParams* params) {
-    return (sinf((((15.0f * params->x) + (0.75f * params->modA)) + (3.14159265358979323846f * params->modB))) * (0.5f + (0.5f * sinf(params->x))));
+    return (sinf(fmaf(3.14159265358979323846f, params->modB, fmaf(15.0f, params->x, (0.75f * params->modA)))) * fmaf(0.5f, sinf(params->x), 0.5f));
 }
 
 static float px_wave_native_160(VmParams* params) {
-    return ((sinf(params->x) * vm_lfsr_clock(params, 4, (0.3f + (0.4f * params->modA)))) + (0.2f * vm_lfsr_noise(params, 0, (2.0f + (3.0f * params->modB)))));
+    return fmaf(sinf(params->x), vm_lfsr_clock(params, 4, fmaf(0.4f, params->modA, 0.3f)), (0.2f * vm_lfsr_noise(params, 0, fmaf(3.0f, params->modB, 2.0f))));
 }
 
 static float px_wave_native_161(VmParams* params) {
@@ -876,23 +876,23 @@ static float px_wave_native_161(VmParams* params) {
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += (sinf(((params->x * k) + ((vm_lfsr_val(params, 8, ((params->x / (2.0f * 3.14159265358979323846f)) + (k * 0.1f)), params->rand_offset) * 3.14159265358979323846f) * params->modA))) / k);
+            sigma_0 += (sinf(fmaf(params->x, k, ((vm_lfsr_val(params, 8, fmaf(k, 0.1f, (params->x / (2.0f * 3.14159265358979323846f))), params->rand_offset) * 3.14159265358979323846f) * params->modA))) / k);
         }
     }
 
-    return (sigma_0 * (0.4f + (0.3f * vm_lfsr_noise(params, 2, (0.5f + (1.5f * params->modB))))));
+    return (sigma_0 * fmaf(0.3f, vm_lfsr_noise(params, 2, fmaf(1.5f, params->modB, 0.5f)), 0.4f));
 }
 
 static float px_wave_native_162(VmParams* params) {
-    return vm_fast_tanh((2.0f * ((((vm_lfsr_val(params, 11, (params->x / 3.14159265358979323846f), (params->modA + params->rand_offset)) * 2.0f) - 1.0f) + (0.5f * sinf((params->x + (vm_lfsr_clock(params, 3, 0.5f) * (3.14159265358979323846f / 2.0f)))))) + (0.3f * vm_lfsr_noise(params, 1, (4.0f + (6.0f * params->modB)))))));
+    return vm_fast_tanh((2.0f * fmaf(0.3f, vm_lfsr_noise(params, 1, fmaf(6.0f, params->modB, 4.0f)), fmaf(0.5f, sinf(fmaf(vm_lfsr_clock(params, 3, 0.5f), (3.14159265358979323846f / 2.0f), params->x)), fmaf(vm_lfsr_val(params, 11, (params->x / 3.14159265358979323846f), (params->modA + params->rand_offset)), 2.0f, (-1.0f))))));
 }
 
 static float px_wave_native_163(VmParams* params) {
-    return (((sinf(params->x) * (0.7f + (0.3f * vm_lfsr_clock(params, 7, 0.25f)))) + (sinf((params->x * 1.5f)) * (0.6f + (0.4f * vm_lfsr_clock(params, 5, (0.33f + (0.3f * params->modA))))))) + (0.3f * vm_lfsr_noise(params, 9, (1.0f + (2.0f * params->modB)))));
+    return fmaf(0.3f, vm_lfsr_noise(params, 9, fmaf(2.0f, params->modB, 1.0f)), fmaf(sinf(params->x), fmaf(0.3f, vm_lfsr_clock(params, 7, 0.25f), 0.7f), (sinf((params->x * 1.5f)) * fmaf(0.4f, vm_lfsr_clock(params, 5, fmaf(0.3f, params->modA, 0.33f)), 0.6f))));
 }
 
 static float px_wave_native_164(VmParams* params) {
-    return sinf(((params->x + ((vm_lfsr_val(params, 12, ((params->x / (2.0f * 3.14159265358979323846f)) + (params->frequency / 1000.0f)), params->rand_offset) * params->modA) * (2.0f * 3.14159265358979323846f))) + (vm_lfsr_noise(params, 4, (0.1f + params->modB)) * 0.5f)));
+    return sinf(fmaf(vm_lfsr_noise(params, 4, (0.1f + params->modB)), 0.5f, fmaf((vm_lfsr_val(params, 12, ((params->x / (2.0f * 3.14159265358979323846f)) + (params->frequency / 1000.0f)), params->rand_offset) * params->modA), (2.0f * 3.14159265358979323846f), params->x)));
 }
 
 static float px_wave_native_165(VmParams* params) {
@@ -904,7 +904,7 @@ static float px_wave_native_165(VmParams* params) {
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += ((sinf((params->x * k)) * vm_lfsr_clock(params, 6, (0.1f + (k * 0.15f)))) * vm_lfsr_val(params, 10, ((params->x / 3.14159265358979323846f) + (k * params->modA)), params->rand_offset));
+            sigma_0 += ((sinf((params->x * k)) * vm_lfsr_clock(params, 6, fmaf(k, 0.15f, 0.1f))) * vm_lfsr_val(params, 10, fmaf(k, params->modA, (params->x / 3.14159265358979323846f)), params->rand_offset));
         }
     }
 
@@ -920,27 +920,27 @@ static float px_wave_native_166(VmParams* params) {
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += ((sinf((params->x * k)) * vm_lfsr_clock(params, ((fabsf(((fmodf(k, 3.0f) == 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (3) : (1)), (0.2f + (params->modA * 0.3f)))) / k);
+            sigma_0 += ((sinf((params->x * k)) * vm_lfsr_clock(params, ((fabsf(((fmodf(k, 3.0f) == 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (3) : (1)), fmaf(params->modA, 0.3f, 0.2f))) / k);
         }
     }
 
-    return (sigma_0 * (0.5f + (0.3f * vm_lfsr_noise(params, 8, (0.8f + params->modB)))));
+    return (sigma_0 * fmaf(0.3f, vm_lfsr_noise(params, 8, (0.8f + params->modB)), 0.5f));
 }
 
 static float px_wave_native_167(VmParams* params) {
-    return (sinf((params->x * (1.0f + (vm_lfsr_val(params, 9, ((params->x / 3.14159265358979323846f) + (params->frequency / 500.0f)), params->modA) * 0.5f)))) + (0.4f * sinf(((params->x * 2.0f) + (vm_lfsr_noise(params, 5, (2.0f + (params->modB * 3.0f))) * 3.14159265358979323846f)))));
+    return fmaf(0.4f, sinf(fmaf(params->x, 2.0f, (vm_lfsr_noise(params, 5, fmaf(params->modB, 3.0f, 2.0f)) * 3.14159265358979323846f))), sinf((params->x * fmaf(vm_lfsr_val(params, 9, ((params->x / 3.14159265358979323846f) + (params->frequency / 500.0f)), params->modA), 0.5f, 1.0f))));
 }
 
 static float px_wave_native_168(VmParams* params) {
-    return ((sinf(params->x) * ((fabsf((( (fabsf(vm_lfsr_clock(params, 12, 0.4f)) > 1e-6f) && (fabsf(vm_lfsr_clock(params, 7, (0.3f + (params->modA * 0.4f)))) > 1e-6f) ) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.3f))) + (0.2f * vm_lfsr_noise(params, 2, (3.0f + (params->modB * 2.0f)))));
+    return fmaf(sinf(params->x), ((fabsf((( (fabsf(vm_lfsr_clock(params, 12, 0.4f)) > 1e-6f) && (fabsf(vm_lfsr_clock(params, 7, fmaf(params->modA, 0.4f, 0.3f))) > 1e-6f) ) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.3f)), (0.2f * vm_lfsr_noise(params, 2, fmaf(params->modB, 2.0f, 3.0f))));
 }
 
 static float px_wave_native_169(VmParams* params) {
-    return (vm_fast_tanh((sinf((params->x + ((vm_lfsr_val(params, 11, (params->x / (2.0f * 3.14159265358979323846f)), params->rand_offset) * params->modA) * 3.14159265358979323846f))) + ((0.3f * vm_lfsr_noise(params, 4, (1.5f + (params->modB * 2.0f)))) * sinf((params->x * 0.5f))))) * 0.8f);
+    return (vm_fast_tanh(fmaf((0.3f * vm_lfsr_noise(params, 4, fmaf(params->modB, 2.0f, 1.5f))), sinf((params->x * 0.5f)), sinf(fmaf((vm_lfsr_val(params, 11, (params->x / (2.0f * 3.14159265358979323846f)), params->rand_offset) * params->modA), 3.14159265358979323846f, params->x)))) * 0.8f);
 }
 
 static float px_wave_native_170(VmParams* params) {
-    return ((sinf((params->x * (1.0f + (vm_lfsr_clock(params, 8, 0.25f) * 0.5f)))) + (sinf((params->x * 2.0f)) * vm_lfsr_val(params, 6, ((params->x / 3.14159265358979323846f) + params->modA), params->rand_offset))) + (0.3f * vm_lfsr_noise(params, 3, (4.0f + (params->modB * 3.0f)))));
+    return fmaf(0.3f, vm_lfsr_noise(params, 3, fmaf(params->modB, 3.0f, 4.0f)), fmaf(sinf((params->x * 2.0f)), vm_lfsr_val(params, 6, ((params->x / 3.14159265358979323846f) + params->modA), params->rand_offset), sinf((params->x * fmaf(vm_lfsr_clock(params, 8, 0.25f), 0.5f, 1.0f)))));
 }
 
 static float px_wave_native_171(VmParams* params) {
@@ -948,11 +948,11 @@ static float px_wave_native_171(VmParams* params) {
     float sigma_0 = 0.0f;
     {
         float _start = 1.0f;
-        float _end = (5.0f + (3.0f * fabsf(params->modB)));
+        float _end = fmaf(3.0f, fabsf(params->modB), 5.0f);
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += ((sinf(((params->x * k) + (vm_lfsr_val(params, 10, ((params->x / (2.0f * 3.14159265358979323846f)) + (k * 0.1f)), (params->rand_offset + params->modA)) * 3.14159265358979323846f))) * vm_lfsr_clock(params, 4, (0.1f + (k * 0.05f)))) / (k + 1.0f));
+            sigma_0 += ((sinf(fmaf(params->x, k, (vm_lfsr_val(params, 10, fmaf(k, 0.1f, (params->x / (2.0f * 3.14159265358979323846f))), (params->rand_offset + params->modA)) * 3.14159265358979323846f))) * vm_lfsr_clock(params, 4, fmaf(k, 0.05f, 0.1f))) / (k + 1.0f));
         }
     }
 
@@ -960,15 +960,15 @@ static float px_wave_native_171(VmParams* params) {
 }
 
 static float px_wave_native_172(VmParams* params) {
-    return ((sinf(params->x) * ((fabsf(vm_lfsr_clock(params, 5, 0.5f)) > 1e-6f) ? (1.0f) : (((fabsf(vm_lfsr_clock(params, 3, (0.7f + (params->modA * 0.2f)))) > 1e-6f) ? (0.6f) : (0.2f))))) + ((0.4f * vm_lfsr_noise(params, 7, (2.5f + (params->modB * 2.0f)))) * sinf((params->x * 3.0f))));
+    return fmaf(sinf(params->x), ((fabsf(vm_lfsr_clock(params, 5, 0.5f)) > 1e-6f) ? (1.0f) : (((fabsf(vm_lfsr_clock(params, 3, fmaf(params->modA, 0.2f, 0.7f))) > 1e-6f) ? (0.6f) : (0.2f)))), ((0.4f * vm_lfsr_noise(params, 7, fmaf(params->modB, 2.0f, 2.5f))) * sinf((params->x * 3.0f))));
 }
 
 static float px_wave_native_173(VmParams* params) {
-    return ((sinf((params->x + (params->modA * 3.14159265358979323846f))) * ((fabsf(((vm_lfsr_val(params, 12, ((params->x / 3.14159265358979323846f) + (params->frequency / 440.0f)), params->rand_offset) > (0.3f + (params->modB * 0.4f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.1f))) + (0.3f * vm_lfsr_noise(params, 2, 3.0f)));
+    return fmaf(sinf(fmaf(params->modA, 3.14159265358979323846f, params->x)), ((fabsf(((vm_lfsr_val(params, 12, ((params->x / 3.14159265358979323846f) + (params->frequency / 440.0f)), params->rand_offset) > fmaf(params->modB, 0.4f, 0.3f)) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.1f)), (0.3f * vm_lfsr_noise(params, 2, 3.0f)));
 }
 
 static float px_wave_native_174(VmParams* params) {
-    return (((sinf(params->x) * vm_lfsr_clock(params, 9, 0.3f)) + (sinf((params->x * 1.333f)) * vm_lfsr_clock(params, 7, (0.4f + (params->modA * 0.3f))))) + ((sinf((params->x * 1.666f)) * vm_lfsr_clock(params, 5, (0.35f + (params->modB * 0.25f)))) * 0.8f));
+    return fmaf((sinf((params->x * 1.666f)) * vm_lfsr_clock(params, 5, fmaf(params->modB, 0.25f, 0.35f))), 0.8f, fmaf(sinf(params->x), vm_lfsr_clock(params, 9, 0.3f), (sinf((params->x * 1.333f)) * vm_lfsr_clock(params, 7, fmaf(params->modA, 0.3f, 0.4f)))));
 }
 
 static float px_wave_native_175(VmParams* params) {
@@ -980,267 +980,267 @@ static float px_wave_native_175(VmParams* params) {
         float _step = 1.0f;
         float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
         for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
-            sigma_0 += ((sinf((params->x * k)) * vm_lfsr_val(params, 3.0f, ((params->x / (2.0f * 3.14159265358979323846f)) + ((k * params->modA) * 0.1f)), params->rand_offset)) * vm_lfsr_clock(params, 0.0f, (0.2f + (k * 0.1f))));
+            sigma_0 += ((sinf((params->x * k)) * vm_lfsr_val(params, 3.0f, fmaf((k * params->modA), 0.1f, (params->x / (2.0f * 3.14159265358979323846f))), params->rand_offset)) * vm_lfsr_clock(params, 0.0f, fmaf(k, 0.1f, 0.2f)));
         }
     }
 
-    return (vm_fast_tanh((sigma_0 * (1.0f + (params->modB * 2.0f)))) * 0.7f);
+    return (vm_fast_tanh((sigma_0 * fmaf(params->modB, 2.0f, 1.0f))) * 0.7f);
 }
 
 static float px_wave_native_176(VmParams* params) {
-    return ((sinf((params->x * (1.0f + (0.3f * sinf(((params->x * 8.0f) + (params->modA * 3.14159265358979323846f))))))) * ((fabsf(((params->x < (3.14159265358979323846f * (0.6f + (0.2f * params->modB)))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.3f))) * 0.8f);
+    return ((sinf((params->x * fmaf(0.3f, sinf(fmaf(params->x, 8.0f, (params->modA * 3.14159265358979323846f))), 1.0f))) * ((fabsf(((params->x < (3.14159265358979323846f * fmaf(0.2f, params->modB, 0.6f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.3f))) * 0.8f);
 }
 
 static float px_wave_native_177(VmParams* params) {
-    return ((sinf((params->x * ((2.0f + (sinf((params->x * 12.0f)) * 1.5f)) + (params->modA * 2.0f)))) * (0.7f + (0.3f * sinf((params->x * (4.0f + (params->modB * 4.0f))))))) * 0.9f);
+    return ((sinf((params->x * fmaf(params->modA, 2.0f, fmaf(sinf((params->x * 12.0f)), 1.5f, 2.0f)))) * fmaf(0.3f, sinf((params->x * fmaf(params->modB, 4.0f, 4.0f))), 0.7f)) * 0.9f);
 }
 
 static float px_wave_native_178(VmParams* params) {
-    return ((sinf((params->x * (2.0f - ((params->x * (3.0f + (params->modA * 2.0f))) / (2.0f * 3.14159265358979323846f))))) * expf(((-params->x) * (0.8f + (params->modB * 1.0f))))) * (1.0f + (0.4f * sinf((params->x * 15.0f)))));
+    return ((sinf((params->x * (2.0f - ((params->x * fmaf(params->modA, 2.0f, 3.0f)) / (2.0f * 3.14159265358979323846f))))) * expf(((-params->x) * fmaf(params->modB, 1.0f, 0.8f)))) * fmaf(0.4f, sinf((params->x * 15.0f)), 1.0f));
 }
 
 static float px_wave_native_179(VmParams* params) {
-    return ((sinf((params->x * (0.8f + (0.2f * sinf((params->x * (6.0f + (params->modA * 4.0f)))))))) * (0.6f + (0.4f * sinf((params->x * (0.5f + (params->modB * 1.0f))))))) * 0.7f);
+    return ((sinf((params->x * fmaf(0.2f, sinf((params->x * fmaf(params->modA, 4.0f, 6.0f))), 0.8f))) * fmaf(0.4f, sinf((params->x * fmaf(params->modB, 1.0f, 0.5f))), 0.6f)) * 0.7f);
 }
 
 static float px_wave_native_180(VmParams* params) {
-    return ((sinf(((params->x * (3.0f + (params->modA * 2.0f))) + (sinf((params->x * (25.0f + (params->modB * 15.0f)))) * 0.8f))) * expf(((-params->x) * 2.5f))) * (1.0f + (0.3f * sinf((params->x * 40.0f)))));
+    return ((sinf(fmaf(params->x, fmaf(params->modA, 2.0f, 3.0f), (sinf((params->x * fmaf(params->modB, 15.0f, 25.0f))) * 0.8f))) * expf(((-params->x) * 2.5f))) * fmaf(0.3f, sinf((params->x * 40.0f)), 1.0f));
 }
 
 static float px_wave_native_181(VmParams* params) {
-    return ((((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * 0.25f)) ? 1.0f : 0.0f)) > 1e-6f) ? (0.8f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * 0.5f)) ? 1.0f : 0.0f)) > 1e-6f) ? (0.4f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * 0.75f)) ? 1.0f : 0.0f)) > 1e-6f) ? (0.6f) : (0.2f)))))) + ((0.3f * sinf((params->x * (2.0f + params->modA)))) * (0.8f + (0.2f * params->modB)))) * 0.9f);
+    return (fmaf((0.3f * sinf((params->x * (2.0f + params->modA)))), fmaf(0.2f, params->modB, 0.8f), ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * 0.25f)) ? 1.0f : 0.0f)) > 1e-6f) ? (0.8f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * 0.5f)) ? 1.0f : 0.0f)) > 1e-6f) ? (0.4f) : (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * 0.75f)) ? 1.0f : 0.0f)) > 1e-6f) ? (0.6f) : (0.2f))))))) * 0.9f);
 }
 
 static float px_wave_native_182(VmParams* params) {
-    return (sinf((params->x * (0.3f + (0.1f * sinf((params->x * (3.0f + (params->modA * 2.0f)))))))) + ((0.4f * sinf(((params->x * (8.0f + (params->modB * 4.0f))) + (sinf((params->x * 0.2f)) * 2.0f)))) * 0.8f));
+    return fmaf((0.4f * sinf(fmaf(params->x, fmaf(params->modB, 4.0f, 8.0f), (sinf((params->x * 0.2f)) * 2.0f)))), 0.8f, sinf((params->x * fmaf(0.1f, sinf((params->x * fmaf(params->modA, 2.0f, 3.0f))), 0.3f))));
 }
 
 static float px_wave_native_183(VmParams* params) {
-    return ((((fmodf(floorf((((params->x * params->frequency) * (80.0f + (params->modA * 40.0f))) / 22050.0f)), 31.0f) - 15.0f) * 0.1f) * expf(((-params->x) * (1.5f + (params->modB * 2.0f))))) + ((sinf((params->x * 0.2f)) * 0.3f) * expf(((-params->x) * 0.8f))));
+    return fmaf(((fmodf(floorf((((params->x * params->frequency) * fmaf(params->modA, 40.0f, 80.0f)) / 22050.0f)), 31.0f) - 15.0f) * 0.1f), expf(((-params->x) * fmaf(params->modB, 2.0f, 1.5f))), ((sinf((params->x * 0.2f)) * 0.3f) * expf(((-params->x) * 0.8f))));
 }
 
 static float px_wave_native_184(VmParams* params) {
-    return ((sinf((params->x * (0.5f + (0.3f * sinf((params->x * (12.0f + (params->modA * 8.0f)))))))) * (0.4f + (0.6f * ((fabsf(((fmodf(floorf((params->x * 20.0f)), 3.0f) > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.3f))))) + (((0.2f * (fmodf(floorf(((params->x * params->frequency) / 1000.0f)), 7.0f) - 3.0f)) * 0.1f) * params->modB));
+    return fmaf(sinf((params->x * fmaf(0.3f, sinf((params->x * fmaf(params->modA, 8.0f, 12.0f))), 0.5f))), fmaf(0.6f, ((fabsf(((fmodf(floorf((params->x * 20.0f)), 3.0f) > 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.3f)), 0.4f), (((0.2f * (fmodf(floorf(((params->x * params->frequency) / 1000.0f)), 7.0f) - 3.0f)) * 0.1f) * params->modB));
 }
 
 static float px_wave_native_185(VmParams* params) {
-    return ((sinf(((params->x * (4.0f + (params->modA * 3.0f))) + (sinf((params->x * (35.0f + (params->modB * 20.0f)))) * 1.2f))) * expf(((-params->x) * 3.0f))) * (1.0f + (0.5f * sinf((params->x * 60.0f)))));
+    return ((sinf(fmaf(params->x, fmaf(params->modA, 3.0f, 4.0f), (sinf((params->x * fmaf(params->modB, 20.0f, 35.0f))) * 1.2f))) * expf(((-params->x) * 3.0f))) * fmaf(0.5f, sinf((params->x * 60.0f)), 1.0f));
 }
 
 static float px_wave_native_186(VmParams* params) {
-    return ((((fmodf(floorf((((params->x * params->frequency) * (120.0f + (params->modA * 80.0f))) / 22050.0f)), 127.0f) - 63.0f) * 0.02f) * expf(((-params->x) * (1.0f + (params->modB * 1.5f))))) + ((sinf((params->x * (0.1f + ((params->x * 2.0f) / (2.0f * 3.14159265358979323846f))))) * 0.4f) * expf(((-params->x) * 0.5f))));
+    return fmaf(((fmodf(floorf((((params->x * params->frequency) * fmaf(params->modA, 80.0f, 120.0f)) / 22050.0f)), 127.0f) - 63.0f) * 0.02f), expf(((-params->x) * fmaf(params->modB, 1.5f, 1.0f))), ((sinf((params->x * (0.1f + ((params->x * 2.0f) / (2.0f * 3.14159265358979323846f))))) * 0.4f) * expf(((-params->x) * 0.5f))));
 }
 
 static float px_wave_native_187(VmParams* params) {
-    return ((sinf(((params->x * (2.0f + ((params->x * (8.0f + (params->modA * 4.0f))) / (2.0f * 3.14159265358979323846f)))) + (sinf((params->x * (45.0f + (params->modB * 25.0f)))) * 2.0f))) * expf(((-params->x) * 0.8f))) * (1.0f + (0.6f * sinf((params->x * 80.0f)))));
+    return ((sinf(fmaf(params->x, (2.0f + ((params->x * fmaf(params->modA, 4.0f, 8.0f)) / (2.0f * 3.14159265358979323846f))), (sinf((params->x * fmaf(params->modB, 25.0f, 45.0f))) * 2.0f))) * expf(((-params->x) * 0.8f))) * fmaf(0.6f, sinf((params->x * 80.0f)), 1.0f));
 }
 
 static float px_wave_native_188(VmParams* params) {
-    return ((sinf((params->x * ((1.5f + (sinf((params->x * (6.0f + (params->modA * 4.0f)))) * 0.8f)) + ((params->x * (2.0f + (params->modB * 2.0f))) / (2.0f * 3.14159265358979323846f))))) * expf(((-params->x) * 1.2f))) * 0.9f);
+    return ((sinf((params->x * (fmaf(sinf((params->x * fmaf(params->modA, 4.0f, 6.0f))), 0.8f, 1.5f) + ((params->x * fmaf(params->modB, 2.0f, 2.0f)) / (2.0f * 3.14159265358979323846f))))) * expf(((-params->x) * 1.2f))) * 0.9f);
 }
 
 static float px_wave_native_189(VmParams* params) {
-    return (sinf((params->x * (0.8f + (0.2f * sinf((params->x * (4.0f + (params->modA * 2.0f)))))))) + ((0.3f * sinf((params->x * (2.4f + (0.4f * sinf((params->x * (1.0f + params->modB)))))))) * 0.8f));
+    return fmaf((0.3f * sinf((params->x * fmaf(0.4f, sinf((params->x * (1.0f + params->modB))), 2.4f)))), 0.8f, sinf((params->x * fmaf(0.2f, sinf((params->x * fmaf(params->modA, 2.0f, 4.0f))), 0.8f))));
 }
 
 static float px_wave_native_190(VmParams* params) {
-    return ((sinf(((params->x * (5.0f + (params->modA * 3.0f))) + (sinf((params->x * (40.0f + (params->modB * 20.0f)))) * 0.6f))) * expf(((-params->x) * 2.8f))) * (1.0f + (0.4f * ((fmodf(floorf((params->x * 30.0f)), 2.0f) * 2.0f) - 1.0f))));
+    return ((sinf(fmaf(params->x, fmaf(params->modA, 3.0f, 5.0f), (sinf((params->x * fmaf(params->modB, 20.0f, 40.0f))) * 0.6f))) * expf(((-params->x) * 2.8f))) * fmaf(0.4f, fmaf(fmodf(floorf((params->x * 30.0f)), 2.0f), 2.0f, (-1.0f)), 1.0f));
 }
 
 static float px_wave_native_191(VmParams* params) {
-    return ((sinf(((params->x * (1.2f + ((params->x * (1.5f + (params->modA * 2.0f))) / (2.0f * 3.14159265358979323846f)))) + (sinf((params->x * (18.0f + (params->modB * 10.0f)))) * 1.0f))) * expf(((-params->x) * 1.0f))) * 0.8f);
+    return ((sinf(fmaf(params->x, (1.2f + ((params->x * fmaf(params->modA, 2.0f, 1.5f)) / (2.0f * 3.14159265358979323846f))), (sinf((params->x * fmaf(params->modB, 10.0f, 18.0f))) * 1.0f))) * expf(((-params->x) * 1.0f))) * 0.8f);
 }
 
 static float px_wave_native_192(VmParams* params) {
-    return ((sinf((params->x * (0.4f + (0.3f * sinf((params->x * (8.0f + (params->modA * 6.0f)))))))) * (0.5f + (0.5f * ((fabsf(((fmodf(floorf((params->x * 15.0f)), 5.0f) > 2.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.4f))))) + (((0.3f * (fmodf(floorf(((params->x * params->frequency) / 800.0f)), 15.0f) - 7.0f)) * 0.02f) * params->modB));
+    return fmaf(sinf((params->x * fmaf(0.3f, sinf((params->x * fmaf(params->modA, 6.0f, 8.0f))), 0.4f))), fmaf(0.5f, ((fabsf(((fmodf(floorf((params->x * 15.0f)), 5.0f) > 2.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.4f)), 0.5f), (((0.3f * (fmodf(floorf(((params->x * params->frequency) / 800.0f)), 15.0f) - 7.0f)) * 0.02f) * params->modB));
 }
 
 static float px_wave_native_193(VmParams* params) {
-    return ((sinf((params->x * ((2.0f + ((params->x * 4.0f) / (2.0f * 3.14159265358979323846f))) + (sinf((params->x * (30.0f + (params->modA * 15.0f)))) * 3.0f)))) * expf(((-params->x) * (0.6f + (params->modB * 0.8f))))) * (1.0f + (0.5f * sinf((params->x * 100.0f)))));
+    return ((sinf((params->x * fmaf(sinf((params->x * fmaf(params->modA, 15.0f, 30.0f))), 3.0f, (2.0f + ((params->x * 4.0f) / (2.0f * 3.14159265358979323846f)))))) * expf(((-params->x) * fmaf(params->modB, 0.8f, 0.6f)))) * fmaf(0.5f, sinf((params->x * 100.0f)), 1.0f));
 }
 
 static float px_wave_native_194(VmParams* params) {
-    return (((sinf(((params->x * (1.8f + (params->modA * 1.0f))) + (sinf((params->x * (12.0f + (params->modB * 8.0f)))) * 1.5f))) * expf(((-params->x) * 2.0f))) * (1.0f + (0.3f * sinf((params->x * 25.0f))))) * 0.9f);
+    return (((sinf(fmaf(params->x, fmaf(params->modA, 1.0f, 1.8f), (sinf((params->x * fmaf(params->modB, 8.0f, 12.0f))) * 1.5f))) * expf(((-params->x) * 2.0f))) * fmaf(0.3f, sinf((params->x * 25.0f)), 1.0f)) * 0.9f);
 }
 
 static float px_wave_native_195(VmParams* params) {
-    return (sinf((params->x * (0.6f + (0.1f * sinf((params->x * (2.0f + params->modA))))))) + (((0.2f * (fmodf(floorf(((params->x * params->frequency) / 1200.0f)), 11.0f) - 5.0f)) * 0.1f) * (0.8f + (0.2f * params->modB))));
+    return fmaf(((0.2f * (fmodf(floorf(((params->x * params->frequency) / 1200.0f)), 11.0f) - 5.0f)) * 0.1f), fmaf(0.2f, params->modB, 0.8f), sinf((params->x * fmaf(0.1f, sinf((params->x * (2.0f + params->modA))), 0.6f))));
 }
 
 static float px_wave_native_196(VmParams* params) {
-    return ((sinf((params->x * (1.5f + (params->modA * 1.5f)))) * expf(((-params->x) * (3.0f + (params->modB * 2.0f))))) + (((0.4f * (fmodf(floorf(((params->x * params->frequency) / 600.0f)), 8.0f) - 3.5f)) * 0.1f) * expf(((-params->x) * 1.5f))));
+    return fmaf(sinf((params->x * fmaf(params->modA, 1.5f, 1.5f))), expf(((-params->x) * fmaf(params->modB, 2.0f, 3.0f))), (((0.4f * (fmodf(floorf(((params->x * params->frequency) / 600.0f)), 8.0f) - 3.5f)) * 0.1f) * expf(((-params->x) * 1.5f))));
 }
 
 static float px_wave_native_197(VmParams* params) {
-    return ((sinf(((params->x * (2.5f + ((params->x * (2.0f + (params->modA * 3.0f))) / (2.0f * 3.14159265358979323846f)))) + (sinf((params->x * (20.0f + (params->modB * 10.0f)))) * 0.8f))) * expf(((-params->x) * 1.8f))) * 0.9f);
+    return ((sinf(fmaf(params->x, (2.5f + ((params->x * fmaf(params->modA, 3.0f, 2.0f)) / (2.0f * 3.14159265358979323846f))), (sinf((params->x * fmaf(params->modB, 10.0f, 20.0f))) * 0.8f))) * expf(((-params->x) * 1.8f))) * 0.9f);
 }
 
 static float px_wave_native_198(VmParams* params) {
-    return ((((fmodf(floorf((((params->x * params->frequency) * (90.0f + (params->modA * 60.0f))) / 22050.0f)), 63.0f) - 31.0f) * 0.05f) * expf(((-params->x) * (1.2f + (params->modB * 1.0f))))) + ((sinf((params->x * (0.15f + ((params->x * 1.5f) / (2.0f * 3.14159265358979323846f))))) * 0.5f) * expf(((-params->x) * 0.7f))));
+    return fmaf(((fmodf(floorf((((params->x * params->frequency) * fmaf(params->modA, 60.0f, 90.0f)) / 22050.0f)), 63.0f) - 31.0f) * 0.05f), expf(((-params->x) * fmaf(params->modB, 1.0f, 1.2f))), ((sinf((params->x * (0.15f + ((params->x * 1.5f) / (2.0f * 3.14159265358979323846f))))) * 0.5f) * expf(((-params->x) * 0.7f))));
 }
 
 static float px_wave_native_199(VmParams* params) {
-    return (((sinf(((params->x * (4.5f + (params->modA * 2.5f))) + (sinf((params->x * (50.0f + (params->modB * 25.0f)))) * 0.7f))) * expf(((-params->x) * 3.5f))) * (1.0f + (0.4f * sinf((params->x * 70.0f))))) * 0.8f);
+    return (((sinf(fmaf(params->x, fmaf(params->modA, 2.5f, 4.5f), (sinf((params->x * fmaf(params->modB, 25.0f, 50.0f))) * 0.7f))) * expf(((-params->x) * 3.5f))) * fmaf(0.4f, sinf((params->x * 70.0f)), 1.0f)) * 0.8f);
 }
 
 static float px_wave_native_200(VmParams* params) {
-    return ((sinf((params->x * ((3.0f + (sinf((params->x * (15.0f + (params->modA * 10.0f)))) * 2.0f)) + ((params->x * (1.0f + params->modB)) / (2.0f * 3.14159265358979323846f))))) * expf(((-params->x) * 1.5f))) * 0.9f);
+    return ((sinf((params->x * (fmaf(sinf((params->x * fmaf(params->modA, 10.0f, 15.0f))), 2.0f, 3.0f) + ((params->x * (1.0f + params->modB)) / (2.0f * 3.14159265358979323846f))))) * expf(((-params->x) * 1.5f))) * 0.9f);
 }
 
 static float px_wave_native_201(VmParams* params) {
-    return ((vm_fast_tanh((sinf(((params->x * (1.2f + (params->modA * 0.8f))) + (sinf((params->x * (8.0f + (params->modB * 6.0f)))) * 1.5f))) * 2.5f)) * (0.7f + (0.3f * ((fabsf(((fmodf(floorf((params->x * 10.0f)), 4.0f) > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.5f))))) * 0.8f);
+    return ((vm_fast_tanh((sinf(fmaf(params->x, fmaf(params->modA, 0.8f, 1.2f), (sinf((params->x * fmaf(params->modB, 6.0f, 8.0f))) * 1.5f))) * 2.5f)) * fmaf(0.3f, ((fabsf(((fmodf(floorf((params->x * 10.0f)), 4.0f) > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.5f)), 0.7f)) * 0.8f);
 }
 
 static float px_wave_native_202(VmParams* params) {
-    return ((sinf(((params->x * (6.0f + (params->modA * 4.0f))) + (sinf((params->x * (45.0f + (params->modB * 30.0f)))) * 0.5f))) * expf(((-params->x) * 4.0f))) * (1.0f + (0.3f * ((fmodf(floorf((params->x * 40.0f)), 2.0f) * 2.0f) - 1.0f))));
+    return ((sinf(fmaf(params->x, fmaf(params->modA, 4.0f, 6.0f), (sinf((params->x * fmaf(params->modB, 30.0f, 45.0f))) * 0.5f))) * expf(((-params->x) * 4.0f))) * fmaf(0.3f, fmaf(fmodf(floorf((params->x * 40.0f)), 2.0f), 2.0f, (-1.0f)), 1.0f));
 }
 
 static float px_wave_native_203(VmParams* params) {
-    return (((sinf((params->x * ((0.9f + (0.4f * sinf((params->x * (3.0f + (params->modA * 2.0f)))))) + ((params->x * (1.5f + params->modB)) / (2.0f * 3.14159265358979323846f))))) * expf(((-params->x) * 0.9f))) * (1.0f + (0.2f * sinf((params->x * 12.0f))))) * 0.8f);
+    return (((sinf((params->x * (fmaf(0.4f, sinf((params->x * fmaf(params->modA, 2.0f, 3.0f))), 0.9f) + ((params->x * (1.5f + params->modB)) / (2.0f * 3.14159265358979323846f))))) * expf(((-params->x) * 0.9f))) * fmaf(0.2f, sinf((params->x * 12.0f)), 1.0f)) * 0.8f);
 }
 
 static float px_wave_native_204(VmParams* params) {
-    return (((sinf(((params->x * (3.5f + (params->modA * 2.0f))) + (sinf((params->x * (28.0f + (params->modB * 15.0f)))) * 1.0f))) * expf(((-params->x) * 2.2f))) * (1.0f + (0.5f * sinf((params->x * 35.0f))))) * 0.9f);
+    return (((sinf(fmaf(params->x, fmaf(params->modA, 2.0f, 3.5f), (sinf((params->x * fmaf(params->modB, 15.0f, 28.0f))) * 1.0f))) * expf(((-params->x) * 2.2f))) * fmaf(0.5f, sinf((params->x * 35.0f)), 1.0f)) * 0.9f);
 }
 
 static float px_wave_native_205(VmParams* params) {
-    return ((sinf((params->x * (0.7f + (0.2f * sinf((params->x * (5.0f + (params->modA * 3.0f)))))))) * (0.6f + (0.4f * ((fabsf(((fmodf(floorf((params->x * 12.0f)), 6.0f) > 2.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.5f))))) + (((0.25f * (fmodf(floorf(((params->x * params->frequency) / 900.0f)), 9.0f) - 4.0f)) * 0.05f) * params->modB));
+    return fmaf(sinf((params->x * fmaf(0.2f, sinf((params->x * fmaf(params->modA, 3.0f, 5.0f))), 0.7f))), fmaf(0.4f, ((fabsf(((fmodf(floorf((params->x * 12.0f)), 6.0f) > 2.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : (0.5f)), 0.6f), (((0.25f * (fmodf(floorf(((params->x * params->frequency) / 900.0f)), 9.0f) - 4.0f)) * 0.05f) * params->modB));
 }
 
 static float px_wave_native_206(VmParams* params) {
-    return ((sinf((params->x * ((2.2f + (0.8f * sinf((params->x * (1.5f + params->modA))))) + (0.3f * sinf((params->x * (7.0f + (params->modB * 4.0f)))))))) * (0.8f + (0.2f * sinf((params->x * 0.8f))))) * 0.9f);
+    return ((sinf((params->x * fmaf(0.3f, sinf((params->x * fmaf(params->modB, 4.0f, 7.0f))), fmaf(0.8f, sinf((params->x * (1.5f + params->modA))), 2.2f)))) * fmaf(0.2f, sinf((params->x * 0.8f)), 0.8f)) * 0.9f);
 }
 
 static float px_wave_native_207(VmParams* params) {
-    return (((sinf(((params->x * (1.6f + (params->modA * 1.2f))) + (sinf((params->x * (14.0f + (params->modB * 8.0f)))) * 1.2f))) * expf(((-params->x) * (1.5f + (fabsf(sinf((params->x * 2.0f))) * 1.0f))))) * (1.0f + (0.3f * sinf((params->x * 20.0f))))) * 0.8f);
+    return (((sinf(fmaf(params->x, fmaf(params->modA, 1.2f, 1.6f), (sinf((params->x * fmaf(params->modB, 8.0f, 14.0f))) * 1.2f))) * expf(((-params->x) * fmaf(fabsf(sinf((params->x * 2.0f))), 1.0f, 1.5f)))) * fmaf(0.3f, sinf((params->x * 20.0f)), 1.0f)) * 0.8f);
 }
 
 static float px_wave_native_208(VmParams* params) {
-    return (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.5f + (0.3f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) + ((0.1f * ((fabsf(((fmodf(floorf(((params->x * params->frequency) / 100.0f)), 2.0f) == 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (0.3f) : ((-0.3f)))) * params->modB));
+    return fmaf((0.1f * ((fabsf(((fmodf(floorf(((params->x * params->frequency) / 100.0f)), 2.0f) == 0.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (0.3f) : ((-0.3f)))), params->modB, ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.3f, params->modA, 0.5f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))));
 }
 
 static float px_wave_native_209(VmParams* params) {
-    return (((fmodf(floorf((((params->x * params->frequency) * (15.0f + (params->modA * 10.0f))) / 64000.0f)), 2.0f) * 2.0f) - 1.0f) * (0.8f + (0.2f * sinf((params->x * (2.0f + (params->modB * 3.0f)))))));
+    return (fmaf(fmodf(floorf((((params->x * params->frequency) * fmaf(params->modA, 10.0f, 15.0f)) / 64000.0f)), 2.0f), 2.0f, (-1.0f)) * fmaf(0.2f, sinf((params->x * fmaf(params->modB, 3.0f, 2.0f))), 0.8f));
 }
 
 static float px_wave_native_210(VmParams* params) {
-    return (vm_fast_tanh((3.0f * (((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * (0.3f + (0.4f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) + (0.3f * sinf((params->x * (1.0f + (params->modB * 2.0f)))))))) * 0.8f);
+    return (vm_fast_tanh((3.0f * fmaf(0.3f, sinf((params->x * fmaf(params->modB, 2.0f, 1.0f))), ((fabsf(((params->x < ((2.0f * 3.14159265358979323846f) * fmaf(0.4f, params->modA, 0.3f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f)))))) * 0.8f);
 }
 
 static float px_wave_native_211(VmParams* params) {
-    return ((sinf(((params->x * (1.0f + (params->modA * 10.0f))) + (sinf((params->x * (31.0f + (params->modB * 20.0f)))) * 2.0f))) * expf(((-params->x) * 0.8f))) * (1.0f + (0.5f * (fmodf(floorf(((params->x * params->frequency) / 1000.0f)), 4.0f) - 1.5f))));
+    return ((sinf(fmaf(params->x, fmaf(params->modA, 10.0f, 1.0f), (sinf((params->x * fmaf(params->modB, 20.0f, 31.0f))) * 2.0f))) * expf(((-params->x) * 0.8f))) * fmaf(0.5f, (fmodf(floorf(((params->x * params->frequency) / 1000.0f)), 4.0f) - 1.5f), 1.0f));
 }
 
 static float px_wave_native_212(VmParams* params) {
-    return ((((fmodf(floorf((((params->x * params->frequency) * (50.0f + (params->modA * 100.0f))) / 64000.0f)), 7.0f) - 3.0f) * 0.3f) * expf(((-params->x) * (0.5f + (params->modB * 2.0f))))) + ((sinf((params->x * 0.1f)) * 0.4f) * expf(((-params->x) * 0.3f))));
+    return fmaf(((fmodf(floorf((((params->x * params->frequency) * fmaf(params->modA, 100.0f, 50.0f)) / 64000.0f)), 7.0f) - 3.0f) * 0.3f), expf(((-params->x) * fmaf(params->modB, 2.0f, 0.5f))), ((sinf((params->x * 0.1f)) * 0.4f) * expf(((-params->x) * 0.3f))));
 }
 
 static float px_wave_native_213(VmParams* params) {
-    return ((sinf(((params->x * 0.25f) + (sinf((params->x * 0.5f)) * 0.5f))) * 0.6f) + (((fmodf(floorf((((params->x * params->frequency) * (8.0f + (params->modA * 12.0f))) / 31000.0f)), 3.0f) - 1.0f) * 0.4f) * (0.7f + (0.3f * sinf((params->x * (0.1f + (params->modB * 0.2f))))))));
+    return fmaf(sinf(fmaf(params->x, 0.25f, (sinf((params->x * 0.5f)) * 0.5f))), 0.6f, (((fmodf(floorf((((params->x * params->frequency) * fmaf(params->modA, 12.0f, 8.0f)) / 31000.0f)), 3.0f) - 1.0f) * 0.4f) * fmaf(0.3f, sinf((params->x * fmaf(params->modB, 0.2f, 0.1f))), 0.7f)));
 }
 
 static float px_wave_native_214(VmParams* params) {
-    return ((floorf((sinf((params->x + (sinf((params->x * (2.0f + (params->modA * 4.0f)))) * 1.5f))) * (4.0f + (params->modB * 8.0f)))) / (4.0f + (params->modB * 8.0f))) * 0.9f);
+    return ((floorf((sinf(fmaf(sinf((params->x * fmaf(params->modA, 4.0f, 2.0f))), 1.5f, params->x)) * fmaf(params->modB, 8.0f, 4.0f))) / fmaf(params->modB, 8.0f, 4.0f)) * 0.9f);
 }
 
 static float px_wave_native_215(VmParams* params) {
-    return ((sinf((params->x * ((1.0f + (floorf(((params->x * 8.0f) / (2.0f * 3.14159265358979323846f))) * 0.5f)) + (params->modA * 2.0f)))) * expf(((-params->x) * (2.0f + (params->modB * 3.0f))))) * (1.0f + (0.3f * sinf((params->x * 15.0f)))));
+    return ((sinf((params->x * fmaf(params->modA, 2.0f, fmaf(floorf(((params->x * 8.0f) / (2.0f * 3.14159265358979323846f))), 0.5f, 1.0f)))) * expf(((-params->x) * fmaf(params->modB, 3.0f, 2.0f)))) * fmaf(0.3f, sinf((params->x * 15.0f)), 1.0f));
 }
 
 static float px_wave_native_216(VmParams* params) {
-    return ((sinf(((params->x * (2.0f + (params->modA * 3.0f))) + (sinf((params->x * (8.0f + (params->modB * 6.0f)))) * 0.8f))) * expf(((-params->x) * 1.5f))) * (1.0f + (0.4f * ((fmodf(floorf((params->x * 20.0f)), 2.0f) * 2.0f) - 1.0f))));
+    return ((sinf(fmaf(params->x, fmaf(params->modA, 3.0f, 2.0f), (sinf((params->x * fmaf(params->modB, 6.0f, 8.0f))) * 0.8f))) * expf(((-params->x) * 1.5f))) * fmaf(0.4f, fmaf(fmodf(floorf((params->x * 20.0f)), 2.0f), 2.0f, (-1.0f)), 1.0f));
 }
 
 static float px_wave_native_217(VmParams* params) {
-    return ((sinf((params->x * (0.5f + ((params->x * (2.0f + (params->modA * 4.0f))) / (2.0f * 3.14159265358979323846f))))) * expf(((-params->x) * (1.0f + (params->modB * 2.0f))))) + ((0.2f * (fmodf(floorf(((params->x * params->frequency) / 5000.0f)), 5.0f) - 2.0f)) * 0.1f));
+    return fmaf(sinf((params->x * (0.5f + ((params->x * fmaf(params->modA, 4.0f, 2.0f)) / (2.0f * 3.14159265358979323846f))))), expf(((-params->x) * fmaf(params->modB, 2.0f, 1.0f))), ((0.2f * (fmodf(floorf(((params->x * params->frequency) / 5000.0f)), 5.0f) - 2.0f)) * 0.1f));
 }
 
 static float px_wave_native_218(VmParams* params) {
-    return ((vm_fast_tanh((sinf(((params->x * (0.8f + (params->modA * 1.5f))) + (sinf((params->x * (17.0f + (params->modB * 10.0f)))) * 1.2f))) * 2.0f)) * 0.7f) + ((0.2f * (fmodf(floorf(((params->x * params->frequency) / 8000.0f)), 8.0f) - 3.5f)) * 0.1f));
+    return fmaf(vm_fast_tanh((sinf(fmaf(params->x, fmaf(params->modA, 1.5f, 0.8f), (sinf((params->x * fmaf(params->modB, 10.0f, 17.0f))) * 1.2f))) * 2.0f)), 0.7f, ((0.2f * (fmodf(floorf(((params->x * params->frequency) / 8000.0f)), 8.0f) - 3.5f)) * 0.1f));
 }
 
 static float px_wave_native_219(VmParams* params) {
-    return ((sinf((params->x * ((0.5f + ((params->x * (4.0f + (params->modA * 6.0f))) / (2.0f * 3.14159265358979323846f))) + (sinf((params->x * (25.0f + (params->modB * 15.0f)))) * 0.3f)))) * expf(((-params->x) * 0.4f))) * (1.0f + (0.3f * sinf((params->x * 12.0f)))));
+    return ((sinf((params->x * fmaf(sinf((params->x * fmaf(params->modB, 15.0f, 25.0f))), 0.3f, (0.5f + ((params->x * fmaf(params->modA, 6.0f, 4.0f)) / (2.0f * 3.14159265358979323846f)))))) * expf(((-params->x) * 0.4f))) * fmaf(0.3f, sinf((params->x * 12.0f)), 1.0f));
 }
 
 static float px_wave_native_220(VmParams* params) {
-    return ((sinf((params->x * (2.0f + (params->modA * 2.0f)))) * expf(((-params->x) * (5.0f + (params->modB * 5.0f))))) + (((fmodf(floorf((((params->x * params->frequency) * 100.0f) / 64000.0f)), 16.0f) - 8.0f) * 0.1f) * expf(((-params->x) * 3.0f))));
+    return fmaf(sinf((params->x * fmaf(params->modA, 2.0f, 2.0f))), expf(((-params->x) * fmaf(params->modB, 5.0f, 5.0f))), (((fmodf(floorf((((params->x * params->frequency) * 100.0f) / 64000.0f)), 16.0f) - 8.0f) * 0.1f) * expf(((-params->x) * 3.0f))));
 }
 
 static float px_wave_native_221(VmParams* params) {
-    return ((sinf((params->x * ((3.0f + (params->modA * 2.0f)) - ((params->x * (2.0f + (params->modB * 3.0f))) / (2.0f * 3.14159265358979323846f))))) * expf(((-params->x) * 0.6f))) * (0.8f + (0.2f * (fmodf(floorf((params->x * 10.0f)), 3.0f) - 1.0f))));
+    return ((sinf((params->x * (fmaf(params->modA, 2.0f, 3.0f) - ((params->x * fmaf(params->modB, 3.0f, 2.0f)) / (2.0f * 3.14159265358979323846f))))) * expf(((-params->x) * 0.6f))) * fmaf(0.2f, (fmodf(floorf((params->x * 10.0f)), 3.0f) - 1.0f), 0.8f));
 }
 
 static float px_wave_native_222(VmParams* params) {
-    return ((((fabsf(((fmodf(floorf((((params->x * params->frequency) * (31.0f + (params->modA * 20.0f))) / 64000.0f)), 31.0f) > (15.0f + (params->modB * 10.0f))) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) * 0.7f) + (0.2f * sinf((params->x * (0.5f + (params->modA * 0.5f))))));
+    return fmaf(((fabsf(((fmodf(floorf((((params->x * params->frequency) * fmaf(params->modA, 20.0f, 31.0f)) / 64000.0f)), 31.0f) > fmaf(params->modB, 10.0f, 15.0f)) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))), 0.7f, (0.2f * sinf((params->x * fmaf(params->modA, 0.5f, 0.5f)))));
 }
 
 static float px_wave_native_223(VmParams* params) {
-    return (0.25f * (((sinf(params->x) + sinf(((params->x * 1.33f) + (params->modA * 3.14159265358979323846f)))) + (((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))) * (0.7f + (0.3f * params->modB)))) + (((fmodf(floorf((((params->x * params->frequency) * 17.0f) / 64000.0f)), 2.0f) * 2.0f) - 1.0f) * 0.8f)));
+    return (0.25f * fmaf(fmaf(fmodf(floorf((((params->x * params->frequency) * 17.0f) / 64000.0f)), 2.0f), 2.0f, (-1.0f)), 0.8f, fmaf(((fabsf(((params->x < 3.14159265358979323846f) ? 1.0f : 0.0f)) > 1e-6f) ? (1.0f) : ((-1.0f))), fmaf(0.3f, params->modB, 0.7f), (sinf(params->x) + sinf(fmaf(params->x, 1.33f, (params->modA * 3.14159265358979323846f)))))));
 }
 
 static float px_wave_native_224(VmParams* params) {
-    return (vm_lfsr_noise(params, 0, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * (1.0f + (0.5f * fabsf(params->modB))))) * (0.6f + (0.39f * params->modA)));
+    return (vm_lfsr_noise(params, 0, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * fmaf(0.5f, fabsf(params->modB), 1.0f))) * fmaf(0.39f, params->modA, 0.6f));
 }
 
 static float px_wave_native_225(VmParams* params) {
-    return (vm_lfsr_noise(params, 1, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 31.0f)) * (1.0f + (0.5f * fabsf(params->modB))))) * (0.6f + (0.39f * params->modA)));
+    return (vm_lfsr_noise(params, 1, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 31.0f)) * fmaf(0.5f, fabsf(params->modB), 1.0f))) * fmaf(0.39f, params->modA, 0.6f));
 }
 
 static float px_wave_native_226(VmParams* params) {
-    return (vm_lfsr_noise(params, 13, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 131071.0f)) * (1.0f + (0.5f * fabsf(params->modB))))) * (0.6f + (0.39f * params->modA)));
+    return (vm_lfsr_noise(params, 13, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 131071.0f)) * fmaf(0.5f, fabsf(params->modB), 1.0f))) * fmaf(0.39f, params->modA, 0.6f));
 }
 
 static float px_wave_native_227(VmParams* params) {
-    return (vm_lfsr_noise(params, 5, ((15699.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 511.0f)) * (1.0f + (0.5f * fabsf(params->modB))))) * (0.6f + (0.39f * params->modA)));
+    return (vm_lfsr_noise(params, 5, ((15699.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 511.0f)) * fmaf(0.5f, fabsf(params->modB), 1.0f))) * fmaf(0.39f, params->modA, 0.6f));
 }
 
 static float px_wave_native_228(VmParams* params) {
-    return (vm_lfsr_noise(params, 0, (((63920.0f * 2.0f) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * (1.0f + (1.5f * fabsf(params->modB))))) * (0.5f + (0.35f * params->modA)));
+    return (vm_lfsr_noise(params, 0, (((63920.0f * 2.0f) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * fmaf(1.5f, fabsf(params->modB), 1.0f))) * fmaf(0.35f, params->modA, 0.5f));
 }
 
 static float px_wave_native_229(VmParams* params) {
-    return (vm_lfsr_noise(params, 1, (((63920.0f * 2.0f) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 31.0f)) * (1.0f + (1.5f * fabsf(params->modB))))) * (0.5f + (0.35f * params->modA)));
+    return (vm_lfsr_noise(params, 1, (((63920.0f * 2.0f) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 31.0f)) * fmaf(1.5f, fabsf(params->modB), 1.0f))) * fmaf(0.35f, params->modA, 0.5f));
 }
 
 static float px_wave_native_230(VmParams* params) {
-    return ((((fabsf(((params->x < (3.14159265358979323846f * (1.0f + (0.9f * params->modB)))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.6f) : ((-0.6f))) * (1.0f - fabsf((params->modA * 0.9f)))) + (vm_lfsr_noise(params, 0, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * (1.0f + (params->rand_offset * 0.2f)))) * fabsf((params->modA * 0.9f))));
+    return fmaf(((fabsf(((params->x < (3.14159265358979323846f * fmaf(0.9f, params->modB, 1.0f))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.6f) : ((-0.6f))), (1.0f - fabsf((params->modA * 0.9f))), (vm_lfsr_noise(params, 0, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * fmaf(params->rand_offset, 0.2f, 1.0f))) * fabsf((params->modA * 0.9f))));
 }
 
 static float px_wave_native_231(VmParams* params) {
-    return ((((fabsf(((params->x < (3.14159265358979323846f * (1.0f + (0.9f * params->modB)))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.6f) : ((-0.6f))) * (1.0f - fabsf((params->modA * 0.9f)))) + (vm_lfsr_noise(params, 1, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 31.0f)) * (1.0f + (params->rand_offset * 0.2f)))) * fabsf((params->modA * 0.9f))));
+    return fmaf(((fabsf(((params->x < (3.14159265358979323846f * fmaf(0.9f, params->modB, 1.0f))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.6f) : ((-0.6f))), (1.0f - fabsf((params->modA * 0.9f))), (vm_lfsr_noise(params, 1, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 31.0f)) * fmaf(params->rand_offset, 0.2f, 1.0f))) * fabsf((params->modA * 0.9f))));
 }
 
 static float px_wave_native_232(VmParams* params) {
-    return ((((fabsf(((params->x < (3.14159265358979323846f * (1.0f + (0.9f * params->modB)))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.6f) : ((-0.6f))) * (1.0f - fabsf((params->modA * 0.9f)))) + (vm_lfsr_noise(params, 13, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 131071.0f)) * (1.0f + (params->rand_offset * 0.2f)))) * fabsf((params->modA * 0.9f))));
+    return fmaf(((fabsf(((params->x < (3.14159265358979323846f * fmaf(0.9f, params->modB, 1.0f))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.6f) : ((-0.6f))), (1.0f - fabsf((params->modA * 0.9f))), (vm_lfsr_noise(params, 13, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 131071.0f)) * fmaf(params->rand_offset, 0.2f, 1.0f))) * fabsf((params->modA * 0.9f))));
 }
 
 static float px_wave_native_233(VmParams* params) {
-    return (((vm_lfsr_noise(params, 0, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * (1.0f + (params->rand_offset * 0.1f)))) * (0.5f + (0.48f * params->modA))) + (vm_lfsr_noise(params, 1, ((15699.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 31.0f)) * (1.0f + (params->rand_offset * 0.1f)))) * (0.5f - (0.48f * params->modA)))) * (0.55f + (0.35f * fabsf(params->modB))));
+    return (fmaf(vm_lfsr_noise(params, 0, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * fmaf(params->rand_offset, 0.1f, 1.0f))), fmaf(0.48f, params->modA, 0.5f), (vm_lfsr_noise(params, 1, ((15699.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 31.0f)) * fmaf(params->rand_offset, 0.1f, 1.0f))) * (0.5f - (0.48f * params->modA)))) * fmaf(0.35f, fabsf(params->modB), 0.55f));
 }
 
 static float px_wave_native_234(VmParams* params) {
-    return (vm_lfsr_noise(params, 0, (((63920.0f * 3.0f) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * (1.0f + (2.0f * fabsf(params->modA))))) * (0.5f + (0.35f * fabsf(params->modB))));
+    return (vm_lfsr_noise(params, 0, (((63920.0f * 3.0f) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * fmaf(2.0f, fabsf(params->modA), 1.0f))) * fmaf(0.35f, fabsf(params->modB), 0.5f));
 }
 
 static float px_wave_native_235(VmParams* params) {
-    return (vm_lfsr_noise(params, 13, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 131071.0f)) * (1.0f + (0.5f * fabsf(params->modA))))) * (0.6f + (0.39f * fabsf(params->modB))));
+    return (vm_lfsr_noise(params, 13, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 131071.0f)) * fmaf(0.5f, fabsf(params->modA), 1.0f))) * fmaf(0.39f, fabsf(params->modB), 0.6f));
 }
 
 static float px_wave_native_236(VmParams* params) {
-    return (vm_lfsr_noise(params, 5, ((15699.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 511.0f)) * (1.0f + (0.5f * fabsf(params->modA))))) * (0.6f + (0.39f * fabsf(params->modB))));
+    return (vm_lfsr_noise(params, 5, ((15699.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 511.0f)) * fmaf(0.5f, fabsf(params->modA), 1.0f))) * fmaf(0.39f, fabsf(params->modB), 0.6f));
 }
 
 static float px_wave_native_237(VmParams* params) {
-    return ((vm_lfsr_noise(params, 1, ((15699.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 31.0f)) * (1.0f + (2.0f * fabsf(params->modA))))) * (0.2f + (0.7f * vm_lfsr_val(params, 0, ((params->x / (2.0f * 3.14159265358979323846f)) * (((15699.0f * 0.5f) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * (1.0f + (3.0f * fabsf(params->modB))))), params->rand_offset)))) * 0.8f);
+    return ((vm_lfsr_noise(params, 1, ((15699.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 31.0f)) * fmaf(2.0f, fabsf(params->modA), 1.0f))) * fmaf(0.7f, vm_lfsr_val(params, 0, ((params->x / (2.0f * 3.14159265358979323846f)) * (((15699.0f * 0.5f) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * fmaf(3.0f, fabsf(params->modB), 1.0f))), params->rand_offset), 0.2f)) * 0.8f);
 }
 
 static float px_wave_native_238(VmParams* params) {
-    return (((vm_lfsr_noise(params, 13, (((((63920.0f * 2.0f) * expf(((-params->x) * 3.5f))) + (15699.0f * 0.5f)) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 131071.0f)) * (1.0f + (0.5f * fabsf(params->modA))))) * expf(((-params->x) * (1.2f + (3.0f * fabsf(params->modB)))))) + ((vm_lfsr_noise(params, 0, ((((15699.0f * expf(((-params->x) * 2.5f))) + (63920.0f * 0.1f)) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * (1.0f + (params->rand_offset * 0.2f)))) * 0.3f) * expf(((-params->x) * (1.8f + (2.5f * fabsf(params->modB))))))) * 0.85f);
+    return (fmaf(vm_lfsr_noise(params, 13, ((fmaf((63920.0f * 2.0f), expf(((-params->x) * 3.5f)), (15699.0f * 0.5f)) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 131071.0f)) * fmaf(0.5f, fabsf(params->modA), 1.0f))), expf(((-params->x) * fmaf(3.0f, fabsf(params->modB), 1.2f))), ((vm_lfsr_noise(params, 0, ((fmaf(15699.0f, expf(((-params->x) * 2.5f)), (63920.0f * 0.1f)) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * fmaf(params->rand_offset, 0.2f, 1.0f))) * 0.3f) * expf(((-params->x) * fmaf(2.5f, fabsf(params->modB), 1.8f))))) * 0.85f);
 }
 
 static float px_wave_native_239(VmParams* params) {
-    return (0.25f * (((vm_lfsr_noise(params, 0, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * (1.0f + (params->rand_offset * 0.1f)))) + vm_lfsr_noise(params, 1, ((15699.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 31.0f)) * (1.0f + (params->rand_offset * 0.1f))))) + ((fabsf(((params->x < (3.14159265358979323846f * (1.0f + (0.9f * params->modA)))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.9f) : ((-0.9f)))) + vm_lfsr_noise(params, 5, (((63920.0f * 0.5f) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 511.0f)) * (1.0f + (1.5f * fabsf(params->modB)))))));
+    return (0.25f * (((vm_lfsr_noise(params, 0, ((63920.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 15.0f)) * fmaf(params->rand_offset, 0.1f, 1.0f))) + vm_lfsr_noise(params, 1, ((15699.0f / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 31.0f)) * fmaf(params->rand_offset, 0.1f, 1.0f)))) + ((fabsf(((params->x < (3.14159265358979323846f * fmaf(0.9f, params->modA, 1.0f))) ? 1.0f : 0.0f)) > 1e-6f) ? (0.9f) : ((-0.9f)))) + vm_lfsr_noise(params, 5, (((63920.0f * 0.5f) / (((fabsf(((params->frequency > 1.0f) ? 1.0f : 0.0f)) > 1e-6f) ? (params->frequency) : (1.0f)) * 511.0f)) * fmaf(1.5f, fabsf(params->modB), 1.0f)))));
 }
 
 static float px_wave_native_240(VmParams* params) {
@@ -1264,47 +1264,47 @@ static float px_wave_native_244(VmParams* params) {
 }
 
 static float px_wave_native_245(VmParams* params) {
-    return ((vm_rand(params) * 2.0f) - 1.0f);
+    return fmaf(vm_rand(params), 2.0f, (-1.0f));
 }
 
 static float px_wave_native_246(VmParams* params) {
-    return ((vm_lfsr_val(params, 12, floorf(((params->x / 3.14159265358979323846f) * params->modA)), 0.0f) * 2.0f) - 1.0f);
+    return fmaf(vm_lfsr_val(params, 12, floorf(((params->x / 3.14159265358979323846f) * params->modA)), 0.0f), 2.0f, (-1.0f));
 }
 
 static float px_wave_native_247(VmParams* params) {
-    return (0.5f * (((sinf(params->x) + (0.618f * sinf((params->x * 1.618f)))) + (0.382f * sinf(((params->x * 2.618f) + params->modA)))) + (0.236f * sinf(((params->x * 4.236f) + params->modB)))));
+    return (0.5f * fmaf(0.236f, sinf(fmaf(params->x, 4.236f, params->modB)), fmaf(0.382f, sinf(fmaf(params->x, 2.618f, params->modA)), fmaf(0.618f, sinf((params->x * 1.618f)), sinf(params->x)))));
 }
 
 static float px_wave_native_248(VmParams* params) {
-    return (sinf((params->x * (1.0f + (params->modA * sinf((params->x * (1.0f + params->modB))))))) * sinf((params->x * 2.718f)));
+    return (sinf((params->x * fmaf(params->modA, sinf((params->x * (1.0f + params->modB))), 1.0f))) * sinf((params->x * 2.718f)));
 }
 
 static float px_wave_native_249(VmParams* params) {
-    return (((8.0f * powf(((params->x / 3.14159265358979323846f) - 1.0f), 4.0f)) - (8.0f * powf(((params->x / 3.14159265358979323846f) - 1.0f), 2.0f))) + 1.0f);
+    return (fmaf(8.0f, powf(((params->x / 3.14159265358979323846f) - 1.0f), 4.0f), (-(8.0f * powf(((params->x / 3.14159265358979323846f) - 1.0f), 2.0f)))) + 1.0f);
 }
 
 static float px_wave_native_250(VmParams* params) {
-    return vm_fast_tanh(((sinf(params->x) * 5.0f) + ((sinf(((params->x * 2.0f) + (params->modA * 3.14159265358979323846f))) * 5.0f) * params->modB)));
+    return vm_fast_tanh(fmaf(sinf(params->x), 5.0f, ((sinf(fmaf(params->x, 2.0f, (params->modA * 3.14159265358979323846f))) * 5.0f) * params->modB)));
 }
 
 static float px_wave_native_251(VmParams* params) {
-    return sinf((params->x + ((expf((sinf(params->x) * (1.0f + (params->modA * 2.0f)))) * params->modB) * 5.0f)));
+    return sinf(fmaf((expf((sinf(params->x) * fmaf(params->modA, 2.0f, 1.0f))) * params->modB), 5.0f, params->x));
 }
 
 static float px_wave_native_252(VmParams* params) {
-    return (sinf((params->x * (1.0f + (params->modA * sinf((params->x * 2.71828182845904523536f)))))) + sinf(((params->x * 3.14159265358979323846f) * params->modB)));
+    return (sinf((params->x * fmaf(params->modA, sinf((params->x * 2.71828182845904523536f)), 1.0f))) + sinf(((params->x * 3.14159265358979323846f) * params->modB)));
 }
 
 static float px_wave_native_253(VmParams* params) {
-    return (sinf((params->x + (((sinf(params->x) * expf(((-params->x) * 5.0f))) * params->modB) * 10.0f))) * expf(((-params->x) * (1.0f + (fabsf(params->modA) * 5.0f)))));
+    return (sinf(fmaf(((sinf(params->x) * expf(((-params->x) * 5.0f))) * params->modB), 10.0f, params->x)) * expf(((-params->x) * fmaf(fabsf(params->modA), 5.0f, 1.0f))));
 }
 
 static float px_wave_native_254(VmParams* params) {
-    return (floorf((sinf(params->x) * (2.0f + (fabsf(params->modA) * 10.0f)))) / (2.0f + (fabsf(params->modA) * 10.0f)));
+    return (floorf((sinf(params->x) * fmaf(fabsf(params->modA), 10.0f, 2.0f))) / fmaf(fabsf(params->modA), 10.0f, 2.0f));
 }
 
 static float px_wave_native_255(VmParams* params) {
-    return (sinf(params->x) * (1.0f + cosf((params->x * (2.0f + (params->modA * 10.0f))))));
+    return (sinf(params->x) * (1.0f + cosf((params->x * fmaf(params->modA, 10.0f, 2.0f)))));
 }
 
 static NativeWaveFunc native_waves[256] = {
