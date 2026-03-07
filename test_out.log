@@ -1,0 +1,1596 @@
+gcc -I. -Wall -Wextra -O2 test/test_vm_taming.c -o test/test_vm_taming  -lm
+In file included from test/test_vm_taming.c:5:
+test/../polysonix.h:84:1: error: static assertion failed: "PxOscillator must be exactly 64 bytes for cache/GPU alignment"
+   84 | static_assert(sizeof(PxOscillator) == 64, "PxOscillator must be exactly 64 bytes for cache/GPU alignment");
+      | ^~~~~~~~~~~~~
+In file included from test/../polysonix.h:1049,
+                 from test/test_vm_taming.c:8:
+test/../px_vm.h: In function ‘patch_jump’:
+test/../px_vm.h:1917:16: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1917 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                ^
+test/../px_vm.h:1917:38: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1917 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                                      ^
+In file included from test/../polysonix.h:1092:
+test/../px_wave_rom.h: At top level:
+test/../px_wave_rom.h:62:10: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   62 | /*   0*/ { "Triangle Up", "fma((1.0 * MOD_B), sin((2.0 * x)), (1.0 - (2.0 * abs(((fma(MOD_C, 0.5, x) / PI) - 1.0)))))" }, // MOD_A: Unused. MOD_B: Harmonic. MOD_C: Phase skew/bend.
+      |          ^
+In file included from test/../polysonix.h:26:
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:64:10: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   64 | /*   1*/ { "Triangle Down", "fma((1.0 * MOD_B), sin((2.0 * x)), fma(2.0, abs(((fma(MOD_C, 0.5, x) / PI) - 1.0)), -1.0))" }, // MOD_A: Unused. MOD_B: Harmonic. MOD_C: Phase skew/bend.
+      |          ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:66:10: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   66 | /*   2*/ { "Sine Up", "fma((1.0 * MOD_B), sin((2.0 * x)), fma((1.0 - (0.5 * (MOD_A + 1.0))), sin(fma(MOD_C, 0.25, x)), ((0.5 * (MOD_A + 1.0)) * tanh((5.0 * sin(fma(MOD_C, 0.25, x)))))))" }, // MOD_A: Sine-to-tanh mix. MOD_B: Harmonic. MOD_C: Phase modulation.
+      |          ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:68:10: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   68 | /*   3*/ { "Sine Down", "fma((1.0 * MOD_B), sin((2.0 * x)), fma((1.0 - (0.5 * (MOD_A + 1.0))), -sin(fma(MOD_C, 0.25, x)), ((0.5 * (MOD_A + 1.0)) * -tanh((5.0 * sin(fma(MOD_C, 0.25, x)))))))" }, // MOD_A: Sine-to-tanh mix. MOD_B: Harmonic. MOD_C: Phase modulation.
+      |          ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:70:10: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   70 | /*   4*/ { "Square Up", "fma((2.0 * MOD_B), sin(fma(2.0, x, (MOD_C * PI))), ((x < (TWO_PI * fma(0.4, MOD_A, 0.5))) ? 1.0 : -1.0))" }, // MOD_A: PWM. MOD_B: Harmonic. MOD_C: Phase modulation on the harmonic.
+      |          ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:72:10: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   72 | /*   5*/ { "Square Down", "fma((2.0 * MOD_B), sin(fma(2.0, x, (MOD_C * PI))), ((x < (TWO_PI * fma(0.4, MOD_A, 0.5))) ? -1.0 : 1.0))" }, // MOD_A: PWM. MOD_B: Harmonic. MOD_C: Phase modulation on the harmonic.
+      |          ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:74:10: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   74 | /*   6*/ { "Saw Rising", "fma((2.0 * MOD_B), sin((2.0 * x)), fma((1.0 - fma(0.5, MOD_A, 0.5)), ((fma((x * MOD_C), 0.5, x) / PI) - 1.0), (fma(0.5, MOD_A, 0.5) * ((x > PI) ? 1.0 : -1.0))))" }, // MOD_A: Saw-to-pulse mix. MOD_B: Harmonic. MOD_C: Phase distortion/bend.
+      |          ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:76:10: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   76 | /*   7*/ { "Saw Falling", "fma((2.0 * MOD_B), sin((2.0 * x)), fma((1.0 - fma(0.5, MOD_A, 0.5)), (1.0 - (fma((x * MOD_C), 0.5, x) / PI)), (fma(0.5, MOD_A, 0.5) * ((x > PI) ? -1.0 : 1.0))))" }, // MOD_A: Saw-to-pulse mix. MOD_B: Harmonic. MOD_C: Phase distortion/bend.
+      |          ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:80:10: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   80 | /*   8*/ { "Saw/Sine Up", "fma((1.0 - (0.5 * (MOD_A + 1.0))), ((x < PI) ? ((x / PI_OVER_2) - 1.0) : sin(fma(PI, MOD_B, x))), ((0.5 * (MOD_A + 1.0)) * tanh((6.0 * ((x < PI) ? ((x / PI_OVER_2) - 1.0) : sin(fma(PI, MOD_B, x)))))))" }, // Phase shift on sine part
+      |          ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:82:10: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   82 | /*   9*/ { "Sine/Saw Down", "fma((1.0 - (0.5 * (MOD_A + 1.0))), ((x < PI) ? -sin(fma(PI, MOD_B, x)) : (1.0 - ((x - PI) / PI_OVER_2))), ((0.5 * (MOD_A + 1.0)) * tanh((6.0 * ((x < PI) ? -sin(fma(PI, MOD_B, x)) : (1.0 - ((x - PI) / PI_OVER_2)))))))" }, // Phase shift on sine
+      |          ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:84:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   84 | /* 10*/ { "Square/Sine Up", "fma((1.0 - (0.5 * (MOD_A + 1.0))), ((x < PI) ? 1.0 : sin(fma(PI, MOD_B, x))), ((0.5 * (MOD_A + 1.0)) * tanh((6.0 * ((x < PI) ? 1.0 : sin(fma(PI, MOD_B, x)))))))" }, // Phase shift on sine
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:86:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   86 | /* 11*/ { "Sine/Square Down", "fma((1.0 - (0.5 * (MOD_A + 1.0))), ((x < PI) ? sin(fma(PI, MOD_B, x)) : -1.0), ((0.5 * (MOD_A + 1.0)) * tanh((6.0 * ((x < PI) ? sin(fma(PI, MOD_B, x)) : -1.0)))))" }, // Phase shift on sine
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:88:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   88 | /* 12*/ { "Saw/Triangle Up", "(x < (TWO_PI * fma(0.1, MOD_B, fma(0.25, MOD_A, 0.5)))) ? ((x / PI_OVER_2) - 1.0) : (((x - PI) < PI_OVER_2) ? ((x - PI) / PI_OVER_2) : (1.0 - (((x - PI) - PI_OVER_2) / PI_OVER_2)))" }, // Adjust split point
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:90:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   90 | /* 13*/ { "Triangle/Saw Down", "(x < (TWO_PI * fma(0.1, MOD_B, fma(0.25, MOD_A, 0.5)))) ? (-2.0 * abs(((x / PI) - 0.5))) : (3.0 - ((2.0 * x) / PI))" }, // Adjust split point
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:92:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   92 | /* 14*/ { "Triangle/Sine Up", "fma((1.0 - (0.5 * (MOD_A + 1.0))), fma(2.0, (1.0 - abs(((x / (PI / 2.0)) - 1.0))), -1.0), ((0.5 * (MOD_A + 1.0)) * sin(fma(PI, MOD_B, x))))" }, // Phase shift on sine
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:94:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   94 | /* 15*/ { "Sine/Triangle Down", "fma((1.0 - (0.5 * (MOD_A + 1.0))), cos(fma(PI, MOD_B, (x + PI))), ((0.5 * (MOD_A + 1.0)) * fma(-2.0, abs((((x - PI) / PI) - 0.5)), 0.5)))" }, // Phase shift on sine
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:99:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+   99 | /* 16*/ { "Clipped Sine", "min(fma(0.5, MOD_B, 0.5), max((-0.5 - (0.5 * MOD_B)), sin(fma(0.3, MOD_A, x)))) * 2.0" }, // Adjust clipping level
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:101:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  101 | /* 17*/ { "Rectified Sine", "fma((1.0 * MOD_B), sin((2.0 * x)), fma(abs(sin(fma(0.4, MOD_A, x))), 2.0, -1.0))" }, // Harmonic texture
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:103:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  103 | /* 18*/ { "Sine * Saw", "fma(sin(fma(0.3, MOD_A, x)), (tanh(x) * PI), ((0.5 * MOD_B) * sin((2.0 * x))))" }, // Harmonic texture
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:105:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  105 | /* 19*/ { "Overload Spark", "fma((1.0 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.2, MOD_A, 0.2))) ? 1.0 : ((x < (TWO_PI * fma(0.2, MOD_A, 0.4))) ? -1.0 : ((x < (TWO_PI * fma(0.2, MOD_A, 0.6))) ? 0.5 : fma((1.0 - (x / TWO_PI)), 1.5, -0.5)))))" }, // Harmonic texture
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:107:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  107 | /* 20*/ { "Overfolded Saw", "min(1.0, max(-1.0, ((1.2 * ((x / PI) - 1.0)) * sin(fma(PI, MOD_B, fma(0.3, MOD_A, fma(3.0, x, RAND_OFFSET)))))))" }, // Phase shift on modulation
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:109:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  109 | /* 21*/ { "Clipped Chaos", "min(0.5, max(-0.5, (1.5 * ((x < PI_OVER_2) ? (x / PI_OVER_2) : ((x < THREE_PI_OVER_2) ? (1.0 - ((x - PI_OVER_2) / PI_OVER_2)) : (-1.0 + ((x - THREE_PI_OVER_2) / PI_OVER_2))))))) * sin(fma(PI, MOD_B, fma(4.0, x, (0.4 * MOD_A))))" }, // Phase shift on modulation
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:111:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  111 | /* 22*/ { "Wavefolder Sim (A=Fold B=Bias)", "(asin((sin(fma(x, (1.0 + (FREQUENCY / 1000.0)), (MOD_B * PI))) * fma(abs(MOD_A), 5.0, 1.0))) / (PI / 2.0)) * 0.8" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:113:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  113 | /* 23*/ { "Triangle Fold", "fma(abs(sin(fma(MOD_A, sin(x), x))), 2.0, -1.0)" }, // Folded triangle wave.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:116:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  116 | /* 24*/ { "Math: Tanh Drive", "tanh((sin(x) * fma(MOD_A, 10.0, 1.0)))" }, // Soft-clipped sine.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:118:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  118 | /* 25*/ { "Math: Cubic", "pow(((x / PI) - 1.0), 3.0)" }, // Cubic function.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:120:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  120 | /* 26*/ { "Math: Rectified", "fma(abs(sin(x)), 2.0, -1.0)" }, // Full-wave rectification.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:122:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  122 | /* 27*/ { "Math: Sinc", "sin(((x * MOD_A) * 10.0)) / fma((x * MOD_A), 10.0, 0.01)" }, // Sinc function approximation.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:124:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  124 | /* 28*/ { "Weird: Step-Slope", "(x < PI) ? 1.0 : (1.0 - (((x - PI) / PI) * 2.0))" }, // Half-square, half-saw.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:127:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  127 | /* 29*/ { "Gritty Bass", "min(1.0, max(-1.0, (1.1 * fma((0.2 * MOD_A), sin(fma(2.0, x, (PI * MOD_B))), ((x / PI) - 1.0)))))" }, // Phase shift on modulation
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:129:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  129 | /* 30*/ { "Hybrid Saw*Sine", "((x / PI) - 1.0) * sin(fma(PI, MOD_B, fma(2.0, x, (0.5 * MOD_A))))" }, // Additional phase shift
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:131:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  131 | /* 31*/ { "Razor Pulse", "fma((0.5 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.02, MOD_A, 0.05))) ? 1.0 : ((x < (TWO_PI * fma(0.02, MOD_A, 0.1))) ? -1.0 : ((x / PI) - 1.0))))" }, // Harmonic texture
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:135:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  135 | /* 32*/ { "Pulse 25%", "fma((1.0 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.25, MOD_A, 0.25))) ? 1.0 : -1.0))" }, // Harmonic softening
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:137:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  137 | /* 33*/ { "Pulse 75%", "fma((1.0 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.25, MOD_A, 0.75))) ? 1.0 : -1.0))" }, // Harmonic softening
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:139:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  139 | /* 34*/ { "Staircase 4 Step", "fma((0.5 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.05, MOD_A, 0.125))) ? -0.75 : ((x < (TWO_PI * fma(0.05, MOD_A, 0.25))) ? -0.25 : ((x < (TWO_PI * fma(0.05, MOD_A, 0.375))) ? 0.25 : 0.75))))" }, // Harmonic texture
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:141:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  141 | /* 35*/ { "Bit Crush Bomb", "fma((0.5 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.1, MOD_A, 0.4))) ? 1.0 : (((floor(((x - (TWO_PI * fma(0.1, MOD_A, 0.4))) / (TWO_PI / 10.0))) % 4.0) - 2.0) * 0.5)))" }, // Harmonic texture
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:143:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  143 | /* 36*/ { "Bit-Crushed Square", "min(1.0, max(-1.0, (((x < PI) ? 1.0 : -1.0) + sin(fma(PI, MOD_B, fma(0.5, MOD_A, fma(2.0, x, RAND_OFFSET)))))))" }, // Phase shift on noise
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:145:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  145 | /* 37*/ { "Pulse Train Wreck", "fma((0.2 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.03, MOD_A, 0.1))) ? 1.0 : ((x < (TWO_PI * fma(0.03, MOD_A, 0.15))) ? -1.0 : ((x < (TWO_PI * fma(0.03, MOD_A, 0.3))) ? 0.5 : ((x < (TWO_PI * fma(0.03, MOD_A, 0.35))) ? -0.5 : 0.0)))))" }, // Harmonic texture
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:147:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  147 | /* 38*/ { "Narrow", "(x < (TWO_PI * fma(0.1, MOD_A, 0.2))) ? 1.0 : ((x < (TWO_PI * fma(0.1, MOD_B, fma(0.05, MOD_A, 0.5)))) ? -1.0 : 0.0)" }, // Adjust second pulse width
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:149:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  149 | /* 39*/ { "Quantized Saw 8", "floor((fma(0.5, MOD_B, fma(0.25, MOD_A, ((x / PI) - 1.0))) * 4.0)) * 0.25" }, // Adjust quantization offset
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:152:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  152 | /* 40*/ { "PWM Synth (A=Width B=Sub)", "fma(((x < (TWO_PI * fma(0.9, abs(MOD_A), 0.05))) ? 1.0 : -1.0), (1.0 - (0.5 * abs(MOD_B))), ((sin((x * 0.5)) * 0.5) * abs(MOD_B))) * 0.7" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:154:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  154 | /* 41*/ { "PWM Gate", "(((x < fma(MOD_B, PI_OVER_2, PI)) ^ (MOD_A > 0.0)) ? 1.0 : -1.0) * 0.8" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:156:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  156 | /* 42*/ { "Harmonic Switch", "(((MOD_A > 0.1) ^ (MOD_B < -0.1)) ? fma(0.5, sin((3.0 * x)), sin(x)) : fma(0.3, cos(fma(2.0, x, (PI * 0.25))), sin(x))) * 0.7" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:158:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  158 | /* 43*/ { "Multi-Gate", "((x < PI_OVER_2) ? sin((2.0 * x)) : ((x < PI) ? (((MOD_A > 0.0) * cos((x - PI_OVER_2))) * 1.5) : ((((MOD_A <= 0.0) ^ (MOD_B > 0.0)) * sin((3.0 * (x - PI)))) * 0.8))) * ((1.0 - (0.2 * abs(MOD_A))) - (0.2 * abs(MOD_B)))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:160:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  160 | /* 44*/ { "Bitwise Staircase", "floor((x * fma(MOD_A, 14.0, 2.0))) / fma(MOD_A, 14.0, 2.0)" }, // Creates a stepped version of a sawtooth.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:162:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  162 | /* 45*/ { "Bitwise XOR Wave", "fma(((floor(((x * 32.0) / TWO_PI)) + floor((((x * MOD_A) * 32.0) / TWO_PI))) % 2.0), 2.0, -1.0)" }, // Simulates XOR parity noise.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:164:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  164 | /* 46*/ { "Hard Quantize Sine", "floor((sin(x) * fma(MOD_A, 6.0, 2.0))) / fma(MOD_A, 6.0, 2.0)" }, // A sine wave quantized to low bit depth.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:166:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  166 | /* 47*/ { "Comparator Fuzz", "(sin(x) > sin((x * (2.0 + MOD_A)))) ? 1.0 : -1.0" }, // 1-bit comparator fuzz effect.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:170:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  170 | /* 48*/ { "Warp Speed", "(x < (TWO_PI * 0.7)) ? ((x / PI_OVER_2) - 1.0) : sin(fma(PI, MOD_B, fma(5.0, x, (0.5 * MOD_A))))" }, // Phase shift on high harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:172:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  172 | /* 49*/ { "Ghost Wail", "sin(fma(PI, MOD_B, fma(0.3, sin(fma(4.0, x, MOD_A)), x)))" }, // Additional phase modulation
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:174:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  174 | /* 50*/ { "Laser Malfunction", "min(1.0, max(-1.0, (((x / PI) - 1.0) * sin(fma(PI, MOD_B, fma(0.4, MOD_A, fma(3.0, x, RAND_OFFSET)))))))" }, // Phase shift on modulation
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:176:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  176 | /* 51*/ { "Hyperspace Glitch", "(x < (TWO_PI * fma(0.05, MOD_A, 0.2))) ? 1.0 : ((x < (TWO_PI * fma(0.05, MOD_A, 0.4))) ? cos(fma(PI, MOD_B, fma(4.0, x, (0.4 * MOD_A)))) : ((x < (TWO_PI * fma(0.05, MOD_A, 0.6))) ? -1.0 : (sin(fma(6.0, x, (0.4 * MOD_A))) * 0.7)))" }, // Phase shift on cos
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:179:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  179 | /* 52*/ { "Shredded Saw", "min(0.8, max(-0.8, (2.0 * fma((0.2 * MOD_A), sin(fma(3.0, x, (PI * MOD_B))), ((x / PI) - 1.0)))))" }, // Phase shift on modulation
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:181:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  181 | /* 53*/ { "Glitch Sine", "(sin(fma(PI, MOD_B, fma(0.5, MOD_A, x))) + (((x > (TWO_PI * 0.2)) && (x < PI_OVER_2)) ? -0.5 : 0.0)) + (((x > (TWO_PI * 0.6)) && (x < (TWO_PI * 0.65))) ? 0.5 : 0.0)" }, // Additional phase shift
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:183:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  183 | /* 54*/ { "4-Segment Bump", "-1.0 + ((x < PI_OVER_2) ? (1.0 * sin((2.0 * fma(PI, MOD_B, fma(0.2, MOD_A, x))))) : ((x < PI) ? (1.5 * sin((2.0 * (x - PI_OVER_2)))) : ((x < THREE_PI_OVER_2) ? (1.75 * sin((2.0 * (x - PI)))) : (0.75 * sin((2.0 * (x - THREE_PI_OVER_2)))))))" }, // Phase shift on first segment
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:185:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  185 | /* 55*/ { "Bird Call AM", "sin(fma(0.5, MOD_A, x)) * fma(0.5, sin(fma(5.0, x, (PI * MOD_B))), 0.5)" }, // Phase shift on carrier
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:187:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  187 | /* 56*/ { "Phase Distortion (A=Amt B=Shape)", "sin(fma((((fma(abs(((x / PI) - 1.0)), 2.0, -1.0) * fma(MOD_B, 0.5, 1.0)) * PI) * abs(MOD_A)), (1.0 + (FREQUENCY / 600.0)), x)) * 0.9" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:189:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  189 | /* 57*/ { "Chaos Sine (A=ModRate B=ModAmt)", "sin(fma((sin((x * fma(abs(MOD_A), 8.0, 1.0))) * abs(MOD_B)), 3.0, x))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:191:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  191 | /* 58*/ { "Phase Glitch", "sin(fma((((MOD_A > 0.0) ^ (x > PI)) * PI_OVER_2), fma(0.5, MOD_B, 0.5), x))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:193:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  193 | /* 59*/ { "Phase Distortion Wave", "fma(sin(fma(lfsr_noise(LFSR_6BIT, 1.0), 0.1, fma((sin(fma(x, 0.5, (MOD_A * PI))) * MOD_B), 4.0, x))), fma(0.5, sin(fma(x, 0.25, (RAND_OFFSET * PI))), 1.0), ((tanh((sin(fma(x, 2.0, (MOD_A * PI_OVER_2))) * 3.0)) * 0.2) * abs(MOD_B)))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:195:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  195 | /* 60*/ { "PD: Resonant", "sin(fma((sin(x) * MOD_A), 3.0, x))" }, // Classic phase distortion resonance.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:197:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  197 | /* 61*/ { "PD: Wrap", "sin((x * fma(MOD_A, sin(x), 1.0)))" }, // Frequency warping phase distortion.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:199:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  199 | /* 62*/ { "PD: Spike", "sin(fma(((x > PI) ? 1.0 : -1.0), MOD_A, x))" }, // Discontinuous phase spike.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:201:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  201 | /* 63*/ { "PD: Windowed", "sin(x) * sin((x * fma(MOD_A, 10.0, 1.0)))" }, // AM windowing creating formant-like effects.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:205:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  205 | /* 64*/ { "Classic FM EP (A=Index B=Detune)", "fma((sin(x) * 0.1), abs(MOD_B), sin(fma((sin(fma(x, 2.0, (0.01 * MOD_B))) * fma(5.0, abs(MOD_A), 1.0)), (FREQUENCY / 440.0), x))) / 1.1" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:207:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  207 | /* 65*/ { "FM Bass Growl (A=Fdbk B=Index)", "tanh((sin(fma(((sin(fma(x, 0.5, (0.05 * MOD_B))) * MOD_B) * 3.0), (1.0 + (FREQUENCY / 200.0)), x)) * fma(abs(MOD_A), 2.0, 1.0))) * 0.9" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:209:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  209 | /* 66*/ { "Freq Shifter FM (A=Shift B=Index)", "sin(fma(x, fma(MOD_A, (FREQUENCY / 440.0), 1.0), ((sin((x * 1.5)) * abs(MOD_B)) * 3.0)))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:211:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  211 | /* 67*/ { "Complex FM A=Index B=ModFreq", "sin(fma((sin((x * fma(abs(MOD_B), 4.0, 1.0))) * (FREQUENCY / 220.0)), fma(MOD_A, 3.0, 1.0), x))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:213:8: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  213 | /* 68*/{ "FM Pluck", "(sin(fma(x, (1.0 + ((0.001 * FREQUENCY) / 100.0)), ((sin((x * (((MOD_A > 0.2) ^ (MOD_B < -0.2)) ? fma(MOD_A, 2.0, 3.5) : (1.5 - (MOD_B * 1.0))))) * fma(1.0, abs(MOD_B), fma(2.0, abs(MOD_A), 1.5))) * exp((-x * fma(abs(MOD_B), 3.0, 2.0)))))) * 0.9) * exp((-x * 0.3))" },
+      |        ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:215:8: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  215 | /* 69*/{ "FM Pitched Grit", "tanh((sin(fma(x, FREQUENCY, (fma(MOD_A, 3.0, 2.0) * sin(((x * FREQUENCY) * fma(RAND_OFFSET, 0.05, fma(MOD_B, 0.5, 1.414))))))) * fma(MOD_A, 0.5, 1.0))) * 0.9" },
+      |        ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:217:8: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  217 | /* 70*/{ "FM Dynamic Lead", "fma(0.33, sin(fma(x, 3.0, (sin(((x * 3.0) * fma(MOD_A, 1.5, 1.5))) * fma(MOD_B, 2.0, 2.0)))), fma(0.5, sin(fma(x, 2.0, (sin(((x * 2.0) * fma(MOD_A, 1.5, 1.5))) * fma(MOD_B, 2.0, 2.0)))), sin(fma(sin((x * fma(MOD_A, 1.5, 1.5))), fma(MOD_B, 2.0, 2.0), x))))" },
+      |        ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:219:8: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  219 | /* 71*/{ "FM Glassy Evolve", "sin(fma(x, fma(RAND_OFFSET, 0.005, 1.0), (sin(fma(x, fma(RAND_OFFSET, 0.01, 3.01), (sin((x * fma(RAND_OFFSET, 0.02, 7.03))) * fma(MOD_A, 0.6, 0.4)))) * fma(MOD_B, 1.5, 1.0))))" },
+      |        ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:221:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  221 | /* 72*/ { "FM: Classic EP (A=Tine B=Bell C=Ratio)", "sin(fma(sin((x * fma(2.0, MOD_C, 3.0))), (1.5 * MOD_B), fma((sin((x * 2.0)) * fma(3.0, MOD_A, 2.0)), exp((-x * 2.0)), x)))" }, // A classic 2-Op electric piano sound that evolves.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:224:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  224 | /* 73*/ { "FM: Growl Bass (A=Index B=Fdbk C=Ratio)", "sin(fma(sin(fma(x, (1.5 + MOD_C), (sin((x * (1.5 + MOD_C))) * MOD_B))), fma(4.0, MOD_A, 1.0), x))" }, // A 3-Op setup designed for aggressive bass sounds.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:227:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  227 | /* 74*/ { "FM: Deep Sub", "fma(0.5, sin(fma(x, 0.5, MOD_A)), sin(x))" }, // Sub-oscillator FM.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:229:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  229 | /* 75*/ { "FM: Talker", "sin((x * fma(sin((x * 5.0)), MOD_A, 1.0)))" }, // Vowel-like FM modulation.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:231:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  231 | /* 76*/ { "FM: Feedback Sim", "sin(fma((sin(x) * sin(x)), MOD_B, fma(sin(x), MOD_A, x)))" }, // Simulated feedback path.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:233:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  233 | /* 77*/ { "FM: Cascaded", "sin(fma(sin(fma(x, 2.0, (sin((x * 4.0)) * MOD_B))), MOD_A, x))" }, // 3-operator cascade.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:235:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  235 | /* 78*/ { "FM: Vowel-ish", "sin((x * (1.0 + MOD_A))) * sin((x * (3.0 + MOD_B)))" }, // Formant-ish AM/FM.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:238:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  238 | /* 79*/ { "FM: Sci-Fi Drone (A=Evolve B=Chaos C=Pitch)", "sin(fma(sin((x * 13.0)), MOD_B, fma(x, fma(MOD_C, 0.01, 1.0), (sin((x * 0.25)) * fma(2.0, MOD_A, 2.0)))))" }, // An evolving, complex pad/drone sound.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:243:8: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  243 | /* 80*/{ "FM Metallic Bell (A=Decay B=Ratio)", "sin(fma((sin((x * fma(RAND_OFFSET, 0.02, fma(MOD_B, 2.0, 4.03)))) * fma(abs(MOD_A), 4.0, 3.0)), exp((-x * fma(abs(MOD_A), 8.0, 2.0))), x)) * exp((-x * 0.5))" },
+      |        ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:245:8: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  245 | /* 81*/{ "FM Hollow Drone (A=ModMix B=ModRatio)", "fma(sin(fma(sin((x * 0.75)), 3.5, x)), (1.0 - abs(MOD_A)), (sin(fma(sin((x * fma(MOD_B, 2.0, 2.5))), 1.5, x)) * abs(MOD_A))) * 0.7" },
+      |        ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:247:8: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  247 | /* 82*/{ "FM Harsh Noise Sweep (A=Sweep B=Intensity)", "sin(fma(tan((x * fma(x, 5.0, fma(MOD_A, 20.0, 10.0)))), fma(abs(MOD_B), 2.5, 0.5), x)) * 0.8" },
+      |        ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:249:8: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  249 | /* 83*/{ "FM Soft Pad (A=Brightness B=Chorus)", "(sin(fma(sin((x * 1.99)), fma(MOD_A, 1.5, 0.5), x)) + sin(fma(x, fma(((RAND_OFFSET - 0.5) * 0.002), abs(MOD_B), 1.0), (sin(((x * 1.99) * fma(((RAND_OFFSET - 0.5) * 0.003), abs(MOD_B), 1.0))) * fma(MOD_A, 1.5, 0.5))))) * 0.45" },
+      |        ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:251:8: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  251 | /* 84*/{ "FM Bipolar Sweep Pad", "(sin((fma(sin((x * fma(MOD_A, 2.5, 3.0))), fma((MOD_B * ((MOD_B > 0.0) ? 1.0 : 0.3)), 2.0, 1.5), x) + ((MOD_B < -0.1) ? (sin((x * 0.49)) * (abs(MOD_B) * 2.5)) : 0.0))) * 0.75) * (1.0 - (abs(MOD_A) * 0.2))" },
+      |        ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:253:8: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  253 | /* 85*/{ "FM Clangorous Hit (A=Metal B=Dissonance)", "tanh((sin(fma(sin((x * 4.75)), (((MOD_A + 1.0) * 0.5) * 1.5), fma(sin((x * fma(MOD_B, 1.5, 1.414))), fma(abs(MOD_B), 2.0, 1.0), x))) * fma(((MOD_A + 1.0) * 0.5), 0.3, 1.0))) * 0.85" },
+      |        ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:255:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  255 | /* 86*/ { "FM: Noise", "sin(fma(lfsr_noise(LFSR_4BIT, 10.0), MOD_A, x))" }, // Noise modulation FM.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:257:8: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  257 | /* 87*/{ "FM Evolving SciFi (A=Evolve B=Harmonics)", "sin(fma(sin((x * fma(RAND_OFFSET, 0.1, 6.0))), (abs(MOD_B) * 1.5), fma(sin((x * fma(sin(fma(x, 0.05, RAND_OFFSET)), fma(MOD_A, 2.0, 1.0), 1.5))), 2.0, x))) * 0.75" },
+      |        ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:261:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  261 | /* 88*/ { "FM: Metallic Bell (A=Decay B=Index2 C=Ratio)", "sin(fma(sin(fma(x, fma(MOD_C, 2.0, 2.414), (sin((x * (5.75 - (MOD_C * 3.0)))) * fma(2.0, MOD_B, 1.0)))), (4.0 * exp((-x * fma(4.0, MOD_A, 1.5)))), x))" }, // A classic inharmonic bell tone.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:264:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  264 | /* 89*/ { "FM: Glitchy Noise (A=Index B=Bit C=Rate)", "sin(fma(sin(fma(x, fma(15.0, MOD_C, 1.0), (floor((sin((x * 27.0)) * (8.0 * MOD_B))) / 8.0))), (5.0 * MOD_A), x))" }, // Uses FM to create harsh, digital noise effects.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:268:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  268 | /* 90*/ { "FM: Metallic 1", "sin(fma((sin((x * 1.414)) * MOD_A), 5.0, x))" }, // Inharmonic metallic FM.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:270:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  270 | /* 91*/ { "FM: Metallic 2", "sin(fma((sin((x * 2.718)) * MOD_A), 5.0, x))" }, // Another flavor of metallic FM.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:272:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  272 | /* 92*/ { "Weird: AM Chaos", "sin(x) * sin((x * fma(MOD_A, 100.0, 1.0)))" }, // High-frequency AM sidebands.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:274:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  274 | /* 93*/ { "Sci-Fi Drone", "(fma(fma(0.3, sin(fma(x, 11.0, (RAND_OFFSET * PI))), ((x / PI) - 1.0)), 0.6, ((((MOD_A > 0.0) ^ (MOD_B > 0.0)) ? (((x * 0.5) < PI) ? 0.4 : -0.4) : (sin(fma(x, 0.5, (MOD_B * PI_OVER_2))) * 0.4)) * fma(0.5, abs(MOD_A), 0.5))) * fma(0.6, fma(0.5, tanh((3.0 * (fma(MOD_A, 0.8, -(MOD_B * 0.6)) - cos((x * (0.5 + (((MOD_A > 0.0) ^ (MOD_B < 0.0)) ? 1.5 : 0.5))))))), 0.5), 0.4)) * 0.7" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:276:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  276 | /* 94*/ { "Evolving Metallic Bell", "(sigma(k, 1.0, 6.0, 1.0, ((sin(((x * k) * fma((MOD_A * 0.1), k, fma(k, 0.14159, 1.0)))) * exp(((-x * k) * fma(MOD_B, 0.7, 0.3)))) / k)) * fma(0.3, sin(fma(x, 0.5, (RAND_OFFSET * PI))), 1.0)) * 0.4" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:278:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  278 | /* 95*/ { "Alien Communication", "fma(lfsr_noise(LFSR_4BIT, 16.0), 0.2, fma(sin((x * fma(lfsr_noise(LFSR_8BIT, 4.0), 0.5, 1.0))), fma(0.5, lfsr_clock(LFSR_7BIT, fma(MOD_B, 0.4, 0.4)), 0.5), fma(lfsr_val(LFSR_11BIT, fma((x / TWO_PI), 2.0, MOD_A), RAND_OFFSET), 2.0, -1.0)))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:283:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  283 | /* 96*/ { "Sine Harmonics", "0.5 * fma((0.5 * MOD_B), sin((4.0 * x)), fma(0.3, sin((3.0 * x)), fma(fma(0.3, MOD_A, 0.5), sin((2.0 * x)), sin(x))))" }, // Add 4th harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:285:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  285 | /* 97*/ { "Harmonic Noise Blast", "0.5 * fma((0.5 * MOD_B), sin((3.0 * x)), fma(MOD_A, sin(fma(7.85, x, -(RAND_OFFSET * 2.0))), (sin((2.0 * x)) + sin(fma(4.6, x, RAND_OFFSET)))))" }, // Add 3rd harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:287:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  287 | /* 98*/ { "Brass", "0.3 * fma(0.3, sin((6.0 * x)), fma(0.4, sin((5.0 * x)), fma(0.5, sin(fma(4.0, x, (PI * MOD_B))), fma(0.6, sin((3.0 * x)), fma(0.8, sin(fma(2.0, x, (0.3 * MOD_A))), sin(x))))))" }, // Phase shift on 4th harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:289:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  289 | /* 99*/ { "Bowed String", "0.5 * (((((sin(x) + (sin((2.0 * x)) / 2.0)) + ((fma(0.3, MOD_A, 0.5) * sin((3.0 * x))) / 3.0)) + (sin(fma(4.0, x, (PI * MOD_B))) / 4.0)) + (sin((5.0 * x)) / 5.0)) + (sin((6.0 * x)) / 6.0))" }, // Phase shift on 4th harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:291:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  291 | /*100*/ { "Additive Square", "0.8 * (((sin(x) + (sin((3.0 * x)) / 3.0)) + ((MOD_A * sin(fma(5.0, x, (PI * MOD_B)))) / 5.0)) + (sin((7.0 * x)) / 7.0))" }, // Phase shift on 5th harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:293:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  293 | /*101*/ { "Electric Pianoish", "0.6 * fma(0.125, sin((7.0 * x)), fma(0.25, sin((5.0 * x)), fma(0.5, sin(fma(PI, MOD_B, fma(3.0, x, (0.3 * MOD_A)))), sin(x))))" }, // Phase shift on 3rd harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:295:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  295 | /*102*/ { "Classic Pad", "0.7 * fma(0.125, sin((4.0 * x)), fma(0.25, sin((3.0 * x)), fma(fma(0.25, MOD_A, 0.5), sin(fma(2.0, x, (PI * MOD_B))), sin(x))))" }, // Phase shift on 2nd harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:297:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  297 | /*103*/ { "Additive Saw (A=Harms B=Shape)", "sigma(k, 1.0, fma(8.0, abs(MOD_A), 1.0), 1.0, (sin((x * k)) / pow(k, (1.0 + abs(MOD_B))))) * 0.5" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:299:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  299 | /*104*/ { "Random Phase Additive (A=RndAmt B=Harm)", "sigma(k, 1.0, fma(6.0, abs(MOD_B), 2.0), 1.0, (sin(fma(x, k, (((MOD_A * RAND_OFFSET) * k) * PI))) / k)) * 0.6" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:301:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  301 | /*105*/ { "Grit Additive (A=Grit B=Tone)", "tanh((sigma(k, 1.0, fma(4.0, abs(MOD_B), 3.0), 1.0, (sin((x * k)) / k)) * fma(abs(MOD_A), 2.0, 1.0))) * 0.8" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:303:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  303 | /*106*/ { "Simple Minor Triad", "fma(fma(sin(fma((x * 1.498307), (1.0 - (MOD_A * 0.004)), (RAND_OFFSET * 0.07))), 0.7, fma(sin(fma((x * 1.189207), fma(MOD_A, 0.005, 1.0), (RAND_OFFSET * 0.05))), 0.8, sin(x))), (0.33 / (1.0 + abs((MOD_B * 0.5)))), ((MOD_B > 0.5) ? (sin((x * 1.781797)) * 0.2) : 0.0))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:305:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  305 | /*107*/ { "Add: Spec 1", "fma(0.125, sin((x * 4.0)), fma(0.25, sin((x * 3.0)), fma(0.5, sin((x * 2.0)), sin(x))))" }, // Basic harmonic series.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:307:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  307 | /*108*/ { "Add: Spec 2", "fma(0.1, sin((x * 7.0)), fma(0.2, sin((x * 5.0)), fma(0.3, sin((x * 3.0)), sin(x))))" }, // Odd harmonics.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:309:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  309 | /*109*/ { "Add: Bell", "fma(0.3, sin((x * 4.2)), fma(0.5, sin((x * 2.5)), sin(x)))" }, // Inharmonic bell spectrum.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:311:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  311 | /*110*/ { "Add: Organ", "fma(0.1, sin((x * 8.0)), fma(0.2, sin((x * 4.0)), fma(0.5, sin((x * 2.0)), sin(x))))" }, // Octave stacking.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:313:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  313 | /*111*/ { "Add: Random Phase", "(sin(x) + sin(fma(x, 2.0, MOD_A))) + sin(fma(x, 3.0, MOD_B))" }, // Harmonics with phase control.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:317:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  317 | /*112*/ { "Formantish", "0.33 * ((sin((2.0 * x)) + sin(fma(3.0, x, (0.4 * MOD_A)))) + sin(fma(5.0, x, (PI * MOD_B))))" }, // Phase shift on 5x harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:319:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  319 | /*113*/ { "Vocal Ah", "0.35 * fma(0.2, sin((10.0 * x)), fma(0.9, sin(fma(PI, MOD_B, fma(5.0, x, (0.3 * MOD_A)))), (fma(0.6, sin(x), (0.8 * sin((2.0 * x)))) + sin((3.0 * x)))))" }, // Phase shift on 5th harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:321:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  321 | /*114*/ { "Reso Filter Sweep (A=Reso B=Cutoff)", "(fma(0.7, sin((x * fma(abs(MOD_A), 5.0, 2.0))), ((x / PI) - 1.0)) * 0.4) * (1.0 + tanh((3.0 * (MOD_B - (cos(x) * (1.0 - (FREQUENCY / 1500.0)))))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:323:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  323 | /*115*/ { "Formant Vowel (A=Phsr1 B=Phsr2)", "(0.4 * sigma(k, 1.0, 5.0, 1.0, ((sin((x * k)) * ((1.0 + (((k > 1.5) && (k < 2.5)) ? (2.0 * abs(MOD_A)) : 0.0)) + (((k > 3.5) && (k < 4.5)) ? (2.0 * abs(MOD_B)) : 0.0))) / (k + 1.0)))) * fma(0.1, (FREQUENCY / 1000.0), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:325:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  325 | /*116*/ { "Sync Sweep No Slant", "((sin((x * fma(5.0, abs(MOD_A), 1.0))) > (MOD_B * 0.9)) ? 1.0 : -1.0) * 0.6" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:327:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  327 | /*117*/ { "Sync Sweep Cos Shape", "fma(((sin((x * fma(5.0, abs(MOD_A), 1.0))) > (MOD_B * 0.9)) ? 1.0 : -1.0), 0.6, (cos(x) * 0.3))"},
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:329:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  329 | /*118*/ { "Smoothed Sync (A=SyncFreq B=Duty)", "fma(tanh((10.0 * (sin((x * fma(5.0, abs(MOD_A), 1.0))) - (MOD_B * 0.9)))), 0.7, (((x / PI) - 1.0) * 0.2))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:332:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  332 | /*119*/ { "Limited Sync (A=SyncFreq B=Duty)", "fma(((sin((x * fma(2.5, abs(MOD_A), 1.0))) > (MOD_B * 0.9)) ? 1.0 : -1.0), 0.6, (((x / PI) - 1.0) * 0.3))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:334:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  334 | /*120*/ { "Sync Sweep (A=SyncFreq B=Duty)", "fma(((sin((x * fma(5.0, abs(MOD_A), 1.0))) > (MOD_B * 0.9)) ? 1.0 : -1.0), 0.6, (((x / PI) - 1.0) * 0.3))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:336:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  336 | /*121*/ { "Oooh Choir Formant", "(sigma(k, 1.0, fma(4.0, abs(MOD_B), 8.0), 1.0, ((sin(fma(x, k, ((RAND_OFFSET * 0.1) * k))) * ((1.0 / (1.0 + pow(((k - fma(MOD_A, 1.5, 2.5)) / (0.8 + abs((MOD_A * 0.3)))), 2.0))) + (0.7 / (1.0 + pow(((k - (((MOD_A > 0.0) ^ (MOD_B > 0.3)) ? (6.0 - (MOD_A * 2.0)) : fma(MOD_A, 1.0, 5.0))) / 1.2), 2.0))))) / pow(k, fma(0.2, abs(MOD_B), 0.7)))) * 0.25) * fma(0.15, sin(fma(x, 6.0, (RAND_OFFSET * PI))), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:338:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  338 | /*122*/ { "PD Vocal Formant", "sin((x + sin(((x * MOD_A) * 8.0))))" }, // Simple PD Formant
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:340:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  340 | /*123*/ { "Sync Soft", "sin((x * fma(MOD_A, 3.0, 1.0))) * (1.0 - (x / TWO_PI))" }, // Windowed sync effect.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:342:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  342 | /*124*/ { "Fractal Sine", "sin(fma(sin(fma(x, 3.0, (sin((x * 9.0)) * MOD_A))), MOD_B, x))" }, // Nested sine modulations.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:344:8: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  344 | /*125*/{ "FM Breathy Flute (A=Air B=PitchMod)", "sin(fma(x, fma((sin(fma(x, 0.2, (RAND_OFFSET * TWO_PI))) * 0.005), abs(MOD_B), 1.0), (fma((fma(rand(), 2.0, -1.0) * abs(MOD_A)), 0.7, sin((x * 2.95))) * 1.2))) * 0.8" },
+      |        ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:346:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  346 | /*126*/ { "Add: Saw 8", "sigma(k, 1.0, 8.0, 1.0, (sin((x * k)) / k))" }, // 8-harmonic sawtooth approximation.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:348:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  348 | /*127*/ { "Add: Square 8", "sigma(k, 1.0, 15.0, 2.0, (sin((x * k)) / k))" }, // 8-harmonic square approximation.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:352:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  352 | /*128*/ { "Kick Drum", "0.6 * fma(0.2, sin(fma(3.0, x, (PI * MOD_B))), fma(0.4, sin((2.0 * x)), sin(fma(0.3, MOD_A, x))))" }, // Phase shift on 3rd harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:354:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  354 | /*129*/ { "Snare Drum", "min(1.0, max(-1.0, ((sin(fma(PI, MOD_B, fma(5.0, x, (0.5 * MOD_A)))) + sin((7.5 * x))) * 2.0))) * (1.0 - (x / (TWO_PI * 1.27)))" }, // Phase shift on 5x harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:356:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  356 | /*130*/ { "Clap", "min(1.0, max(-1.0, (((sin((4.0 * x)) + sin(fma(PI, MOD_B, fma(6.0, x, (0.4 * MOD_A))))) + sin((8.0 * x))) * 1.5))) * (1.0 - (x / (TWO_PI * 1.6)))" }, // Phase shift on 6x harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:358:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  358 | /*131*/ { "Tom Drum", "0.7 * fma(0.1, sin((3.0 * x)), fma(0.3, sin((2.0 * x)), sin(fma(PI, MOD_B, fma(0.3, MOD_A, x)))))" }, // Phase shift on fundamental
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:360:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  360 | /*132*/ { "Cymbalish", "0.25 * fma(MOD_A, sin(fma(3.14, x, (PI * MOD_B))), ((sin(x) + sin((1.57 * x))) + sin((2.25 * x))))" }, // Phase shift on 3.14x harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:362:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  362 | /*133*/ { "Double Waves", "max(-1.0, fma((0.7 * fma(0.8, sin(fma(1.1, x, RAND_OFFSET)), sin(x))), (1.0 - (x / TWO_PI)), (0.5 * fma(MOD_A, sin(fma(PI, MOD_B, fma(2.2, x, RAND_OFFSET))), sin((2.0 * x))))))" }, // Phase shift on 2.2x
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:364:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  364 | /*134*/ { "Metal Impact", "0.25 * (((sin(x) + sin(fma(PI, MOD_B, fma(1.25, x, (0.5 * MOD_A))))) + sin((1.85 * x))) + sin((2.1 * x)))" }, // Phase shift on 1.25x
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:366:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  366 | /*135*/ { "Bell Tone", "0.5 * fma(0.2, sin((2.15 * x)), fma(0.3, sin((1.6 * x)), fma(0.5, sin(fma(1.05, x, (0.4 * MOD_A))), sin(fma(PI, MOD_B, x)))))" }, // Phase shift on fundamental
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:368:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  368 | /*136*/ { "Metallic Perc", "0.25 * (fma(MOD_A, sin(fma(2.5, x, (PI * MOD_B))), (sin(x) + sin((1.5 * x)))) + sin((3.5 * x)))" }, // Phase shift on 2.5x harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:370:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  370 | /*137*/ { "Sigma Bell (A=Decay B=Metal)", "(sigma(k, 1.0, 4.0, 1.0, (sin(((x * k) * fma((0.2 * k), abs(MOD_B), 1.0))) / (k + 1.0))) * exp((((-x * 2.0) * fma(abs(MOD_A), 4.0, 1.0)) / (1.0 + (FREQUENCY / 300.0))))) * 0.7" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:372:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  372 | /*138*/ { "Classic Noise Sim", "(fma((((((x * FREQUENCY) * fma(MOD_A, 10.0, 15.0)) * fma(RAND_OFFSET, 0.1, 1.0)) % fma(abs(MOD_B), 0.3, 1.0)) - 0.5), fma(0.4, (((MOD_A > 0.1) ^ (MOD_B > 0.1)) ? sin((((x * FREQUENCY) * (23.0 - (MOD_A * 5.0))) * (1.0 - (RAND_OFFSET * 0.05)))) : cos(((x * FREQUENCY) * fma(MOD_B, 3.0, 7.0)))), 0.6), ((MOD_B < -0.2) ? (((((x * FREQUENCY) * fma(MOD_A, 3.0, 37.0)) % 0.8) - 0.4) * 0.3) : 0.0)) * 0.55) * (1.0 - (abs(MOD_A) * 0.1))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:374:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  374 | /*139*/ { "Distorted Pitch", "((floor(((((x * FREQUENCY) * fma(MOD_A, 24.0, 8.0)) % fma((RAND_OFFSET * 0.1), ((MOD_A < 0.1) ? 1.0 : 0.0), fma(abs(MOD_A), 0.7, 1.0))) * fma(abs(MOD_B), 1.5, 2.5))) / fma(abs(MOD_B), 1.0, 2.0)) * fma((MOD_B * 0.15), sin(((x * FREQUENCY) * fma(MOD_A, 5.0, 31.0))), 1.0)) * 0.7" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:376:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  376 | /*140*/ { "Gritty Rumble Noise", "fma((fma(rand(), 2.0, -1.0) * sin(fma(x, 0.5, ((RAND_OFFSET * TWO_PI) * 0.5)))), 0.2, fma(fma(rand(), 2.0, -1.0), 0.4, ((fma(rand(), 2.0, -1.0) * sin(fma(x, 0.1, (RAND_OFFSET * TWO_PI)))) * 0.3))) * fma(MOD_A, 0.5, 1.0)"},
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:378:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  378 | /*141*/ { "Filtered Static Noise", "fma(sigma(k, 0.0, 7.0, 1.0, (fma(rand(), 2.0, -1.0) * pow(fma(MOD_A, 0.35, 0.6), k))), 0.125, (((fma(rand(), 2.0, -1.0) * sin(((x * fma(MOD_B, 900.0, 100.0)) / (FREQUENCY + 0.01)))) * MOD_B) * 0.2))"},
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:381:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  381 | /*142*/ { "Wooden Percussion", "0.7 * fma(0.125, sin((4.0 * x)), fma(0.25, sin(fma(3.0, x, (PI * MOD_B))), fma(0.5, sin((2.0 * x)), sin(fma(0.2, MOD_A, x)))))" }, // Phase shift on 3rd harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:383:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  383 | /*143*/ { "Glitchy Percussion", "fma((lfsr_clock(LFSR_8BIT, 0.8) * sin(fma(x, fma(lfsr_noise(LFSR_12BIT, 32.0), 2.0, 1.0), (lfsr_val(LFSR_16BIT, (x / PI), MOD_A) * PI)))), exp((-x * fma(MOD_B, 8.0, 2.0))), ((lfsr_clock(LFSR_4BIT, 0.5) * 0.3) * exp((-x * 12.0))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:387:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  387 | /*144*/ { "Plucked String (A=Damp B=Body)", "(sigma(k, 1.0, fma(4.0, abs(MOD_B), 3.0), 1.0, (sin((x * k)) * pow(0.85, (k * (1.0 + abs(MOD_A)))))) * exp((-x * 0.5))) * 0.8" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:389:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  389 | /*145*/ { "Sigma A=End B=Decay", "sigma(k, 1.0, fma(abs(MOD_A), 5.0, 1.0), 1.0, (sin((x * k)) / (pow(k, fma(abs(MOD_B), 2.0, 1.0)) + 0.1))) * 0.5" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:391:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  391 | /*146*/ { "Noisy Pad (A=NoiseAmt B=Flt)", "(fma(sigma(k, 1.0, 4.0, 1.0, (sin((x * k)) / k)), (1.0 - abs(MOD_A)), (((rand() - 0.5) * 1.5) * abs(MOD_A))) * fma(0.5, tanh((3.0 * (1.0 - (abs(MOD_B) * (1.0 - (FREQUENCY / 1000.0)))))), 0.5)) * 0.6" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:393:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  393 | /*147*/ { "Rich String Ensemble", "(sigma(k, 1.0, fma(3.0, abs(MOD_B), 5.0), 1.0, (((sin(fma(x, k, (((MOD_A * 0.02) * k) * RAND_OFFSET))) + sin(fma((x * k), fma(MOD_A, 0.005, 1.0), (((MOD_A * 0.03) * k) * (k * 0.1))))) + sin(fma((x * k), (1.0 - (MOD_A * 0.005)), -(((MOD_A * 0.025) * k) * (k * 0.13))))) / pow(k, fma(0.3, abs(MOD_B), 1.1)))) * 0.15) * fma(0.2, sin(fma(x, 0.5, PI_OVER_2)), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:395:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  395 | /*148*/ { "Mellow Brass Section", "tanh((sigma(k, 1.0, fma(2.0, abs(MOD_A), 4.0), 1.0, ((sin(fma(x, k, ((MOD_B * 0.02) * sin((x * 7.0))))) * fma(abs(MOD_A), fma(0.1, k, -0.05), (1.0 - (0.2 * k)))) / pow(k, fma(0.4, (1.0 - abs(MOD_A)), 0.8)))) * fma(0.3, abs(MOD_A), 0.6))) * 0.85" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:397:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  397 | /*149*/ { "Jittery Inharmonic Pitch", "sigma(k, 1.0, fma(abs(MOD_A), 4.0, 4.0), 1.0, (sin(fma((x * FREQUENCY), fma(((MOD_B * 0.05) * (k - 1.0)), (((k % 2.0) == 0.0) ? -1.0 : 1.0), k), (((RAND_OFFSET * 0.2) * k) * (((k % 3.0) == 0.0) ? 0.5 : 0.1)))) * ((1.0 / fma(abs(MOD_B), 0.5, k)) * fma((RAND_OFFSET * 0.2), MOD_A, 0.8)))) * (0.6 / fma(abs(MOD_A), 0.5, 1.0))"},
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:399:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  399 | /*150*/ { "LFSR Granular Texture", "fma(sin(fma(lfsr_noise(LFSR_12BIT, fma(MOD_A, 16.0, 8.0)), fma(MOD_B, 1.5, 0.5), x)), lfsr_clock(LFSR_8BIT, fma(MOD_A, 0.4, 0.3)), (lfsr_val(LFSR_16BIT, ((x / TWO_PI) + RAND_OFFSET), (MOD_B * 0.5)) * 0.3)) - 0.15" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:401:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  401 | /*151*/ { "Morphing Harmonics", "sigma(k, 1.0, 12.0, 1.0, ((sin(fma(x, k, (((sin(((x * k) * 0.25)) * MOD_A) * k) * 0.1))) * ((MOD_B > 0.0) ? (1.0 / fma(abs(MOD_B), 8.0, k)) : exp(((-k * abs(MOD_B)) * 0.5)))) * fma(0.2, sin(fma((x * k), 3.0, (RAND_OFFSET * k))), 1.0))) * 0.15" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:403:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  403 | /*152*/ { "Breathing Pad", "fma((fma(sin((x * 2.006)), 0.5, fma(sin((x * 1.498)), 0.7, sin(x))) * fma(0.4, sin(fma(x, 0.125, (MOD_A * PI))), 0.6)), fma((MOD_B * 0.3), sin(fma(x, 0.0625, (RAND_OFFSET * TWO_PI))), 1.0), (lfsr_noise(LFSR_4BIT, 0.5) * 0.05))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:405:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  405 | /*153*/ { "Chaotic Oscillator", "tanh((fma(sin(fma(x, 0.618, (MOD_B * PI_OVER_2))), 0.7, sin(fma(sin(fma(x, 1.618, (MOD_A * PI))), 0.5, x))) * fma(MOD_A, 3.0, 2.0))) * fma(0.2, lfsr_val(LFSR_7BIT, ((x / TWO_PI) * 3.0), RAND_OFFSET), 0.8)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:407:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  407 | /*154*/ { "Crystalline Arpeggio", "sigma(k, 1.0, 8.0, 1.0, ((sin(fma(x, pow(2.0, (floor(fma(MOD_A, 4.0, k)) * 0.33333)), ((RAND_OFFSET * k) * 0.1))) * exp(((-x * k) * fma(MOD_B, 1.2, 0.8)))) * lfsr_clock(LFSR_5BIT, fma(k, 0.05, 0.6)))) * 0.18" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:409:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  409 | /*155*/ { "Add: Shepard Cycle", "fma(sin((x * (2.0 + MOD_A))), 0.5, sin((x * (1.0 + MOD_A))))" }, // Shepard tone component.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:412:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  412 | /*156*/ { "Water Droplet", "(x < (TWO_PI * 0.05)) ? -1.0 : ((sin(fma(PI, MOD_B, fma((x - (TWO_PI * 0.05)), 5.0, (1.0 * MOD_A)))) * 0.6) * exp((-(x - (TWO_PI * 0.05)) * 0.5)))" }, // Phase shift on ripple
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:414:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  414 | /*157*/ { "Alien Chatter", "fma((0.5 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.05, MOD_A, 0.15))) ? 1.0 : ((x < (TWO_PI * fma(0.05, MOD_A, 0.25))) ? -0.5 : ((x < (TWO_PI * fma(0.05, MOD_A, 0.35))) ? 0.7 : ((x < PI) ? -1.0 : (sin(fma(3.0, x, (0.4 * MOD_A))) * 0.6))))))" }, // Harmonic texture
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:416:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  416 | /*158*/ { "Weird: Chirp", "sin(((x * x) / PI))" }, // Quadratic phase chirp.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:418:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  418 | /*159*/ { "Wind AM", "sin(fma(PI, MOD_B, fma(15.0, x, (0.75 * MOD_A)))) * fma(0.5, sin(x), 0.5)" }, // Phase shift on high harmonic
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:423:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  423 | /*160*/ { "LFSR Rhythm Gate", "fma(sin(x), lfsr_clock(LFSR_8BIT, fma(0.4, MOD_A, 0.3)), (0.2 * lfsr_noise(LFSR_4BIT, fma(3.0, MOD_B, 2.0))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:425:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  425 | /*161*/ { "LFSR Harmonic Chaos", "sigma(k, 1.0, 6.0, 1.0, (sin(fma(x, k, ((lfsr_val(LFSR_12BIT, fma(k, 0.1, (x / TWO_PI)), RAND_OFFSET) * PI) * MOD_A))) / k)) * fma(0.3, lfsr_noise(LFSR_6BIT, fma(1.5, MOD_B, 0.5)), 0.4)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:427:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  427 | /*162*/ { "LFSR Digital Texture", "tanh((2.0 * fma(0.3, lfsr_noise(LFSR_5BIT, fma(6.0, MOD_B, 4.0)), fma(0.5, sin(fma(lfsr_clock(LFSR_7BIT, 0.5), PI_OVER_2, x)), fma(lfsr_val(LFSR_15BIT, (x / PI), (MOD_A + RAND_OFFSET)), 2.0, -1.0)))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:429:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  429 | /*163*/ { "LFSR Poly Rhythm", "fma(0.3, lfsr_noise(LFSR_13BIT, fma(2.0, MOD_B, 1.0)), fma(sin(x), fma(0.3, lfsr_clock(LFSR_11BIT, 0.25), 0.7), (sin((x * 1.5)) * fma(0.4, lfsr_clock(LFSR_9BIT, fma(0.3, MOD_A, 0.33)), 0.6))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:431:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  431 | /*164*/ { "LFSR Phase Modulation", "sin(fma(lfsr_noise(LFSR_8BIT, (0.1 + MOD_B)), 0.5, fma((lfsr_val(LFSR_16BIT, ((x / TWO_PI) + (FREQUENCY / 1000.0)), RAND_OFFSET) * MOD_A), TWO_PI, x)))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:433:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  433 | /*165*/ { "LFSR Granular", "sigma(k, 1.0, 4.0, 1.0, ((sin((x * k)) * lfsr_clock(LFSR_10BIT, fma(k, 0.15, 0.1))) * lfsr_val(LFSR_14BIT, fma(k, MOD_A, (x / PI)), RAND_OFFSET))) * 0.6" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:435:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  435 | /*166*/ { "LFSR Rhythmic Harmonics", "sigma(k, 1.0, 8.0, 1.0, ((sin((x * k)) * lfsr_clock((((k % 3.0) == 0.0) ? LFSR_7BIT : LFSR_5BIT), fma(MOD_A, 0.3, 0.2))) / k)) * fma(0.3, lfsr_noise(LFSR_12BIT, (0.8 + MOD_B)), 0.5)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:437:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  437 | /*167*/ { "LFSR Spectral Shift", "fma(0.4, sin(fma(x, 2.0, (lfsr_noise(LFSR_9BIT, fma(MOD_B, 3.0, 2.0)) * PI))), sin((x * fma(lfsr_val(LFSR_13BIT, ((x / PI) + (FREQUENCY / 500.0)), MOD_A), 0.5, 1.0))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:439:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  439 | /*168*/ { "LFSR Euclidean Beat", "fma(sin(x), ((lfsr_clock(LFSR_16BIT, 0.4) && lfsr_clock(LFSR_11BIT, fma(MOD_A, 0.4, 0.3))) ? 1.0 : 0.3), (0.2 * lfsr_noise(LFSR_6BIT, fma(MOD_B, 2.0, 3.0))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:441:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  441 | /*169*/ { "LFSR Feedback Synth", "tanh(fma((0.3 * lfsr_noise(LFSR_8BIT, fma(MOD_B, 2.0, 1.5))), sin((x * 0.5)), sin(fma((lfsr_val(LFSR_15BIT, (x / TWO_PI), RAND_OFFSET) * MOD_A), PI, x)))) * 0.8" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:443:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  443 | /*170*/ { "LFSR Algorithmic Lead", "fma(0.3, lfsr_noise(LFSR_7BIT, fma(MOD_B, 3.0, 4.0)), fma(sin((x * 2.0)), lfsr_val(LFSR_10BIT, ((x / PI) + MOD_A), RAND_OFFSET), sin((x * fma(lfsr_clock(LFSR_12BIT, 0.25), 0.5, 1.0)))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:445:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  445 | /*171*/ { "LFSR Morphing Pad", "sigma(k, 1.0, fma(3.0, abs(MOD_B), 5.0), 1.0, ((sin(fma(x, k, (lfsr_val(LFSR_14BIT, fma(k, 0.1, (x / TWO_PI)), (RAND_OFFSET + MOD_A)) * PI))) * lfsr_clock(LFSR_8BIT, fma(k, 0.05, 0.1))) / (k + 1.0))) * 0.4" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:447:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  447 | /*172*/ { "LFSR Breakbeat", "fma(sin(x), (lfsr_clock(LFSR_9BIT, 0.5) ? 1.0 : (lfsr_clock(LFSR_7BIT, fma(MOD_A, 0.2, 0.7)) ? 0.6 : 0.2)), ((0.4 * lfsr_noise(LFSR_11BIT, fma(MOD_B, 2.0, 2.5))) * sin((x * 3.0))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:449:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  449 | /*173*/ { "LFSR Probability Gate", "fma(sin(fma(MOD_A, PI, x)), ((lfsr_val(LFSR_16BIT, ((x / PI) + (FREQUENCY / 440.0)), RAND_OFFSET) > fma(MOD_B, 0.4, 0.3)) ? 1.0 : 0.1), (0.3 * lfsr_noise(LFSR_6BIT, 3.0)))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:451:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  451 | /*174*/ { "LFSR Polyrhythmic Chaos", "fma((sin((x * 1.666)) * lfsr_clock(LFSR_9BIT, fma(MOD_B, 0.25, 0.35))), 0.8, fma(sin(x), lfsr_clock(LFSR_13BIT, 0.3), (sin((x * 1.333)) * lfsr_clock(LFSR_11BIT, fma(MOD_A, 0.3, 0.4)))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:453:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  453 | /*175*/ { "LFSR Glitch Matrix", "tanh((sigma(k, 1.0, 4.0, 1.0, ((sin((x * k)) * lfsr_val(3.0, fma((k * MOD_A), 0.1, (x / TWO_PI)), RAND_OFFSET)) * lfsr_clock(0.0, fma(k, 0.1, 0.2)))) * fma(MOD_B, 2.0, 1.0))) * 0.7" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:459:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  459 | /*176*/ { "Pac-Man Wakka", "(sin((x * fma(0.3, sin(fma(x, 8.0, (MOD_A * PI))), 1.0))) * ((x < (PI * fma(0.2, MOD_B, 0.6))) ? 1.0 : 0.3)) * 0.8" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:461:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  461 | /*177*/ { "Pac-Man Power Pellet", "(sin((x * fma(MOD_A, 2.0, fma(sin((x * 12.0)), 1.5, 2.0)))) * fma(0.3, sin((x * fma(MOD_B, 4.0, 4.0))), 0.7)) * 0.9" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:463:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  463 | /*178*/ { "Pac-Man Death", "(sin((x * (2.0 - ((x * fma(MOD_A, 2.0, 3.0)) / TWO_PI)))) * exp((-x * fma(MOD_B, 1.0, 0.8)))) * fma(0.4, sin((x * 15.0)), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:465:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  465 | /*179*/ { "Pac-Man Ghost", "(sin((x * fma(0.2, sin((x * fma(MOD_A, 4.0, 6.0))), 0.8))) * fma(0.4, sin((x * fma(MOD_B, 1.0, 0.5))), 0.6)) * 0.7" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:467:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  467 | /*180*/ { "Space Invaders Shot", "(sin(fma(x, fma(MOD_A, 2.0, 3.0), (sin((x * fma(MOD_B, 15.0, 25.0))) * 0.8))) * exp((-x * 2.5))) * fma(0.3, sin((x * 40.0)), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:469:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  469 | /*181*/ { "Space Invaders March", "fma((0.3 * sin((x * (2.0 + MOD_A)))), fma(0.2, MOD_B, 0.8), ((x < (TWO_PI * 0.25)) ? 0.8 : ((x < (TWO_PI * 0.5)) ? 0.4 : ((x < (TWO_PI * 0.75)) ? 0.6 : 0.2)))) * 0.9" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:471:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  471 | /*182*/ { "Space Invaders UFO", "fma((0.4 * sin(fma(x, fma(MOD_B, 4.0, 8.0), (sin((x * 0.2)) * 2.0)))), 0.8, sin((x * fma(0.1, sin((x * fma(MOD_A, 2.0, 3.0))), 0.3))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:473:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  473 | /*183*/ { "Space Invaders Explosion", "fma((((floor((((x * FREQUENCY) * fma(MOD_A, 40.0, 80.0)) / 22050.0)) % 31.0) - 15.0) * 0.1), exp((-x * fma(MOD_B, 2.0, 1.5))), ((sin((x * 0.2)) * 0.3) * exp((-x * 0.8))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:475:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  475 | /*184*/ { "Asteroids Thrust", "fma(sin((x * fma(0.3, sin((x * fma(MOD_A, 8.0, 12.0))), 0.5))), fma(0.6, (((floor((x * 20.0)) % 3.0) > 0.0) ? 1.0 : 0.3), 0.4), (((0.2 * ((floor(((x * FREQUENCY) / 1000.0)) % 7.0) - 3.0)) * 0.1) * MOD_B))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:477:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  477 | /*185*/ { "Asteroids Shoot", "(sin(fma(x, fma(MOD_A, 3.0, 4.0), (sin((x * fma(MOD_B, 20.0, 35.0))) * 1.2))) * exp((-x * 3.0))) * fma(0.5, sin((x * 60.0)), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:479:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  479 | /*186*/ { "Asteroids Explosion", "fma((((floor((((x * FREQUENCY) * fma(MOD_A, 80.0, 120.0)) / 22050.0)) % 127.0) - 63.0) * 0.02), exp((-x * fma(MOD_B, 1.5, 1.0))), ((sin((x * (0.1 + ((x * 2.0) / TWO_PI)))) * 0.4) * exp((-x * 0.5))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:481:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  481 | /*187*/ { "Asteroids Hyperspace", "(sin(fma(x, (2.0 + ((x * fma(MOD_A, 4.0, 8.0)) / TWO_PI)), (sin((x * fma(MOD_B, 25.0, 45.0))) * 2.0))) * exp((-x * 0.8))) * fma(0.6, sin((x * 80.0)), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:483:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  483 | /*188*/ { "Galaxian Attack", "(sin((x * (fma(sin((x * fma(MOD_A, 4.0, 6.0))), 0.8, 1.5) + ((x * fma(MOD_B, 2.0, 2.0)) / TWO_PI)))) * exp((-x * 1.2))) * 0.9" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:485:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  485 | /*189*/ { "Galaxian Formation", "fma((0.3 * sin((x * fma(0.4, sin((x * (1.0 + MOD_B))), 2.4)))), 0.8, sin((x * fma(0.2, sin((x * fma(MOD_A, 2.0, 4.0))), 0.8))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:487:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  487 | /*190*/ { "Centipede Laser", "(sin(fma(x, fma(MOD_A, 3.0, 5.0), (sin((x * fma(MOD_B, 20.0, 40.0))) * 0.6))) * exp((-x * 2.8))) * fma(0.4, fma((floor((x * 30.0)) % 2.0), 2.0, -1.0), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:489:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  489 | /*191*/ { "Centipede Flea Drop", "(sin(fma(x, (1.2 + ((x * fma(MOD_A, 2.0, 1.5)) / TWO_PI)), (sin((x * fma(MOD_B, 10.0, 18.0))) * 1.0))) * exp((-x * 1.0))) * 0.8" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:493:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  493 | /*192*/ { "Defender Thrust", "fma(sin((x * fma(0.3, sin((x * fma(MOD_A, 6.0, 8.0))), 0.4))), fma(0.5, (((floor((x * 15.0)) % 5.0) > 2.0) ? 1.0 : 0.4), 0.5), (((0.3 * ((floor(((x * FREQUENCY) / 800.0)) % 15.0) - 7.0)) * 0.02) * MOD_B))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:495:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  495 | /*193*/ { "Defender Smart Bomb", "(sin((x * fma(sin((x * fma(MOD_A, 15.0, 30.0))), 3.0, (2.0 + ((x * 4.0) / TWO_PI))))) * exp((-x * fma(MOD_B, 0.8, 0.6)))) * fma(0.5, sin((x * 100.0)), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:497:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  497 | /*194*/ { "Frogger Hop", "((sin(fma(x, fma(MOD_A, 1.0, 1.8), (sin((x * fma(MOD_B, 8.0, 12.0))) * 1.5))) * exp((-x * 2.0))) * fma(0.3, sin((x * 25.0)), 1.0)) * 0.9" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:499:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  499 | /*195*/ { "Frogger Traffic", "fma(((0.2 * ((floor(((x * FREQUENCY) / 1200.0)) % 11.0) - 5.0)) * 0.1), fma(0.2, MOD_B, 0.8), sin((x * fma(0.1, sin((x * (2.0 + MOD_A))), 0.6))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:501:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  501 | /*196*/ { "Donkey Kong Hammer", "fma(sin((x * fma(MOD_A, 1.5, 1.5))), exp((-x * fma(MOD_B, 2.0, 3.0))), (((0.4 * ((floor(((x * FREQUENCY) / 600.0)) % 8.0) - 3.5)) * 0.1) * exp((-x * 1.5))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:503:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  503 | /*197*/ { "Donkey Kong Jump", "(sin(fma(x, (2.5 + ((x * fma(MOD_A, 3.0, 2.0)) / TWO_PI)), (sin((x * fma(MOD_B, 10.0, 20.0))) * 0.8))) * exp((-x * 1.8))) * 0.9" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:505:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  505 | /*198*/ { "Missile Command Explosion", "fma((((floor((((x * FREQUENCY) * fma(MOD_A, 60.0, 90.0)) / 22050.0)) % 63.0) - 31.0) * 0.05), exp((-x * fma(MOD_B, 1.0, 1.2))), ((sin((x * (0.15 + ((x * 1.5) / TWO_PI)))) * 0.5) * exp((-x * 0.7))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:507:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  507 | /*199*/ { "Tempest Shoot", "((sin(fma(x, fma(MOD_A, 2.5, 4.5), (sin((x * fma(MOD_B, 25.0, 50.0))) * 0.7))) * exp((-x * 3.5))) * fma(0.4, sin((x * 70.0)), 1.0)) * 0.8" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:509:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  509 | /*200*/ { "Tempest Flip", "(sin((x * (fma(sin((x * fma(MOD_A, 10.0, 15.0))), 2.0, 3.0) + ((x * (1.0 + MOD_B)) / TWO_PI)))) * exp((-x * 1.5))) * 0.9" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:511:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  511 | /*201*/ { "Berzerk Robot Voice", "(tanh((sin(fma(x, fma(MOD_A, 0.8, 1.2), (sin((x * fma(MOD_B, 6.0, 8.0))) * 1.5))) * 2.5)) * fma(0.3, (((floor((x * 10.0)) % 4.0) > 1.0) ? 1.0 : 0.5), 0.7)) * 0.8" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:513:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  513 | /*202*/ { "Robotron Shoot", "(sin(fma(x, fma(MOD_A, 4.0, 6.0), (sin((x * fma(MOD_B, 30.0, 45.0))) * 0.5))) * exp((-x * 4.0))) * fma(0.3, fma((floor((x * 40.0)) % 2.0), 2.0, -1.0), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:515:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  515 | /*203*/ { "Phoenix Bird Cry", "((sin((x * (fma(0.4, sin((x * fma(MOD_A, 2.0, 3.0))), 0.9) + ((x * (1.5 + MOD_B)) / TWO_PI)))) * exp((-x * 0.9))) * fma(0.2, sin((x * 12.0)), 1.0)) * 0.8" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:517:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  517 | /*204*/ { "Gorf Laser", "((sin(fma(x, fma(MOD_A, 2.0, 3.5), (sin((x * fma(MOD_B, 15.0, 28.0))) * 1.0))) * exp((-x * 2.2))) * fma(0.5, sin((x * 35.0)), 1.0)) * 0.9" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:519:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  519 | /*205*/ { "Scramble Engine", "fma(sin((x * fma(0.2, sin((x * fma(MOD_A, 3.0, 5.0))), 0.7))), fma(0.4, (((floor((x * 12.0)) % 6.0) > 2.0) ? 1.0 : 0.5), 0.6), (((0.25 * ((floor(((x * FREQUENCY) / 900.0)) % 9.0) - 4.0)) * 0.05) * MOD_B))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:521:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  521 | /*206*/ { "Zaxxon Alarm", "(sin((x * fma(0.3, sin((x * fma(MOD_B, 4.0, 7.0))), fma(0.8, sin((x * (1.5 + MOD_A))), 2.2)))) * fma(0.2, sin((x * 0.8)), 0.8)) * 0.9" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:523:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  523 | /*207*/ { "Moon Patrol Bounce", "((sin(fma(x, fma(MOD_A, 1.2, 1.6), (sin((x * fma(MOD_B, 8.0, 14.0))) * 1.2))) * exp((-x * fma(abs(sin((x * 2.0))), 1.0, 1.5)))) * fma(0.3, sin((x * 20.0)), 1.0)) * 0.8" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:546:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  546 | /*208*/ { "POKEY Pure Tone", "fma((0.1 * (((floor(((x * FREQUENCY) / 100.0)) % 2.0) == 0.0) ? 0.3 : -0.3)), MOD_B, ((x < (TWO_PI * fma(0.3, MOD_A, 0.5))) ? 1.0 : -1.0))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:548:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  548 | /*209*/ { "POKEY Filtered Noise", "fma((floor((((x * FREQUENCY) * fma(MOD_A, 10.0, 15.0)) / 64000.0)) % 2.0), 2.0, -1.0) * fma(0.2, sin((x * fma(MOD_B, 3.0, 2.0))), 0.8)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:550:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  550 | /*210*/ { "POKEY Distorted Bass", "tanh((3.0 * fma(0.3, sin((x * fma(MOD_B, 2.0, 1.0))), ((x < (TWO_PI * fma(0.4, MOD_A, 0.3))) ? 1.0 : -1.0)))) * 0.8" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:552:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  552 | /*211*/ { "POKEY Laser Zap", "(sin(fma(x, fma(MOD_A, 10.0, 1.0), (sin((x * fma(MOD_B, 20.0, 31.0))) * 2.0))) * exp((-x * 0.8))) * fma(0.5, ((floor(((x * FREQUENCY) / 1000.0)) % 4.0) - 1.5), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:554:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  554 | /*212*/ { "POKEY Explosion", "fma((((floor((((x * FREQUENCY) * fma(MOD_A, 100.0, 50.0)) / 64000.0)) % 7.0) - 3.0) * 0.3), exp((-x * fma(MOD_B, 2.0, 0.5))), ((sin((x * 0.1)) * 0.4) * exp((-x * 0.3))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:556:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  556 | /*213*/ { "POKEY Engine Rumble", "fma(sin(fma(x, 0.25, (sin((x * 0.5)) * 0.5))), 0.6, ((((floor((((x * FREQUENCY) * fma(MOD_A, 12.0, 8.0)) / 31000.0)) % 3.0) - 1.0) * 0.4) * fma(0.3, sin((x * fma(MOD_B, 0.2, 0.1))), 0.7)))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:558:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  558 | /*214*/ { "POKEY Bit Crush Lead", "(floor((sin(fma(sin((x * fma(MOD_A, 4.0, 2.0))), 1.5, x)) * fma(MOD_B, 8.0, 4.0))) / fma(MOD_B, 8.0, 4.0)) * 0.9" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:560:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  560 | /*215*/ { "POKEY Coin Pickup", "(sin((x * fma(MOD_A, 2.0, fma(floor(((x * 8.0) / TWO_PI)), 0.5, 1.0)))) * exp((-x * fma(MOD_B, 3.0, 2.0)))) * fma(0.3, sin((x * 15.0)), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:562:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  562 | /*216*/ { "POKEY Jump Sound", "(sin(fma(x, fma(MOD_A, 3.0, 2.0), (sin((x * fma(MOD_B, 6.0, 8.0))) * 0.8))) * exp((-x * 1.5))) * fma(0.4, fma((floor((x * 20.0)) % 2.0), 2.0, -1.0), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:564:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  564 | /*217*/ { "POKEY Chirp Bird", "fma(sin((x * (0.5 + ((x * fma(MOD_A, 4.0, 2.0)) / TWO_PI)))), exp((-x * fma(MOD_B, 2.0, 1.0))), ((0.2 * ((floor(((x * FREQUENCY) / 5000.0)) % 5.0) - 2.0)) * 0.1))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:566:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  566 | /*218*/ { "POKEY Alien Voice", "fma(tanh((sin(fma(x, fma(MOD_A, 1.5, 0.8), (sin((x * fma(MOD_B, 10.0, 17.0))) * 1.2))) * 2.0)), 0.7, ((0.2 * ((floor(((x * FREQUENCY) / 8000.0)) % 8.0) - 3.5)) * 0.1))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:568:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  568 | /*219*/ { "POKEY Power Up", "(sin((x * fma(sin((x * fma(MOD_B, 15.0, 25.0))), 0.3, (0.5 + ((x * fma(MOD_A, 6.0, 4.0)) / TWO_PI))))) * exp((-x * 0.4))) * fma(0.3, sin((x * 12.0)), 1.0)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:570:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  570 | /*220*/ { "POKEY Hit Sound", "fma(sin((x * fma(MOD_A, 2.0, 2.0))), exp((-x * fma(MOD_B, 5.0, 5.0))), ((((floor((((x * FREQUENCY) * 100.0) / 64000.0)) % 16.0) - 8.0) * 0.1) * exp((-x * 3.0))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:572:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  572 | /*221*/ { "POKEY Sweep Down", "(sin((x * (fma(MOD_A, 2.0, 3.0) - ((x * fma(MOD_B, 3.0, 2.0)) / TWO_PI)))) * exp((-x * 0.6))) * fma(0.2, ((floor((x * 10.0)) % 3.0) - 1.0), 0.8)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:574:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  574 | /*222*/ { "POKEY Poly Counter", "fma((((floor((((x * FREQUENCY) * fma(MOD_A, 20.0, 31.0)) / 64000.0)) % 31.0) > fma(MOD_B, 10.0, 15.0)) ? 1.0 : -1.0), 0.7, (0.2 * sin((x * fma(MOD_A, 0.5, 0.5)))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:576:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  576 | /*223*/ { "POKEY Four Channel", "0.25 * fma(fma((floor((((x * FREQUENCY) * 17.0) / 64000.0)) % 2.0), 2.0, -1.0), 0.8, fma(((x < PI) ? 1.0 : -1.0), fma(0.3, MOD_B, 0.7), (sin(x) + sin(fma(x, 1.33, (MOD_A * PI))))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:582:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  582 | /*224*/ { "POKEY 4-bit Noise (64k)", "lfsr_noise(LFSR_4BIT, ((63920.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 15.0)) * fma(0.5, abs(MOD_B), 1.0))) * fma(0.39, MOD_A, 0.6)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:586:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  586 | /*225*/ { "POKEY 5-bit Noise (64k)", "lfsr_noise(LFSR_5BIT, ((63920.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 31.0)) * fma(0.5, abs(MOD_B), 1.0))) * fma(0.39, MOD_A, 0.6)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:590:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  590 | /*226*/ { "POKEY 17-bit Noise (64k)", "lfsr_noise(LFSR_17BIT, ((63920.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 131071.0)) * fma(0.5, abs(MOD_B), 1.0))) * fma(0.39, MOD_A, 0.6)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:594:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  594 | /*227*/ { "POKEY 9-bit Noise (15k)", "lfsr_noise(LFSR_9BIT, ((15699.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 511.0)) * fma(0.5, abs(MOD_B), 1.0))) * fma(0.39, MOD_A, 0.6)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:598:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  598 | /*228*/ { "POKEY Filtered 4-bit (Fast)", "lfsr_noise(LFSR_4BIT, (((63920.0 * 2.0) / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 15.0)) * fma(1.5, abs(MOD_B), 1.0))) * fma(0.35, MOD_A, 0.5)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:602:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  602 | /*229*/ { "POKEY Filtered 5-bit (Fast)", "lfsr_noise(LFSR_5BIT, (((63920.0 * 2.0) / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 31.0)) * fma(1.5, abs(MOD_B), 1.0))) * fma(0.35, MOD_A, 0.5)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:605:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  605 | /*230*/ { "POKEY Tone + 4-bit (64k)", "fma(((x < (PI * fma(0.9, MOD_B, 1.0))) ? 0.6 : -0.6), (1.0 - abs((MOD_A * 0.9))), (lfsr_noise(LFSR_4BIT, ((63920.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 15.0)) * fma(RAND_OFFSET, 0.2, 1.0))) * abs((MOD_A * 0.9))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:609:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  609 | /*231*/ { "POKEY Tone + 5-bit (64k)", "fma(((x < (PI * fma(0.9, MOD_B, 1.0))) ? 0.6 : -0.6), (1.0 - abs((MOD_A * 0.9))), (lfsr_noise(LFSR_5BIT, ((63920.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 31.0)) * fma(RAND_OFFSET, 0.2, 1.0))) * abs((MOD_A * 0.9))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:612:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  612 | /*232*/ { "POKEY Tone + 17-bit (64k)", "fma(((x < (PI * fma(0.9, MOD_B, 1.0))) ? 0.6 : -0.6), (1.0 - abs((MOD_A * 0.9))), (lfsr_noise(LFSR_17BIT, ((63920.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 131071.0)) * fma(RAND_OFFSET, 0.2, 1.0))) * abs((MOD_A * 0.9))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:616:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  616 | /*233*/ { "POKEY 4(64k)+5(15k) Combined", "fma(lfsr_noise(LFSR_4BIT, ((63920.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 15.0)) * fma(RAND_OFFSET, 0.1, 1.0))), fma(0.48, MOD_A, 0.5), (lfsr_noise(LFSR_5BIT, ((15699.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 31.0)) * fma(RAND_OFFSET, 0.1, 1.0))) * (0.5 - (0.48 * MOD_A)))) * fma(0.35, abs(MOD_B), 0.55)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:620:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  620 | /*234*/ { "POKEY \"High Pass\" 4-bit (Fast)", "lfsr_noise(LFSR_4BIT, (((63920.0 * 3.0) / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 15.0)) * fma(2.0, abs(MOD_A), 1.0))) * fma(0.35, abs(MOD_B), 0.5)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:624:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  624 | /*235*/ { "POKEY 64kHz Noise (17-bit)", "lfsr_noise(LFSR_17BIT, ((63920.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 131071.0)) * fma(0.5, abs(MOD_A), 1.0))) * fma(0.39, abs(MOD_B), 0.6)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:628:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  628 | /*236*/ { "POKEY 15kHz Noise (9-bit)", "lfsr_noise(LFSR_9BIT, ((15699.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 511.0)) * fma(0.5, abs(MOD_A), 1.0))) * fma(0.39, abs(MOD_B), 0.6)" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:632:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  632 | /*237*/ { "POKEY Engine Sound (Noise Gated)", "(lfsr_noise(LFSR_5BIT, ((15699.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 31.0)) * fma(2.0, abs(MOD_A), 1.0))) * fma(0.7, lfsr_val(LFSR_4BIT, ((x / TWO_PI) * (((15699.0 * 0.5) / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 15.0)) * fma(3.0, abs(MOD_B), 1.0))), RAND_OFFSET), 0.2)) * 0.8" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:636:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  636 | /*238*/ { "POKEY Explosion (Decaying Rate/Vol)", "fma(lfsr_noise(LFSR_17BIT, ((fma((63920.0 * 2.0), exp((-x * 3.5)), (15699.0 * 0.5)) / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 131071.0)) * fma(0.5, abs(MOD_A), 1.0))), exp((-x * fma(3.0, abs(MOD_B), 1.2))), ((lfsr_noise(LFSR_4BIT, ((fma(15699.0, exp((-x * 2.5)), (63920.0 * 0.1)) / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 15.0)) * fma(RAND_OFFSET, 0.2, 1.0))) * 0.3) * exp((-x * fma(2.5, abs(MOD_B), 1.8))))) * 0.85" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:640:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  640 | /*239*/ { "POKEY \"Multi-Channel\" (Mixed)", "0.25 * (((lfsr_noise(LFSR_4BIT, ((63920.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 15.0)) * fma(RAND_OFFSET, 0.1, 1.0))) + lfsr_noise(LFSR_5BIT, ((15699.0 / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 31.0)) * fma(RAND_OFFSET, 0.1, 1.0)))) + ((x < (PI * fma(0.9, MOD_A, 1.0))) ? 0.9 : -0.9)) + lfsr_noise(LFSR_9BIT, (((63920.0 * 0.5) / (((FREQUENCY > 1.0) ? FREQUENCY : 1.0) * 511.0)) * fma(1.5, abs(MOD_B), 1.0))))" },
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:647:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  647 | /*240*/ { "Logic: PWM Hash", "((sin(x) > 0.0) ^ (sin((x * (1.0 + MOD_A))) > 0.0)) ? 1.0 : -1.0" }, // PWM-like effect using XOR logic.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:649:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  649 | /*241*/ { "Sample & Hold Sine", "sin((floor((x / (PI / 8.0))) * (PI / 8.0)))" }, // Sampled and held sine wave.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:651:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  651 | /*242*/ { "Digital Saw", "(floor(((x / PI) * 8.0)) / 8.0) - 1.0" }, // Low-resolution sawtooth.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:653:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  653 | /*243*/ { "Glitch Step", "((x < PI) ? 1.0 : -1.0) * floor((x * MOD_A))" }, // Square wave amplitude modulated by a stepper.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:656:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  656 | /*244*/ { "Weird: Gap", "(x > (MOD_A * PI)) ? sin(x) : 0.0" }, // Gated sine wave.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:658:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  658 | /*245*/ { "Noise: White-ish", "fma(rand(), 2.0, -1.0)" }, // White noise generator.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:660:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  660 | /*246*/ { "Noise: S&H", "fma(lfsr_val(LFSR_16BIT, floor(((x / PI) * MOD_A)), 0.0), 2.0, -1.0)" }, // Sample & Hold noise.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:662:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  662 | /*247*/ { "Fibonacci Series", "0.5 * fma(0.236, sin(fma(x, 4.236, MOD_B)), fma(0.382, sin(fma(x, 2.618, MOD_A)), fma(0.618, sin((x * 1.618)), sin(x))))" }, // Golden ratio additive.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:664:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  664 | /*248*/ { "Logistic Chaos", "sin((x * fma(MOD_A, sin((x * (1.0 + MOD_B))), 1.0))) * sin((x * 2.718))" }, // Chaotic AM/FM texture.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:666:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  666 | /*249*/ { "Chebyshev 4th", "fma(8.0, pow(((x / PI) - 1.0), 4.0), -(8.0 * pow(((x / PI) - 1.0), 2.0))) + 1.0" }, // Chebyshev T4 polynomial mapped to phase.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:668:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  668 | /*250*/ { "Tanh Fold", "tanh(fma(sin(x), 5.0, ((sin(fma(x, 2.0, (MOD_A * PI))) * 5.0) * MOD_B)))" }, // Soft-saturated wavefolder.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:672:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  672 | /*251*/ { "Exp FM", "sin(fma((exp((sin(x) * fma(MOD_A, 2.0, 1.0))) * MOD_B), 5.0, x))" }, // Exponential Frequency Modulation.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:675:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  675 | /*252*/ { "Chaotic Map", "sin((x * fma(MOD_A, sin((x * E)), 1.0))) + sin(((x * PI) * MOD_B))" }, // Recursive sine mapping.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:678:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  678 | /*253*/ { "Pseudo-LPG", "sin(fma(((sin(x) * exp((-x * 5.0))) * MOD_B), 10.0, x)) * exp((-x * fma(abs(MOD_A), 5.0, 1.0)))" }, // Simulated Low Pass Gate pluck.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:681:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  681 | /*254*/ { "Harmonic Steps", "floor((sin(x) * fma(abs(MOD_A), 10.0, 2.0))) / fma(abs(MOD_A), 10.0, 2.0)" }, // Quantized sine wave.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../px_wave_rom.h:683:9: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
+  683 | /*255*/ { "Vocal Formant 2", "sin(x) * (1.0 + cos((x * fma(MOD_A, 10.0, 2.0))))" }, // Windowed sync formant.
+      |         ^
+test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
+  459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
+      |                    ^~~~~~~~~~~~~~~~~
+test/../polysonix.h: In function ‘PX_Process’:
+test/../polysonix.h:3255:46: warning: unused variable ‘current_step’ [-Wunused-variable]
+ 3255 |                         const PxWaveSeqStep* current_step = &sq->current_sequence->steps[sq->step_idx];
+      |                                              ^~~~~~~~~~~~
+test/../polysonix.h:3151:19: warning: unused variable ‘lfo_pan_env_input’ [-Wunused-variable]
+ 3151 |             float lfo_pan_env_input = v->lfo_pan_mod_val;
+      |                   ^~~~~~~~~~~~~~~~~
+test/../polysonix.h: In function ‘PX_GetLFOParam’:
+test/../polysonix.h:4084:65: warning: unused parameter ‘p’ [-Wunused-parameter]
+ 4084 | PX_API float PX_GetLFOParam(PxSynth* s, int idx, PxLFOParamType p) {
+      |                                                  ~~~~~~~~~~~~~~~^
+test/../px_vm.h: At top level:
+test/../px_vm.h:4350:13: warning: ‘compile_and_generate_wave’ defined but not used [-Wunused-function]
+ 4350 | static bool compile_and_generate_wave( const char *expression, BytecodeChunk** chunk_ptr_location, float *output_buffer, uint16_t wave_length)
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~
+test/../px_vm.h:2962:16: warning: ‘read_byte’ defined but not used [-Wunused-function]
+ 2962 | static uint8_t read_byte(VM *vm) {
+      |                ^~~~~~~~~
+test/../px_vm.h:2956:16: warning: ‘read_jump_offset’ defined but not used [-Wunused-function]
+ 2956 | static int16_t read_jump_offset(VM *vm) {
+      |                ^~~~~~~~~~~~~~~~
+test/../px_vm.h:2950:17: warning: ‘read_short’ defined but not used [-Wunused-function]
+ 2950 | static uint16_t read_short(VM *vm) {
+      |                 ^~~~~~~~~~
+test/../px_vm.h:2940:14: warning: ‘peek’ defined but not used [-Wunused-function]
+ 2940 | static float peek(VM *vm, int distance) {
+      |              ^~~~
+test/../px_vm.h:2931:14: warning: ‘pop’ defined but not used [-Wunused-function]
+ 2931 | static float pop(VM *vm) {
+      |              ^~~
+test/../px_vm.h:2922:13: warning: ‘push’ defined but not used [-Wunused-function]
+ 2922 | static void push(VM *vm, float value) {
+      |             ^~~~
+test/../px_vm.h:1845:13: warning: ‘emit_bytes’ defined but not used [-Wunused-function]
+ 1845 | static void emit_bytes(BytecodeChunk *chunk, uint8_t byte1, uint8_t byte2) {
+      |             ^~~~~~~~~~
+test/../px_vm.h:946:14: warning: ‘aligned_calloc’ defined but not used [-Wunused-function]
+  946 | static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
+      |              ^~~~~~~~~~~~~~
+test/../px_vm.h:935:13: warning: ‘aligned_free’ defined but not used [-Wunused-function]
+  935 | static void aligned_free(void* ptr) {
+      |             ^~~~~~~~~~~~
+make: *** [Makefile:62: test/test_vm_taming] Error 1

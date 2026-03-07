@@ -78,8 +78,14 @@ typedef struct {
     bool  osc_sync_enabled;     /**< Sync to previous osc */
     bool  ring_mod_enabled;     /**< Ring mod with previous osc */
     bool  bitcrush_enabled;
-    char  _pad[10];             /**< Pad to exactly 64 bytes */
+    char  _pad[12];             /**< Pad to exactly 64 bytes */
 } PX_ALIGN_64 PxOscillator;
+
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+_Static_assert(sizeof(PxOscillator) == 64, "PxOscillator must be exactly 64 bytes for cache/GPU alignment");
+#elif defined(__cplusplus) && __cplusplus >= 201103L
+static_assert(sizeof(PxOscillator) == 64, "PxOscillator must be exactly 64 bytes for cache/GPU alignment");
+#endif
 
 /**
  * @enum PxOscillatorType
