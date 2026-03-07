@@ -515,8 +515,9 @@ void main() {
                 for (int j = 0; j < int(n); j++) {
                     values[j] = pop();
                 }
-                int index = int(fma(param, float(n), 0.0));
-                index = max(0, min(int(n)-1, index));
+                float f_index = fma(param, float(n), 0.0);
+                f_index = clamp(f_index, 0.0, float(n - 1));
+                int index = int(f_index);
                 push(values[index]);
                 break;
             }

@@ -3538,8 +3538,9 @@ SUB_LABEL_OP_SELECT: {
     for (int i = 0; i < n; i++) values[i] = *(--sp); // popped in reverse (param then v1, v2)
     // Actually the compiler pushes vn, vn-1... v1, then param.
     // So popping param, then pop() -> v1, then pop() -> v2, ...
-    int index = (int)fmaf(param, (float)n, 0.0f);
-    index = index < 0 ? 0 : (index >= n ? n-1 : index);
+    float f_index = fmaf(param, (float)n, 0.0f);
+    f_index = fmaxf(0.0f, fminf((float)(n-1), f_index));
+    int index = (int)f_index;
     *sp++ = values[index];
     instruction=*ip++; goto *sub_dispatch_table[instruction];
 }
@@ -4102,8 +4103,9 @@ LABEL_OP_SELECT: {
     float param = *(--sp);
     float values[16];
     for (int i = 0; i < n; i++) values[i] = *(--sp);
-    int index = (int)fmaf(param, (float)n, 0.0f);
-    index = index < 0 ? 0 : (index >= n ? n-1 : index);
+    float f_index = fmaf(param, (float)n, 0.0f);
+    f_index = fmaxf(0.0f, fminf((float)(n-1), f_index));
+    int index = (int)f_index;
     *sp++ = values[index];
     goto DISPATCH_LOOP;
 }
