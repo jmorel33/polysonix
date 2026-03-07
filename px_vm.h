@@ -5089,7 +5089,12 @@ void dispatch_wave_gpu(SituationCommandBuffer cmd, GpuWaveBuffers bufs, VmParams
 
     SituationCmdBindComputePipeline(cmd, wave_compute_pipeline);
     SituationCmdSetPushConstant(cmd, 0, &pc, sizeof(PushConstants));
-    SituationCmdDispatch(cmd, (wave_length + 63) / 64, 1, 1);
+
+    // We now spawn 1 thread PER WAVE, rather than 1 thread per sample.
+    // Assuming this function dispatches a single wave in the current API format.
+    // If you were dispatching multiple waves, you would pass `num_waves`.
+    // For a single wave calculation:
+    SituationCmdDispatch(cmd, 1, 1, 1);
 }
 
 #endif // POLYSONIX_USE_GPU
