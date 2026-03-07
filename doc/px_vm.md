@@ -162,7 +162,18 @@ The following variables are available within a script:
 
 ### 3.5. Functions
 
-#### 3.5.1. Trigonometric Functions
+#### 3.5.1. State and Logic Functions
+
+- **`markov(id, trigger, p00, p01, ..., pNN)`**
+  Evaluates a dynamically sized Markov chain matrix exactly once on the rising edge of the given trigger.
+  - `id`: The memory slot index (0 to 3).
+  - `trigger`: A condition evaluated on the current sample. The transition is only triggered if this evaluates to true *and* evaluated to false in the previous sample (rising edge).
+  - `p00...pNN`: The probabilities of transitioning between states, flattened into a 1D sequence. The number of elements must form a perfect square representing an NxN matrix (e.g. 4 args = 2x2 matrix). Up to an 8x8 matrix is supported. Matrix rows do not strictly need to sum to 1.0; the VM handles auto-normalization gracefully.
+  - **Returns**: The current integer state (0.0 to N-1.0) of the specified Markov chain.
+  - **Example**: `markov(0, x < 0.05, 0.9, 0.1, 0.4, 0.6)`
+  - *Note*: State persists across audio frames.
+
+#### 3.5.2. Trigonometric Functions
 
 These functions operate on radians.
 

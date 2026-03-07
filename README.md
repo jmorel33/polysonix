@@ -40,7 +40,7 @@ like UI, input handling, and audio device management.
 - **Thread-Safe by Design:** The library is 100% lock-free. Control functions (like `PX_NoteOn`, `PX_SetFilterParam`) can be safely called from any
   UI or main thread, while the `PX_Process` function runs on the dedicated real-time audio thread.
 - **Dynamic Waveform Generation:** Leverages the `px_vm` library to execute bytecode expressions for oscillators and LFOs, enabling complex,
-  evolving timbres that go far beyond simple wavetables.
+  evolving timbres that go far beyond simple wavetables. Includes advanced mathematical functions, LFSR noise generation, and **Markov chains** for probability-based state transitions.
 - **Rich Synthesis Architecture:**
   - **Polyphony:** Configurable number of voices (up to 16) with intelligent voice stealing.
   - **Triple Oscillator Architecture:** Each voice features **3 independent oscillators**, each with its own Waveform, Mix Level, Pan, Coarse Tuning (±24 semitones), Fine Tuning (±100 cents), and Wave Sequencer state. This enables massive stacked sounds, chords, and complex multi-timbral textures within a single voice.

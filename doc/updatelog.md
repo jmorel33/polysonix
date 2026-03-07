@@ -1,5 +1,11 @@
 # Update Log
 
+## v1.9.25 (2026/03/08)
+- **Features / Fixes**:
+  - Implemented `OP_MARKOV` for probability-based state transitions using dynamically-sized square matrices and a rising-edge trigger.
+  - Re-architected `px_vm.comp` to execute 1 thread per wavetable instead of 1 thread per sample, fixing stateful DSP data races (like Markov chains and LFSR states).
+  - Optimized the GPU compute shader for `OP_MARKOV` to use stack-peek memory access instead of array pops, heavily reducing GPU register allocation and avoiding register spilling.
+
 ## v1.9.24 (2026/03/07)
 - **Features / Fixes**:
   - Increased token stack limit in `px_vm.h` from 256 to 1024 to support parsing complex FM modulation scripts without exhausting tokens.
