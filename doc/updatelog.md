@@ -1,5 +1,11 @@
 # Update Log
 
+## v1.9.24 (2026/03/07)
+- **Features / Fixes**:
+  - Increased token stack limit in `px_vm.h` from 256 to 1024 to support parsing complex FM modulation scripts without exhausting tokens.
+  - Made `OP_RAND` execution deterministic per-cycle by seeding it predictably with the phase and `rand_offset`, preventing undesirable white-noise generation.
+  - Removed division-by-zero VM error throws for `OP_DIV`. Division by zero now naturally yields `INFINITY` or `NaN` to better support audio distortion artifacts.
+
 ## v1.9.23 (2026/03/07)
 - **Features**:
   - Implemented advanced math opcodes (`exp2`, `log2`, `expm1`, `log1p`, `hypot`, `copysign`, `scalbn`, `remquo`, `nextafter`, `fdim`, `nan`, `inf`, `lgamma`, `tgamma`) and the FMA family (`fma`, `fms`, `fnmadd`, `fnmsub`) in the GLSL compute shader (`px_vm.comp`).
