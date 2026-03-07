@@ -165,13 +165,31 @@ The following variables are available within a script:
 #### 3.5.1. State and Logic Functions
 
 - **`markov(id, trigger, p00, p01, ..., pNN)`**
-  Evaluates a dynamically sized Markov chain matrix exactly once on the rising edge of the given trigger.
-  - `id`: The memory slot index (0 to 3).
-  - `trigger`: A condition evaluated on the current sample. The transition is only triggered if this evaluates to true *and* evaluated to false in the previous sample (rising edge).
-  - `p00...pNN`: The probabilities of transitioning between states, flattened into a 1D sequence. The number of elements must form a perfect square representing an NxN matrix (e.g. 4 args = 2x2 matrix). Up to an 8x8 matrix is supported. Matrix rows do not strictly need to sum to 1.0; the VM handles auto-normalization gracefully.
-  - **Returns**: The current integer state (0.0 to N-1.0) of the specified Markov chain.
-  - **Example**: `markov(0, x < 0.05, 0.9, 0.1, 0.4, 0.6)`
-  - *Note*: State persists across audio frames.
+  Creates a state machine that randomly transitions between different states based on a set of probabilities. This is incredibly powerful for generative sequencing, random but structured rhythms, or evolving timbres.
+
+  *How it works:* Imagine you are in State 0. You roll a set of dice to decide if you stay in State 0, move to State 1, or move to State 2. The probabilities for this decision are defined in the matrix.
+
+  - `id`: The memory slot index (0 to 3). You can have up to 4 independent Markov chains running per voice.
+  - `trigger`: A condition evaluated every sample. The dice are *only rolled* when this condition goes from `false` to `true` (a "rising edge"). For example, `x < 0.05` means the transition only happens exactly once at the very start of every wave cycle. This prevents the state from rapidly changing 48,000 times a second and turning into white noise.
+  - `p00...pNN`: The transition probabilities, written as a flattened grid.
+    - If you have 2 states (0 and 1), you need 4 numbers (a 2x2 grid).
+      - `p00`: Probability to stay in State 0 if you are currently in State 0.
+      - `p01`: Probability to jump to State 1 if you are currently in State 0.
+      - `p10`: Probability to jump to State 0 if you are currently in State 1.
+      - `p11`: Probability to stay in State 1 if you are currently in State 1.
+    - If you have 3 states (0, 1, and 2), you need 9 numbers (a 3x3 grid), and so on up to 8x8.
+    - *Note:* The compiler automatically figures out how many states you have based on how many numbers you provide. The rows do not strictly need to equal exactly 1.0; the VM will auto-normalize the probabilities gracefully.
+  - **Returns**: The current integer state (0.0, 1.0, 2.0, etc.). You can use this state with the `select` function to choose different frequencies, waves, or modulation amounts.
+
+  **Musical Example (Generative Rhythm):**
+  Let's create a 2-state system where State 0 is "Quiet" and State 1 is "Loud".
+  - If we are Quiet (State 0), we have a 90% chance to stay Quiet, and a 10% chance to get Loud.
+  - If we are Loud (State 1), we have a 60% chance to get Quiet again, and a 40% chance to stay Loud.
+
+  We would write this as: `markov(0, lfsr_clock(LFSR_8BIT, 0.5), 0.9, 0.1, 0.6, 0.4)`
+  We can then wrap this in a `select` function to output actual volume levels based on the state:
+  `select(markov(0, lfsr_clock(LFSR_8BIT, 0.5), 0.9, 0.1, 0.6, 0.4), 0.2, 1.0) * sin(x)`
+  *(If state is 0, volume is 0.2. If state is 1, volume is 1.0).*
 
 #### 3.5.2. Trigonometric Functions
 
