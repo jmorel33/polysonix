@@ -3,7 +3,7 @@
 </div>
 
 # Polysonix
-**Version 1.9.18 (March 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
+**Version 1.9.19 (March 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
 
 A single-header polyphonic synthesizer engine.
 
@@ -733,6 +733,7 @@ The language supports the following operators:
 - **Summation**: `sigma(k, start, end, step, expr)`
 - **LFSR**: `lfsr_val`, `lfsr_noise`, `lfsr_clock`
 - **Probability**: `prob(chance, true, false)`
+- **Dynamic Selection**: `select(param, v1, v2, ...)`
 
 ### Advanced Math Functions
 The VM provides several optimized, advanced math functions, useful for shaping signals and calculating pitch or amplitude scaling accurately.
