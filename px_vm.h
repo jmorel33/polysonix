@@ -551,9 +551,12 @@ typedef enum {
     OP_PROB           = 0x45,
     OP_SELECT         = 0x46, // Pops param + n values (n from operand), pushes selected
     OP_SMOOTH_SELECT  = 0x47, // Pops param + n values (n from operand), pushes lerped selected
+    OP_CLAMP          = 0x48,
+    OP_MIX            = 0x49,
+    OP_RAMP           = 0x4A,
 
     // --- End ---
-    OP_HALT           = 0x48  // Must be last (used for array sizes)
+    OP_HALT           = 0x4B  // Must be last (used for array sizes)
 } OpCode;
 #define VM_MAX_OPCODE OP_HALT
 #define VM_DISPATCH_TABLE_SIZE (VM_MAX_OPCODE + 1) // Important for computed goto table size
@@ -857,6 +860,9 @@ static PxFunctionDef px_functions[] = {
     {"prob", 4, OP_PROB, 3},
     {"select", 6, OP_SELECT, -1},
     {"smooth_select", 13, OP_SMOOTH_SELECT, -1},
+    {"clamp", 5, OP_CLAMP, 3},
+    {"mix", 3, OP_MIX, 3},
+    {"ramp", 4, OP_RAMP, 3},
     {"atan", 4, OP_ATAN, 1},
     {"abs", 3, OP_ABS, 1},
     {"tanh", 4, OP_TANH, 1},
@@ -2307,7 +2313,10 @@ const char* getOpCodeName(OpCode code) {
         /* 0x45 */ "OP_PROB",
         /* 0x46 */ "OP_SELECT",
         /* 0x47 */ "OP_SMOOTH_SELECT",
-        /* 0x48 */ "OP_HALT"
+        /* 0x48 */ "OP_CLAMP",
+        /* 0x49 */ "OP_MIX",
+        /* 0x4A */ "OP_RAMP",
+        /* 0x4B */ "OP_HALT"
     };
     // Basic bounds check using VM_MAX_OPCODE
     if (code >= 0 && code <= VM_MAX_OPCODE) {
@@ -2421,6 +2430,7 @@ int disassembleInstruction(BytecodeChunk *chunk, int offset) {
         case OP_SIGMA_SETUP: // Has operands, but getOpCodeName handles it, so no specific print needed here for operands if disassembleInstruction logic is followed correctly for size
         case OP_EXP2: case OP_LOG2: case OP_EXPM1: case OP_LOG1P: case OP_HYPOT: case OP_COPYSIGN: case OP_SCALBN:
         case OP_REMQUO: case OP_NEXTAFTER: case OP_FDIM: case OP_NAN: case OP_INF: case OP_LGAMMA: case OP_TGAMMA:
+        case OP_CLAMP: case OP_MIX: case OP_RAMP:
         case OP_PROB:
         case OP_HALT:
             // No operands, size is 1, or operands handled by get_instruction_size for OP_SIGMA_SETUP
@@ -3068,7 +3078,10 @@ static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
         /* 0x45 OP_PROB */             &&SUB_LABEL_OP_PROB,
         /* 0x46 OP_SELECT */           &&SUB_LABEL_OP_SELECT,
         /* 0x47 OP_SMOOTH_SELECT */    &&SUB_LABEL_OP_SMOOTH_SELECT,
-        /* 0x48 OP_HALT */             &&SUB_LABEL_OP_HALT
+        /* 0x48 OP_CLAMP */            &&SUB_LABEL_OP_CLAMP,
+        /* 0x49 OP_MIX */              &&SUB_LABEL_OP_MIX,
+        /* 0x4A OP_RAMP */             &&SUB_LABEL_OP_RAMP,
+        /* 0x4B OP_HALT */             &&SUB_LABEL_OP_HALT
     };
 
     uint8_t instruction;
@@ -3562,6 +3575,26 @@ SUB_LABEL_OP_SMOOTH_SELECT: {
     *sp++ = selected;
     instruction=*ip++; goto *sub_dispatch_table[instruction];
 }
+SUB_LABEL_OP_CLAMP: {
+    if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (clamp)"); success=false; goto sub_chunk_end; }
+    float max_val=*(--sp); float min_val=*(--sp); float val=*(--sp);
+    *sp++ = fmaxf(min_val, fminf(max_val, val));
+    instruction=*ip++; goto *sub_dispatch_table[instruction];
+}
+SUB_LABEL_OP_MIX: {
+    if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (mix)"); success=false; goto sub_chunk_end; }
+    float v2=*(--sp); float v1=*(--sp); float param=*(--sp);
+    param = fmaxf(0.0f, fminf(1.0f, param));
+    *sp++ = fmaf(param, (v2 - v1), v1);
+    instruction=*ip++; goto *sub_dispatch_table[instruction];
+}
+SUB_LABEL_OP_RAMP: {
+    if (PX_UNLIKELY((sp - vm->stack) < 3)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (ramp)"); success=false; goto sub_chunk_end; }
+    float time=*(--sp); float end=*(--sp); float start=*(--sp);
+    time = fmaxf(0.0f, fminf(1.0f, time));
+    *sp++ = fmaf(time, (end - start), start);
+    instruction=*ip++; goto *sub_dispatch_table[instruction];
+}
 SUB_LABEL_OP_HALT: {
     // CRITICAL FIX: Always leave exactly one result on stack for caller
     if (PX_LIKELY(success && sp > vm->stack)) {
@@ -3727,7 +3760,10 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
         /* 0x45 OP_PROB */             &&LABEL_OP_PROB,
         /* 0x46 OP_SELECT */           &&LABEL_OP_SELECT,
         /* 0x47 OP_SMOOTH_SELECT */    &&LABEL_OP_SMOOTH_SELECT,
-        /* 0x48 OP_HALT */             &&LABEL_OP_HALT
+        /* 0x48 OP_CLAMP */            &&LABEL_OP_CLAMP,
+        /* 0x49 OP_MIX */              &&LABEL_OP_MIX,
+        /* 0x4A OP_RAMP */             &&LABEL_OP_RAMP,
+        /* 0x4B OP_HALT */             &&LABEL_OP_HALT
     };
 
     // --- Central Dispatch Loop ---
@@ -4126,6 +4162,26 @@ LABEL_OP_SMOOTH_SELECT: {
     *sp++ = selected;
     goto DISPATCH_LOOP;
 }
+LABEL_OP_CLAMP: {
+    if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (clamp)"); success=false; goto execution_end; }
+    float max_val=*(--sp); float min_val=*(--sp); float val=*(--sp);
+    *sp++ = fmaxf(min_val, fminf(max_val, val));
+    goto DISPATCH_LOOP;
+}
+LABEL_OP_MIX: {
+    if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (mix)"); success=false; goto execution_end; }
+    float v2=*(--sp); float v1=*(--sp); float param=*(--sp);
+    param = fmaxf(0.0f, fminf(1.0f, param));
+    *sp++ = fmaf(param, (v2 - v1), v1);
+    goto DISPATCH_LOOP;
+}
+LABEL_OP_RAMP: {
+    if (PX_UNLIKELY((sp - vm.stack) < 3)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (ramp)"); success=false; goto execution_end; }
+    float time=*(--sp); float end=*(--sp); float start=*(--sp);
+    time = fmaxf(0.0f, fminf(1.0f, time));
+    *sp++ = fmaf(time, (end - start), start);
+    goto DISPATCH_LOOP;
+}
 LABEL_OP_HALT: {
     goto execution_end;
 }
@@ -4349,6 +4405,7 @@ static int get_instruction_size(const BytecodeChunk *chunk, int offset) {
         case OP_LFSR_VAL: case OP_LFSR_NOISE: case OP_LFSR_CLOCK:
         case OP_EXP2: case OP_LOG2: case OP_EXPM1: case OP_LOG1P: case OP_HYPOT: case OP_COPYSIGN: case OP_SCALBN:
         case OP_REMQUO: case OP_NEXTAFTER: case OP_FDIM: case OP_NAN: case OP_INF: case OP_LGAMMA: case OP_TGAMMA:
+        case OP_CLAMP: case OP_MIX: case OP_RAMP:
         case OP_HALT:
             // Size remains 1
             break;

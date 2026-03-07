@@ -1,5 +1,13 @@
 # Update Log
 
+## v1.9.22 (2026/03/10)
+**Feature: VM Taming Opcodes**
+
+- Added `OP_CLAMP`, `OP_MIX`, and `OP_RAMP` opcodes to the VM to control bounded ranges, precise blending, and linear envelopes respectively.
+- Syntax: `clamp(value, min, max)`, `mix(param, v1, v2)`, `ramp(start, end, time)`.
+- Implemented entirely branchless natively using `fminf`, `fmaxf`, and `fmaf`.
+- Fully supported across the CPU interpreter (`px_vm.h`), the GLSL compute shader (`px_vm.comp`), and native transpiler (`transpile_waves.py`).
+
 ## v1.9.21 (2026/03/10)
 **Bug Fix: Safe Index Clamping for OP_SELECT/OP_SMOOTH_SELECT**
 

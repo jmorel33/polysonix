@@ -730,10 +730,11 @@ The language supports the following operators:
 ### Functions
 - **Trigonometric**: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`
 - **Numeric**: `fma`, `abs`, `tanh`, `exp`, `log`, `log10`, `floor`, `ceil`, `min`, `max`, `sqrt`, `pow`, `rand`, `exp2`, `log2`, `expm1`, `log1p`, `hypot`, `copysign`, `scalbn`
+- **Taming**: `clamp`, `mix`, `ramp`
 - **Summation**: `sigma(k, start, end, step, expr)`
 - **LFSR**: `lfsr_val`, `lfsr_noise`, `lfsr_clock`
 - **Probability**: `prob(chance, true, false)`
-- **Dynamic Selection**: `select(param, v1, v2, ...)`
+- **Dynamic Selection**: `select(param, v1, v2, ...)`, `smooth_select(param, v1, v2, ...)`
 
 ### Advanced Math Functions
 The VM provides several optimized, advanced math functions, useful for shaping signals and calculating pitch or amplitude scaling accurately.

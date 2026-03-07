@@ -298,6 +298,16 @@ class FuncNode(Node):
             # Need to pass params first
             return f"{c_func}(params, {', '.join(arg_strs)})"
 
+
+        if self.name == "clamp":
+            return f"fmaxf({arg_strs[1]}, fminf({arg_strs[2]}, {arg_strs[0]}))"
+
+        if self.name == "mix":
+            return f"fmaf(fmaxf(0.0f, fminf(1.0f, {arg_strs[0]})), ({arg_strs[2]} - {arg_strs[1]}), {arg_strs[1]})"
+
+        if self.name == "ramp":
+            return f"fmaf(fmaxf(0.0f, fminf(1.0f, {arg_strs[2]})), ({arg_strs[1]} - {arg_strs[0]}), {arg_strs[0]})"
+
         if self.name == "remquo":
             return f"(px_remquof_wrapper({arg_strs[0]}, {arg_strs[1]}))"
         return f"{c_func}({', '.join(arg_strs)})"
