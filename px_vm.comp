@@ -474,7 +474,7 @@ void main() {
             case OP_MUL: { float b = pop(); float a = pop(); push(a * b); break; }
             case OP_DIV: {
                 float b = pop(); float a = pop();
-                push(abs(b) < EPSILON ? 0.0 : a / b);
+                push(a / b);
                 break;
             }
             case OP_MOD: {

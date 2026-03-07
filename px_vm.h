@@ -447,6 +447,7 @@ typedef struct {
     POLYSONIX_ALIGN(32) float stack[MAX_VM_STACK];  // Force 32-byte alignment for the stack
     float *stack_top;
     VmParams* params;                               // Pointer to the parameters for this execution run
+    float rand_seed;                                // Seed for pseudo-random generation per-execution
     // Sigma loop state
     LoopVarInfo   active_loop_var;
     float         sigma_end;
@@ -2902,6 +2903,12 @@ static uint8_t read_byte(VM *vm) {
 
 // --- VM Logic Helpers ---
 
+static inline float vm_pseudo_rand(float *seed) {
+    *seed += 0.1f;
+    float val = sinf(*seed) * 43758.5453123f;
+    return val - floorf(val);
+}
+
 static inline float vm_rand(VmParams* params) {
     if (params->rng_state_ptr) {
         uint32_t val = px_rand(params->rng_state_ptr);
@@ -3216,14 +3223,7 @@ SUB_LABEL_OP_DIV: {
     } else {
         float b = *(--sp);
         float a = *(--sp);
-        if (PX_UNLIKELY(!VM_IS_TRUE(b))) {
-            vm->ip = ip; vm->stack_top = sp;
-            vm_error(vm,"Division by zero (sub).");
-            *sp++ = 0.0f;
-            success = false;
-        } else {
-            *sp++ = a / b;
-        }
+        *sp++ = a / b;
     }
     instruction = *ip++;
     goto *sub_dispatch_table[instruction];
@@ -3449,7 +3449,7 @@ SUB_LABEL_OP_TGAMMA: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_
 
 SUB_LABEL_OP_RAND: {
     if (PX_UNLIKELY(sp >= vm->stack + MAX_VM_STACK)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack overflow (rand)"); success=false; goto sub_chunk_end; }
-    *sp++ = vm_rand(vm->params);
+    *sp++ = vm_pseudo_rand(&vm->rand_seed);
     instruction=*ip++; goto *sub_dispatch_table[instruction];
 }
 
@@ -3801,29 +3801,13 @@ LABEL_OP_MUL: { float b = *(--sp); float a = *(--sp); *sp++ = a * b; goto DISPAT
 LABEL_OP_DIV: {
     float b = *(--sp);
     float a = *(--sp);
-    if (PX_UNLIKELY(!VM_IS_TRUE(b))) {
-        vm.ip = ip; vm.stack_top = sp;
-        vm_error(&vm,"Division by zero.");
-        *sp++ = 0.0f;
-        success = false;
-        goto execution_end;
-    } else {
-        *sp++ = a / b;
-    }
+    *sp++ = a / b;
     goto DISPATCH_LOOP;
 }
 LABEL_OP_MOD: {
     float b = *(--sp);
     float a = *(--sp);
-    if (PX_UNLIKELY(!VM_IS_TRUE(b))) {
-        vm.ip = ip; vm.stack_top = sp;
-        vm_error(&vm,"Modulo by zero.");
-        *sp++ = 0.0f;
-        success = false;
-        goto execution_end;
-    } else {
-        *sp++ = fmodf(a, b);
-    }
+    *sp++ = fmodf(a, b);
     goto DISPATCH_LOOP;
 }
 LABEL_OP_NEGATE: { sp[-1] = -sp[-1]; goto DISPATCH_LOOP; }
@@ -3914,7 +3898,7 @@ LABEL_OP_TGAMMA: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp;
 
 LABEL_OP_RAND: {
     if (PX_UNLIKELY(sp >= vm.stack + MAX_VM_STACK)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack overflow (rand)"); success=false; goto execution_end; }
-    *sp++ = vm_rand(vm.params);
+    *sp++ = vm_pseudo_rand(&vm.rand_seed);
     goto DISPATCH_LOOP;
 }
 
@@ -4215,8 +4199,8 @@ static bool compile_and_generate_wave( const char *expression, BytecodeChunk** c
     }
 
     // --- Tokenize and Parse ---
-    Token tokens[256];
-    int tokenCount = tokenize(expression, tokens, 256);
+    Token tokens[1024];
+    int tokenCount = tokenize(expression, tokens, 1024);
     if (tokenCount < 0) { *chunk_ptr_location = NULL; return false; }
 
     int pos = 0;
@@ -4299,8 +4283,8 @@ BytecodeChunk* compile_expression_to_bytecode(const char *expression) {
         return NULL;
     }
     // --- Tokenize ---
-    Token tokens[256]; // Adjust size if needed
-    int tokenCount = tokenize(expression, tokens, 256);
+    Token tokens[1024]; // Adjust size if needed
+    int tokenCount = tokenize(expression, tokens, 1024);
     if (tokenCount < 0) {
         fprintf(stderr, "Tokenization failed for: %s\n", expression);
         return NULL;

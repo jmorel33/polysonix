@@ -25,12 +25,12 @@ int test_div_zero() {
     params.lfsr_state = 1;
 
     float result = execute_bytecode(&chunk, &params);
-    printf("Result of '%s': %f (Expected: 0.0)\n", expr, result);
+    printf("Result of '%s': %f (Expected: inf/nan)\n", expr, result);
 
     freeAST(ast);
     free_bytecode_chunk(&chunk);
 
-    if (result == 0.0f) {
+    if (isinf(result) || isnan(result)) {
         printf("SUCCESS: Division by zero handled correctly.\n");
         return 0;
     } else {
@@ -59,12 +59,12 @@ int test_mod_zero() {
     params.lfsr_state = 1;
 
     float result = execute_bytecode(&chunk, &params);
-    printf("Result of '%s': %f (Expected: 0.0)\n", expr, result);
+    printf("Result of '%s': %f (Expected: inf/nan)\n", expr, result);
 
     freeAST(ast);
     free_bytecode_chunk(&chunk);
 
-    if (result == 0.0f) {
+    if (isinf(result) || isnan(result)) {
         printf("SUCCESS: Modulo by zero handled correctly.\n");
         return 0;
     } else {
@@ -94,13 +94,13 @@ int test_div_small() {
     params.lfsr_state = 1;
 
     float result = execute_bytecode(&chunk, &params);
-    printf("Result of '%s': %f (Expected: 0.0)\n", expr, result);
+    printf("Result of '%s': %f (Expected: inf/nan)\n", expr, result);
 
     freeAST(ast);
     free_bytecode_chunk(&chunk);
 
-    if (result == 0.0f) {
-        printf("SUCCESS: Small divisor handled as zero correctly.\n");
+    if (isinf(result) || isnan(result) || result > 10000.0f) {
+        printf("SUCCESS: Small divisor handled correctly.\n");
         return 0;
     } else {
         printf("FAILURE: Small divisor NOT handled correctly. Got %f\n", result);
@@ -129,12 +129,12 @@ int test_sigma_div_zero() {
     params.lfsr_state = 1;
 
     float result = execute_bytecode(&chunk, &params);
-    printf("Result of '%s': %f (Expected: 0.0)\n", expr, result);
+    printf("Result of '%s': %f (Expected: inf/nan)\n", expr, result);
 
     freeAST(ast);
     free_bytecode_chunk(&chunk);
 
-    if (result == 0.0f) {
+    if (isinf(result) || isnan(result)) {
         printf("SUCCESS: Division by zero in Sigma handled correctly.\n");
         return 0;
     } else {
