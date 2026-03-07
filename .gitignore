@@ -1,0 +1,4 @@
+test/test_*
+!test/*.c
+!test/*.h
+test/*.o

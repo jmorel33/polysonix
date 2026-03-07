@@ -23,6 +23,12 @@
 - Allows for sub-index lerping for creamy morphs and transitions. Similar to `select`, maps the `param` value `[0..1]` across the N-1 intervals of the array elements.
 - Fully supported across the CPU interpreter and GLSL compute shader, leveraging `fma`/`fmaf`.
 
+## v1.9.23 (2026/03/11)
+- **Features**:
+  - Implemented advanced math opcodes (`exp2`, `log2`, `expm1`, `log1p`, `hypot`, `copysign`, `scalbn`, `remquo`, `nextafter`, `fdim`, `nan`, `inf`, `lgamma`, `tgamma`) and the FMA family (`fma`, `fms`, `fnmadd`, `fnmsub`) in the GLSL compute shader (`px_vm.comp`).
+- **Maintenance**:
+  - Reorganized `Makefile` test targets to output binaries directly into the `test/` directory to prevent repository root clutter. Added `.gitignore` for test artifacts.
+
 ## v1.9.19 (2026/03/10)
 **Feature: Dynamic Selection Operator**
 

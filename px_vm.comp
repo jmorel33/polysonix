@@ -75,6 +75,25 @@ layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define OP_LFSR_VAL       0x30
 #define OP_LFSR_NOISE     0x31
 #define OP_LFSR_CLOCK     0x32
+#define OP_FMA            0x33
+#define OP_FMS            0x34
+#define OP_FNMADD         0x35
+#define OP_FNMSUB         0x36
+// --- Advanced Math Opcodes ---
+#define OP_EXP2           0x37
+#define OP_LOG2           0x38
+#define OP_EXPM1          0x39
+#define OP_LOG1P          0x3A
+#define OP_HYPOT          0x3B
+#define OP_COPYSIGN       0x3C
+#define OP_SCALBN         0x3D
+#define OP_REMQUO         0x3E
+#define OP_NEXTAFTER      0x3F
+#define OP_FDIM           0x40
+#define OP_NAN            0x41
+#define OP_INF            0x42
+#define OP_LGAMMA         0x43
+#define OP_TGAMMA         0x44
 #define OP_PROB           0x45
 #define OP_SELECT         0x46
 #define OP_SMOOTH_SELECT  0x47
@@ -534,6 +553,83 @@ void main() {
             case OP_SQRT: { float v = pop(); push(v >= 0.0 ? sqrt(v) : 0.0); break; }
             case OP_POW:  { float b = pop(); float a = pop(); push(a == 2.0 ? exp2(b) : pow(a, b)); break; }
             case OP_RAND: push(pseudo_rand()); break;
+
+            case OP_FMA: { float c = pop(); float b = pop(); float a = pop(); push(fma(a, b, c)); break; }
+            case OP_FMS: { float c = pop(); float b = pop(); float a = pop(); push(fma(a, b, -c)); break; }
+            case OP_FNMADD: { float c = pop(); float b = pop(); float a = pop(); push(fma(-a, b, c)); break; }
+            case OP_FNMSUB: { float c = pop(); float b = pop(); float a = pop(); push(fma(-a, b, -c)); break; }
+            case OP_EXP2:  { push(exp2(pop())); break; }
+            case OP_LOG2:  { float v = pop(); push(v > 0.0 ? log2(v) : 0.0); break; }
+            case OP_EXPM1: { push(exp(pop()) - 1.0); break; }
+            case OP_LOG1P: { float v = pop(); push(v > -1.0 ? log(1.0 + v) : 0.0); break; }
+            case OP_HYPOT: { float b = pop(); float a = pop(); push(sqrt(a * a + b * b)); break; }
+            case OP_COPYSIGN:{ float b = pop(); float a = pop(); uint ua = floatBitsToUint(a); uint ub = floatBitsToUint(b); push(uintBitsToFloat((ua & 0x7FFFFFFFu) | (ub & 0x80000000u))); break; }
+            case OP_SCALBN:{ float exp_val = pop(); float v = pop(); push(v * exp2(floor(exp_val))); break; }
+            case OP_REMQUO:{
+                float y = pop(); float x = pop();
+                if (y == 0.0) { push(uintBitsToFloat(0x7FC00000u)); } // NaN
+                else {
+                    float q = round(x / y);
+                    push(x - q * y); // The C wrapper px_remquof_wrapper only returns the remainder, the quotient is discarded
+                }
+                break;
+            }
+            case OP_NEXTAFTER:{
+                float y = pop(); float x = pop();
+                if (x == y) { push(y); }
+                else {
+                    int ix = floatBitsToInt(x);
+                    if (x == 0.0) {
+                        push(intBitsToFloat((y > 0.0) ? 1 : -2147483647)); // Approximation of smallest denorm
+                    } else if ((x > 0.0) == (y > x)) {
+                        push(intBitsToFloat(ix + 1));
+                    } else {
+                        push(intBitsToFloat(ix - 1));
+                    }
+                }
+                break;
+            }
+            case OP_FDIM: { float y = pop(); float x = pop(); push(x > y ? x - y : 0.0); break; }
+            case OP_NAN:  { push(uintBitsToFloat(0x7FC00000u)); break; }
+            case OP_INF:  { push(uintBitsToFloat(0x7F800000u)); break; }
+            case OP_LGAMMA:{
+                float x = pop();
+                if (x <= 0.0 && floor(x) == x) { push(uintBitsToFloat(0x7F800000u)); } // Infinity for non-positive integers
+                else if (x > 0.0) {
+                    float tmp = x + 5.5;
+                    tmp = (x + 0.5) * log(tmp) - tmp;
+                    float ser = 1.000000000190015 + (76.18009172947146 / (x + 1.0)) - (86.50532032941677 / (x + 2.0)) + (24.01409824083091 / (x + 3.0)) - (1.231739572450155 / (x + 4.0)) + (0.1208650973866179e-2 / (x + 5.0)) - (0.5395239384953e-5 / (x + 6.0));
+                    push(tmp + log(2.5066282746310005 * ser / x));
+                } else {
+                    float nx = 1.0 - x;
+                    float tmp_n = nx + 5.5;
+                    tmp_n = (nx + 0.5) * log(tmp_n) - tmp_n;
+                    float ser_n = 1.000000000190015 + (76.18009172947146 / (nx + 1.0)) - (86.50532032941677 / (nx + 2.0)) + (24.01409824083091 / (nx + 3.0)) - (1.231739572450155 / (nx + 4.0)) + (0.1208650973866179e-2 / (nx + 5.0)) - (0.5395239384953e-5 / (nx + 6.0));
+                    float pi = 3.14159265358979323846;
+                    push(log(pi / abs(sin(pi * x))) - (tmp_n + log(2.5066282746310005 * ser_n / nx)));
+                }
+                break;
+            }
+            case OP_TGAMMA:{
+                float x = pop();
+                if (x <= 0.0 && floor(x) == x) { push(uintBitsToFloat(0x7FC00000u)); } // NaN/Inf for non-positive integers
+                else if (x > 0.0) {
+                    float tmp = x + 5.5;
+                    float log_tgamma_approx = (x + 0.5) * log(tmp) - tmp;
+                    float ser = 1.000000000190015 + (76.18009172947146 / (x + 1.0)) - (86.50532032941677 / (x + 2.0)) + (24.01409824083091 / (x + 3.0)) - (1.231739572450155 / (x + 4.0)) + (0.1208650973866179e-2 / (x + 5.0)) - (0.5395239384953e-5 / (x + 6.0));
+                    push(exp(log_tgamma_approx + log(2.5066282746310005 * ser / x)));
+                } else {
+                    float pi = 3.14159265358979323846;
+                    float nx = 1.0 - x;
+                    float tmp_n = nx + 5.5;
+                    float log_tg_nx = (nx + 0.5) * log(tmp_n) - tmp_n;
+                    float ser_n = 1.000000000190015 + (76.18009172947146 / (nx + 1.0)) - (86.50532032941677 / (nx + 2.0)) + (24.01409824083091 / (nx + 3.0)) - (1.231739572450155 / (nx + 4.0)) + (0.1208650973866179e-2 / (nx + 5.0)) - (0.5395239384953e-5 / (nx + 6.0));
+                    float tg_nx = exp(log_tg_nx + log(2.5066282746310005 * ser_n / nx));
+                    push(pi / (sin(pi * x) * tg_nx));
+                }
+                break;
+            }
+
             case OP_PROB: { float f = pop(); float t = pop(); float c = pop(); float rand_val = vm_params.rand_offset; push((rand_val < c) ? t : f); break; }
             case OP_SELECT: {
                 uint n = read_byte(bytecode);
