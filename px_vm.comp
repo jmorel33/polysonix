@@ -311,16 +311,10 @@ uint get_sigma_offset(VmMetadataBuffer vm_metadata, uint index) {
 
 
 void main() {
-    uint gid = gl_GlobalInvocationID.x;
+    uint wave_idx = gl_GlobalInvocationID.x; // This thread handles ONE ENTIRE WAVE
 
     // --- Resolve Buffer Pointers from Push Constants ---
     VmParamsBuffer vm_params = regs.vm_params;
-
-    // Bounds check
-    if (gid >= vm_params.wave_length) {
-        return;
-    }
-
     VmMetadataBuffer vm_metadata = regs.vm_metadata;
     BytecodeBuffer bytecode = regs.bytecode;
     ConstantsBuffer constants = regs.constants;
@@ -328,26 +322,26 @@ void main() {
     OutputBuffer output_buffer = regs.output_buffer;
     LfsrStateBuffer lfsr_state = regs.lfsr_state;
 
-    // --- Initialize Per-Thread State ---
+    // Loop through every sample of the wave sequentially
+    for (uint sample = 0; sample < vm_params.wave_length; sample++) {
 
-    // Calculate phase 'x' for this sample
-    local_x = (float(gid) / float(vm_params.wave_length)) * 6.28318530718;
+        // Calculate phase 'x' for this sample
+        local_x = (float(sample) / float(vm_params.wave_length)) * 6.28318530718;
 
-    // Initialize the random seed using global ID to ensure variation across the wave
-    rand_seed = vm_params.rand_offset + float(gid) * 0.12345;
+        // Initialize the random seed using wave index and sample to ensure variation
+        rand_seed = vm_params.rand_offset + float(wave_idx * vm_params.wave_length + sample) * 0.12345;
 
-    // Initialize VM state
-    stack_top = 0;
-    call_stack_top = 0;
-    sigma_is_active = false;
-    ip = int(vm_metadata.main_chunk_offset);
+        // Reset VM state for this specific sample
+        stack_top = 0;
+        call_stack_top = 0;
+        sigma_is_active = false;
+        ip = int(vm_metadata.main_chunk_offset);
 
+        // --- Main VM Loop ---
+        for(int i = 0; i < 100000; ++i) {
+            uint instruction = read_byte(bytecode);
 
-    // --- Main VM Loop ---
-    for(int i = 0; i < 100000; ++i) { // Increased loop limiter
-        uint instruction = read_byte(bytecode);
-
-        switch (instruction) {
+            switch (instruction) {
 
             case OP_CLAMP: {
                 float max_val = pop();
@@ -376,15 +370,15 @@ void main() {
                 uint n_states = read_byte(bytecode);
                 uint matrix_size = n_states * n_states;
 
+                if (stack_top < int(matrix_size + 2)) {
+                    i = 999999; // Stack underflow, halt
+                    break;
+                }
+
                 float id_val = pop();
                 float trig_val = pop();
                 int id = int(max(0.0, min(float(MAX_MARKOV_CHAINS - 1), id_val)));
                 bool is_triggered = abs(trig_val) > EPSILON;
-
-                float matrix[64];
-                for (int i = 0; i < int(matrix_size); i++) {
-                    matrix[i] = pop();
-                }
 
                 uint current_state = vm_params.markov_state[id];
                 if (current_state >= n_states) current_state = 0;
@@ -394,15 +388,25 @@ void main() {
                     int row_start = int(current_state * n_states);
                     float r = pseudo_rand();
                     float accumulator = 0.0;
-                    for (int i = 0; i < int(n_states); i++) {
-                        accumulator += matrix[row_start + i];
-                        if (r <= accumulator || i == int(n_states) - 1) {
-                            current_state = i;
+
+                    // Peek directly into the stack!
+                    // stack_top - 1 is p00. stack_top - 2 is p01, etc.
+                    int p00_idx = stack_top - 1;
+
+                    for (int j = 0; j < int(n_states); j++) {
+                        float p = vm_stack[p00_idx - (row_start + j)];
+                        accumulator += p;
+                        if (r <= accumulator || j == int(n_states) - 1) {
+                            current_state = uint(j);
                             break;
                         }
                     }
                     vm_params.markov_state[id] = current_state;
                 }
+
+                // Pop the entire matrix off the stack instantly
+                stack_top -= int(matrix_size);
+
                 vm_params.markov_prev_trigger[id] = is_triggered ? 1 : 0;
                 push(float(current_state));
 
@@ -823,12 +827,17 @@ void main() {
                 }
                 break;
         }
-    }
 
-    // Clamp and write the final result to the output array at gid
-    float final_result = 0.0;
-    if (stack_top > 0) {
-        final_result = pop();
-    }
-    output_buffer.result[gid] = clamp(final_result, -1.0, 1.0);
+        } // End VM Loop
+
+        // Clamp and write the final result for this sample
+        float final_result = 0.0;
+        if (stack_top > 0) {
+            final_result = pop();
+        }
+
+        // Write to the output buffer (offset by which wave this thread is generating)
+        output_buffer.result[wave_idx * vm_params.wave_length + sample] = clamp(final_result, -1.0, 1.0);
+
+    } // End Sample Loop
 }
