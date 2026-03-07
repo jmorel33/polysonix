@@ -261,6 +261,7 @@ extern "C" {
 #define MAX_SIGMA_CHUNKS  16 // Max nested or parallel sigma chunks needed
 #define MAX_STRINGS 32 // Max unique string literals (variable names, etc.) per chunk
 #define MAX_PARSE_DEPTH 200 // Maximum recursion depth for parser
+#define MAX_MARKOV_CHAINS 4 // Support 4 independent chains per voice
 
 #ifndef NUM_DEFAULT_WAVES
 #define NUM_DEFAULT_WAVES 256
@@ -401,6 +402,10 @@ typedef struct {
     uint32_t lfsr_seed;     // Initial seed for resetting (can be used by caller to reset lfsr_state)
     float lfsr_accum_phase; // New: Accumulator for fractional LFSR advances
     uint32_t* rng_state_ptr; // Pointer to the voice's RNG state
+
+    // --- Markov Chain State ---
+    uint32_t markov_state[MAX_MARKOV_CHAINS];      // Current state (0, 1, 2...)
+    bool     markov_prev_trigger[MAX_MARKOV_CHAINS]; // For rising-edge detection
 } VmParams;
 
 #ifdef PX_BENCHMARK_NATIVE_WAVES
@@ -555,9 +560,10 @@ typedef enum {
     OP_CLAMP          = 0x48,
     OP_MIX            = 0x49,
     OP_RAMP           = 0x4A,
+    OP_MARKOV         = 0x4B,
 
     // --- End ---
-    OP_HALT           = 0x4B  // Must be last (used for array sizes)
+    OP_HALT           = 0x4C  // Must be last (used for array sizes)
 } OpCode;
 #define VM_MAX_OPCODE OP_HALT
 #define VM_DISPATCH_TABLE_SIZE (VM_MAX_OPCODE + 1) // Important for computed goto table size
@@ -899,6 +905,7 @@ static PxFunctionDef px_functions[] = {
     {"lgamma", 6, OP_LGAMMA, 1},
     {"tgamma", 6, OP_TGAMMA, 1},
     {"sigma", 5, (OpCode)0, 5},
+    {"markov", 6, OP_MARKOV, -1},
     {NULL, 0, (OpCode)0, 0}
 };
 
@@ -2127,6 +2134,40 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
 
                 emit_byte(chunk, (strcmp(fname, "smooth_select") == 0) ? OP_SMOOTH_SELECT : OP_SELECT);
                 emit_byte(chunk, (uint8_t)(arg_count - 1)); // num_values n
+            } else if (strcmp(fname, "markov") == 0) {
+                // 1. Count arguments
+                int arg_count = 0;
+                Node *currentArg = node->child1;
+                while(currentArg) { arg_count++; currentArg = currentArg->right; }
+
+                // 2. Validate Matrix Size (arg_count - 2 must be a perfect square)
+                int matrix_args = arg_count - 2;
+                int n_states = (int)sqrt((double)matrix_args);
+                if (matrix_args < 4 || (n_states * n_states) != matrix_args) {
+                    fprintf(stderr, "Compile Error: 'markov' requires id, trigger, and a square matrix (e.g., 4 or 9 matrix args). Got %d total args.\n", arg_count);
+                    return false;
+                }
+                if (n_states > 8) { // Safety cap
+                    fprintf(stderr, "Compile Error: Markov matrix too large (max 8x8).\n");
+                    return false;
+                }
+
+                // 3. Store nodes in an array for reverse compilation
+                Node *args[66]; // Max 2 + 64 (8x8 matrix)
+                currentArg = node->child1;
+                for(int i = 0; i < arg_count; i++) {
+                    args[i] = currentArg;
+                    currentArg = currentArg->right;
+                }
+
+                // 4. Compile in reverse order: Matrix (pNN down to p00), then Trigger, then ID
+                for (int i = arg_count - 1; i >= 0; i--) {
+                    if (!compile_node(args[i], chunk, active_loop_var_name_ptr)) return false;
+                }
+
+                // 5. Emit OpCode and the number of states (N) as a 1-byte operand
+                emit_byte(chunk, OP_MARKOV);
+                emit_byte(chunk, (uint8_t)n_states);
             } else if (strcmp(fname, "sigma") == 0) {
                 // --- Sigma Compilation (Iterative) ---
                 if (active_loop_var_name_ptr && *active_loop_var_name_ptr) {
@@ -2317,7 +2358,8 @@ const char* getOpCodeName(OpCode code) {
         /* 0x48 */ "OP_CLAMP",
         /* 0x49 */ "OP_MIX",
         /* 0x4A */ "OP_RAMP",
-        /* 0x4B */ "OP_HALT"
+        /* 0x4B */ "OP_MARKOV",
+        /* 0x4C */ "OP_HALT"
     };
     // Basic bounds check using VM_MAX_OPCODE
     if (code >= 0 && code <= VM_MAX_OPCODE) {
@@ -2391,6 +2433,12 @@ int disassembleInstruction(BytecodeChunk *chunk, int offset) {
              break;
          }
 
+        case OP_MARKOV: {
+             uint8_t n_states = chunk->code[offset + 1];
+             printf("n_states:%u", n_states);
+             instruction_size += 1;
+             break;
+        }
         case OP_SELECT:
         case OP_SMOOTH_SELECT: {
              uint8_t num_values = chunk->code[offset + 1];
@@ -3088,7 +3136,8 @@ static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
         /* 0x48 OP_CLAMP */            &&SUB_LABEL_OP_CLAMP,
         /* 0x49 OP_MIX */              &&SUB_LABEL_OP_MIX,
         /* 0x4A OP_RAMP */             &&SUB_LABEL_OP_RAMP,
-        /* 0x4B OP_HALT */             &&SUB_LABEL_OP_HALT
+        /* 0x4B OP_MARKOV */           &&SUB_LABEL_OP_MARKOV,
+        /* 0x4C OP_HALT */             &&SUB_LABEL_OP_HALT
     };
 
     uint8_t instruction;
@@ -3595,6 +3644,47 @@ SUB_LABEL_OP_RAMP: {
     *sp++ = fmaf(time, (end - start), start);
     instruction=*ip++; goto *sub_dispatch_table[instruction];
 }
+SUB_LABEL_OP_MARKOV: {
+    uint8_t n_states = *ip++;
+    int matrix_size = n_states * n_states;
+    if (PX_UNLIKELY((sp - vm->stack) < (matrix_size + 2))) {
+        vm->ip = ip; vm->stack_top = sp;
+        vm_error(vm, "Stack underflow (markov)");
+        success = false;
+        goto sub_chunk_end;
+    }
+    float id_val = *(--sp);
+    float trig_val = *(--sp);
+    int id = (int)fmaxf(0.0f, fminf((float)(MAX_MARKOV_CHAINS - 1), id_val));
+    bool is_triggered = VM_IS_TRUE(trig_val);
+
+    float matrix[64];
+    for (int i = 0; i < matrix_size; i++) {
+        matrix[i] = *(--sp);
+    }
+
+    uint32_t current_state = vm->params->markov_state[id];
+    if (current_state >= n_states) current_state = 0;
+
+    bool prev_trig = vm->params->markov_prev_trigger[id];
+    if (is_triggered && !prev_trig) {
+        int row_start = current_state * n_states;
+        float r = vm_pseudo_rand(&vm->rand_seed);
+        float accumulator = 0.0f;
+        for (int i = 0; i < n_states; i++) {
+            accumulator += matrix[row_start + i];
+            if (r <= accumulator || i == n_states - 1) {
+                current_state = i;
+                break;
+            }
+        }
+        vm->params->markov_state[id] = current_state;
+    }
+    vm->params->markov_prev_trigger[id] = is_triggered;
+    *sp++ = (float)current_state;
+
+    instruction=*ip++; goto *sub_dispatch_table[instruction];
+}
 SUB_LABEL_OP_HALT: {
     // CRITICAL FIX: Always leave exactly one result on stack for caller
     if (PX_LIKELY(success && sp > vm->stack)) {
@@ -3764,7 +3854,8 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
         /* 0x48 OP_CLAMP */            &&LABEL_OP_CLAMP,
         /* 0x49 OP_MIX */              &&LABEL_OP_MIX,
         /* 0x4A OP_RAMP */             &&LABEL_OP_RAMP,
-        /* 0x4B OP_HALT */             &&LABEL_OP_HALT
+        /* 0x4B OP_MARKOV */           &&LABEL_OP_MARKOV,
+        /* 0x4C OP_HALT */             &&LABEL_OP_HALT
     };
 
     // --- Central Dispatch Loop ---
@@ -4167,6 +4258,65 @@ LABEL_OP_RAMP: {
     *sp++ = fmaf(time, (end - start), start);
     goto DISPATCH_LOOP;
 }
+LABEL_OP_MARKOV: {
+    uint8_t n_states = *ip++;
+    int matrix_size = n_states * n_states;
+
+    if (PX_UNLIKELY((sp - vm.stack) < (matrix_size + 2))) {
+        vm.ip = ip; vm.stack_top = sp;
+        vm_error(&vm, "Stack underflow (markov)");
+        success = false;
+        goto execution_end;
+    }
+
+    // 1. Pop ID and Trigger
+    float id_val = *(--sp);
+    float trig_val = *(--sp);
+    int id = (int)fmaxf(0.0f, fminf((float)(MAX_MARKOV_CHAINS - 1), id_val));
+    bool is_triggered = VM_IS_TRUE(trig_val);
+
+    // 2. Pop Matrix into local array
+    float matrix[64];
+    for (int i = 0; i < matrix_size; i++) {
+        matrix[i] = *(--sp);
+    }
+
+    // 3. Get current state
+    uint32_t current_state = vm.params->markov_state[id];
+    if (current_state >= n_states) current_state = 0; // Failsafe
+
+    // 4. Rising Edge Detection & Transition
+    bool prev_trig = vm.params->markov_prev_trigger[id];
+    if (is_triggered && !prev_trig) {
+
+        // Find our row in the matrix
+        int row_start = current_state * n_states;
+
+        // Roll the dice (0.0 to 1.0)
+        float r = vm_pseudo_rand(&vm.rand_seed);
+        float accumulator = 0.0f;
+
+        // Iterate through probabilities in this row
+        for (int i = 0; i < n_states; i++) {
+            accumulator += matrix[row_start + i];
+            if (r <= accumulator || i == n_states - 1) { // Fallback to last state if math is fuzzy
+                current_state = i;
+                break;
+            }
+        }
+
+        // Save new state
+        vm.params->markov_state[id] = current_state;
+    }
+
+    // Save trigger state for the next sample evaluation
+    vm.params->markov_prev_trigger[id] = is_triggered;
+
+    // 5. Push the current state to the stack
+    *sp++ = (float)current_state;
+
+    goto DISPATCH_LOOP;
+}
 LABEL_OP_HALT: {
     goto execution_end;
 }
@@ -4252,7 +4402,9 @@ static bool compile_and_generate_wave( const char *expression, BytecodeChunk** c
         .lfsr_state = 1,
         .lfsr_type = LFSR_8BIT,
         .lfsr_position = 0,
-        .lfsr_seed = 1
+        .lfsr_seed = 1,
+        .markov_state = {0},
+        .markov_prev_trigger = {false}
     };
 
     float first_sample = 0.0f;
@@ -4352,6 +4504,7 @@ static int get_instruction_size(const BytecodeChunk *chunk, int offset) {
         case OP_SIGMA_INIT:
         case OP_SELECT:
         case OP_SMOOTH_SELECT:
+        case OP_MARKOV:
             size += 1; // name_index or num_values
             break;
         // Special case: OP_SIGMA_EXEC
@@ -4496,7 +4649,9 @@ float generate_sample_from_bytecode(BytecodeChunk *chunk, uint16_t sample_index,
         .lfsr_state = 1,        // Default initial state for free-running LFSR
         .lfsr_type = LFSR_8BIT, // Default LFSR type, script can use other types
         .lfsr_position = 0,
-        .lfsr_seed = 1          // Default seed
+        .lfsr_seed = 1,          // Default seed
+        .markov_state = {0},
+        .markov_prev_trigger = {false}
     };
 
     float sample_f = execute_bytecode(chunk, &params); // Pass non-const pointer
@@ -4759,6 +4914,10 @@ typedef struct {
     int32_t lfsr_type;          // 4 bytes
     uint32_t lfsr_seed;         // 4 bytes
     uint32_t wave_length;       // 4 bytes
+
+    // --- Markov Chain State ---
+    uint32_t markov_state[MAX_MARKOV_CHAINS];      // Current state (0, 1, 2...)
+    uint32_t markov_prev_trigger[MAX_MARKOV_CHAINS]; // For rising-edge detection (using uint32_t for shader alignment instead of bool)
 } VmParamsBuffer;
 
 // Structure for the persistent LFSR state buffer (read-write)
@@ -4911,6 +5070,10 @@ void dispatch_wave_gpu(SituationCommandBuffer cmd, GpuWaveBuffers bufs, VmParams
         .lfsr_seed = params->lfsr_seed,
         .wave_length = wave_length
     };
+    for (int i = 0; i < MAX_MARKOV_CHAINS; i++) {
+        pb.markov_state[i] = params->markov_state[i];
+        pb.markov_prev_trigger[i] = params->markov_prev_trigger[i] ? 1 : 0;
+    }
 
     SituationCreateBuffer(sizeof(VmParamsBuffer), &pb, SITUATION_BUFFER_USAGE_STORAGE_BUFFER, out_params_buf);
 
