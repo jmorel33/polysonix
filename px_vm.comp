@@ -76,7 +76,8 @@ layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define OP_LFSR_NOISE     0x31
 #define OP_LFSR_CLOCK     0x32
 #define OP_PROB           0x45
-#define OP_HALT           0x46
+#define OP_SELECT         0x46
+#define OP_HALT           0x47
 
 // --- Bindless Buffer Layouts ---
 
@@ -506,6 +507,18 @@ void main() {
             case OP_POW:  { float b = pop(); float a = pop(); push(a == 2.0 ? exp2(b) : pow(a, b)); break; }
             case OP_RAND: push(pseudo_rand()); break;
             case OP_PROB: { float f = pop(); float t = pop(); float c = pop(); float rand_val = vm_params.rand_offset; push((rand_val < c) ? t : f); break; }
+            case OP_SELECT: {
+                uint n = read_byte(bytecode);
+                float param = pop();
+                float values[16];
+                for (int j = 0; j < int(n); j++) {
+                    values[j] = pop();
+                }
+                int index = int(fma(param, float(n), 0.0));
+                index = max(0, min(int(n)-1, index));
+                push(values[index]);
+                break;
+            }
 
             case OP_LFSR_VAL: {
                 float seed_norm = pop();
