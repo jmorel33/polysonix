@@ -116,6 +116,7 @@ sqrt(1)                     : Square root. Input must be >= 0.
 pow(2)                      : Power (base, exponent).
 rand()                      : Returns a pseudo-random float between 0.0 and 1.0.
 sigma(5)                    : Summation (loop_var_name, start_val, end_val, step_val, expression_to_sum).
+select(param, v1...vn)      : Dynamically selects an expression based on the param value [0.0..1.0].
 lfsr_val(3)                 : LFSR bit value (type, position_norm, seed_norm).
 lfsr_noise(2)               : LFSR bipolar noise (type, rate).
 lfsr_clock(2)               : LFSR rhythmic pulses (type, density).
