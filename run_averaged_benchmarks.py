@@ -38,8 +38,8 @@ def main():
                     patch_data[pid] = {"name": name, "times": []}
                 patch_data[pid]["times"].append(time_val)
 
-    # Read the previous v1.9.25 baseline from PERFORMANCE_REPORT_5.md
-    print("Loading v1.9.25 baseline...")
+    # Read the previous v1.9.16 baseline from PERFORMANCE_REPORT_5.md
+    print("Loading v1.9.16 (FMA Peak) baseline...")
     report_5_times = {}
     try:
         with open('doc/PERFORMANCE_REPORT_5.md', 'r') as f:
@@ -62,10 +62,10 @@ def main():
     out_lines = [
         "# Polysonix VM v1.9.26 Performance Report",
         "",
-        f"This report compares the execution time of the new Iterative Sigma / Stack-Peek VM (v1.9.26) against the v1.9.25 baseline.",
+        f"This report compares the execution time of the new Iterative Sigma / Stack-Peek VM (v1.9.26) against the v1.9.16 (FMA Peak) baseline.",
         f"Measurements are averaged over {NUM_RUNS} runs to eliminate OS and cache noise.",
         "",
-        "| Patch ID | Name | v1.9.25 (Before) (ns) | v1.9.26 (After) (ns) | Improvement |",
+        "| Patch ID | Name | v1.9.16 (Before) (ns) | v1.9.26 (After) (ns) | Improvement |",
         "| :--- | :--- | :--- | :--- | :--- |"
     ]
 
@@ -101,7 +101,7 @@ def main():
     out_lines.append("")
     out_lines.append(f"* **Total Patches Benchmarked:** {len(patch_data)}")
     out_lines.append(f"* **Averaged Over:** {NUM_RUNS} test runs")
-    out_lines.append(f"* **Average Time per Sample (v1.9.25):** {avg_baseline:.2f} ns")
+    out_lines.append(f"* **Average Time per Sample (v1.9.16):** {avg_baseline:.2f} ns")
     out_lines.append(f"* **Average Time per Sample (v1.9.26):** {avg_after:.2f} ns")
     out_lines.append(f"* **Overall Performance Improvement:** **{overall_impr:.2f}%**")
     out_lines.append("")
