@@ -1,5 +1,15 @@
 # Update Log
 
+## v1.9.19 (2026/03/10)
+**Feature: Dynamic Selection Operator**
+
+- Added `OP_SELECT` opcode to VM for dynamic selection from a variable-length list.
+- Syntax: `select(param, v1, v2, ..., vn)`.
+- Implements fast, branchless clamping with `fmaf` for mapping the `param` value `[0..1]` to a 0-indexed array choice.
+- Fully supported across the CPU interpreter, GLSL compute shader, and Python transpiler.
+- Allows for nested operations and probabilities as operands to easily construct non-linear morphs and sequence logic.
+
+
 ## v1.9.18 (2026/03/10)
 - Added `OP_PROB` opcode to VM for probabilistic ternary operations (`prob(chance, true_expr, false_expr)`).
 
