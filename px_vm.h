@@ -3674,6 +3674,7 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
     // vm.ip = chunk->code;
     vm.stack_top = vm.stack;
     vm.params = params; // Store the pointer to the parameters
+    vm.rand_seed = params->rand_offset * 1337.0f; // Initialize rand_seed
     vm.is_in_sigma_body = false; // Reset sigma state for main execution
     vm.active_loop_var.name = NULL;
     vm.active_loop_var.current_value = 0.0f;
