@@ -550,9 +550,10 @@ typedef enum {
     OP_TGAMMA         = 0x44,
     OP_PROB           = 0x45,
     OP_SELECT         = 0x46, // Pops param + n values (n from operand), pushes selected
+    OP_SMOOTH_SELECT  = 0x47, // Pops param + n values (n from operand), pushes lerped selected
 
     // --- End ---
-    OP_HALT           = 0x47  // Must be last (used for array sizes)
+    OP_HALT           = 0x48  // Must be last (used for array sizes)
 } OpCode;
 #define VM_MAX_OPCODE OP_HALT
 #define VM_DISPATCH_TABLE_SIZE (VM_MAX_OPCODE + 1) // Important for computed goto table size
@@ -855,6 +856,7 @@ static PxFunctionDef px_functions[] = {
     {"acos", 4, OP_ACOS, 1},
     {"prob", 4, OP_PROB, 3},
     {"select", 6, OP_SELECT, -1},
+    {"smooth_select", 13, OP_SMOOTH_SELECT, -1},
     {"atan", 4, OP_ATAN, 1},
     {"abs", 3, OP_ABS, 1},
     {"tanh", 4, OP_TANH, 1},
@@ -2085,8 +2087,8 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
         case TOKEN_FUNCTION: {
             const char* fname = node->data.name;
 
-            if (strcmp(fname, "select") == 0) {
-                // OP_SELECT: param + 2 to 16 values
+            if (strcmp(fname, "select") == 0 || strcmp(fname, "smooth_select") == 0) {
+                // OP_SELECT / OP_SMOOTH_SELECT: param + 2 to 16 values
                 int arg_count = 0;
                 Node *currentArg = node->child1;
                 // First pass: count arguments
@@ -2096,7 +2098,7 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
                 }
 
                 if (arg_count < 3 || arg_count > 17) {
-                    fprintf(stderr, "Compile Error: Function 'select' expects between 3 and 17 arguments (1 param + 2 to 16 values), got %d.\n", arg_count);
+                    fprintf(stderr, "Compile Error: Function '%s' expects between 3 and 17 arguments (1 param + 2 to 16 values), got %d.\n", fname, arg_count);
                     return false;
                 }
 
@@ -2116,7 +2118,7 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
                 // Compile param (v0)
                 if (!compile_node(args[0], chunk, active_loop_var_name_ptr)) return false;
 
-                emit_byte(chunk, OP_SELECT);
+                emit_byte(chunk, (strcmp(fname, "smooth_select") == 0) ? OP_SMOOTH_SELECT : OP_SELECT);
                 emit_byte(chunk, (uint8_t)(arg_count - 1)); // num_values n
             } else if (strcmp(fname, "sigma") == 0) {
                 // --- Sigma Compilation (Iterative) ---
@@ -2304,7 +2306,8 @@ const char* getOpCodeName(OpCode code) {
         /* 0x44 */ "OP_TGAMMA",
         /* 0x45 */ "OP_PROB",
         /* 0x46 */ "OP_SELECT",
-        /* 0x47 */ "OP_HALT"
+        /* 0x47 */ "OP_SMOOTH_SELECT",
+        /* 0x48 */ "OP_HALT"
     };
     // Basic bounds check using VM_MAX_OPCODE
     if (code >= 0 && code <= VM_MAX_OPCODE) {
@@ -2378,7 +2381,8 @@ int disassembleInstruction(BytecodeChunk *chunk, int offset) {
              break;
          }
 
-        case OP_SELECT: {
+        case OP_SELECT:
+        case OP_SMOOTH_SELECT: {
              uint8_t num_values = chunk->code[offset + 1];
              printf("num_values:%u", num_values);
              instruction_size += 1; // Opcode + num_values
@@ -3063,7 +3067,8 @@ static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
         /* 0x44 OP_TGAMMA */           &&SUB_LABEL_OP_TGAMMA,
         /* 0x45 OP_PROB */             &&SUB_LABEL_OP_PROB,
         /* 0x46 OP_SELECT */           &&SUB_LABEL_OP_SELECT,
-        /* 0x47 OP_HALT */             &&SUB_LABEL_OP_HALT
+        /* 0x47 OP_SMOOTH_SELECT */    &&SUB_LABEL_OP_SMOOTH_SELECT,
+        /* 0x48 OP_HALT */             &&SUB_LABEL_OP_HALT
     };
 
     uint8_t instruction;
@@ -3538,6 +3543,24 @@ SUB_LABEL_OP_SELECT: {
     *sp++ = values[index];
     instruction=*ip++; goto *sub_dispatch_table[instruction];
 }
+SUB_LABEL_OP_SMOOTH_SELECT: {
+    uint8_t n = *ip++;
+    if (PX_UNLIKELY((sp - vm->stack) < (n + 1))) {
+        vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (smooth_select)");
+        success=false; goto sub_chunk_end;
+    }
+    float param = *(--sp);
+    float values[16];
+    for (int i = 0; i < n; i++) values[i] = *(--sp);
+    param = fmaxf(0.0f, fminf((float)(n-1), param));
+    int low = (int)param;
+    float frac = param - (float)low;
+    // Handle edge case where low == n - 1 (lerp values[n-1] to values[n-1] to avoid out of bounds)
+    float high_val = (low + 1 < n) ? values[low + 1] : values[low];
+    float selected = fmaf(frac, (high_val - values[low]), values[low]);
+    *sp++ = selected;
+    instruction=*ip++; goto *sub_dispatch_table[instruction];
+}
 SUB_LABEL_OP_HALT: {
     // CRITICAL FIX: Always leave exactly one result on stack for caller
     if (PX_LIKELY(success && sp > vm->stack)) {
@@ -3702,7 +3725,8 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
         /* 0x44 OP_TGAMMA */           &&LABEL_OP_TGAMMA,
         /* 0x45 OP_PROB */             &&LABEL_OP_PROB,
         /* 0x46 OP_SELECT */           &&LABEL_OP_SELECT,
-        /* 0x47 OP_HALT */             &&LABEL_OP_HALT
+        /* 0x47 OP_SMOOTH_SELECT */    &&LABEL_OP_SMOOTH_SELECT,
+        /* 0x48 OP_HALT */             &&LABEL_OP_HALT
     };
 
     // --- Central Dispatch Loop ---
@@ -4083,6 +4107,23 @@ LABEL_OP_SELECT: {
     *sp++ = values[index];
     goto DISPATCH_LOOP;
 }
+LABEL_OP_SMOOTH_SELECT: {
+    uint8_t n = *ip++;
+    if (PX_UNLIKELY((sp - vm.stack) < (n + 1))) {
+        vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (smooth_select)");
+        success=false; goto execution_end;
+    }
+    float param = *(--sp);
+    float values[16];
+    for (int i = 0; i < n; i++) values[i] = *(--sp);
+    param = fmaxf(0.0f, fminf((float)(n-1), param));
+    int low = (int)param;
+    float frac = param - (float)low;
+    float high_val = (low + 1 < n) ? values[low + 1] : values[low];
+    float selected = fmaf(frac, (high_val - values[low]), values[low]);
+    *sp++ = selected;
+    goto DISPATCH_LOOP;
+}
 LABEL_OP_HALT: {
     goto execution_end;
 }
@@ -4267,6 +4308,7 @@ static int get_instruction_size(const BytecodeChunk *chunk, int offset) {
         case OP_PUSH_LOOP_VAR:
         case OP_SIGMA_INIT:
         case OP_SELECT:
+        case OP_SMOOTH_SELECT:
             size += 1; // name_index or num_values
             break;
         // Special case: OP_SIGMA_EXEC

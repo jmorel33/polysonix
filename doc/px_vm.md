@@ -28,8 +28,9 @@ This guide provides a comprehensive overview of the language, from its basic syn
     - [3.5.2. Mathematical Functions](#352-mathematical-functions)
     - [3.5.3. Probability Function (prob)](#353-probability-function-prob)
     - [3.5.4. Dynamic Selection Function (select)](#354-dynamic-selection-function-select)
-    - [3.5.5. LFSR (Linear-Feedback Shift Register) Functions](#355-lfsr-linear-feedback-shift-register-functions)
-    - [3.5.6. Summation Function (sigma)](#356-summation-function-sigma)
+    - [3.5.5. Smooth Interpolated Selection (smooth_select)](#355-smooth-interpolated-selection-smooth_select)
+    - [3.5.6. LFSR (Linear-Feedback Shift Register) Functions](#356-lfsr-linear-feedback-shift-register-functions)
+    - [3.5.7. Summation Function (sigma)](#357-summation-function-sigma)
 - [4. The Compilation and Execution Model](#4-the-compilation-and-execution-model)
   - [4.1. Overview](#41-overview)
   - [4.2. Tokenizer](#42-tokenizer)
@@ -341,7 +342,16 @@ These functions operate on radians.
   - `v1...vn`: The list of expressions to choose from. Can contain static values, mathematical operations, or nested function calls.
   - **Example**: `select(MOD_A, sin(x), saw(x), tri(x))` switches between a sine, saw, and triangle wave depending on the value of the `MOD_A` knob.
 
-#### 3.5.5. LFSR (Linear-Feedback Shift Register) Functions
+#### 3.5.5. Smooth Interpolated Selection (smooth_select)
+
+- **`smooth_select(param, v1, v2, ..., vn)`**
+  The smooth counterpart to `select`. Linearly interpolates (lerps) between adjacent items in the list for fractional `param` values. It unlocks creamy, artifact-free transitions between expressions. Like `select`, `param` is clamped and scaled across the `N-1` intervals in the list.
+  - `param`: A float evaluating the selection index [0.0..1.0]. A value of `0.0` yields exactly `v1`, while `0.5` between 3 items yields a 50/50 blend of `v2` and `v3`.
+  - `v1...vn`: The 2 to 16 expressions to smoothly blend between.
+  - **Example**: `smooth_select(MOD_A, sin(x), saw(x), tri(x))` smoothly morphs between the waveforms as the `MOD_A` knob turns.
+  - **Pro-Tip (Spiced Chaos)**: Combine with prob! `smooth_select(sin(x*0.1), prob(0.5, sin(x), cos(x)), saw(x))` creates a buttery smooth blend between a randomly alternating sin/cos wave and a sawtooth wave over time.
+
+#### 3.5.6. LFSR (Linear-Feedback Shift Register) Functions
 
 LFSRs are powerful tools for generating pseudo-random sequences, useful for creating noise, random triggers, or complex, evolving textures. The LFSR functions can operate in two distinct modes, determined by the C environment:
 
@@ -367,7 +377,7 @@ LFSRs are powerful tools for generating pseudo-random sequences, useful for crea
   - `density`: A threshold from 0.0 to 1.0. A pulse is generated if the LFSR value is greater than or equal to the density.
   - **Example**: `sin(x) * lfsr_clock(LFSR_7BIT, 0.75)` creates a gated sine wave that plays in a pseudo-random rhythmic pattern.
 
-#### 3.5.6. Summation Function (sigma)
+#### 3.5.7. Summation Function (sigma)
 
 The `sigma` function provides a powerful way to perform summations, which is fundamental to additive synthesis and creating complex harmonic structures.
 

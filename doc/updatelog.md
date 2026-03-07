@@ -1,5 +1,13 @@
 # Update Log
 
+## v1.9.20 (2026/03/10)
+**Feature: Smooth Selection Operator**
+
+- Added `OP_SMOOTH_SELECT` opcode to VM for fractional linear interpolation across a variable-length list.
+- Syntax: `smooth_select(param, v1, v2, ..., vn)`.
+- Allows for sub-index lerping for creamy morphs and transitions. Similar to `select`, maps the `param` value `[0..1]` across the N-1 intervals of the array elements.
+- Fully supported across the CPU interpreter and GLSL compute shader, leveraging `fma`/`fmaf`.
+
 ## v1.9.19 (2026/03/10)
 **Feature: Dynamic Selection Operator**
 

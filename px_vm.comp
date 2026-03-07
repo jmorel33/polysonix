@@ -77,7 +77,8 @@ layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define OP_LFSR_CLOCK     0x32
 #define OP_PROB           0x45
 #define OP_SELECT         0x46
-#define OP_HALT           0x47
+#define OP_SMOOTH_SELECT  0x47
+#define OP_HALT           0x48
 
 // --- Bindless Buffer Layouts ---
 
@@ -517,6 +518,21 @@ void main() {
                 int index = int(fma(param, float(n), 0.0));
                 index = max(0, min(int(n)-1, index));
                 push(values[index]);
+                break;
+            }
+            case OP_SMOOTH_SELECT: {
+                uint n = read_byte(bytecode);
+                float param = pop();
+                float values[16];
+                for (int j = 0; j < int(n); j++) {
+                    values[j] = pop();
+                }
+                param = max(0.0, min(float(n - 1), param));
+                int low = int(param);
+                float frac = param - float(low);
+                float high_val = (low + 1 < int(n)) ? values[low + 1] : values[low];
+                float selected = fma(frac, (high_val - values[low]), values[low]);
+                push(selected);
                 break;
             }
 
