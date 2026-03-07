@@ -28,10 +28,9 @@ This guide provides a comprehensive overview of the language, from its basic syn
     - [3.5.2. Mathematical Functions](#352-mathematical-functions)
     - [3.5.3. Probability Function (prob)](#353-probability-function-prob)
     - [3.5.4. Dynamic Selection Function (select)](#354-dynamic-selection-function-select)
-    - [3.5.5. Taming Functions (clamp, mix, ramp)](#355-taming-functions-clamp-mix-ramp)
-    - [3.5.6. Smooth Interpolated Selection (smooth_select)](#356-smooth-interpolated-selection-smooth_select)
-    - [3.5.7. LFSR (Linear-Feedback Shift Register) Functions](#357-lfsr-linear-feedback-shift-register-functions)
-    - [3.5.8. Summation Function (sigma)](#358-summation-function-sigma)
+    - [3.5.5. Smooth Interpolated Selection (smooth_select)](#355-smooth-interpolated-selection-smooth_select)
+    - [3.5.6. LFSR (Linear-Feedback Shift Register) Functions](#356-lfsr-linear-feedback-shift-register-functions)
+    - [3.5.7. Summation Function (sigma)](#357-summation-function-sigma)
 - [4. The Compilation and Execution Model](#4-the-compilation-and-execution-model)
   - [4.1. Overview](#41-overview)
   - [4.2. Tokenizer](#42-tokenizer)
@@ -324,6 +323,16 @@ These functions operate on radians.
   Returns a new pseudo-random floating-point value between 0.0 and 1.0 every time it is executed. Unlike `RAND_OFFSET`, this function is not constant for the duration of a note.
   - **Example**: `(rand() - 0.5) * 0.1` adds a small amount of random noise to the signal.
 
+**Taming Functions (Branchless)**
+These functions are compiled down to hardware-accelerated C math primitives (`fminf`, `fmaxf`, and `fmaf`), making them ideal for high-performance modulation:
+
+- **`clamp(value, min, max)`**: Clamps the `value` strictly within the `[min, max]` range.
+  - **Example**: `clamp(prob(0.5, MOD_A, 0.0), 0.2, 0.8)` creates a bounded, probabilistic modulation.
+- **`mix(param, v1, v2)`**: Linearly interpolates between two expressions, `v1` and `v2`, driven by a mixing `param` (safely clamped between `0.0` and `1.0`).
+  - **Example**: `mix(MOD_A, sin(x), saw(x))` crossfades between a sine wave and a sawtooth wave.
+- **`ramp(start, end, time)`**: Linearly interpolates from `start` to `end` driven by a `time` or envelope progress value (clamped between `0.0` and `1.0`).
+  - **Example**: `ramp(0.0, 1.0, MOD_B) * sin(x)` applies an amplitude swell to a sine wave.
+
 #### 3.5.3. Probability Function (prob)
 
 - **`prob(chance, true_expr, false_expr)`**
@@ -343,35 +352,7 @@ These functions operate on radians.
   - `v1...vn`: The list of expressions to choose from. Can contain static values, mathematical operations, or nested function calls.
   - **Example**: `select(MOD_A, sin(x), saw(x), tri(x))` switches between a sine, saw, and triangle wave depending on the value of the `MOD_A` knob.
 
-#### 3.5.5. Taming Functions (clamp, mix, ramp)
-
-Provides safe bounding, smooth blending, and precise linear envelopes to control chaos securely:
-
-- **`clamp(value, min, max)`**
-  Clamps the `value` strictly within the `[min, max]` range.
-  - `value`: The expression to be bounded.
-  - `min`: The lower bound.
-  - `max`: The upper bound.
-  - **Example**: `clamp(prob(0.5, MOD_A, 0.0), 0.2, 0.8)` creates a bounded, probabilistic modulation.
-  - **Pro-Tip**: Perfect for preventing LFOs or chaotic functions from exceeding safe audio limits (which could otherwise cause loud pops).
-
-- **`mix(param, v1, v2)`**
-  Linearly interpolates between two expressions, `v1` and `v2`, driven by a mixing `param`.
-  - `param`: The blend control, safely clamped between `0.0` and `1.0`. A value of `0.0` yields `v1`, `1.0` yields `v2`, and `0.5` yields an equal blend.
-  - `v1`: The first expression.
-  - `v2`: The second expression.
-  - **Example**: `mix(MOD_A, sin(x), saw(x))` crossfades between a sine wave and a sawtooth wave as you turn the `MOD_A` knob.
-
-- **`ramp(start, end, time)`**
-  Linearly interpolates from `start` to `end` driven by a `time` or envelope progress value.
-  - `start`: The initial value.
-  - `end`: The final target value.
-  - `time`: The normalized progress, safely clamped between `0.0` and `1.0`.
-  - **Example**: `ramp(0.0, 1.0, MOD_B) * sin(x)` applies an amplitude swell to a sine wave based on the `MOD_B` envelope curve.
-
-These functions are specifically compiled down to branchless, hardware-accelerated C math primitives (`fminf`, `fmaxf`, and `fmaf`), making them ideal for high-performance audio rate modulation without branching overhead.
-
-#### 3.5.6. Smooth Interpolated Selection (smooth_select)
+#### 3.5.5. Smooth Interpolated Selection (smooth_select)
 
 - **`smooth_select(param, v1, v2, ..., vn)`**
   The smooth counterpart to `select`. Linearly interpolates (lerps) between adjacent items in the list for fractional `param` values. It unlocks creamy, artifact-free transitions between expressions. Like `select`, `param` is clamped and scaled across the `N-1` intervals in the list.
@@ -380,7 +361,7 @@ These functions are specifically compiled down to branchless, hardware-accelerat
   - **Example**: `smooth_select(MOD_A, sin(x), saw(x), tri(x))` smoothly morphs between the waveforms as the `MOD_A` knob turns.
   - **Pro-Tip (Spiced Chaos)**: Combine with prob! `smooth_select(sin(x*0.1), prob(0.5, sin(x), cos(x)), saw(x))` creates a buttery smooth blend between a randomly alternating sin/cos wave and a sawtooth wave over time.
 
-#### 3.5.7. LFSR (Linear-Feedback Shift Register) Functions
+#### 3.5.6. LFSR (Linear-Feedback Shift Register) Functions
 
 LFSRs are powerful tools for generating pseudo-random sequences, useful for creating noise, random triggers, or complex, evolving textures. The LFSR functions can operate in two distinct modes, determined by the C environment:
 
@@ -406,7 +387,7 @@ LFSRs are powerful tools for generating pseudo-random sequences, useful for crea
   - `density`: A threshold from 0.0 to 1.0. A pulse is generated if the LFSR value is greater than or equal to the density.
   - **Example**: `sin(x) * lfsr_clock(LFSR_7BIT, 0.75)` creates a gated sine wave that plays in a pseudo-random rhythmic pattern.
 
-#### 3.5.8. Summation Function (sigma)
+#### 3.5.7. Summation Function (sigma)
 
 The `sigma` function provides a powerful way to perform summations, which is fundamental to additive synthesis and creating complex harmonic structures.
 
