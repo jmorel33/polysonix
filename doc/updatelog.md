@@ -1,6 +1,12 @@
 # Update Log
 
-## v1.9.22 (2026/03/10)
+## v1.9.23 (2026/03/07)
+- **Features**:
+  - Implemented advanced math opcodes (`exp2`, `log2`, `expm1`, `log1p`, `hypot`, `copysign`, `scalbn`, `remquo`, `nextafter`, `fdim`, `nan`, `inf`, `lgamma`, `tgamma`) and the FMA family (`fma`, `fms`, `fnmadd`, `fnmsub`) in the GLSL compute shader (`px_vm.comp`).
+- **Maintenance**:
+  - Reorganized `Makefile` test targets to output binaries directly into the `test/` directory to prevent repository root clutter. Added `.gitignore` for test artifacts.
+
+## v1.9.22 (2026/03/07)
 **Feature: VM Taming Opcodes**
 
 - Added `OP_CLAMP`, `OP_MIX`, and `OP_RAMP` opcodes to the VM to control bounded ranges, precise blending, and linear envelopes respectively.
@@ -8,14 +14,14 @@
 - Implemented entirely branchless natively using `fminf`, `fmaxf`, and `fmaf`.
 - Fully supported across the CPU interpreter (`px_vm.h`), the GLSL compute shader (`px_vm.comp`), and native transpiler (`transpile_waves.py`).
 
-## v1.9.21 (2026/03/10)
+## v1.9.21 (2026/03/07)
 **Bug Fix: Safe Index Clamping for OP_SELECT/OP_SMOOTH_SELECT**
 
 - Fixed an issue where out-of-bounds or edge-case floating-point parameters in `OP_SELECT` and `OP_SMOOTH_SELECT` could result in out-of-bounds array accesses or integer overflow behavior due to premature casting.
 - The floating-point scaling index is now safely clamped to `[0.0, n - 1]` before extraction, ensuring stability for edge case parameters like `NaN` or `+Inf`.
 - Parity maintained across `px_vm.h` (CPU) and `px_vm.comp` (GPU).
 
-## v1.9.20 (2026/03/10)
+## v1.9.20 (2026/03/06)
 **Feature: Smooth Selection Operator**
 
 - Added `OP_SMOOTH_SELECT` opcode to VM for fractional linear interpolation across a variable-length list.
@@ -23,13 +29,7 @@
 - Allows for sub-index lerping for creamy morphs and transitions. Similar to `select`, maps the `param` value `[0..1]` across the N-1 intervals of the array elements.
 - Fully supported across the CPU interpreter and GLSL compute shader, leveraging `fma`/`fmaf`.
 
-## v1.9.23 (2026/03/11)
-- **Features**:
-  - Implemented advanced math opcodes (`exp2`, `log2`, `expm1`, `log1p`, `hypot`, `copysign`, `scalbn`, `remquo`, `nextafter`, `fdim`, `nan`, `inf`, `lgamma`, `tgamma`) and the FMA family (`fma`, `fms`, `fnmadd`, `fnmsub`) in the GLSL compute shader (`px_vm.comp`).
-- **Maintenance**:
-  - Reorganized `Makefile` test targets to output binaries directly into the `test/` directory to prevent repository root clutter. Added `.gitignore` for test artifacts.
-
-## v1.9.19 (2026/03/10)
+## v1.9.19 (2026/03/06)
 **Feature: Dynamic Selection Operator**
 
 - Added `OP_SELECT` opcode to VM for dynamic selection from a variable-length list.
@@ -39,10 +39,10 @@
 - Allows for nested operations and probabilities as operands to easily construct non-linear morphs and sequence logic.
 
 
-## v1.9.18 (2026/03/10)
+## v1.9.18 (2026/03/06)
 - Added `OP_PROB` opcode to VM for probabilistic ternary operations (`prob(chance, true_expr, false_expr)`).
 
-## v1.9.17 (2026/03/10)
+## v1.9.17 (2026/03/06)
 **Feature: Advanced Math Functions for VM**
 
 *   **Virtual Machine Additions:**
@@ -53,7 +53,7 @@
 *   **Documentation:**
     *   Updated `README.md` and `doc/px_vm.md` with comprehensive explanations and practical synthesizer use-cases for each new mathematical operation.
 
-## v1.9.16 (2026/03/10)
+## v1.9.16 (2026/03/06)
 **Performance Optimization: Titanium FMA DSP & New VM Instructions**
 
 *   **Optimization:**
@@ -63,7 +63,7 @@
     *   Added new `OP_FMS`, `OP_FNMADD`, and `OP_FNMSUB` instructions to the `px_vm` stack machine execution loop.
     *   These new functions compile directly to standard FMA scalar instructions without requiring unsupported non-ISO `<math.h>` dependencies.
 
-## v1.9.15 (2026/03/10)
+## v1.9.15 (2026/03/06)
 **Performance Optimization: Fused Multiply-Add (FMA)**
 
 *   **Optimization:**
