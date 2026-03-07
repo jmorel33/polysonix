@@ -1,10 +1,13 @@
 # Update Log
 
+## v1.9.26 (2026/03/08)
+- **Features / Fixes**:
+  - Re-architected `px_vm.comp` to execute 1 thread per wavetable sequentially instead of 1 thread per sample, completely fixing stateful DSP data races for structures like Markov chains and LFSR states.
+  - Refactored `OP_MARKOV` in both the CPU VM (`px_vm.h`) and GPU compute shader (`px_vm.comp`) to read its state matrix using direct Stack-Peek pointer offsets. This eliminates expensive array copying into local variables, saving CPU cache bandwidth and avoiding GPU register spilling.
+
 ## v1.9.25 (2026/03/08)
 - **Features / Fixes**:
   - Implemented `OP_MARKOV` for probability-based state transitions using dynamically-sized square matrices and a rising-edge trigger.
-  - Re-architected `px_vm.comp` to execute 1 thread per wavetable instead of 1 thread per sample, fixing stateful DSP data races (like Markov chains and LFSR states).
-  - Optimized the GPU compute shader for `OP_MARKOV` to use stack-peek memory access instead of array pops, heavily reducing GPU register allocation and avoiding register spilling.
 
 ## v1.9.24 (2026/03/07)
 - **Features / Fixes**:
