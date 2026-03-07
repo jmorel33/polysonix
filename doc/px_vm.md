@@ -346,7 +346,7 @@ These functions operate on radians.
 
 - **`smooth_select(param, v1, v2, ..., vn)`**
   The smooth counterpart to `select`. Linearly interpolates (lerps) between adjacent items in the list for fractional `param` values. It unlocks creamy, artifact-free transitions between expressions. Like `select`, `param` is clamped and scaled across the `N-1` intervals in the list.
-  - `param`: A float evaluating the selection index [0.0..1.0]. A value of `0.0` yields exactly `v1`, while `0.5` between 3 items yields a 50/50 blend of `v2` and `v3`.
+  - `param`: A float evaluating the selection index [0.0..1.0]. A value of `0.0` yields exactly `v1`, while `0.5` across 3 items yields exactly `v2`, and `0.75` yields a 50/50 blend of `v2` and `v3`.
   - `v1...vn`: The 2 to 16 expressions to smoothly blend between.
   - **Example**: `smooth_select(MOD_A, sin(x), saw(x), tri(x))` smoothly morphs between the waveforms as the `MOD_A` knob turns.
   - **Pro-Tip (Spiced Chaos)**: Combine with prob! `smooth_select(sin(x*0.1), prob(0.5, sin(x), cos(x)), saw(x))` creates a buttery smooth blend between a randomly alternating sin/cos wave and a sawtooth wave over time.

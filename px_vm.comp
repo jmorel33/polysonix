@@ -527,9 +527,10 @@ void main() {
                 for (int j = 0; j < int(n); j++) {
                     values[j] = pop();
                 }
-                param = max(0.0, min(float(n - 1), param));
-                int low = int(param);
-                float frac = param - float(low);
+                float f_index = fma(param, float(n - 1), 0.0);
+                f_index = max(0.0, min(float(n - 1), f_index));
+                int low = int(f_index);
+                float frac = f_index - float(low);
                 float high_val = (low + 1 < int(n)) ? values[low + 1] : values[low];
                 float selected = fma(frac, (high_val - values[low]), values[low]);
                 push(selected);

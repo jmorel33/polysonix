@@ -3552,9 +3552,10 @@ SUB_LABEL_OP_SMOOTH_SELECT: {
     float param = *(--sp);
     float values[16];
     for (int i = 0; i < n; i++) values[i] = *(--sp);
-    param = fmaxf(0.0f, fminf((float)(n-1), param));
-    int low = (int)param;
-    float frac = param - (float)low;
+    float f_index = fmaf(param, (float)(n - 1), 0.0f);
+    f_index = fmaxf(0.0f, fminf((float)(n - 1), f_index));
+    int low = (int)f_index;
+    float frac = f_index - (float)low;
     // Handle edge case where low == n - 1 (lerp values[n-1] to values[n-1] to avoid out of bounds)
     float high_val = (low + 1 < n) ? values[low + 1] : values[low];
     float selected = fmaf(frac, (high_val - values[low]), values[low]);
@@ -4116,9 +4117,10 @@ LABEL_OP_SMOOTH_SELECT: {
     float param = *(--sp);
     float values[16];
     for (int i = 0; i < n; i++) values[i] = *(--sp);
-    param = fmaxf(0.0f, fminf((float)(n-1), param));
-    int low = (int)param;
-    float frac = param - (float)low;
+    float f_index = fmaf(param, (float)(n - 1), 0.0f);
+    f_index = fmaxf(0.0f, fminf((float)(n - 1), f_index));
+    int low = (int)f_index;
+    float frac = f_index - (float)low;
     float high_val = (low + 1 < n) ? values[low + 1] : values[low];
     float selected = fmaf(frac, (high_val - values[low]), values[low]);
     *sp++ = selected;
