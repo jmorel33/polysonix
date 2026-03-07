@@ -75,13 +75,10 @@ layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define OP_LFSR_VAL       0x30
 #define OP_LFSR_NOISE     0x31
 #define OP_LFSR_CLOCK     0x32
-#define OP_PROB           0x45
-#define OP_SELECT         0x46
-#define OP_SMOOTH_SELECT  0x47
-#define OP_CLAMP          0x48
-#define OP_MIX            0x49
-#define OP_RAMP           0x4A
-#define OP_HALT           0x4B
+#define OP_FMA            0x33
+#define OP_FMS            0x34
+#define OP_FNMADD         0x35
+#define OP_FNMSUB         0x36
 // --- Advanced Math Opcodes ---
 #define OP_EXP2           0x37
 #define OP_LOG2           0x38
@@ -97,6 +94,13 @@ layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define OP_INF            0x42
 #define OP_LGAMMA         0x43
 #define OP_TGAMMA         0x44
+#define OP_PROB           0x45
+#define OP_SELECT         0x46
+#define OP_SMOOTH_SELECT  0x47
+#define OP_CLAMP          0x48
+#define OP_MIX            0x49
+#define OP_RAMP           0x4A
+#define OP_HALT           0x4B
 
 // --- Bindless Buffer Layouts ---
 
@@ -550,6 +554,10 @@ void main() {
             case OP_POW:  { float b = pop(); float a = pop(); push(a == 2.0 ? exp2(b) : pow(a, b)); break; }
             case OP_RAND: push(pseudo_rand()); break;
 
+            case OP_FMA: { float c = pop(); float b = pop(); float a = pop(); push(fma(a, b, c)); break; }
+            case OP_FMS: { float c = pop(); float b = pop(); float a = pop(); push(fma(a, b, -c)); break; }
+            case OP_FNMADD: { float c = pop(); float b = pop(); float a = pop(); push(fma(-a, b, c)); break; }
+            case OP_FNMSUB: { float c = pop(); float b = pop(); float a = pop(); push(fma(-a, b, -c)); break; }
             case OP_EXP2:  { push(exp2(pop())); break; }
             case OP_LOG2:  { float v = pop(); push(v > 0.0 ? log2(v) : 0.0); break; }
             case OP_EXPM1: { push(exp(pop()) - 1.0); break; }
@@ -587,42 +595,37 @@ void main() {
             case OP_LGAMMA:{
                 float x = pop();
                 if (x <= 0.0 && floor(x) == x) { push(uintBitsToFloat(0x7F800000u)); } // Infinity for non-positive integers
-                else {
-                    // Lanczos approximation
+                else if (x > 0.0) {
                     float tmp = x + 5.5;
                     tmp = (x + 0.5) * log(tmp) - tmp;
                     float ser = 1.000000000190015 + (76.18009172947146 / (x + 1.0)) - (86.50532032941677 / (x + 2.0)) + (24.01409824083091 / (x + 3.0)) - (1.231739572450155 / (x + 4.0)) + (0.1208650973866179e-2 / (x + 5.0)) - (0.5395239384953e-5 / (x + 6.0));
-                    if (x > 0.0) {
-                        push(tmp + log(2.5066282746310005 * ser / x));
-                    } else {
-                        // Reflection formula for negative values
-                        float pi = 3.14159265358979323846;
-                        push(log(pi / abs(sin(pi * x))) - (tmp + log(2.5066282746310005 * ser / (1.0 - x)))); // Simplified reflection using 1-x since x is negative
-                    }
+                    push(tmp + log(2.5066282746310005 * ser / x));
+                } else {
+                    float nx = 1.0 - x;
+                    float tmp_n = nx + 5.5;
+                    tmp_n = (nx + 0.5) * log(tmp_n) - tmp_n;
+                    float ser_n = 1.000000000190015 + (76.18009172947146 / (nx + 1.0)) - (86.50532032941677 / (nx + 2.0)) + (24.01409824083091 / (nx + 3.0)) - (1.231739572450155 / (nx + 4.0)) + (0.1208650973866179e-2 / (nx + 5.0)) - (0.5395239384953e-5 / (nx + 6.0));
+                    float pi = 3.14159265358979323846;
+                    push(log(pi / abs(sin(pi * x))) - (tmp_n + log(2.5066282746310005 * ser_n / nx)));
                 }
                 break;
             }
             case OP_TGAMMA:{
                 float x = pop();
                 if (x <= 0.0 && floor(x) == x) { push(uintBitsToFloat(0x7FC00000u)); } // NaN/Inf for non-positive integers
-                else {
-                    // Lanczos approximation
+                else if (x > 0.0) {
                     float tmp = x + 5.5;
                     float log_tgamma_approx = (x + 0.5) * log(tmp) - tmp;
                     float ser = 1.000000000190015 + (76.18009172947146 / (x + 1.0)) - (86.50532032941677 / (x + 2.0)) + (24.01409824083091 / (x + 3.0)) - (1.231739572450155 / (x + 4.0)) + (0.1208650973866179e-2 / (x + 5.0)) - (0.5395239384953e-5 / (x + 6.0));
-                    if (x > 0.0) {
-                        push(exp(log_tgamma_approx + log(2.5066282746310005 * ser / x)));
-                    } else {
-                        float pi = 3.14159265358979323846;
-                        // For reflection formula: tgamma(x) * tgamma(1-x) = pi / sin(pi * x)
-                        // x is negative, so 1-x is positive (> 1)
-                        float nx = 1.0 - x;
-                        float tmp_n = nx + 5.5;
-                        float log_tg_nx = (nx + 0.5) * log(tmp_n) - tmp_n;
-                        float ser_n = 1.000000000190015 + (76.18009172947146 / (nx + 1.0)) - (86.50532032941677 / (nx + 2.0)) + (24.01409824083091 / (nx + 3.0)) - (1.231739572450155 / (nx + 4.0)) + (0.1208650973866179e-2 / (nx + 5.0)) - (0.5395239384953e-5 / (nx + 6.0));
-                        float tg_nx = exp(log_tg_nx + log(2.5066282746310005 * ser_n / nx));
-                        push(pi / (sin(pi * x) * tg_nx));
-                    }
+                    push(exp(log_tgamma_approx + log(2.5066282746310005 * ser / x)));
+                } else {
+                    float pi = 3.14159265358979323846;
+                    float nx = 1.0 - x;
+                    float tmp_n = nx + 5.5;
+                    float log_tg_nx = (nx + 0.5) * log(tmp_n) - tmp_n;
+                    float ser_n = 1.000000000190015 + (76.18009172947146 / (nx + 1.0)) - (86.50532032941677 / (nx + 2.0)) + (24.01409824083091 / (nx + 3.0)) - (1.231739572450155 / (nx + 4.0)) + (0.1208650973866179e-2 / (nx + 5.0)) - (0.5395239384953e-5 / (nx + 6.0));
+                    float tg_nx = exp(log_tg_nx + log(2.5066282746310005 * ser_n / nx));
+                    push(pi / (sin(pi * x) * tg_nx));
                 }
                 break;
             }
