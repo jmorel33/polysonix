@@ -347,11 +347,29 @@ These functions operate on radians.
 
 Provides safe bounding, smooth blending, and precise linear envelopes to control chaos securely:
 
-- `clamp(value, min, max)`: Clamps the `value` strictly within the `[min, max]` range.
-- `mix(param, v1, v2)`: Linearly interpolates from `v1` to `v2` driven by `param` (which is safely clamped to `[0.0, 1.0]`).
-- `ramp(start, end, time)`: Linearly interpolates from `start` to `end` driven by a `time` or envelope progress value (clamped to `[0.0, 1.0]`).
+- **`clamp(value, min, max)`**
+  Clamps the `value` strictly within the `[min, max]` range.
+  - `value`: The expression to be bounded.
+  - `min`: The lower bound.
+  - `max`: The upper bound.
+  - **Example**: `clamp(prob(0.5, MOD_A, 0.0), 0.2, 0.8)` creates a bounded, probabilistic modulation.
+  - **Pro-Tip**: Perfect for preventing LFOs or chaotic functions from exceeding safe audio limits (which could otherwise cause loud pops).
 
-These functions are specifically compiled down to branchless hardware-accelerated `fminf`, `fmaxf`, and `fmaf` primitives, making them ideal for high-performance audio rate modulation paths.
+- **`mix(param, v1, v2)`**
+  Linearly interpolates between two expressions, `v1` and `v2`, driven by a mixing `param`.
+  - `param`: The blend control, safely clamped between `0.0` and `1.0`. A value of `0.0` yields `v1`, `1.0` yields `v2`, and `0.5` yields an equal blend.
+  - `v1`: The first expression.
+  - `v2`: The second expression.
+  - **Example**: `mix(MOD_A, sin(x), saw(x))` crossfades between a sine wave and a sawtooth wave as you turn the `MOD_A` knob.
+
+- **`ramp(start, end, time)`**
+  Linearly interpolates from `start` to `end` driven by a `time` or envelope progress value.
+  - `start`: The initial value.
+  - `end`: The final target value.
+  - `time`: The normalized progress, safely clamped between `0.0` and `1.0`.
+  - **Example**: `ramp(0.0, 1.0, MOD_B) * sin(x)` applies an amplitude swell to a sine wave based on the `MOD_B` envelope curve.
+
+These functions are specifically compiled down to branchless, hardware-accelerated C math primitives (`fminf`, `fmaxf`, and `fmaf`), making them ideal for high-performance audio rate modulation without branching overhead.
 
 #### 3.5.6. Smooth Interpolated Selection (smooth_select)
 
