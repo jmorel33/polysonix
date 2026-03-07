@@ -24,13 +24,14 @@ This guide provides a comprehensive overview of the language, from its basic syn
   - [3.3. Variables](#33-variables)
   - [3.4. Constants](#34-constants)
   - [3.5. Functions](#35-functions)
-    - [3.5.1. Trigonometric Functions](#351-trigonometric-functions)
-    - [3.5.2. Mathematical Functions](#352-mathematical-functions)
-    - [3.5.3. Probability Function (prob)](#353-probability-function-prob)
-    - [3.5.4. Dynamic Selection Function (select)](#354-dynamic-selection-function-select)
-    - [3.5.5. Smooth Interpolated Selection (smooth_select)](#355-smooth-interpolated-selection-smooth_select)
-    - [3.5.6. LFSR (Linear-Feedback Shift Register) Functions](#356-lfsr-linear-feedback-shift-register-functions)
-    - [3.5.7. Summation Function (sigma)](#357-summation-function-sigma)
+    - [3.5.1. State and Logic Functions](#351-state-and-logic-functions)
+    - [3.5.2. Trigonometric Functions](#352-trigonometric-functions)
+    - [3.5.3. Mathematical Functions](#353-mathematical-functions)
+    - [3.5.4. Probability Function (prob)](#354-probability-function-prob)
+    - [3.5.5. Dynamic Selection Function (select)](#355-dynamic-selection-function-select)
+    - [3.5.6. Smooth Interpolated Selection (smooth_select)](#356-smooth-interpolated-selection-smooth_select)
+    - [3.5.7. LFSR (Linear-Feedback Shift Register) Functions](#357-lfsr-linear-feedback-shift-register-functions)
+    - [3.5.8. Summation Function (sigma)](#358-summation-function-sigma)
 - [4. The Compilation and Execution Model](#4-the-compilation-and-execution-model)
   - [4.1. Overview](#41-overview)
   - [4.2. Tokenizer](#42-tokenizer)
@@ -227,7 +228,7 @@ These functions operate on radians.
   - `value`: Any floating-point number.
   - **Returns**: The angle in radians, from `-PI/2` to `PI/2`.
 
-#### 3.5.2. Mathematical Functions
+#### 3.5.3. Mathematical Functions
 
 - **`fma(a, b, c)`**
   Computes `(a * b) + c` as a single operation (Fused Multiply-Add). This is often faster and more precise than performing multiplication and addition separately.
@@ -362,7 +363,7 @@ These functions are compiled down to hardware-accelerated C math primitives (`fm
 - **`ramp(start, end, time)`**: Linearly interpolates from `start` to `end` driven by a `time` or envelope progress value (clamped between `0.0` and `1.0`).
   - **Example**: `ramp(0.0, 1.0, MOD_B) * sin(x)` applies an amplitude swell to a sine wave.
 
-#### 3.5.3. Probability Function (prob)
+#### 3.5.4. Probability Function (prob)
 
 - **`prob(chance, true_expr, false_expr)`**
   Evaluates to `true_expr` with the probability given by `chance` (a value between 0.0 and 1.0), otherwise evaluates to `false_expr`. The probability is calculated against the per-wave `RAND_OFFSET` to ensure deterministic execution within a single cycle, preventing unwanted audio artifacts that true per-sample randomness might introduce inside continuous waveforms.
@@ -372,7 +373,7 @@ These functions are compiled down to hardware-accelerated C math primitives (`fm
   - **Example**: `prob(0.5, sin(x), cos(x))` has a 50% chance of behaving as a sine wave or a cosine wave for the duration of the current cycle.
 
 
-#### 3.5.4. Dynamic Selection Function (select)
+#### 3.5.5. Dynamic Selection Function (select)
 
 - **`select(param, v1, v2, ..., vn)`**
   Dynamically selects a value from a variable-length list of expressions (between 2 and 16 items) based on the input `param`.
@@ -381,7 +382,7 @@ These functions are compiled down to hardware-accelerated C math primitives (`fm
   - `v1...vn`: The list of expressions to choose from. Can contain static values, mathematical operations, or nested function calls.
   - **Example**: `select(MOD_A, sin(x), saw(x), tri(x))` switches between a sine, saw, and triangle wave depending on the value of the `MOD_A` knob.
 
-#### 3.5.5. Smooth Interpolated Selection (smooth_select)
+#### 3.5.6. Smooth Interpolated Selection (smooth_select)
 
 - **`smooth_select(param, v1, v2, ..., vn)`**
   The smooth counterpart to `select`. Linearly interpolates (lerps) between adjacent items in the list for fractional `param` values. It unlocks creamy, artifact-free transitions between expressions. Like `select`, `param` is clamped and scaled across the `N-1` intervals in the list.
@@ -390,7 +391,7 @@ These functions are compiled down to hardware-accelerated C math primitives (`fm
   - **Example**: `smooth_select(MOD_A, sin(x), saw(x), tri(x))` smoothly morphs between the waveforms as the `MOD_A` knob turns.
   - **Pro-Tip (Spiced Chaos)**: Combine with prob! `smooth_select(sin(x*0.1), prob(0.5, sin(x), cos(x)), saw(x))` creates a buttery smooth blend between a randomly alternating sin/cos wave and a sawtooth wave over time.
 
-#### 3.5.6. LFSR (Linear-Feedback Shift Register) Functions
+#### 3.5.7. LFSR (Linear-Feedback Shift Register) Functions
 
 LFSRs are powerful tools for generating pseudo-random sequences, useful for creating noise, random triggers, or complex, evolving textures. The LFSR functions can operate in two distinct modes, determined by the C environment:
 
@@ -416,7 +417,7 @@ LFSRs are powerful tools for generating pseudo-random sequences, useful for crea
   - `density`: A threshold from 0.0 to 1.0. A pulse is generated if the LFSR value is greater than or equal to the density.
   - **Example**: `sin(x) * lfsr_clock(LFSR_7BIT, 0.75)` creates a gated sine wave that plays in a pseudo-random rhythmic pattern.
 
-#### 3.5.7. Summation Function (sigma)
+#### 3.5.8. Summation Function (sigma)
 
 The `sigma` function provides a powerful way to perform summations, which is fundamental to additive synthesis and creating complex harmonic structures.
 
