@@ -52,6 +52,7 @@ FUNCTIONS = {
     "tgamma": (1, "tgammaf"),
     "rand": (0, "vm_rand"),
     "prob": (3, "prob"),
+    "select": (-1, "select"),
     "sigma": (5, "sigma"), # Special handling
     "lfsr_val": (3, "vm_lfsr_val"),
     "lfsr_noise": (2, "vm_lfsr_noise"),
@@ -277,6 +278,21 @@ class FuncNode(Node):
 
         if self.name == "prob":
             return f"((params->rand_offset < ({arg_strs[0]})) ? ({arg_strs[1]}) : ({arg_strs[2]}))"
+
+        if self.name == "select":
+            temp_var = f"select_{ctx['sigma_count']}"
+            ctx['sigma_count'] += 1
+            param_str = arg_strs[0]
+            values_strs = arg_strs[1:]
+            n = len(values_strs)
+
+            c_code = f"float {temp_var}_vals[{n}] = {{" + ", ".join(values_strs) + f"}};"
+            c_code += f"\n    int {temp_var}_idx = (int)fmaf({param_str}, {n}.0f, 0.0f);"
+            c_code += f"\n    {temp_var}_idx = {temp_var}_idx < 0 ? 0 : ({temp_var}_idx >= {n} ? {n}-1 : {temp_var}_idx);"
+            c_code += f"\n    float {temp_var} = {temp_var}_vals[{temp_var}_idx];"
+
+            ctx['pre_calcs'].append(c_code)
+            return temp_var
 
         if self.name in ["lfsr_val", "lfsr_noise", "lfsr_clock"]:
             # Need to pass params first
