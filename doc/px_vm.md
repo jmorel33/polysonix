@@ -28,8 +28,9 @@ This guide provides a comprehensive overview of the language, from its basic syn
     - [3.5.2. Mathematical Functions](#352-mathematical-functions)
     - [3.5.3. Probability Function (prob)](#353-probability-function-prob)
     - [3.5.4. Dynamic Selection Function (select)](#354-dynamic-selection-function-select)
-    - [3.5.5. LFSR (Linear-Feedback Shift Register) Functions](#355-lfsr-linear-feedback-shift-register-functions)
-    - [3.5.6. Summation Function (sigma)](#356-summation-function-sigma)
+    - [3.5.5. Smooth Interpolated Selection (smooth_select)](#355-smooth-interpolated-selection-smooth_select)
+    - [3.5.6. LFSR (Linear-Feedback Shift Register) Functions](#356-lfsr-linear-feedback-shift-register-functions)
+    - [3.5.7. Summation Function (sigma)](#357-summation-function-sigma)
 - [4. The Compilation and Execution Model](#4-the-compilation-and-execution-model)
   - [4.1. Overview](#41-overview)
   - [4.2. Tokenizer](#42-tokenizer)
@@ -376,7 +377,7 @@ LFSRs are powerful tools for generating pseudo-random sequences, useful for crea
   - `density`: A threshold from 0.0 to 1.0. A pulse is generated if the LFSR value is greater than or equal to the density.
   - **Example**: `sin(x) * lfsr_clock(LFSR_7BIT, 0.75)` creates a gated sine wave that plays in a pseudo-random rhythmic pattern.
 
-#### 3.5.6. Summation Function (sigma)
+#### 3.5.7. Summation Function (sigma)
 
 The `sigma` function provides a powerful way to perform summations, which is fundamental to additive synthesis and creating complex harmonic structures.
 
