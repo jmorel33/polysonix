@@ -21,6 +21,7 @@ layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define MAX_CONSTANTS 256
 #define MAX_SIGMA_CHUNKS 16
 #define NUM_LFSR_TYPES 16
+#define MAX_MARKOV_CHAINS 4
 #define EPSILON 1e-6
 
 // --- Opcodes (must match px_vm.h OpCode enum) ---
@@ -100,7 +101,8 @@ layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define OP_CLAMP          0x48
 #define OP_MIX            0x49
 #define OP_RAMP           0x4A
-#define OP_HALT           0x4B
+#define OP_MARKOV         0x4B
+#define OP_HALT           0x4C
 
 // --- Bindless Buffer Layouts ---
 
@@ -143,6 +145,10 @@ layout(buffer_reference, scalar) buffer VmParamsBuffer {
     int lfsr_type;         // The type ID of the currently active free-running LFSR
     uint lfsr_seed;        // The seed to use if the state becomes zero
     uint wave_length;      // Total length of the wave to generate
+
+    // --- Markov Chain State ---
+    uint markov_state[MAX_MARKOV_CHAINS];      // Current state (0, 1, 2...)
+    uint markov_prev_trigger[MAX_MARKOV_CHAINS]; // For rising-edge detection
 };
 
 // Input: Metadata for buffer access
@@ -364,6 +370,42 @@ void main() {
                 float start = pop();
                 time = max(0.0, min(1.0, time));
                 push(fma(time, (end - start), start));
+                break;
+            }
+            case OP_MARKOV: {
+                uint n_states = read_byte(bytecode);
+                uint matrix_size = n_states * n_states;
+
+                float id_val = pop();
+                float trig_val = pop();
+                int id = int(max(0.0, min(float(MAX_MARKOV_CHAINS - 1), id_val)));
+                bool is_triggered = abs(trig_val) > EPSILON;
+
+                float matrix[64];
+                for (int i = 0; i < int(matrix_size); i++) {
+                    matrix[i] = pop();
+                }
+
+                uint current_state = vm_params.markov_state[id];
+                if (current_state >= n_states) current_state = 0;
+
+                bool prev_trig = vm_params.markov_prev_trigger[id] != 0;
+                if (is_triggered && !prev_trig) {
+                    int row_start = int(current_state * n_states);
+                    float r = pseudo_rand();
+                    float accumulator = 0.0;
+                    for (int i = 0; i < int(n_states); i++) {
+                        accumulator += matrix[row_start + i];
+                        if (r <= accumulator || i == int(n_states) - 1) {
+                            current_state = i;
+                            break;
+                        }
+                    }
+                    vm_params.markov_state[id] = current_state;
+                }
+                vm_params.markov_prev_trigger[id] = is_triggered ? 1 : 0;
+                push(float(current_state));
+
                 break;
             }
             case OP_HALT: {
