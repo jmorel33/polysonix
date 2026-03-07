@@ -3658,11 +3658,6 @@ SUB_LABEL_OP_MARKOV: {
     int id = (int)fmaxf(0.0f, fminf((float)(MAX_MARKOV_CHAINS - 1), id_val));
     bool is_triggered = VM_IS_TRUE(trig_val);
 
-    float matrix[64];
-    for (int i = 0; i < matrix_size; i++) {
-        matrix[i] = *(--sp);
-    }
-
     uint32_t current_state = vm->params->markov_state[id];
     if (current_state >= n_states) current_state = 0;
 
@@ -3671,8 +3666,11 @@ SUB_LABEL_OP_MARKOV: {
         int row_start = current_state * n_states;
         float r = vm_pseudo_rand(&vm->rand_seed);
         float accumulator = 0.0f;
+
+        // PEEK DIRECTLY INTO THE STACK
         for (int i = 0; i < n_states; i++) {
-            accumulator += matrix[row_start + i];
+            float p = sp[-(1 + row_start + i)];
+            accumulator += p;
             if (r <= accumulator || i == n_states - 1) {
                 current_state = i;
                 break;
@@ -3680,6 +3678,10 @@ SUB_LABEL_OP_MARKOV: {
         }
         vm->params->markov_state[id] = current_state;
     }
+
+    // Instantly drop the stack pointer to "pop" the entire matrix
+    sp -= matrix_size;
+
     vm->params->markov_prev_trigger[id] = is_triggered;
     *sp++ = (float)current_state;
 
@@ -4269,50 +4271,44 @@ LABEL_OP_MARKOV: {
         goto execution_end;
     }
 
-    // 1. Pop ID and Trigger
+    // Pop ID and Trigger
     float id_val = *(--sp);
     float trig_val = *(--sp);
     int id = (int)fmaxf(0.0f, fminf((float)(MAX_MARKOV_CHAINS - 1), id_val));
     bool is_triggered = VM_IS_TRUE(trig_val);
 
-    // 2. Pop Matrix into local array
-    float matrix[64];
-    for (int i = 0; i < matrix_size; i++) {
-        matrix[i] = *(--sp);
-    }
-
-    // 3. Get current state
+    // Get current state
     uint32_t current_state = vm.params->markov_state[id];
     if (current_state >= n_states) current_state = 0; // Failsafe
 
-    // 4. Rising Edge Detection & Transition
+    // Rising Edge Detection & Transition
     bool prev_trig = vm.params->markov_prev_trigger[id];
     if (is_triggered && !prev_trig) {
 
-        // Find our row in the matrix
         int row_start = current_state * n_states;
-
-        // Roll the dice (0.0 to 1.0)
         float r = vm_pseudo_rand(&vm.rand_seed);
         float accumulator = 0.0f;
 
-        // Iterate through probabilities in this row
+        // PEEK DIRECTLY INTO THE STACK
+        // 'sp' currently points to the slot just AFTER p00.
+        // Therefore, sp[-1] is p00, sp[-2] is p01, etc.
         for (int i = 0; i < n_states; i++) {
-            accumulator += matrix[row_start + i];
-            if (r <= accumulator || i == n_states - 1) { // Fallback to last state if math is fuzzy
+            float p = sp[-(1 + row_start + i)];
+            accumulator += p;
+            if (r <= accumulator || i == n_states - 1) {
                 current_state = i;
                 break;
             }
         }
 
-        // Save new state
         vm.params->markov_state[id] = current_state;
     }
 
-    // Save trigger state for the next sample evaluation
-    vm.params->markov_prev_trigger[id] = is_triggered;
+    // Instantly drop the stack pointer to "pop" the entire matrix
+    sp -= matrix_size;
 
-    // 5. Push the current state to the stack
+    // Save trigger state and push result
+    vm.params->markov_prev_trigger[id] = is_triggered;
     *sp++ = (float)current_state;
 
     goto DISPATCH_LOOP;

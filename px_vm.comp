@@ -187,25 +187,10 @@ int ip = 0; // Instruction Pointer
 float rand_seed = 0.0;
 float local_x = 0.0; // Per-thread phase value
 
-// Call stack for handling sub-chunk execution (for sigma)
-int call_stack[MAX_CALL_STACK];
-int call_stack_top = 0;
-
-// State machine for a single, non-nested OP_SIGMA_EXEC
 bool sigma_is_active = false;
-int sigma_phase = 0; // 0:eval start, 1:eval end, 2:eval step, 3:eval body
-uint sigma_start_chunk_idx = 0;
-uint sigma_end_chunk_idx = 0;
-uint sigma_step_chunk_idx = 0;
-uint sigma_body_chunk_ip = 0;
-float sigma_start_val = 0.0;
-float sigma_end_val = 0.0;
 float sigma_step_val = 0.0;
 float sigma_end_boundary = 0.0; // C VM uses a boundary for robust float comparison
-float sigma_current_k = 0.0;
-float sigma_sum = 0.0;
 float loop_var_value = 0.0; // Value of 'k' during sigma body execution
-int sigma_base_stack_top = 0; // Base stack pointer for sigma to ensure hygiene
 
 // --- Helper Functions ---
 
@@ -311,16 +296,10 @@ uint get_sigma_offset(VmMetadataBuffer vm_metadata, uint index) {
 
 
 void main() {
-    uint gid = gl_GlobalInvocationID.x;
+    uint wave_idx = gl_GlobalInvocationID.x; // This thread handles ONE ENTIRE WAVE
 
     // --- Resolve Buffer Pointers from Push Constants ---
     VmParamsBuffer vm_params = regs.vm_params;
-
-    // Bounds check
-    if (gid >= vm_params.wave_length) {
-        return;
-    }
-
     VmMetadataBuffer vm_metadata = regs.vm_metadata;
     BytecodeBuffer bytecode = regs.bytecode;
     ConstantsBuffer constants = regs.constants;
@@ -328,26 +307,25 @@ void main() {
     OutputBuffer output_buffer = regs.output_buffer;
     LfsrStateBuffer lfsr_state = regs.lfsr_state;
 
-    // --- Initialize Per-Thread State ---
+    // Loop through every sample of the wave sequentially
+    for (uint sample = 0; sample < vm_params.wave_length; sample++) {
 
-    // Calculate phase 'x' for this sample
-    local_x = (float(gid) / float(vm_params.wave_length)) * 6.28318530718;
+        // Calculate phase 'x' for this sample
+        local_x = (float(sample) / float(vm_params.wave_length)) * 6.28318530718;
 
-    // Initialize the random seed using global ID to ensure variation across the wave
-    rand_seed = vm_params.rand_offset + float(gid) * 0.12345;
+        // Initialize the random seed using wave index and sample to ensure variation
+        rand_seed = vm_params.rand_offset + float(wave_idx * vm_params.wave_length + sample) * 0.12345;
 
-    // Initialize VM state
-    stack_top = 0;
-    call_stack_top = 0;
-    sigma_is_active = false;
-    ip = int(vm_metadata.main_chunk_offset);
+        // Reset VM state for this specific sample
+        stack_top = 0;
+        sigma_is_active = false;
+        ip = int(vm_metadata.main_chunk_offset);
 
+        // --- Main VM Loop ---
+        for(int i = 0; i < 100000; ++i) {
+            uint instruction = read_byte(bytecode);
 
-    // --- Main VM Loop ---
-    for(int i = 0; i < 100000; ++i) { // Increased loop limiter
-        uint instruction = read_byte(bytecode);
-
-        switch (instruction) {
+            switch (instruction) {
 
             case OP_CLAMP: {
                 float max_val = pop();
@@ -376,15 +354,15 @@ void main() {
                 uint n_states = read_byte(bytecode);
                 uint matrix_size = n_states * n_states;
 
+                if (stack_top < int(matrix_size + 2)) {
+                    i = 999999; // Stack underflow, halt
+                    break;
+                }
+
                 float id_val = pop();
                 float trig_val = pop();
                 int id = int(max(0.0, min(float(MAX_MARKOV_CHAINS - 1), id_val)));
                 bool is_triggered = abs(trig_val) > EPSILON;
-
-                float matrix[64];
-                for (int i = 0; i < int(matrix_size); i++) {
-                    matrix[i] = pop();
-                }
 
                 uint current_state = vm_params.markov_state[id];
                 if (current_state >= n_states) current_state = 0;
@@ -394,105 +372,32 @@ void main() {
                     int row_start = int(current_state * n_states);
                     float r = pseudo_rand();
                     float accumulator = 0.0;
-                    for (int i = 0; i < int(n_states); i++) {
-                        accumulator += matrix[row_start + i];
-                        if (r <= accumulator || i == int(n_states) - 1) {
-                            current_state = i;
+
+                    // Peek directly into the stack!
+                    // stack_top - 1 is p00. stack_top - 2 is p01, etc.
+                    int p00_idx = stack_top - 1;
+
+                    for (int j = 0; j < int(n_states); j++) {
+                        float p = vm_stack[p00_idx - (row_start + j)];
+                        accumulator += p;
+                        if (r <= accumulator || j == int(n_states) - 1) {
+                            current_state = uint(j);
                             break;
                         }
                     }
                     vm_params.markov_state[id] = current_state;
                 }
+
+                // Pop the entire matrix off the stack instantly
+                stack_top -= int(matrix_size);
+
                 vm_params.markov_prev_trigger[id] = is_triggered ? 1 : 0;
                 push(float(current_state));
 
                 break;
             }
             case OP_HALT: {
-                // Halt execution of the current chunk.
-                if (!sigma_is_active || call_stack_top == 0) {
-                    // This is a standard HALT, not part of a sigma operation.
-                    // Return from a sub-chunk or terminate the main chunk.
-                    if (call_stack_top > 0) {
-                        ip = call_stack[--call_stack_top];
-                    } else {
-                        i = 999999; // Main chunk is done, break VM loop.
-                    }
-                    break;
-                }
-
-                // --- SIGMA STATE MACHINE CONTINUATION ---
-                // We just finished a sub-chunk execution that was part of a sigma.
-                // Critical Regression Fix: Ensure stack hygiene by resetting to base + result.
-
-                if (sigma_phase == 0) { // Finished 'start' chunk
-                    sigma_start_val = pop();
-                    stack_top = sigma_base_stack_top; // Reset stack frame
-                    sigma_phase = 1;
-                    // "Call" the 'end' chunk
-                    ip = int(get_sigma_offset(vm_metadata, sigma_end_chunk_idx));
-                } else if (sigma_phase == 1) { // Finished 'end' chunk
-                    sigma_end_val = pop();
-                    stack_top = sigma_base_stack_top; // Reset stack frame
-                    sigma_phase = 2;
-                    // "Call" the 'step' chunk
-                    ip = int(get_sigma_offset(vm_metadata, sigma_step_chunk_idx));
-                } else if (sigma_phase == 2) { // Finished 'step' chunk
-                    sigma_step_val = pop();
-                    stack_top = sigma_base_stack_top; // Reset stack frame
-
-                    // Now we have all loop parameters, start the iteration.
-                    if (abs(sigma_step_val) < EPSILON) {
-                        // Step is zero, loop does not run. Cleanup and return.
-                        sigma_is_active = false;
-                        push(0.0);
-                        ip = call_stack[--call_stack_top]; // Return from sigma
-                    } else {
-                        sigma_phase = 3;
-                        sigma_current_k = sigma_start_val;
-                        // C VM uses a boundary check for robust float loops
-                        sigma_end_boundary = sigma_step_val > 0 ?
-                            (sigma_end_val + abs(sigma_step_val) * 0.5) :
-                            (sigma_end_val - abs(sigma_step_val) * 0.5);
-
-                        // Check if the loop should run at all
-                        bool condition_met = sigma_step_val > 0 ?
-                            (sigma_current_k <= sigma_end_boundary) :
-                            (sigma_current_k >= sigma_end_boundary);
-
-                        if (condition_met) {
-                            // Start the first iteration of the body
-                            loop_var_value = sigma_current_k;
-                            ip = int(sigma_body_chunk_ip);
-                        } else {
-                            // Loop condition is not met, finish sigma.
-                            sigma_is_active = false;
-                            push(sigma_sum);
-                            ip = call_stack[--call_stack_top]; // Return from sigma
-                        }
-                    }
-                } else if (sigma_phase == 3) { // Finished a 'body' chunk iteration
-                    sigma_sum += pop();
-                    stack_top = sigma_base_stack_top; // Reset stack frame to remove any garbage left by body
-
-                    sigma_current_k += sigma_step_val;
-
-                    // Check if the loop should continue using the robust boundary
-                    bool condition_met = sigma_step_val > 0 ?
-                        (sigma_current_k <= sigma_end_boundary) :
-                        (sigma_current_k >= sigma_end_boundary);
-
-                    if (condition_met) {
-                        // Continue to next iteration
-                        loop_var_value = sigma_current_k;
-                        ip = int(sigma_body_chunk_ip);
-                    } else {
-                        // Loop finished.
-                        sigma_is_active = false;
-                        push(sigma_sum);
-                        ip = call_stack[--call_stack_top]; // Return from sigma
-                    }
-                }
+                i = 999999; // Break the VM loop
                 break;
             }
 
@@ -763,54 +668,52 @@ void main() {
             }
 
             // --- Sigma ---
-            case OP_PUSH_LOOP_VAR: {
-                read_byte(bytecode); // Consume var_name_id, unused in shader
-                push(loop_var_value);
-                break;
-            }
-            case OP_SIGMA_EXEC: {
-                // --- STATE MACHINE INITIALIZATION ---
-                // If a sigma is already running, we can't start another (no nesting).
-                if (sigma_is_active) {
-                    // Consume bytes and push 0
-                    read_byte(bytecode); read_short(bytecode); read_short(bytecode); read_short(bytecode); read_short(bytecode);
-                    push(0.0);
-                    break;
-                }
+            case OP_SIGMA_INIT: {
+                uint name_index = read_byte(bytecode); // Consume name string index
+                if (stack_top < 3) { i = 999999; break; } // Underflow
 
-                read_byte(bytecode); // Consume var_name_id
-                sigma_start_chunk_idx = read_short(bytecode);
-                sigma_end_chunk_idx = read_short(bytecode);
-                sigma_step_chunk_idx = read_short(bytecode);
-                uint body_chunk_idx = read_short(bytecode);
+                float step_val = pop();
+                float end_val = pop();
+                float start_val = pop();
 
-                // Store the chunk IPs for the state machine
-                sigma_body_chunk_ip = get_sigma_offset(vm_metadata, body_chunk_idx);
-
-                // Save current IP to the call stack to return to after the sigma is done.
-                if (call_stack_top >= MAX_CALL_STACK) { i = 999999; break; } // Safety break
-                call_stack[call_stack_top++] = ip;
-
-                // Initialize the state machine
+                loop_var_value = start_val;
+                sigma_step_val = step_val;
+                // Precompute boundary for robust float comparison
+                sigma_end_boundary = (step_val > 0.0) ? (end_val + abs(step_val) * 0.5) : (end_val - abs(step_val) * 0.5);
                 sigma_is_active = true;
-                sigma_phase = 0; // Start with phase 0: evaluating the 'start' chunk
-                sigma_sum = 0.0;
-                sigma_base_stack_top = stack_top; // Capture base stack pointer for hygiene
 
-                // "Call" the first sub-chunk (start)
-                ip = int(get_sigma_offset(vm_metadata, sigma_start_chunk_idx));
+                push(0.0); // Push the initial accumulator (sum = 0)
                 break;
             }
+            case OP_SIGMA_CHECK: {
+                uint hi = read_byte(bytecode);
+                uint lo = read_byte(bytecode);
+                uint combined = (hi << 8) | lo;
+                int offset = ((combined & 0x8000) > 0) ? int(combined | 0xFFFF0000) : int(combined);
 
-            case OP_SIGMA_SETUP: {
-                // Deprecated/Error instruction. Consume operands (1 byte + 4*2 bytes = 9 bytes)
-                // Consume bytes to keep stream aligned (though we error out)
-                read_byte(bytecode);
-                read_short(bytecode); read_short(bytecode); read_short(bytecode); read_short(bytecode);
-                // Treat as error/halt
-                push(0.0);
-                // Break main loop to stop execution
-                i = 999999;
+                // Check condition: (step > 0) ? (k <= boundary) : (k >= boundary)
+                bool condition = (sigma_step_val > 0.0) ? (loop_var_value <= sigma_end_boundary) : (loop_var_value >= sigma_end_boundary);
+
+                if (!condition) {
+                    // Loop finished, jump to the end
+                    int new_ip = ip + offset;
+                    if (new_ip < 0 || new_ip >= int(vm_metadata.bytecode_length)) {
+                        i = 999999; // Halt
+                    } else {
+                        ip = new_ip;
+                    }
+                    sigma_is_active = false;
+                }
+                // Else fall through to the loop body
+                break;
+            }
+            case OP_SIGMA_INC: {
+                loop_var_value += sigma_step_val;
+                break;
+            }
+            case OP_PUSH_LOOP_VAR: {
+                read_byte(bytecode); // Consume name_index
+                push(sigma_is_active ? loop_var_value : 0.0);
                 break;
             }
 
@@ -823,12 +726,17 @@ void main() {
                 }
                 break;
         }
-    }
 
-    // Clamp and write the final result to the output array at gid
-    float final_result = 0.0;
-    if (stack_top > 0) {
-        final_result = pop();
-    }
-    output_buffer.result[gid] = clamp(final_result, -1.0, 1.0);
+        } // End VM Loop
+
+        // Clamp and write the final result for this sample
+        float final_result = 0.0;
+        if (stack_top > 0) {
+            final_result = pop();
+        }
+
+        // Write to the output buffer (offset by which wave this thread is generating)
+        output_buffer.result[wave_idx * vm_params.wave_length + sample] = clamp(final_result, -1.0, 1.0);
+
+    } // End Sample Loop
 }
