@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -I. -Wall -Wextra -O2
 LIBS = -lm
 
-TESTS = test_vm_div_zero test_vm_jump_bounds test_vm_compliance test_lfsr test_security_wave_idx test_vm_prob test_vm_select test_vm_smooth_select
+TESTS = test_vm_taming test_vm_div_zero test_vm_jump_bounds test_vm_compliance test_lfsr test_security_wave_idx test_vm_prob test_vm_select test_vm_smooth_select
 
 .PHONY: all clean run_tests
 
@@ -55,3 +55,6 @@ run_tests: $(TESTS)
 
 clean:
 	rm -f $(TESTS) *.o
+
+test_vm_taming: test/test_vm_taming.c polysonix.h px_vm.h dsp_math.h
+	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS) -lm

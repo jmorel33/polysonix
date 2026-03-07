@@ -887,3 +887,7 @@ This release seals the current codebase as **Version 1.0Alpha1**, marking a sign
 
 ## v1.0.0
 *   Initial port from original monolithic version.
+
+## [Unreleased]
+### Added
+- VM Taming Opcodes: \`clamp\`, \`mix\`, and \`ramp\` for safe bounding, blending, and linear envelopes.

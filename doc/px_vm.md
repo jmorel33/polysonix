@@ -598,3 +598,9 @@ params.modB = envelope_value; // Map envelope output to MOD_B
 float sample = execute_bytecode(voice->wave->compiled_bytecode, &params);
 ```
 This demonstrates how the same compiled script for `"sin(x + MOD_A)"` can produce a vibrato effect, as the value of `MOD_A` (and therefore the result of the expression) changes on every audio block.
+
+### Taming Ops
+
+- \`clamp(value, min, max)\` — Clamps value to [min, max].
+- \`mix(param, v1, v2)\` — Linear mix v1 to v2 by param [0..1].
+- \`ramp(start, end, time)\` — Linear ramp from start to end by time [0..1].

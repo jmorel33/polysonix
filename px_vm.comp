@@ -78,7 +78,10 @@ layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define OP_PROB           0x45
 #define OP_SELECT         0x46
 #define OP_SMOOTH_SELECT  0x47
-#define OP_HALT           0x48
+#define OP_CLAMP          0x48
+#define OP_MIX            0x49
+#define OP_RAMP           0x4A
+#define OP_HALT           0x4B
 
 // --- Bindless Buffer Layouts ---
 
@@ -320,6 +323,30 @@ void main() {
         uint instruction = read_byte(bytecode);
 
         switch (instruction) {
+
+            case OP_CLAMP: {
+                float max_val = pop();
+                float min_val = pop();
+                float val = pop();
+                push(max(min_val, min(max_val, val)));
+                break;
+            }
+            case OP_MIX: {
+                float v2 = pop();
+                float v1 = pop();
+                float param = pop();
+                param = max(0.0, min(1.0, param));
+                push(fma(param, (v2 - v1), v1));
+                break;
+            }
+            case OP_RAMP: {
+                float time = pop();
+                float end = pop();
+                float start = pop();
+                time = max(0.0, min(1.0, time));
+                push(fma(time, (end - start), start));
+                break;
+            }
             case OP_HALT: {
                 // Halt execution of the current chunk.
                 if (!sigma_is_active || call_stack_top == 0) {
