@@ -1,6 +1,6 @@
 # Update Log
 
-## v1.9.27 (2026/03/08)
+## v1.9.27 (2026/03/07)
 - **Features / Fixes**:
   - Fixed `PxOscillator` structure padding so that it aligns cleanly to exactly 64 bytes.
   - Changed `OP_MARKOV` execution to correctly pop values into a local array, eliminating fragile stack pointer math.
@@ -9,12 +9,12 @@
   - Fixed LFSR advancement to explicitly guard against `bit_length == 0`.
   - Converted loose magic numbers in shader code to explicitly named constants.
 
-## v1.9.26 (2026/03/08)
+## v1.9.26 (2026/03/07)
 - **Features / Fixes**:
   - Re-architected `px_vm.comp` to execute 1 thread per wavetable sequentially instead of 1 thread per sample, completely fixing stateful DSP data races for structures like Markov chains and LFSR states.
   - Refactored `OP_MARKOV` in both the CPU VM (`px_vm.h`) and GPU compute shader (`px_vm.comp`) to read its state matrix using direct Stack-Peek pointer offsets. This eliminates expensive array copying into local variables, saving CPU cache bandwidth and avoiding GPU register spilling.
 
-## v1.9.25 (2026/03/08)
+## v1.9.25 (2026/03/07)
 - **Features / Fixes**:
   - Implemented `OP_MARKOV` for probability-based state transitions using dynamically-sized square matrices and a rising-edge trigger.
 
