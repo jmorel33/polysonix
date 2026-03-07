@@ -23,6 +23,8 @@ layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 #define NUM_LFSR_TYPES 16
 #define MAX_MARKOV_CHAINS 4
 #define EPSILON 1e-6
+const float LOG2_10_INV = 0.30102999566398119521;
+const int MAX_VM_LOOP_ITERATIONS = 100000;
 
 // --- Opcodes (must match px_vm.h OpCode enum) ---
 #define OP_PUSH_CONST     0x00
@@ -240,7 +242,7 @@ void advance_lfsr_state(VmParamsBuffer vm_params, VmMetadataBuffer vm_metadata, 
     uint tap_mask   = vm_metadata.lfsr_tap_masks[type_id / 4][type_id % 4];
     uint period     = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
 
-    if (period == 0) return;
+    if (period == 0 || bit_length == 0) return;
 
     uint current_state = lfsr_state.state;
     uint feedback_bit = 0;
@@ -272,15 +274,12 @@ float lfsr_get_bit(VmMetadataBuffer vm_metadata, LfsrTablesBuffer lfsr_tables, i
     uint offset = vm_metadata.lfsr_offsets[type_id / 4][type_id % 4];
     position = position % period;
 
-    uint byte_idx = offset + (position / 8);
-    uint bit_idx_in_byte = position % 8;
+    uint bit_offset = offset * 8u + position;
+    uint uint_idx = bit_offset / 32u;
+    uint bit_idx_in_uint = bit_offset % 32u;
 
-    // Correctly read the packed byte from the uint array
-    uint uint_idx = byte_idx / 4;
-    uint byte_shift = (byte_idx % 4) * 8;
-    uint packed_byte = (lfsr_tables.data[uint_idx] >> byte_shift) & 0xFF;
-
-    return ((packed_byte >> bit_idx_in_byte) & 1) == 1 ? 1.0 : 0.0;
+    uint word = lfsr_tables.data[uint_idx];
+    return ((word >> bit_idx_in_uint) & 1u) != 0u ? 1.0 : 0.0;
 }
 
 
@@ -322,7 +321,7 @@ void main() {
         ip = int(vm_metadata.main_chunk_offset);
 
         // --- Main VM Loop ---
-        for(int i = 0; i < 100000; ++i) {
+        for(int i = 0; i < MAX_VM_LOOP_ITERATIONS; ++i) {
             uint instruction = read_byte(bytecode);
 
             switch (instruction) {
@@ -368,28 +367,26 @@ void main() {
                 if (current_state >= n_states) current_state = 0;
 
                 bool prev_trig = vm_params.markov_prev_trigger[id] != 0;
+
+                float probs[64];
+                for (int j = 0; j < int(matrix_size); j++) {
+                    probs[int(matrix_size) - 1 - j] = pop();
+                }
+
                 if (is_triggered && !prev_trig) {
                     int row_start = int(current_state * n_states);
                     float r = pseudo_rand();
                     float accumulator = 0.0;
-
-                    // Peek directly into the stack!
-                    // stack_top - 1 is p00. stack_top - 2 is p01, etc.
-                    int p00_idx = stack_top - 1;
+                    uint next_state = current_state;
 
                     for (int j = 0; j < int(n_states); j++) {
-                        float p = vm_stack[p00_idx - (row_start + j)];
+                        float p = probs[row_start + j];
                         accumulator += p;
-                        if (r <= accumulator || j == int(n_states) - 1) {
-                            current_state = uint(j);
-                            break;
-                        }
+                        next_state = uint(mix(float(next_state), float(j), step(r, accumulator)));
                     }
+                    current_state = next_state;
                     vm_params.markov_state[id] = current_state;
                 }
-
-                // Pop the entire matrix off the stack instantly
-                stack_top -= int(matrix_size);
 
                 vm_params.markov_prev_trigger[id] = is_triggered ? 1 : 0;
                 push(float(current_state));
@@ -492,7 +489,7 @@ void main() {
             case OP_TANH: push(tanh(pop())); break;
             case OP_EXP:  push(exp(pop())); break;
             case OP_LOG:  { float v = pop(); push(v > 0.0 ? log(v) : 0.0); break; }
-            case OP_LOG10:{ float v = pop(); push(v > 0.0 ? log2(v) / log2(10.0) : 0.0); break; }
+            case OP_LOG10:{ float v = pop(); push(v > 0.0 ? log2(v) * LOG2_10_INV : 0.0); break; }
             case OP_FLOOR:push(floor(pop())); break;
             case OP_CEIL: push(ceil(pop())); break;
             case OP_MIN:  { float b = pop(); float a = pop(); push(min(a, b)); break; }

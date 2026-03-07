@@ -3,7 +3,7 @@
 </div>
 
 # Polysonix
-**Version 1.9.25 (March 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
+**Version 1.9.27 (March 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
 
 A single-header polyphonic synthesizer engine.
 
@@ -595,7 +595,7 @@ typedef struct {
     // v1.7.1 Features
     bool  bitcrush_enabled;
     float bitcrush_depth;       // 0.0–1.0 (matrix modulatable)
-} PxOscillator;
+} PX_ALIGN_64 PxOscillator; // Padded to exactly 64 bytes for cache/GPU alignment
 ```
 
 **`PxConfig`**
@@ -735,6 +735,7 @@ The language supports the following operators:
 - **LFSR**: `lfsr_val`, `lfsr_noise`, `lfsr_clock`
 - **Probability**: `prob(chance, true, false)`
 - **Dynamic Selection**: `select(param, v1, v2, ...)`, `smooth_select(param, v1, v2, ...)`
+- **State/Generative**: `markov(id, trigger, p00, p01, ...)`
 
 ### Advanced Math Functions
 The VM provides several optimized, advanced math functions, useful for shaping signals and calculating pitch or amplitude scaling accurately.

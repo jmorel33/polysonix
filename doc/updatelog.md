@@ -1,5 +1,14 @@
 # Update Log
 
+## v1.9.27 (2026/03/08)
+- **Features / Fixes**:
+  - Fixed `PxOscillator` structure padding so that it aligns cleanly to exactly 64 bytes.
+  - Changed `OP_MARKOV` execution to correctly pop values into a local array, eliminating fragile stack pointer math.
+  - Implemented branchless Markov matrix evaluation in the GLSL compute shader for faster processing.
+  - Optimized `lfsr_get_bit` in the GLSL compute shader to load 32-bit words directly instead of utilizing byte offsets.
+  - Fixed LFSR advancement to explicitly guard against `bit_length == 0`.
+  - Converted loose magic numbers in shader code to explicitly named constants.
+
 ## v1.9.26 (2026/03/08)
 - **Features / Fixes**:
   - Re-architected `px_vm.comp` to execute 1 thread per wavetable sequentially instead of 1 thread per sample, completely fixing stateful DSP data races for structures like Markov chains and LFSR states.

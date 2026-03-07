@@ -2888,7 +2888,7 @@ static void advance_lfsr_state(VmParams *params) { // REMOVED const
         period = config->period;
     }
 
-    if (period == 0) return; // Cannot advance LFSR with zero period
+    if (period == 0 || bit_length == 0) return; // Cannot advance LFSR with zero period or length
 
     // Advance LFSR (Fibonacci configuration)
     uint32_t lfsr_state = params->lfsr_state;
@@ -3679,14 +3679,19 @@ SUB_LABEL_OP_MARKOV: {
     if (current_state >= n_states) current_state = 0;
 
     bool prev_trig = vm->params->markov_prev_trigger[id];
+
+    float probs[64];
+    for (int i = 0; i < matrix_size; i++) {
+        probs[matrix_size - 1 - i] = *(--sp);
+    }
+
     if (is_triggered && !prev_trig) {
         int row_start = current_state * n_states;
         float r = vm_pseudo_rand(&vm->rand_seed);
         float accumulator = 0.0f;
 
-        // PEEK DIRECTLY INTO THE STACK
         for (int i = 0; i < n_states; i++) {
-            float p = sp[-(1 + row_start + i)];
+            float p = probs[row_start + i];
             accumulator += p;
             if (r <= accumulator || i == n_states - 1) {
                 current_state = i;
@@ -3695,9 +3700,6 @@ SUB_LABEL_OP_MARKOV: {
         }
         vm->params->markov_state[id] = current_state;
     }
-
-    // Instantly drop the stack pointer to "pop" the entire matrix
-    sp -= matrix_size;
 
     vm->params->markov_prev_trigger[id] = is_triggered;
     *sp++ = (float)current_state;
@@ -4298,19 +4300,21 @@ LABEL_OP_MARKOV: {
     uint32_t current_state = vm.params->markov_state[id];
     if (current_state >= n_states) current_state = 0; // Failsafe
 
-    // Rising Edge Detection & Transition
     bool prev_trig = vm.params->markov_prev_trigger[id];
-    if (is_triggered && !prev_trig) {
 
+    float probs[64];
+    for (int i = 0; i < matrix_size; i++) {
+        probs[matrix_size - 1 - i] = *(--sp);
+    }
+
+    // Rising Edge Detection & Transition
+    if (is_triggered && !prev_trig) {
         int row_start = current_state * n_states;
         float r = vm_pseudo_rand(&vm.rand_seed);
         float accumulator = 0.0f;
 
-        // PEEK DIRECTLY INTO THE STACK
-        // 'sp' currently points to the slot just AFTER p00.
-        // Therefore, sp[-1] is p00, sp[-2] is p01, etc.
         for (int i = 0; i < n_states; i++) {
-            float p = sp[-(1 + row_start + i)];
+            float p = probs[row_start + i];
             accumulator += p;
             if (r <= accumulator || i == n_states - 1) {
                 current_state = i;
@@ -4320,9 +4324,6 @@ LABEL_OP_MARKOV: {
 
         vm.params->markov_state[id] = current_state;
     }
-
-    // Instantly drop the stack pointer to "pop" the entire matrix
-    sp -= matrix_size;
 
     // Save trigger state and push result
     vm.params->markov_prev_trigger[id] = is_triggered;
