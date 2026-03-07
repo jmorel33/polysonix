@@ -1,5 +1,12 @@
 # Update Log
 
+## v1.9.21 (2026/03/10)
+**Bug Fix: Safe Index Clamping for OP_SELECT/OP_SMOOTH_SELECT**
+
+- Fixed an issue where out-of-bounds or edge-case floating-point parameters in `OP_SELECT` and `OP_SMOOTH_SELECT` could result in out-of-bounds array accesses or integer overflow behavior due to premature casting.
+- The floating-point scaling index is now safely clamped to `[0.0, n - 1]` before extraction, ensuring stability for edge case parameters like `NaN` or `+Inf`.
+- Parity maintained across `px_vm.h` (CPU) and `px_vm.comp` (GPU).
+
 ## v1.9.20 (2026/03/10)
 **Feature: Smooth Selection Operator**
 
