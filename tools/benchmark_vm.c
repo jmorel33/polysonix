@@ -57,7 +57,7 @@ int main() {
     for (int i = 0; i < 256; i++) baseline_times[i] = 0.0; // Init
 
     // Injected data from parsing step
-    #include "../baseline_data.c"
+    #include "../test/baseline_data.c"
 
     for (int i = 0; i < NUM_DEFAULT_WAVES; i++) {
         const char* name = default_waves[i].name;
