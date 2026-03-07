@@ -115,8 +115,25 @@ max(2)                      : Maximum of two values.
 sqrt(1)                     : Square root. Input must be >= 0.
 pow(2)                      : Power (base, exponent).
 rand()                      : Returns a pseudo-random float between 0.0 and 1.0.
+prob(3)                     : Probability choice (chance, true_val, false_val) based on rand().
+clamp(3)                    : Clamps value (val, min_val, max_val).
+mix(3)                      : Linearly interpolates (param, v1, v2).
+ramp(3)                     : Linearly interpolates (time, start, end).
+fma(3), fms(3), fnmadd(3), fnmsub(3) : Fused multiply-add operations.
+exp2(1), log2(1)            : Base-2 exponential and logarithm.
+expm1(1), log1p(1)          : exp(x)-1 and log(1+x).
+hypot(2)                    : Euclidean distance.
+copysign(2)                 : Copies sign of y to x.
+scalbn(2)                   : x * FLT_RADIX^n.
+remquo(2)                   : Remainder and part of quotient.
+nextafter(2)                : Next representable floating-point value.
+fdim(2)                     : Positive difference.
+nan(), inf()                : Returns NaN and Infinity.
+lgamma(1), tgamma(1)        : Gamma functions.
 sigma(5)                    : Summation (loop_var_name, start_val, end_val, step_val, expression_to_sum).
 select(param, v1...vn)      : Dynamically selects an expression based on the param value [0.0..1.0].
+smooth_select(param, v1...vn): Dynamically smoothly selects (lerps) an expression based on the param value.
+markov(id, trig, p00...pNN) : Markov chain state transition with a square probability matrix.
 lfsr_val(3)                 : LFSR bit value (type, position_norm, seed_norm).
 lfsr_noise(2)               : LFSR bipolar noise (type, rate).
 lfsr_clock(2)               : LFSR rhythmic pulses (type, density).
