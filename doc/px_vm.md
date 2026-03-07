@@ -342,7 +342,17 @@ These functions operate on radians.
   - `v1...vn`: The list of expressions to choose from. Can contain static values, mathematical operations, or nested function calls.
   - **Example**: `select(MOD_A, sin(x), saw(x), tri(x))` switches between a sine, saw, and triangle wave depending on the value of the `MOD_A` knob.
 
-#### 3.5.5. Smooth Interpolated Selection (smooth_select)
+#### 3.5.5. Taming Functions (clamp, mix, ramp)
+
+Provides safe bounding, smooth blending, and precise linear envelopes to control chaos securely:
+
+- `clamp(value, min, max)`: Clamps the `value` strictly within the `[min, max]` range.
+- `mix(param, v1, v2)`: Linearly interpolates from `v1` to `v2` driven by `param` (which is safely clamped to `[0.0, 1.0]`).
+- `ramp(start, end, time)`: Linearly interpolates from `start` to `end` driven by a `time` or envelope progress value (clamped to `[0.0, 1.0]`).
+
+These functions are specifically compiled down to branchless hardware-accelerated `fminf`, `fmaxf`, and `fmaf` primitives, making them ideal for high-performance audio rate modulation paths.
+
+#### 3.5.6. Smooth Interpolated Selection (smooth_select)
 
 - **`smooth_select(param, v1, v2, ..., vn)`**
   The smooth counterpart to `select`. Linearly interpolates (lerps) between adjacent items in the list for fractional `param` values. It unlocks creamy, artifact-free transitions between expressions. Like `select`, `param` is clamped and scaled across the `N-1` intervals in the list.
@@ -351,7 +361,7 @@ These functions operate on radians.
   - **Example**: `smooth_select(MOD_A, sin(x), saw(x), tri(x))` smoothly morphs between the waveforms as the `MOD_A` knob turns.
   - **Pro-Tip (Spiced Chaos)**: Combine with prob! `smooth_select(sin(x*0.1), prob(0.5, sin(x), cos(x)), saw(x))` creates a buttery smooth blend between a randomly alternating sin/cos wave and a sawtooth wave over time.
 
-#### 3.5.6. LFSR (Linear-Feedback Shift Register) Functions
+#### 3.5.7. LFSR (Linear-Feedback Shift Register) Functions
 
 LFSRs are powerful tools for generating pseudo-random sequences, useful for creating noise, random triggers, or complex, evolving textures. The LFSR functions can operate in two distinct modes, determined by the C environment:
 
@@ -377,7 +387,7 @@ LFSRs are powerful tools for generating pseudo-random sequences, useful for crea
   - `density`: A threshold from 0.0 to 1.0. A pulse is generated if the LFSR value is greater than or equal to the density.
   - **Example**: `sin(x) * lfsr_clock(LFSR_7BIT, 0.75)` creates a gated sine wave that plays in a pseudo-random rhythmic pattern.
 
-#### 3.5.7. Summation Function (sigma)
+#### 3.5.8. Summation Function (sigma)
 
 The `sigma` function provides a powerful way to perform summations, which is fundamental to additive synthesis and creating complex harmonic structures.
 
@@ -598,9 +608,3 @@ params.modB = envelope_value; // Map envelope output to MOD_B
 float sample = execute_bytecode(voice->wave->compiled_bytecode, &params);
 ```
 This demonstrates how the same compiled script for `"sin(x + MOD_A)"` can produce a vibrato effect, as the value of `MOD_A` (and therefore the result of the expression) changes on every audio block.
-
-### Taming Ops
-
-- \`clamp(value, min, max)\` — Clamps value to [min, max].
-- \`mix(param, v1, v2)\` — Linear mix v1 to v2 by param [0..1].
-- \`ramp(start, end, time)\` — Linear ramp from start to end by time [0..1].
