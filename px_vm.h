@@ -938,6 +938,9 @@ static PxFunctionDef px_functions[] = {
 
 
 // Helper for freeing memory allocated with aligned_calloc
+#ifdef __GNUC__
+__attribute__((unused))
+#endif
 static void aligned_free(void* ptr) {
 #if defined(_WIN32)
     _aligned_free(ptr);
@@ -949,6 +952,9 @@ static void aligned_free(void* ptr) {
 }
 
 // Helper that allocates aligned, zero-initialized memory
+#ifdef __GNUC__
+__attribute__((unused))
+#endif
 static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
     void* ptr = NULL;
     size_t total_size = num * size;
@@ -1791,6 +1797,9 @@ static BytecodeChunk* lookup_cache(const char *expression) {
 }
 
 // Insert a newly compiled chunk into the cache
+#ifdef __GNUC__
+__attribute__((unused))
+#endif
 static bool insert_cache(const char *expression, BytecodeChunk *chunk_to_store) {
     if (!cache_initialized || !expression || !chunk_to_store) return false;
 
@@ -1848,6 +1857,9 @@ static void emit_byte(BytecodeChunk *chunk, uint8_t byte) {
     chunk->code[chunk->code_count++] = byte;
 }
 
+#ifdef __GNUC__
+__attribute__((unused))
+#endif
 static void emit_bytes(BytecodeChunk *chunk, uint8_t byte1, uint8_t byte2) {
     emit_byte(chunk, byte1);
     emit_byte(chunk, byte2);
@@ -2929,6 +2941,9 @@ static void advance_lfsr_state(VmParams *params) { // REMOVED const
 
 // --- VM Helper Functions ---
 
+#ifdef __GNUC__
+__attribute__((unused))
+#endif
 static void push(VM *vm, float value) {
     if (vm->stack_top >= vm->stack + MAX_VM_STACK) {
         vm_error(vm, "Stack overflow.");
@@ -2938,6 +2953,9 @@ static void push(VM *vm, float value) {
     vm->stack_top++;
 }
 
+#ifdef __GNUC__
+__attribute__((unused))
+#endif
 static float pop(VM *vm) {
     if (vm->stack_top == vm->stack) {
         vm_error(vm, "Stack underflow.");
@@ -2947,6 +2965,9 @@ static float pop(VM *vm) {
     return *vm->stack_top;
 }
 
+#ifdef __GNUC__
+__attribute__((unused))
+#endif
 static float peek(VM *vm, int distance) {
     // distance 0 = top, 1 = one below top, etc.
     if (vm->stack_top - (distance + 1) < vm->stack) {
@@ -2957,18 +2978,27 @@ static float peek(VM *vm, int distance) {
 }
 
 // Read a 16-bit value (e.g., index, offset) from bytecode stream
+#ifdef __GNUC__
+__attribute__((unused))
+#endif
 static uint16_t read_short(VM *vm) {
     vm->ip += 2;
     return (uint16_t)((vm->ip[-2] << 8) | vm->ip[-1]);
 }
 
 // Read a signed 16-bit relative offset
+#ifdef __GNUC__
+__attribute__((unused))
+#endif
 static int16_t read_jump_offset(VM *vm) {
      vm->ip += 2;
      return (int16_t)((vm->ip[-2] << 8) | vm->ip[-1]);
 }
 
 // Read a single byte operand
+#ifdef __GNUC__
+__attribute__((unused))
+#endif
 static uint8_t read_byte(VM *vm) {
      return *vm->ip++;
 }
