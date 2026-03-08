@@ -2,8 +2,16 @@
 
 ## v1.9.33 (2026/03/08)
 - **Features / Fixes**:
-  - Optimized mathematical operations inside the `PX_Process` loop by replacing linear interpolations, ADSR scaling, glide evaluations, and modulation operations with `fmaf`.
-
+  - Optimized mathematical operations inside the `PX_Process` loop by leveraging `fmaf` for improved performance and calculation precision. Key replacements include:
+    - Modulation matrix destination accumulations (`dest_mod[slot->dest] = fmaf(...)`)
+    - ADSR LFO output scaling adjustments (`adsr_lfo_scale[i] = fmaf(...)`)
+    - Aggregate LFO target calculations (pitch, cutoff, amp, pan, params)
+    - Cubic glide interpolation curve calculation (`t = t * t * fmaf(-2.0f, t, 3.0f)`)
+    - Glide frequency approach (`v->frequency = fmaf(...)`)
+    - Oscillator tuning mapping (`tuning_st = fmaf(...)`)
+    - Phase distortion processing (`effective_phase = fmaf(...)`)
+    - Ring modulation and cross modulation wet/dry mixing (`raw_sample = fmaf(wet - raw_sample, depth, raw_sample)`)
+    - Stereo mixer panning applications (`mixed_sample_l_f = fmaf(final_sample_l, gain_l, mixed_sample_l_f)`)
 
 ## v1.9.32 (2026/03/08)
 - **Features / Fixes**:
