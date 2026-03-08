@@ -20,7 +20,7 @@ The language follows a C-like mathematical expression grammar, parsed using recu
 
 Literals    : Floating-point numbers (e.g., 1.0, 0.5).
 Variables   : x, FREQUENCY, MOD_A, MOD_B, MOD_C, RAND_OFFSET, and loop variables (e.g., k).
-Constants   : PI, TWO_PI, PI_OVER_2, THREE_PI_OVER_2, E, LFSR type constants.
+Constants   : PI, TWO_PI, PI_OVER_2, THREE_PI_OVER_2, INV_PI, INV_TWO_PI, INV_PI_OVER_2, E, LFSR type constants.
 Functions   : Mathematical, utility, and LFSR functions (e.g., sin, sigma, lfsr_val).
 Operators   : Arithmetic, unary, comparison, logical, and ternary.
 Grouping    : Parentheses () for precedence and function arguments.
@@ -79,6 +79,9 @@ PI                  : 3.14159265358979323846.
 TWO_PI              : 2 * PI.
 PI_OVER_2           : PI / 2.
 THREE_PI_OVER_2     : 3 * PI / 2.
+INV_PI              : 1 / PI.
+INV_TWO_PI          : 1 / (2 * PI).
+INV_PI_OVER_2       : 1 / (PI / 2).
 E                   : Base of natural logarithm (approx. 2.71828).
 
 LFSR Type Constants (Integer values passed to LFSR functions):
@@ -1668,6 +1671,9 @@ Node *parseFunctionArgs(Token *tokens, int *pos, const char* func_name, int expe
 #define C_TWO_PI (2.0 * C_PI)
 #define C_PI_OVER_2 (C_PI / 2.0)
 #define C_THREE_PI_OVER_2 (3.0 * C_PI / 2.0)
+#define C_INV_PI (1.0 / C_PI)
+#define C_INV_TWO_PI (1.0 / C_TWO_PI)
+#define C_INV_PI_OVER_2 (1.0 / C_PI_OVER_2)
 #define C_E 2.71828182845904523536
 #define EPSILON 1e-6f
 
@@ -2005,6 +2011,9 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
             else if (strcmp(node->data.name, "TWO_PI") == 0) const_val = C_TWO_PI;
             else if (strcmp(node->data.name, "PI_OVER_2") == 0) const_val = C_PI_OVER_2;
             else if (strcmp(node->data.name, "THREE_PI_OVER_2") == 0) const_val = C_THREE_PI_OVER_2;
+            else if (strcmp(node->data.name, "INV_PI") == 0) const_val = C_INV_PI;
+            else if (strcmp(node->data.name, "INV_TWO_PI") == 0) const_val = C_INV_TWO_PI;
+            else if (strcmp(node->data.name, "INV_PI_OVER_2") == 0) const_val = C_INV_PI_OVER_2;
             // LFSR Constants
             else if (strcmp(node->data.name, "LFSR_4BIT") == 0) const_val = (float)LFSR_4BIT;
             else if (strcmp(node->data.name, "LFSR_5BIT") == 0) const_val = (float)LFSR_5BIT;
