@@ -63,50 +63,50 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /*   1*/ { "Triangle Down", "fma((1.0 * MOD_B), sin((2.0 * x)), fma(2.0, abs(((fma(MOD_C, 0.5, x) / PI) - 1.0)), -1.0))" }, // MOD_A: Unused. MOD_B: Harmonic. MOD_C: Phase skew/bend.
 
-/*   2*/ { "Sine Up", "fma((1.0 * MOD_B), sin((2.0 * x)), fma((1.0 - (0.5 * (MOD_A + 1.0))), sin(fma(MOD_C, 0.25, x)), ((0.5 * (MOD_A + 1.0)) * tanh((5.0 * sin(fma(MOD_C, 0.25, x)))))))" }, // MOD_A: Sine-to-tanh mix. MOD_B: Harmonic. MOD_C: Phase modulation.
+/*   2*/ { "Sine Up", "fma((1.0 * MOD_B), sin((2.0 * x)), mix((0.5 * (MOD_A + 1.0)), sin(fma(MOD_C, 0.25, x)), tanh((5.0 * sin(fma(MOD_C, 0.25, x))))))" }, // MOD_A: Sine-to-tanh mix. MOD_B: Harmonic. MOD_C: Phase modulation.
 
-/*   3*/ { "Sine Down", "fma((1.0 * MOD_B), sin((2.0 * x)), fma((1.0 - (0.5 * (MOD_A + 1.0))), -sin(fma(MOD_C, 0.25, x)), ((0.5 * (MOD_A + 1.0)) * -tanh((5.0 * sin(fma(MOD_C, 0.25, x)))))))" }, // MOD_A: Sine-to-tanh mix. MOD_B: Harmonic. MOD_C: Phase modulation.
+/*   3*/ { "Sine Down", "fma((1.0 * MOD_B), sin((2.0 * x)), mix((0.5 * (MOD_A + 1.0)), -sin(fma(MOD_C, 0.25, x)), -tanh((5.0 * sin(fma(MOD_C, 0.25, x))))))" }, // MOD_A: Sine-to-tanh mix. MOD_B: Harmonic. MOD_C: Phase modulation.
 
-/*   4*/ { "Square Up", "fma((2.0 * MOD_B), sin(fma(2.0, x, (MOD_C * PI))), ((x < (TWO_PI * fma(0.4, MOD_A, 0.5))) ? 1.0 : -1.0))" }, // MOD_A: PWM. MOD_B: Harmonic. MOD_C: Phase modulation on the harmonic.
+/*   4*/ { "Square Up", "fma((2.0 * MOD_B), sin(fma(2.0, x, (MOD_C * PI))), fma(-2.0, step(TWO_PI * fma(0.4, MOD_A, 0.5), x), 1.0))" }, // MOD_A: PWM. MOD_B: Harmonic. MOD_C: Phase modulation on the harmonic.
 
-/*   5*/ { "Square Down", "fma((2.0 * MOD_B), sin(fma(2.0, x, (MOD_C * PI))), ((x < (TWO_PI * fma(0.4, MOD_A, 0.5))) ? -1.0 : 1.0))" }, // MOD_A: PWM. MOD_B: Harmonic. MOD_C: Phase modulation on the harmonic.
+/*   5*/ { "Square Down", "fma((2.0 * MOD_B), sin(fma(2.0, x, (MOD_C * PI))), fma(2.0, step(TWO_PI * fma(0.4, MOD_A, 0.5), x), -1.0))" }, // MOD_A: PWM. MOD_B: Harmonic. MOD_C: Phase modulation on the harmonic.
 
-/*   6*/ { "Saw Rising", "fma((2.0 * MOD_B), sin((2.0 * x)), fma((1.0 - fma(0.5, MOD_A, 0.5)), ((fma((x * MOD_C), 0.5, x) / PI) - 1.0), (fma(0.5, MOD_A, 0.5) * ((x > PI) ? 1.0 : -1.0))))" }, // MOD_A: Saw-to-pulse mix. MOD_B: Harmonic. MOD_C: Phase distortion/bend.
+/*   6*/ { "Saw Rising", "fma((2.0 * MOD_B), sin((2.0 * x)), mix(fma(0.5, MOD_A, 0.5), ((fma((x * MOD_C), 0.5, x) / PI) - 1.0), ((x > PI) ? 1.0 : -1.0)))" }, // MOD_A: Saw-to-pulse mix. MOD_B: Harmonic. MOD_C: Phase distortion/bend.
 
 /*   7*/ { "Saw Falling", "fma((2.0 * MOD_B), sin((2.0 * x)), fma((1.0 - fma(0.5, MOD_A, 0.5)), (1.0 - (fma((x * MOD_C), 0.5, x) / PI)), (fma(0.5, MOD_A, 0.5) * ((x > PI) ? -1.0 : 1.0))))" }, // MOD_A: Saw-to-pulse mix. MOD_B: Harmonic. MOD_C: Phase distortion/bend.
 
     // --- Half/Half Waves (8-15) ---
 
-/*   8*/ { "Saw/Sine Up", "fma((1.0 - (0.5 * (MOD_A + 1.0))), ((x < PI) ? ((x / PI_OVER_2) - 1.0) : sin(fma(PI, MOD_B, x))), ((0.5 * (MOD_A + 1.0)) * tanh((6.0 * ((x < PI) ? ((x / PI_OVER_2) - 1.0) : sin(fma(PI, MOD_B, x)))))))" }, // Phase shift on sine part
+/*   8*/ { "Saw/Sine Up", "mix((0.5 * (MOD_A + 1.0)), ((x < PI) ? ((x / PI_OVER_2) - 1.0) : sin(fma(PI, MOD_B, x))), tanh((6.0 * ((x < PI) ? ((x / PI_OVER_2) - 1.0) : sin(fma(PI, MOD_B, x))))))" }, // Phase shift on sine part
 
-/*   9*/ { "Sine/Saw Down", "fma((1.0 - (0.5 * (MOD_A + 1.0))), ((x < PI) ? -sin(fma(PI, MOD_B, x)) : (1.0 - ((x - PI) / PI_OVER_2))), ((0.5 * (MOD_A + 1.0)) * tanh((6.0 * ((x < PI) ? -sin(fma(PI, MOD_B, x)) : (1.0 - ((x - PI) / PI_OVER_2)))))))" }, // Phase shift on sine
+/*   9*/ { "Sine/Saw Down", "mix((0.5 * (MOD_A + 1.0)), ((x < PI) ? -sin(fma(PI, MOD_B, x)) : (1.0 - ((x - PI) / PI_OVER_2))), tanh((6.0 * ((x < PI) ? -sin(fma(PI, MOD_B, x)) : (1.0 - ((x - PI) / PI_OVER_2))))))" }, // Phase shift on sine
 
-/* 10*/ { "Square/Sine Up", "fma((1.0 - (0.5 * (MOD_A + 1.0))), ((x < PI) ? 1.0 : sin(fma(PI, MOD_B, x))), ((0.5 * (MOD_A + 1.0)) * tanh((6.0 * ((x < PI) ? 1.0 : sin(fma(PI, MOD_B, x)))))))" }, // Phase shift on sine
+/* 10*/ { "Square/Sine Up", "mix((0.5 * (MOD_A + 1.0)), ((x < PI) ? 1.0 : sin(fma(PI, MOD_B, x))), tanh((6.0 * ((x < PI) ? 1.0 : sin(fma(PI, MOD_B, x))))))" }, // Phase shift on sine
 
-/* 11*/ { "Sine/Square Down", "fma((1.0 - (0.5 * (MOD_A + 1.0))), ((x < PI) ? sin(fma(PI, MOD_B, x)) : -1.0), ((0.5 * (MOD_A + 1.0)) * tanh((6.0 * ((x < PI) ? sin(fma(PI, MOD_B, x)) : -1.0)))))" }, // Phase shift on sine
+/* 11*/ { "Sine/Square Down", "mix((0.5 * (MOD_A + 1.0)), ((x < PI) ? sin(fma(PI, MOD_B, x)) : -1.0), tanh((6.0 * ((x < PI) ? sin(fma(PI, MOD_B, x)) : -1.0))))" }, // Phase shift on sine
 
 /* 12*/ { "Saw/Triangle Up", "(x < (TWO_PI * fma(0.1, MOD_B, fma(0.25, MOD_A, 0.5)))) ? ((x / PI_OVER_2) - 1.0) : (((x - PI) < PI_OVER_2) ? ((x - PI) / PI_OVER_2) : (1.0 - (((x - PI) - PI_OVER_2) / PI_OVER_2)))" }, // Adjust split point
 
 /* 13*/ { "Triangle/Saw Down", "(x < (TWO_PI * fma(0.1, MOD_B, fma(0.25, MOD_A, 0.5)))) ? (-2.0 * abs(((x / PI) - 0.5))) : (3.0 - ((2.0 * x) / PI))" }, // Adjust split point
 
-/* 14*/ { "Triangle/Sine Up", "fma((1.0 - (0.5 * (MOD_A + 1.0))), fma(2.0, (1.0 - abs(((x / (PI / 2.0)) - 1.0))), -1.0), ((0.5 * (MOD_A + 1.0)) * sin(fma(PI, MOD_B, x))))" }, // Phase shift on sine
+/* 14*/ { "Triangle/Sine Up", "mix((0.5 * (MOD_A + 1.0)), fma(2.0, (1.0 - abs(((x / (PI / 2.0)) - 1.0))), -1.0), sin(fma(PI, MOD_B, x)))" }, // Phase shift on sine
 
-/* 15*/ { "Sine/Triangle Down", "fma((1.0 - (0.5 * (MOD_A + 1.0))), cos(fma(PI, MOD_B, (x + PI))), ((0.5 * (MOD_A + 1.0)) * fma(-2.0, abs((((x - PI) / PI) - 0.5)), 0.5)))" }, // Phase shift on sine
+/* 15*/ { "Sine/Triangle Down", "mix((0.5 * (MOD_A + 1.0)), cos(fma(PI, MOD_B, (x + PI))), fma(-2.0, abs((((x - PI) / PI) - 0.5)), 0.5))" }, // Phase shift on sine
 
 
 
     // --- Bank 1: Waveshaping & Distortion (16-31) ---
-/* 16*/ { "Clipped Sine", "min(fma(0.5, MOD_B, 0.5), max((-0.5 - (0.5 * MOD_B)), sin(fma(0.3, MOD_A, x)))) * 2.0" }, // Adjust clipping level
+/* 16*/ { "Clipped Sine", "clamp(sin(fma(0.3, MOD_A, x)), (-0.5 - (0.5 * MOD_B)), fma(0.5, MOD_B, 0.5)) * 2.0" }, // Adjust clipping level
 
 /* 17*/ { "Rectified Sine", "fma((1.0 * MOD_B), sin((2.0 * x)), fma(abs(sin(fma(0.4, MOD_A, x))), 2.0, -1.0))" }, // Harmonic texture
 
 /* 18*/ { "Sine * Saw", "fma(sin(fma(0.3, MOD_A, x)), (tanh(x) * PI), ((0.5 * MOD_B) * sin((2.0 * x))))" }, // Harmonic texture
 
-/* 19*/ { "Overload Spark", "fma((1.0 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.2, MOD_A, 0.2))) ? 1.0 : ((x < (TWO_PI * fma(0.2, MOD_A, 0.4))) ? -1.0 : ((x < (TWO_PI * fma(0.2, MOD_A, 0.6))) ? 0.5 : fma((1.0 - (x / TWO_PI)), 1.5, -0.5)))))" }, // Harmonic texture
+/* 19*/ { "Overload Spark", "fma((1.0 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.2, MOD_A, 0.2))) ? 1.0 : ((x < (TWO_PI * fma(0.2, MOD_A, 0.4))) ? -1.0 : ((x < (TWO_PI * fma(0.2, MOD_A, 0.6))) ? 0.5 : ramp((x / TWO_PI), 1.0, -0.5)))))" }, // Harmonic texture
 
-/* 20*/ { "Overfolded Saw", "min(1.0, max(-1.0, ((1.2 * ((x / PI) - 1.0)) * sin(fma(PI, MOD_B, fma(0.3, MOD_A, fma(3.0, x, RAND_OFFSET)))))))" }, // Phase shift on modulation
+/* 20*/ { "Overfolded Saw", "clamp(((1.2 * ((x / PI) - 1.0)) * sin(fma(PI, MOD_B, fma(0.3, MOD_A, fma(3.0, x, RAND_OFFSET))))), -1.0, 1.0)" }, // Phase shift on modulation
 
-/* 21*/ { "Clipped Chaos", "min(0.5, max(-0.5, (1.5 * ((x < PI_OVER_2) ? (x / PI_OVER_2) : ((x < THREE_PI_OVER_2) ? (1.0 - ((x - PI_OVER_2) / PI_OVER_2)) : (-1.0 + ((x - THREE_PI_OVER_2) / PI_OVER_2))))))) * sin(fma(PI, MOD_B, fma(4.0, x, (0.4 * MOD_A))))" }, // Phase shift on modulation
+/* 21*/ { "Clipped Chaos", "clamp((1.5 * ((x < PI_OVER_2) ? (x / PI_OVER_2) : ((x < THREE_PI_OVER_2) ? (1.0 - ((x - PI_OVER_2) / PI_OVER_2)) : (-1.0 + ((x - THREE_PI_OVER_2) / PI_OVER_2))))), -0.5, 0.5) * sin(fma(PI, MOD_B, fma(4.0, x, (0.4 * MOD_A))))" }, // Phase shift on modulation
 
 /* 22*/ { "Wavefolder Sim (A=Fold B=Bias)", "(asin((sin(fma(x, (1.0 + (FREQUENCY / 1000.0)), (MOD_B * PI))) * fma(abs(MOD_A), 5.0, 1.0))) / (PI / 2.0)) * 0.8" },
 
@@ -124,7 +124,7 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 /* 28*/ { "Weird: Step-Slope", "(x < PI) ? 1.0 : (1.0 - (((x - PI) / PI) * 2.0))" }, // Half-square, half-saw.
 
 
-/* 29*/ { "Gritty Bass", "min(1.0, max(-1.0, (1.1 * fma((0.2 * MOD_A), sin(fma(2.0, x, (PI * MOD_B))), ((x / PI) - 1.0)))))" }, // Phase shift on modulation
+/* 29*/ { "Gritty Bass", "clamp((1.1 * fma((0.2 * MOD_A), sin(fma(2.0, x, (PI * MOD_B))), ((x / PI) - 1.0))), -1.0, 1.0)" }, // Phase shift on modulation
 
 /* 30*/ { "Hybrid Saw*Sine", "((x / PI) - 1.0) * sin(fma(PI, MOD_B, fma(2.0, x, (0.5 * MOD_A))))" }, // Additional phase shift
 
@@ -132,15 +132,15 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 
     // --- Bank 2: Digital Steps & Logic (32-47) ---
-/* 32*/ { "Pulse 25%", "fma((1.0 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.25, MOD_A, 0.25))) ? 1.0 : -1.0))" }, // Harmonic softening
+/* 32*/ { "Pulse 25%", "fma((1.0 * MOD_B), sin((2.0 * x)), fma(-2.0, step(TWO_PI * fma(0.25, MOD_A, 0.25), x), 1.0))" }, // Harmonic softening
 
-/* 33*/ { "Pulse 75%", "fma((1.0 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.25, MOD_A, 0.75))) ? 1.0 : -1.0))" }, // Harmonic softening
+/* 33*/ { "Pulse 75%", "fma((1.0 * MOD_B), sin((2.0 * x)), fma(-2.0, step(TWO_PI * fma(0.25, MOD_A, 0.75), x), 1.0))" }, // Harmonic softening
 
 /* 34*/ { "Staircase 4 Step", "fma((0.5 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.05, MOD_A, 0.125))) ? -0.75 : ((x < (TWO_PI * fma(0.05, MOD_A, 0.25))) ? -0.25 : ((x < (TWO_PI * fma(0.05, MOD_A, 0.375))) ? 0.25 : 0.75))))" }, // Harmonic texture
 
 /* 35*/ { "Bit Crush Bomb", "fma((0.5 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.1, MOD_A, 0.4))) ? 1.0 : (((floor(((x - (TWO_PI * fma(0.1, MOD_A, 0.4))) / (TWO_PI / 10.0))) % 4.0) - 2.0) * 0.5)))" }, // Harmonic texture
 
-/* 36*/ { "Bit-Crushed Square", "min(1.0, max(-1.0, (((x < PI) ? 1.0 : -1.0) + sin(fma(PI, MOD_B, fma(0.5, MOD_A, fma(2.0, x, RAND_OFFSET)))))))" }, // Phase shift on noise
+/* 36*/ { "Bit-Crushed Square", "clamp((fma(-2.0, step(PI, x), 1.0) + sin(fma(PI, MOD_B, fma(0.5, MOD_A, fma(2.0, x, RAND_OFFSET))))), -1.0, 1.0)" }, // Phase shift on noise
 
 /* 37*/ { "Pulse Train Wreck", "fma((0.2 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.03, MOD_A, 0.1))) ? 1.0 : ((x < (TWO_PI * fma(0.03, MOD_A, 0.15))) ? -1.0 : ((x < (TWO_PI * fma(0.03, MOD_A, 0.3))) ? 0.5 : ((x < (TWO_PI * fma(0.03, MOD_A, 0.35))) ? -0.5 : 0.0)))))" }, // Harmonic texture
 
@@ -171,12 +171,12 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /* 49*/ { "Ghost Wail", "sin(fma(PI, MOD_B, fma(0.3, sin(fma(4.0, x, MOD_A)), x)))" }, // Additional phase modulation
 
-/* 50*/ { "Laser Malfunction", "min(1.0, max(-1.0, (((x / PI) - 1.0) * sin(fma(PI, MOD_B, fma(0.4, MOD_A, fma(3.0, x, RAND_OFFSET)))))))" }, // Phase shift on modulation
+/* 50*/ { "Laser Malfunction", "clamp((((x / PI) - 1.0) * sin(fma(PI, MOD_B, fma(0.4, MOD_A, fma(3.0, x, RAND_OFFSET))))), -1.0, 1.0)" }, // Phase shift on modulation
 
 /* 51*/ { "Hyperspace Glitch", "(x < (TWO_PI * fma(0.05, MOD_A, 0.2))) ? 1.0 : ((x < (TWO_PI * fma(0.05, MOD_A, 0.4))) ? cos(fma(PI, MOD_B, fma(4.0, x, (0.4 * MOD_A)))) : ((x < (TWO_PI * fma(0.05, MOD_A, 0.6))) ? -1.0 : (sin(fma(6.0, x, (0.4 * MOD_A))) * 0.7)))" }, // Phase shift on cos
 
 
-/* 52*/ { "Shredded Saw", "min(0.8, max(-0.8, (2.0 * fma((0.2 * MOD_A), sin(fma(3.0, x, (PI * MOD_B))), ((x / PI) - 1.0)))))" }, // Phase shift on modulation
+/* 52*/ { "Shredded Saw", "clamp((2.0 * fma((0.2 * MOD_A), sin(fma(3.0, x, (PI * MOD_B))), ((x / PI) - 1.0))), -0.8, 0.8)" }, // Phase shift on modulation
 
 /* 53*/ { "Glitch Sine", "(sin(fma(PI, MOD_B, fma(0.5, MOD_A, x))) + (((x > (TWO_PI * 0.2)) && (x < PI_OVER_2)) ? -0.5 : 0.0)) + (((x > (TWO_PI * 0.6)) && (x < (TWO_PI * 0.65))) ? 0.5 : 0.0)" }, // Additional phase shift
 
@@ -242,7 +242,7 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
     // --- Bank 5: FM Synthesis II (Complex & Metallic) (80-95) ---
 /* 80*/{ "FM Metallic Bell (A=Decay B=Ratio)", "sin(fma((sin((x * fma(RAND_OFFSET, 0.02, fma(MOD_B, 2.0, 4.03)))) * fma(abs(MOD_A), 4.0, 3.0)), exp((-x * fma(abs(MOD_A), 8.0, 2.0))), x)) * exp((-x * 0.5))" },
 
-/* 81*/{ "FM Hollow Drone (A=ModMix B=ModRatio)", "fma(sin(fma(sin((x * 0.75)), 3.5, x)), (1.0 - abs(MOD_A)), (sin(fma(sin((x * fma(MOD_B, 2.0, 2.5))), 1.5, x)) * abs(MOD_A))) * 0.7" },
+/* 81*/{ "FM Hollow Drone (A=ModMix B=ModRatio)", "mix(abs(MOD_A), sin(fma(sin((x * 0.75)), 3.5, x)), sin(fma(sin((x * fma(MOD_B, 2.0, 2.5))), 1.5, x))) * 0.7" },
 
 /* 82*/{ "FM Harsh Noise Sweep (A=Sweep B=Intensity)", "sin(fma(tan((x * fma(x, 5.0, fma(MOD_A, 20.0, 10.0)))), fma(abs(MOD_B), 2.5, 0.5), x)) * 0.8" },
 
@@ -322,22 +322,22 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /*115*/ { "Formant Vowel (A=Phsr1 B=Phsr2)", "(0.4 * sigma(k, 1.0, 5.0, 1.0, ((sin((x * k)) * ((1.0 + (((k > 1.5) && (k < 2.5)) ? (2.0 * abs(MOD_A)) : 0.0)) + (((k > 3.5) && (k < 4.5)) ? (2.0 * abs(MOD_B)) : 0.0))) / (k + 1.0)))) * fma(0.1, (FREQUENCY / 1000.0), 1.0)" },
 
-/*116*/ { "Sync Sweep No Slant", "((sin((x * fma(5.0, abs(MOD_A), 1.0))) > (MOD_B * 0.9)) ? 1.0 : -1.0) * 0.6" },
+/*116*/ { "Sync Sweep No Slant", "sign(sin((x * fma(5.0, abs(MOD_A), 1.0))) - (MOD_B * 0.9)) * 0.6" },
 
-/*117*/ { "Sync Sweep Cos Shape", "fma(((sin((x * fma(5.0, abs(MOD_A), 1.0))) > (MOD_B * 0.9)) ? 1.0 : -1.0), 0.6, (cos(x) * 0.3))"},
+/*117*/ { "Sync Sweep Cos Shape", "fma(sign(sin((x * fma(5.0, abs(MOD_A), 1.0))) - (MOD_B * 0.9)), 0.6, (cos(x) * 0.3))"},
 
 /*118*/ { "Smoothed Sync (A=SyncFreq B=Duty)", "fma(tanh((10.0 * (sin((x * fma(5.0, abs(MOD_A), 1.0))) - (MOD_B * 0.9)))), 0.7, (((x / PI) - 1.0) * 0.2))" },
 
 
-/*119*/ { "Limited Sync (A=SyncFreq B=Duty)", "fma(((sin((x * fma(2.5, abs(MOD_A), 1.0))) > (MOD_B * 0.9)) ? 1.0 : -1.0), 0.6, (((x / PI) - 1.0) * 0.3))" },
+/*119*/ { "Limited Sync (A=SyncFreq B=Duty)", "fma(sign(sin((x * fma(2.5, abs(MOD_A), 1.0))) - (MOD_B * 0.9)), 0.6, (((x / PI) - 1.0) * 0.3))" },
 
-/*120*/ { "Sync Sweep (A=SyncFreq B=Duty)", "fma(((sin((x * fma(5.0, abs(MOD_A), 1.0))) > (MOD_B * 0.9)) ? 1.0 : -1.0), 0.6, (((x / PI) - 1.0) * 0.3))" },
+/*120*/ { "Sync Sweep (A=SyncFreq B=Duty)", "fma(sign(sin((x * fma(5.0, abs(MOD_A), 1.0))) - (MOD_B * 0.9)), 0.6, (((x / PI) - 1.0) * 0.3))" },
 
 /*121*/ { "Oooh Choir Formant", "(sigma(k, 1.0, fma(4.0, abs(MOD_B), 8.0), 1.0, ((sin(fma(x, k, ((RAND_OFFSET * 0.1) * k))) * ((1.0 / (1.0 + pow(((k - fma(MOD_A, 1.5, 2.5)) / (0.8 + abs((MOD_A * 0.3)))), 2.0))) + (0.7 / (1.0 + pow(((k - (((MOD_A > 0.0) ^ (MOD_B > 0.3)) ? (6.0 - (MOD_A * 2.0)) : fma(MOD_A, 1.0, 5.0))) / 1.2), 2.0))))) / pow(k, fma(0.2, abs(MOD_B), 0.7)))) * 0.25) * fma(0.15, sin(fma(x, 6.0, (RAND_OFFSET * PI))), 1.0)" },
 
 /*122*/ { "PD Vocal Formant", "sin((x + sin(((x * MOD_A) * 8.0))))" }, // Simple PD Formant
 
-/*123*/ { "Sync Soft", "sin((x * fma(MOD_A, 3.0, 1.0))) * (1.0 - (x / TWO_PI))" }, // Windowed sync effect.
+/*123*/ { "Sync Soft", "sin((x * fma(MOD_A, 3.0, 1.0))) * ramp((x / TWO_PI), 1.0, 0.0)" }, // Windowed sync effect.
 
 /*124*/ { "Fractal Sine", "sin(fma(sin(fma(x, 3.0, (sin((x * 9.0)) * MOD_A))), MOD_B, x))" }, // Nested sine modulations.
 
@@ -351,15 +351,15 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
     // --- Bank 8: Percussion & Noise (128-143) ---
 /*128*/ { "Kick Drum", "0.6 * fma(0.2, sin(fma(3.0, x, (PI * MOD_B))), fma(0.4, sin((2.0 * x)), sin(fma(0.3, MOD_A, x))))" }, // Phase shift on 3rd harmonic
 
-/*129*/ { "Snare Drum", "min(1.0, max(-1.0, ((sin(fma(PI, MOD_B, fma(5.0, x, (0.5 * MOD_A)))) + sin((7.5 * x))) * 2.0))) * (1.0 - (x / (TWO_PI * 1.27)))" }, // Phase shift on 5x harmonic
+/*129*/ { "Snare Drum", "clamp(((sin(fma(PI, MOD_B, fma(5.0, x, (0.5 * MOD_A)))) + sin((7.5 * x))) * 2.0), -1.0, 1.0) * (1.0 - (x / (TWO_PI * 1.27)))" }, // Phase shift on 5x harmonic
 
-/*130*/ { "Clap", "min(1.0, max(-1.0, (((sin((4.0 * x)) + sin(fma(PI, MOD_B, fma(6.0, x, (0.4 * MOD_A))))) + sin((8.0 * x))) * 1.5))) * (1.0 - (x / (TWO_PI * 1.6)))" }, // Phase shift on 6x harmonic
+/*130*/ { "Clap", "clamp((((sin((4.0 * x)) + sin(fma(PI, MOD_B, fma(6.0, x, (0.4 * MOD_A))))) + sin((8.0 * x))) * 1.5), -1.0, 1.0) * (1.0 - (x / (TWO_PI * 1.6)))" }, // Phase shift on 6x harmonic
 
 /*131*/ { "Tom Drum", "0.7 * fma(0.1, sin((3.0 * x)), fma(0.3, sin((2.0 * x)), sin(fma(PI, MOD_B, fma(0.3, MOD_A, x)))))" }, // Phase shift on fundamental
 
 /*132*/ { "Cymbalish", "0.25 * fma(MOD_A, sin(fma(3.14, x, (PI * MOD_B))), ((sin(x) + sin((1.57 * x))) + sin((2.25 * x))))" }, // Phase shift on 3.14x harmonic
 
-/*133*/ { "Double Waves", "max(-1.0, fma((0.7 * fma(0.8, sin(fma(1.1, x, RAND_OFFSET)), sin(x))), (1.0 - (x / TWO_PI)), (0.5 * fma(MOD_A, sin(fma(PI, MOD_B, fma(2.2, x, RAND_OFFSET))), sin((2.0 * x))))))" }, // Phase shift on 2.2x
+/*133*/ { "Double Waves", "max(-1.0, fma((0.7 * fma(0.8, sin(fma(1.1, x, RAND_OFFSET)), sin(x))), ramp((x / TWO_PI), 1.0, 0.0), (0.5 * fma(MOD_A, sin(fma(PI, MOD_B, fma(2.2, x, RAND_OFFSET))), sin((2.0 * x))))))" }, // Phase shift on 2.2x
 
 /*134*/ { "Metal Impact", "0.25 * (((sin(x) + sin(fma(PI, MOD_B, fma(1.25, x, (0.5 * MOD_A))))) + sin((1.85 * x))) + sin((2.1 * x)))" }, // Phase shift on 1.25x
 
@@ -388,7 +388,7 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /*145*/ { "Sigma A=End B=Decay", "sigma(k, 1.0, fma(abs(MOD_A), 5.0, 1.0), 1.0, (sin((x * k)) / (pow(k, fma(abs(MOD_B), 2.0, 1.0)) + 0.1))) * 0.5" },
 
-/*146*/ { "Noisy Pad (A=NoiseAmt B=Flt)", "(fma(sigma(k, 1.0, 4.0, 1.0, (sin((x * k)) / k)), (1.0 - abs(MOD_A)), (((rand() - 0.5) * 1.5) * abs(MOD_A))) * fma(0.5, tanh((3.0 * (1.0 - (abs(MOD_B) * (1.0 - (FREQUENCY / 1000.0)))))), 0.5)) * 0.6" },
+/*146*/ { "Noisy Pad (A=NoiseAmt B=Flt)", "(mix(abs(MOD_A), sigma(k, 1.0, 4.0, 1.0, (sin((x * k)) / k)), ((rand() - 0.5) * 1.5)) * fma(0.5, tanh((3.0 * (1.0 - (abs(MOD_B) * (1.0 - (FREQUENCY / 1000.0)))))), 0.5)) * 0.6" },
 
 /*147*/ { "Rich String Ensemble", "(sigma(k, 1.0, fma(3.0, abs(MOD_B), 5.0), 1.0, (((sin(fma(x, k, (((MOD_A * 0.02) * k) * RAND_OFFSET))) + sin(fma((x * k), fma(MOD_A, 0.005, 1.0), (((MOD_A * 0.03) * k) * (k * 0.1))))) + sin(fma((x * k), (1.0 - (MOD_A * 0.005)), -(((MOD_A * 0.025) * k) * (k * 0.13))))) / pow(k, fma(0.3, abs(MOD_B), 1.1)))) * 0.15) * fma(0.2, sin(fma(x, 0.5, PI_OVER_2)), 1.0)" },
 
@@ -543,11 +543,11 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 
     // --- Bank 13: Chiptune Tones (POKEY) (208-223) ---
-/*208*/ { "POKEY Pure Tone", "fma((0.1 * (((floor(((x * FREQUENCY) / 100.0)) % 2.0) == 0.0) ? 0.3 : -0.3)), MOD_B, ((x < (TWO_PI * fma(0.3, MOD_A, 0.5))) ? 1.0 : -1.0))" },
+/*208*/ { "POKEY Pure Tone", "fma((0.1 * (((floor(((x * FREQUENCY) / 100.0)) % 2.0) == 0.0) ? 0.3 : -0.3)), MOD_B, fma(-2.0, step(TWO_PI * fma(0.3, MOD_A, 0.5), x), 1.0))" },
 
 /*209*/ { "POKEY Filtered Noise", "fma((floor((((x * FREQUENCY) * fma(MOD_A, 10.0, 15.0)) / 64000.0)) % 2.0), 2.0, -1.0) * fma(0.2, sin((x * fma(MOD_B, 3.0, 2.0))), 0.8)" },
 
-/*210*/ { "POKEY Distorted Bass", "tanh((3.0 * fma(0.3, sin((x * fma(MOD_B, 2.0, 1.0))), ((x < (TWO_PI * fma(0.4, MOD_A, 0.3))) ? 1.0 : -1.0)))) * 0.8" },
+/*210*/ { "POKEY Distorted Bass", "tanh((3.0 * fma(0.3, sin((x * fma(MOD_B, 2.0, 1.0))), fma(-2.0, step(TWO_PI * fma(0.4, MOD_A, 0.3), x), 1.0)))) * 0.8" },
 
 /*211*/ { "POKEY Laser Zap", "(sin(fma(x, fma(MOD_A, 10.0, 1.0), (sin((x * fma(MOD_B, 20.0, 31.0))) * 2.0))) * exp((-x * 0.8))) * fma(0.5, ((floor(((x * FREQUENCY) / 1000.0)) % 4.0) - 1.5), 1.0)" },
 
@@ -573,7 +573,7 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /*222*/ { "POKEY Poly Counter", "fma((((floor((((x * FREQUENCY) * fma(MOD_A, 20.0, 31.0)) / 64000.0)) % 31.0) > fma(MOD_B, 10.0, 15.0)) ? 1.0 : -1.0), 0.7, (0.2 * sin((x * fma(MOD_A, 0.5, 0.5)))))" },
 
-/*223*/ { "POKEY Four Channel", "0.25 * fma(fma((floor((((x * FREQUENCY) * 17.0) / 64000.0)) % 2.0), 2.0, -1.0), 0.8, fma(((x < PI) ? 1.0 : -1.0), fma(0.3, MOD_B, 0.7), (sin(x) + sin(fma(x, 1.33, (MOD_A * PI))))))" },
+/*223*/ { "POKEY Four Channel", "0.25 * fma(fma((floor((((x * FREQUENCY) * 17.0) / 64000.0)) % 2.0), 2.0, -1.0), 0.8, fma(fma(-2.0, step(PI, x), 1.0), fma(0.3, MOD_B, 0.7), (sin(x) + sin(fma(x, 1.33, (MOD_A * PI))))))" },
 
     // Classic Arcade Sounds (144-175)
 
@@ -644,13 +644,13 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 
     // --- Bank 15: Digital, Utilities & Extras (240-255) ---
-/*240*/ { "Logic: PWM Hash", "((sin(x) > 0.0) ^ (sin((x * (1.0 + MOD_A))) > 0.0)) ? 1.0 : -1.0" }, // PWM-like effect using XOR logic.
+/*240*/ { "Logic: PWM Hash", "-sign(sin(x) * sin((x * (1.0 + MOD_A))))" }, // PWM-like effect using XOR logic.
 
 /*241*/ { "Sample & Hold Sine", "sin((floor((x / (PI / 8.0))) * (PI / 8.0)))" }, // Sampled and held sine wave.
 
 /*242*/ { "Digital Saw", "(floor(((x / PI) * 8.0)) / 8.0) - 1.0" }, // Low-resolution sawtooth.
 
-/*243*/ { "Glitch Step", "((x < PI) ? 1.0 : -1.0) * floor((x * MOD_A))" }, // Square wave amplitude modulated by a stepper.
+/*243*/ { "Glitch Step", "fma(-2.0, step(PI, x), 1.0) * floor((x * MOD_A))" }, // Square wave amplitude modulated by a stepper.
 
 
 /*244*/ { "Weird: Gap", "(x > (MOD_A * PI)) ? sin(x) : 0.0" }, // Gated sine wave.

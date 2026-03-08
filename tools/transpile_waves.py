@@ -53,6 +53,12 @@ FUNCTIONS = {
     "rand": (0, "vm_rand"),
     "prob": (3, "prob"),
     "select": (-1, "select"),
+    "clamp": (3, "clamp"),
+    "mix": (3, "mix"),
+    "ramp": (3, "ramp"),
+    "step": (2, "step"),
+    "sign": (1, "sign"),
+    "inversesqrt": (1, "inversesqrt"),
     "sigma": (5, "sigma"), # Special handling
     "lfsr_val": (3, "vm_lfsr_val"),
     "lfsr_noise": (2, "vm_lfsr_noise"),
@@ -298,7 +304,6 @@ class FuncNode(Node):
             # Need to pass params first
             return f"{c_func}(params, {', '.join(arg_strs)})"
 
-
         if self.name == "clamp":
             return f"fmaxf({arg_strs[1]}, fminf({arg_strs[2]}, {arg_strs[0]}))"
 
@@ -306,7 +311,16 @@ class FuncNode(Node):
             return f"fmaf(fmaxf(0.0f, fminf(1.0f, {arg_strs[0]})), ({arg_strs[2]} - {arg_strs[1]}), {arg_strs[1]})"
 
         if self.name == "ramp":
-            return f"fmaf(fmaxf(0.0f, fminf(1.0f, {arg_strs[2]})), ({arg_strs[1]} - {arg_strs[0]}), {arg_strs[0]})"
+            return f"fmaf(fmaxf(0.0f, fminf(1.0f, {arg_strs[0]})), ({arg_strs[2]} - {arg_strs[1]}), {arg_strs[1]})"
+
+        if self.name == "step":
+            return f"(({arg_strs[1]} < {arg_strs[0]}) ? 0.0f : 1.0f)"
+
+        if self.name == "sign":
+            return f"(({arg_strs[0]} > 0.0f) ? 1.0f : (({arg_strs[0]} < 0.0f) ? -1.0f : 0.0f))"
+
+        if self.name == "inversesqrt":
+            return f"(1.0f / sqrtf({arg_strs[0]}))"
 
         if self.name == "remquo":
             return f"(px_remquof_wrapper({arg_strs[0]}, {arg_strs[1]}))"
