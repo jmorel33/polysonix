@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 9
-#define POLYSONIX_VERSION_PATCH 28
+#define POLYSONIX_VERSION_PATCH 29
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -2851,8 +2851,17 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 }
 
                 if (tplfo_params->enabled) {
-                    tlfo_inst->phase = fmodf(tlfo_inst->phase + (tplfo_params->frequency * lfo_update_delta_time), 1.0f);
-                    if (tlfo_inst->phase < 0.0f) tlfo_inst->phase += 1.0f;
+                    tlfo_inst->phase = fmaf(tplfo_params->frequency, lfo_update_delta_time, tlfo_inst->phase);
+                    if (PX_UNLIKELY(tlfo_inst->phase >= 1.0f)) {
+                        tlfo_inst->phase -= 1.0f;
+                        if (PX_UNLIKELY(tlfo_inst->phase >= 1.0f)) tlfo_inst->phase = fmodf(tlfo_inst->phase, 1.0f);
+                    } else if (PX_UNLIKELY(tlfo_inst->phase < 0.0f)) {
+                        tlfo_inst->phase += 1.0f;
+                        if (PX_UNLIKELY(tlfo_inst->phase < 0.0f)) {
+                            tlfo_inst->phase = fmodf(tlfo_inst->phase, 1.0f);
+                            if (tlfo_inst->phase < 0.0f) tlfo_inst->phase += 1.0f;
+                        }
+                    }
 
                     // Generate and store both raw and final values
                     tlfo_inst->current_raw_output_value = GenerateLFOValue(tlfo_inst);

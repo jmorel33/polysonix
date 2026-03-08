@@ -1,5 +1,9 @@
 # Update Log
 
+## v1.9.31 (2026/03/07)
+- **Features / Fixes**:
+  - Optimized template LFO phase wrapping calculation in `polysonix.h` by utilizing fused multiply-add (`fmaf`) and replacing the expensive `fmodf` operation with fast branch-predicted conditionals, improving overall LFO processing efficiency.
+
 ## v1.9.30 (2026/03/07)
 - **Features / Fixes**:
   - Replaced legacy ternary conditionals in `px_wave_rom.h` with branchless `mix` and `step` combined with `fma` expressions to improve wave calculation efficiency.
