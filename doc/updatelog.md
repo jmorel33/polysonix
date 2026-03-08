@@ -1,5 +1,9 @@
 # Update Log
 
+## v1.9.32 (2026/03/08)
+- **Features / Fixes**:
+  - Optimized velocity and aftertouch curve calculations (`PX_CURVE_EXP`, `PX_CURVE_LOG`, `PX_CURVE_S`) in `polysonix.h` by utilizing fused multiply-add (`fmaf`) and replacing expensive `powf` and `logf` calls with fast algebraic equivalents and accurate rational polynomial approximations.
+
 ## v1.9.31 (2026/03/07)
 - **Features / Fixes**:
   - Optimized template LFO phase wrapping calculation in `polysonix.h` by utilizing fused multiply-add (`fmaf`) and replacing the expensive `fmodf` operation with fast branch-predicted conditionals, improving overall LFO processing efficiency.
