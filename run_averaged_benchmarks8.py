@@ -13,6 +13,8 @@ def main():
     # { patch_id: { "name": name, "times": [] } }
     patch_data = {}
 
+    UPDATED_WAVES = [2, 3, 4, 5, 6, 8, 9, 10, 11, 14, 15, 16, 19, 20, 21, 29, 32, 33, 36, 50, 52, 81, 116, 117, 119, 120, 123, 129, 130, 133, 146, 208, 210, 223, 240, 243]
+
     # Regex to match the output table lines:
     # Example: | 0 | Triangle Up | 59.97 | 49.92 | **16.76%** |
     table_line_re = re.compile(r'^\|\s*(\d+)\s*\|\s*(.*?)\s*\|\s*([\d\.]+)\s*\|\s*([\d\.]+)\s*\|')
@@ -34,9 +36,10 @@ def main():
                 # and the actual new run time in group 4.
                 time_val = float(match.group(4))
 
-                if pid not in patch_data:
-                    patch_data[pid] = {"name": name, "times": []}
-                patch_data[pid]["times"].append(time_val)
+                if pid in UPDATED_WAVES:
+                    if pid not in patch_data:
+                        patch_data[pid] = {"name": name, "times": []}
+                    patch_data[pid]["times"].append(time_val)
 
     # Read the previous v1.9.26 baseline from PERFORMANCE_REPORT7.md
     print("Loading Report 7 baseline...")
