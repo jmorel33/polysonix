@@ -3110,10 +3110,10 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
                 if (j < 3) {
                     int base = PX_MOD_DEST_ADSR1_ATTACK + j * 4;
-                    mod_params.attack_time  *= powf(0.05f, dest_mod[base + 0]);
-                    mod_params.decay_time   *= powf(0.1f,  dest_mod[base + 1]);
+                    mod_params.attack_time  *= exp2f(dest_mod[base + 0] * -4.32192809489f); /* log2f(0.05f) */
+                    mod_params.decay_time   *= exp2f(dest_mod[base + 1] * -3.32192809489f); /* log2f(0.1f) */
                     mod_params.sustain_level += dest_mod[base + 2];
-                    mod_params.release_time *= powf(0.1f,  dest_mod[base + 3]);
+                    mod_params.release_time *= exp2f(dest_mod[base + 3] * -3.32192809489f); /* log2f(0.1f) */
                 }
                 mod_params.sustain_level = fmaxf(0.0f, fminf(1.0f, mod_params.sustain_level));
 
