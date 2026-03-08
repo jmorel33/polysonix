@@ -85,9 +85,9 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /* 11*/ { "Sine/Square Down", "mix((0.5 * (MOD_A + 1.0)), ((x < PI) ? sin(fma(PI, MOD_B, x)) : -1.0), tanh((6.0 * ((x < PI) ? sin(fma(PI, MOD_B, x)) : -1.0))))" }, // Phase shift on sine
 
-/* 12*/ { "Saw/Triangle Up", "(x < (TWO_PI * fma(0.1, MOD_B, fma(0.25, MOD_A, 0.5)))) ? ((x / PI_OVER_2) - 1.0) : (((x - PI) < PI_OVER_2) ? ((x - PI) / PI_OVER_2) : (1.0 - (((x - PI) - PI_OVER_2) / PI_OVER_2)))" }, // Adjust split point
+/* 12*/ { "Saw/Triangle Up", "mix(mix((1.0 - (((x - PI) - PI_OVER_2) / PI_OVER_2)), ((x - PI) / PI_OVER_2), step((x - PI), PI_OVER_2)), ((x / PI_OVER_2) - 1.0), step(x, (TWO_PI * fma(0.1, MOD_B, fma(0.25, MOD_A, 0.5)))))" }, // Adjust split point
 
-/* 13*/ { "Triangle/Saw Down", "(x < (TWO_PI * fma(0.1, MOD_B, fma(0.25, MOD_A, 0.5)))) ? (-2.0 * abs(((x / PI) - 0.5))) : (3.0 - ((2.0 * x) / PI))" }, // Adjust split point
+/* 13*/ { "Triangle/Saw Down", "mix((3.0 - ((2.0 * x) / PI)), (-2.0 * abs(((x / PI) - 0.5))), step(x, (TWO_PI * fma(0.1, MOD_B, fma(0.25, MOD_A, 0.5)))))" }, // Adjust split point
 
 /* 14*/ { "Triangle/Sine Up", "mix((0.5 * (MOD_A + 1.0)), fma(2.0, (1.0 - abs(((x / (PI / 2.0)) - 1.0))), -1.0), sin(fma(PI, MOD_B, x)))" }, // Phase shift on sine
 
@@ -144,14 +144,14 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /* 37*/ { "Pulse Train Wreck", "fma((0.2 * MOD_B), sin((2.0 * x)), ((x < (TWO_PI * fma(0.03, MOD_A, 0.1))) ? 1.0 : ((x < (TWO_PI * fma(0.03, MOD_A, 0.15))) ? -1.0 : ((x < (TWO_PI * fma(0.03, MOD_A, 0.3))) ? 0.5 : ((x < (TWO_PI * fma(0.03, MOD_A, 0.35))) ? -0.5 : 0.0)))))" }, // Harmonic texture
 
-/* 38*/ { "Narrow", "(x < (TWO_PI * fma(0.1, MOD_A, 0.2))) ? 1.0 : ((x < (TWO_PI * fma(0.1, MOD_B, fma(0.05, MOD_A, 0.5)))) ? -1.0 : 0.0)" }, // Adjust second pulse width
+/* 38*/ { "Narrow", "mix(mix(0.0, -1.0, step(x, (TWO_PI * fma(0.1, MOD_B, fma(0.05, MOD_A, 0.5))))), 1.0, step(x, (TWO_PI * fma(0.1, MOD_A, 0.2))))" }, // Adjust second pulse width
 
 /* 39*/ { "Quantized Saw 8", "floor((fma(0.5, MOD_B, fma(0.25, MOD_A, ((x / PI) - 1.0))) * 4.0)) * 0.25" }, // Adjust quantization offset
 
 
 /* 40*/ { "PWM Synth (A=Width B=Sub)", "fma(((x < (TWO_PI * fma(0.9, abs(MOD_A), 0.05))) ? 1.0 : -1.0), (1.0 - (0.5 * abs(MOD_B))), ((sin((x * 0.5)) * 0.5) * abs(MOD_B))) * 0.7" },
 
-/* 41*/ { "PWM Gate", "(((x < fma(MOD_B, PI_OVER_2, PI)) ^ (MOD_A > 0.0)) ? 1.0 : -1.0) * 0.8" },
+/* 41*/ { "PWM Gate", "mix(-1.0, 1.0, step(0.5, float((x < fma(MOD_B, PI_OVER_2, PI)) ^ (MOD_A > 0.0)))) * 0.8" },
 
 /* 42*/ { "Harmonic Switch", "(((MOD_A > 0.1) ^ (MOD_B < -0.1)) ? fma(0.5, sin((3.0 * x)), sin(x)) : fma(0.3, cos(fma(2.0, x, (PI * 0.25))), sin(x))) * 0.7" },
 
@@ -163,7 +163,7 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /* 46*/ { "Hard Quantize Sine", "floor((sin(x) * fma(MOD_A, 6.0, 2.0))) / fma(MOD_A, 6.0, 2.0)" }, // A sine wave quantized to low bit depth.
 
-/* 47*/ { "Comparator Fuzz", "(sin(x) > sin((x * (2.0 + MOD_A)))) ? 1.0 : -1.0" }, // 1-bit comparator fuzz effect.
+/* 47*/ { "Comparator Fuzz", "mix(-1.0, 1.0, step(sin((x * (2.0 + MOD_A))), sin(x)))" }, // 1-bit comparator fuzz effect.
 
 
     // --- Bank 3: Phase Distortion & Modulation (48-63) ---
