@@ -1,0 +1,115 @@
+<<<<<<< SEARCH
+#define OP_SELECT         0x46
+#define OP_SMOOTH_SELECT  0x47
+#define OP_CLAMP          0x48
+#define OP_MIX            0x49
+#define OP_RAMP           0x4A
+#define OP_MARKOV         0x4B
+#define OP_HALT           0x4C
+=======
+#define OP_SELECT         0x46
+#define OP_SMOOTH_SELECT  0x47
+#define OP_CLAMP          0x48
+#define OP_MIX            0x49
+#define OP_RAMP           0x4A
+#define OP_MARKOV         0x4B
+#define OP_STEP           0x4C
+#define OP_SIGN           0x4D
+#define OP_INVERSESQRT    0x4E
+#define OP_HALT           0x4F
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+            case OP_NOT:    push(abs(pop()) < EPSILON ? 1.0 : 0.0); break;
+            case OP_CMP_EQ: { float b = pop(); float a = pop(); push(abs(a - b) < EPSILON ? 1.0 : 0.0); break; }
+            case OP_CMP_NE: { float b = pop(); float a = pop(); push(abs(a - b) >= EPSILON ? 1.0 : 0.0); break; }
+            case OP_CMP_GT: { float b = pop(); float a = pop(); push((a > b) ? 1.0 : 0.0); break; }
+            case OP_CMP_GE: { float b = pop(); float a = pop(); push((a >= b) ? 1.0 : 0.0); break; }
+            case OP_CMP_LT: { float b = pop(); float a = pop(); push((a < b) ? 1.0 : 0.0); break; }
+            case OP_CMP_LE: { float b = pop(); float a = pop(); push((a <= b) ? 1.0 : 0.0); break; }
+=======
+            case OP_NOT:    push(1.0 - step(EPSILON, abs(pop()))); break;
+            case OP_CMP_EQ: { float b = pop(); float a = pop(); push(1.0 - step(EPSILON, abs(a - b))); break; }
+            case OP_CMP_NE: { float b = pop(); float a = pop(); push(step(EPSILON, abs(a - b))); break; }
+            case OP_CMP_GT: { float b = pop(); float a = pop(); push(1.0 - step(a, b)); break; }
+            case OP_CMP_GE: { float b = pop(); float a = pop(); push(step(b, a)); break; }
+            case OP_CMP_LT: { float b = pop(); float a = pop(); push(1.0 - step(b, a)); break; }
+            case OP_CMP_LE: { float b = pop(); float a = pop(); push(step(a, b)); break; }
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+            case OP_EXPM1: { push(exp(pop()) - 1.0); break; }
+            case OP_LOG1P: { float v = pop(); push(v > -1.0 ? log(1.0 + v) : 0.0); break; }
+            case OP_HYPOT: { float b = pop(); float a = pop(); push(sqrt(a * a + b * b)); break; }
+=======
+            case OP_EXPM1: { push(exp(pop()) - 1.0); break; }
+            case OP_LOG1P: { float v = pop(); push(v > -1.0 ? log(1.0 + v) : 0.0); break; }
+            case OP_HYPOT: { float b = pop(); float a = pop(); float sq = a * a + b * b; push(sq > 0.0 ? sq * inversesqrt(sq) : 0.0); break; }
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+            case OP_PROB: { float f = pop(); float t = pop(); float c = pop(); float rand_val = vm_params.rand_offset; push((rand_val < c) ? t : f); break; }
+=======
+            case OP_PROB: { float f = pop(); float t = pop(); float c = pop(); float rand_val = vm_params.rand_offset; push(mix(t, f, step(c, rand_val))); break; }
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+                param = max(0.0, min(float(n - 1), param));
+                int low = int(param);
+                float frac = param - float(low);
+                float high_val = (low + 1 < int(n)) ? values[low + 1] : values[low];
+                float selected = fma(frac, (high_val - values[low]), values[low]);
+                push(selected);
+                break;
+            }
+
+            case OP_LFSR_VAL: {
+=======
+                param = max(0.0, min(float(n - 1), param));
+                int low = int(param);
+                float frac = param - float(low);
+                float high_val = (low + 1 < int(n)) ? values[low + 1] : values[low];
+                push(mix(values[low], high_val, frac));
+                break;
+            }
+
+            case OP_STEP: {
+                float x = pop();
+                float edge = pop();
+                push(step(edge, x));
+                break;
+            }
+
+            case OP_SIGN: {
+                push(sign(pop()));
+                break;
+            }
+
+            case OP_INVERSESQRT: {
+                push(inversesqrt(pop()));
+                break;
+            }
+
+            case OP_LFSR_VAL: {
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+                if (type_id == vm_params.lfsr_type) {
+                    // Free-running mode
+                    advance_lfsr_state(vm_params, vm_metadata, lfsr_state);
+                    res = ((lfsr_state.state & 1) == 1 ? 1.0 : 0.0) * 2.0 - 1.0;
+                } else {
+                    // Table mode
+                    uint period = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
+                    float lfsr_phase = fract((local_x / (2.0 * 3.14159265)) * rate); // Use local_x
+                    uint table_pos = uint(lfsr_phase * period);
+                    res = lfsr_get_bit(vm_metadata, lfsr_tables, type_id, table_pos) * 2.0 - 1.0;
+                }
+=======
+                if (type_id == vm_params.lfsr_type) {
+                    // Free-running mode
+                    advance_lfsr_state(vm_params, vm_metadata, lfsr_state);
+                    res = sign(float(lfsr_state.state & 1u) - 0.5);
+                } else {
+                    // Table mode
+                    uint period = vm_metadata.lfsr_periods[type_id / 4][type_id % 4];
+                    float lfsr_phase = fract((local_x / (2.0 * 3.14159265)) * rate); // Use local_x
+                    uint table_pos = uint(lfsr_phase * period);
+                    res = sign(float(lfsr_get_bit(vm_metadata, lfsr_tables, type_id, table_pos)) - 0.5);
+                }
+>>>>>>> REPLACE

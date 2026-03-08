@@ -579,8 +579,11 @@ typedef enum {
     OP_RAMP           = 0x4A,
     OP_MARKOV         = 0x4B,
 
+    OP_STEP           = 0x4C,
+    OP_SIGN           = 0x4D,
+    OP_INVERSESQRT    = 0x4E,
     // --- End ---
-    OP_HALT           = 0x4C  // Must be last (used for array sizes)
+    OP_HALT           = 0x4F  // Must be last (used for array sizes)
 } OpCode;
 #define VM_MAX_OPCODE OP_HALT
 #define VM_DISPATCH_TABLE_SIZE (VM_MAX_OPCODE + 1) // Important for computed goto table size
@@ -887,6 +890,9 @@ static PxFunctionDef px_functions[] = {
     {"clamp", 5, OP_CLAMP, 3},
     {"mix", 3, OP_MIX, 3},
     {"ramp", 4, OP_RAMP, 3},
+    {"step", 4, OP_STEP, 2},
+    {"sign", 4, OP_SIGN, 1},
+    {"inversesqrt", 11, OP_INVERSESQRT, 1},
     {"atan", 4, OP_ATAN, 1},
     {"abs", 3, OP_ABS, 1},
     {"tanh", 4, OP_TANH, 1},
@@ -2376,7 +2382,10 @@ const char* getOpCodeName(OpCode code) {
         /* 0x49 */ "OP_MIX",
         /* 0x4A */ "OP_RAMP",
         /* 0x4B */ "OP_MARKOV",
-        /* 0x4C */ "OP_HALT"
+        /* 0x4C */ "OP_STEP",
+        /* 0x4D */ "OP_SIGN",
+        /* 0x4E */ "OP_INVERSESQRT",
+        /* 0x4F */ "OP_HALT"
     };
     // Basic bounds check using VM_MAX_OPCODE
     if (code >= 0 && code <= VM_MAX_OPCODE) {
@@ -2498,6 +2507,7 @@ int disassembleInstruction(BytecodeChunk *chunk, int offset) {
         case OP_REMQUO: case OP_NEXTAFTER: case OP_FDIM: case OP_NAN: case OP_INF: case OP_LGAMMA: case OP_TGAMMA:
         case OP_CLAMP: case OP_MIX: case OP_RAMP:
         case OP_PROB:
+        case OP_STEP: case OP_SIGN: case OP_INVERSESQRT:
         case OP_HALT:
             // No operands, size is 1, or operands handled by get_instruction_size for OP_SIGMA_SETUP
             if (instruction == OP_SIGMA_SETUP) instruction_size += 1 + 2+2+2+2; // name_id + 4*ushort
@@ -3154,7 +3164,10 @@ static float execute_sub_chunk(VM *vm, BytecodeChunk *sub_chunk) {
         /* 0x49 OP_MIX */              &&SUB_LABEL_OP_MIX,
         /* 0x4A OP_RAMP */             &&SUB_LABEL_OP_RAMP,
         /* 0x4B OP_MARKOV */           &&SUB_LABEL_OP_MARKOV,
-        /* 0x4C OP_HALT */             &&SUB_LABEL_OP_HALT
+        /* 0x4C OP_STEP */             &&SUB_LABEL_OP_STEP,
+        /* 0x4D OP_SIGN */             &&SUB_LABEL_OP_SIGN,
+        /* 0x4E OP_INVERSESQRT */      &&SUB_LABEL_OP_INVERSESQRT,
+        /* 0x4F OP_HALT */             &&SUB_LABEL_OP_HALT
     };
 
     uint8_t instruction;
@@ -3502,7 +3515,7 @@ SUB_LABEL_OP_EXP2: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_to
 SUB_LABEL_OP_LOG2: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (log2)"); success=false; goto sub_chunk_end; } sp[-1] = (sp[-1] > 0) ? log2f(sp[-1]) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_EXPM1: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (expm1)"); success=false; goto sub_chunk_end; } sp[-1] = expm1f(sp[-1]); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_LOG1P: { if (PX_UNLIKELY(sp <= vm->stack)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (log1p)"); success=false; goto sub_chunk_end; } sp[-1] = (sp[-1] > -1.0f) ? log1pf(sp[-1]) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
-SUB_LABEL_OP_HYPOT: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (hypot)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = hypotf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_HYPOT: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (hypot)"); success=false; goto sub_chunk_end; } float b=*(--sp); float sq = sp[-1]*sp[-1] + b*b; sp[-1] = (sq > 0.0f) ? (sq * (1.0f / sqrtf(sq))) : 0.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_COPYSIGN: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (copysign)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = copysignf(sp[-1], b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_SCALBN: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (scalbn)"); success=false; goto sub_chunk_end; } float b=*(--sp); sp[-1] = scalbnf(sp[-1], (int)b); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
 SUB_LABEL_OP_REMQUO: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (remquo)"); success=false; goto sub_chunk_end; } float b=*(--sp); int q; sp[-1] = remquof(sp[-1], b, &q); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
@@ -3661,6 +3674,10 @@ SUB_LABEL_OP_RAMP: {
     *sp++ = fmaf(time, (end - start), start);
     instruction=*ip++; goto *sub_dispatch_table[instruction];
 }
+SUB_LABEL_OP_STEP: { if (PX_UNLIKELY((sp - vm->stack) < 2)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (step)"); success=false; goto sub_chunk_end; } float x=*(--sp); float edge=*(--sp); *sp++ = (x < edge) ? 0.0f : 1.0f; instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_SIGN: { if (PX_UNLIKELY((sp - vm->stack) < 1)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (sign)"); success=false; goto sub_chunk_end; } float x=*(--sp); *sp++ = (x > 0.0f) ? 1.0f : ((x < 0.0f) ? -1.0f : 0.0f); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+SUB_LABEL_OP_INVERSESQRT: { if (PX_UNLIKELY((sp - vm->stack) < 1)) { vm->ip=ip; vm->stack_top=sp; vm_error(vm,"Stack underflow (inversesqrt)"); success=false; goto sub_chunk_end; } float x=*(--sp); *sp++ = 1.0f / sqrtf(x); instruction=*ip++; goto *sub_dispatch_table[instruction]; }
+
 SUB_LABEL_OP_MARKOV: {
     uint8_t n_states = *ip++;
     int matrix_size = n_states * n_states;
@@ -3876,7 +3893,10 @@ float execute_bytecode(BytecodeChunk *chunk, VmParams* params) {
         /* 0x49 OP_MIX */              &&LABEL_OP_MIX,
         /* 0x4A OP_RAMP */             &&LABEL_OP_RAMP,
         /* 0x4B OP_MARKOV */           &&LABEL_OP_MARKOV,
-        /* 0x4C OP_HALT */             &&LABEL_OP_HALT
+        /* 0x4C OP_STEP */             &&LABEL_OP_STEP,
+        /* 0x4D OP_SIGN */             &&LABEL_OP_SIGN,
+        /* 0x4E OP_INVERSESQRT */      &&LABEL_OP_INVERSESQRT,
+        /* 0x4F OP_HALT */             &&LABEL_OP_HALT
     };
 
     // --- Central Dispatch Loop ---
@@ -3998,7 +4018,7 @@ LABEL_OP_EXP2: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; v
 LABEL_OP_LOG2: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (log2)"); success=false; goto execution_end; } sp[-1] = (sp[-1] > 0) ? log2f(sp[-1]) : 0.0f; goto DISPATCH_LOOP; }
 LABEL_OP_EXPM1: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (expm1)"); success=false; goto execution_end; } sp[-1] = expm1f(sp[-1]); goto DISPATCH_LOOP; }
 LABEL_OP_LOG1P: { if (PX_UNLIKELY(sp <= vm.stack)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (log1p)"); success=false; goto execution_end; } sp[-1] = (sp[-1] > -1.0f) ? log1pf(sp[-1]) : 0.0f; goto DISPATCH_LOOP; }
-LABEL_OP_HYPOT: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (hypot)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = hypotf(sp[-1], b); goto DISPATCH_LOOP; }
+LABEL_OP_HYPOT: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (hypot)"); success=false; goto execution_end; } float b=*(--sp); float sq = sp[-1]*sp[-1] + b*b; sp[-1] = (sq > 0.0f) ? (sq * (1.0f / sqrtf(sq))) : 0.0f; goto DISPATCH_LOOP; }
 LABEL_OP_COPYSIGN: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (copysign)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = copysignf(sp[-1], b); goto DISPATCH_LOOP; }
 LABEL_OP_SCALBN: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (scalbn)"); success=false; goto execution_end; } float b=*(--sp); sp[-1] = scalbnf(sp[-1], (int)b); goto DISPATCH_LOOP; }
 LABEL_OP_REMQUO: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (remquo)"); success=false; goto execution_end; } float b=*(--sp); int q; sp[-1] = remquof(sp[-1], b, &q); goto DISPATCH_LOOP; }
@@ -4279,6 +4299,10 @@ LABEL_OP_RAMP: {
     *sp++ = fmaf(time, (end - start), start);
     goto DISPATCH_LOOP;
 }
+LABEL_OP_STEP: { if (PX_UNLIKELY((sp - vm.stack) < 2)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (step)"); success=false; goto execution_end; } float x=*(--sp); float edge=*(--sp); *sp++ = (x < edge) ? 0.0f : 1.0f; goto DISPATCH_LOOP; }
+LABEL_OP_SIGN: { if (PX_UNLIKELY((sp - vm.stack) < 1)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (sign)"); success=false; goto execution_end; } float x=*(--sp); *sp++ = (x > 0.0f) ? 1.0f : ((x < 0.0f) ? -1.0f : 0.0f); goto DISPATCH_LOOP; }
+LABEL_OP_INVERSESQRT: { if (PX_UNLIKELY((sp - vm.stack) < 1)) { vm.ip=ip; vm.stack_top=sp; vm_error(&vm,"Stack underflow (inversesqrt)"); success=false; goto execution_end; } float x=*(--sp); *sp++ = 1.0f / sqrtf(x); goto DISPATCH_LOOP; }
+
 LABEL_OP_MARKOV: {
     uint8_t n_states = *ip++;
     int matrix_size = n_states * n_states;
@@ -4558,6 +4582,7 @@ static int get_instruction_size(const BytecodeChunk *chunk, int offset) {
         case OP_EXP2: case OP_LOG2: case OP_EXPM1: case OP_LOG1P: case OP_HYPOT: case OP_COPYSIGN: case OP_SCALBN:
         case OP_REMQUO: case OP_NEXTAFTER: case OP_FDIM: case OP_NAN: case OP_INF: case OP_LGAMMA: case OP_TGAMMA:
         case OP_CLAMP: case OP_MIX: case OP_RAMP:
+        case OP_STEP: case OP_SIGN: case OP_INVERSESQRT:
         case OP_HALT:
             // Size remains 1
             break;
