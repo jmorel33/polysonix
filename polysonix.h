@@ -2886,8 +2886,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 // v1.4.5: Apply velocity curve
                 switch (s->patch.velocity_curve) {
                     case PX_CURVE_EXP: raw_vel = raw_vel * raw_vel; break; // Steep high
-                    case PX_CURVE_LOG: raw_vel = (raw_vel * (1.718282f + 0.268820f * raw_vel)) / (1.0f + 0.987102f * raw_vel); break; // Steep low
-                    case PX_CURVE_S:   raw_vel = raw_vel * raw_vel * (3.0f - 2.0f * raw_vel); break; // Smooth S
+                    case PX_CURVE_LOG: raw_vel = (raw_vel * fmaf(0.268820f, raw_vel, 1.718282f)) / fmaf(0.987102f, raw_vel, 1.0f); break; // Steep low
+                    case PX_CURVE_S:   raw_vel = raw_vel * raw_vel * fmaf(-2.0f, raw_vel, 3.0f); break; // Smooth S
                     default: break; // Linear
                 }
                 mod_sources[PX_MOD_SRC_VELOCITY] = raw_vel;
@@ -2896,8 +2896,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 float curve_at = raw_at;
                 switch (s->patch.aftertouch_curve) {
                     case PX_CURVE_EXP: curve_at = curve_at * curve_at; break;
-                    case PX_CURVE_LOG: curve_at = (curve_at * (1.718282f + 0.268820f * curve_at)) / (1.0f + 0.987102f * curve_at); break;
-                    case PX_CURVE_S:   curve_at = curve_at * curve_at * (3.0f - 2.0f * curve_at); break;
+                    case PX_CURVE_LOG: curve_at = (curve_at * fmaf(0.268820f, curve_at, 1.718282f)) / fmaf(0.987102f, curve_at, 1.0f); break;
+                    case PX_CURVE_S:   curve_at = curve_at * curve_at * fmaf(-2.0f, curve_at, 3.0f); break;
                     default: break;
                 }
                 mod_sources[PX_MOD_SRC_AFTERTOUCH] = curve_at;
@@ -2905,8 +2905,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 float curve_poly_at = raw_poly_at;
                 switch (s->patch.aftertouch_curve) {
                     case PX_CURVE_EXP: curve_poly_at = curve_poly_at * curve_poly_at; break;
-                    case PX_CURVE_LOG: curve_poly_at = (curve_poly_at * (1.718282f + 0.268820f * curve_poly_at)) / (1.0f + 0.987102f * curve_poly_at); break;
-                    case PX_CURVE_S:   curve_poly_at = curve_poly_at * curve_poly_at * (3.0f - 2.0f * curve_poly_at); break;
+                    case PX_CURVE_LOG: curve_poly_at = (curve_poly_at * fmaf(0.268820f, curve_poly_at, 1.718282f)) / fmaf(0.987102f, curve_poly_at, 1.0f); break;
+                    case PX_CURVE_S:   curve_poly_at = curve_poly_at * curve_poly_at * fmaf(-2.0f, curve_poly_at, 3.0f); break;
                     default: break;
                 }
                 mod_sources[PX_MOD_SRC_POLY_AFTERTOUCH] = curve_poly_at;
@@ -3066,8 +3066,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             // v1.4.5: Apply velocity curve
             switch (s->patch.velocity_curve) {
                 case PX_CURVE_EXP: raw_vel = raw_vel * raw_vel; break; // Steep high
-                case PX_CURVE_LOG: raw_vel = (raw_vel * (1.718282f + 0.268820f * raw_vel)) / (1.0f + 0.987102f * raw_vel); break; // Steep low
-                case PX_CURVE_S:   raw_vel = raw_vel * raw_vel * (3.0f - 2.0f * raw_vel); break; // Smooth S
+                case PX_CURVE_LOG: raw_vel = (raw_vel * fmaf(0.268820f, raw_vel, 1.718282f)) / fmaf(0.987102f, raw_vel, 1.0f); break; // Steep low
+                case PX_CURVE_S:   raw_vel = raw_vel * raw_vel * fmaf(-2.0f, raw_vel, 3.0f); break; // Smooth S
                 default: break; // Linear
             }
             mod_sources[PX_MOD_SRC_VELOCITY] = raw_vel;
@@ -3076,8 +3076,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             float curve_at = raw_at;
             switch (s->patch.aftertouch_curve) {
                 case PX_CURVE_EXP: curve_at = curve_at * curve_at; break;
-                case PX_CURVE_LOG: curve_at = (curve_at * (1.718282f + 0.268820f * curve_at)) / (1.0f + 0.987102f * curve_at); break;
-                case PX_CURVE_S:   curve_at = curve_at * curve_at * (3.0f - 2.0f * curve_at); break;
+                case PX_CURVE_LOG: curve_at = (curve_at * fmaf(0.268820f, curve_at, 1.718282f)) / fmaf(0.987102f, curve_at, 1.0f); break;
+                case PX_CURVE_S:   curve_at = curve_at * curve_at * fmaf(-2.0f, curve_at, 3.0f); break;
                 default: break;
             }
             mod_sources[PX_MOD_SRC_AFTERTOUCH] = curve_at;
@@ -3085,8 +3085,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             float curve_poly_at = raw_poly_at;
             switch (s->patch.aftertouch_curve) {
                 case PX_CURVE_EXP: curve_poly_at = curve_poly_at * curve_poly_at; break;
-                case PX_CURVE_LOG: curve_poly_at = (curve_poly_at * (1.718282f + 0.268820f * curve_poly_at)) / (1.0f + 0.987102f * curve_poly_at); break;
-                case PX_CURVE_S:   curve_poly_at = curve_poly_at * curve_poly_at * (3.0f - 2.0f * curve_poly_at); break;
+                case PX_CURVE_LOG: curve_poly_at = (curve_poly_at * fmaf(0.268820f, curve_poly_at, 1.718282f)) / fmaf(0.987102f, curve_poly_at, 1.0f); break;
+                case PX_CURVE_S:   curve_poly_at = curve_poly_at * curve_poly_at * fmaf(-2.0f, curve_poly_at, 3.0f); break;
                 default: break;
             }
             mod_sources[PX_MOD_SRC_POLY_AFTERTOUCH] = curve_poly_at;
