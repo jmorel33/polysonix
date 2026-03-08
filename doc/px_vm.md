@@ -354,7 +354,7 @@ These functions operate on radians.
   - **Example**: `(rand() - 0.5) * 0.1` adds a small amount of random noise to the signal.
 
 **Taming Functions (Branchless)**
-These functions are compiled down to hardware-accelerated C math primitives (`fminf`, `fmaxf`, and `fmaf`), making them ideal for high-performance modulation:
+These functions are compiled down to hardware-accelerated C math primitives and GLSL equivalents, making them ideal for high-performance modulation and logical flow:
 
 - **`clamp(value, min, max)`**: Clamps the `value` strictly within the `[min, max]` range.
   - **Example**: `clamp(prob(0.5, MOD_A, 0.0), 0.2, 0.8)` creates a bounded, probabilistic modulation.
@@ -362,6 +362,12 @@ These functions are compiled down to hardware-accelerated C math primitives (`fm
   - **Example**: `mix(MOD_A, sin(x), saw(x))` crossfades between a sine wave and a sawtooth wave.
 - **`ramp(start, end, time)`**: Linearly interpolates from `start` to `end` driven by a `time` or envelope progress value (clamped between `0.0` and `1.0`).
   - **Example**: `ramp(0.0, 1.0, MOD_B) * sin(x)` applies an amplitude swell to a sine wave.
+- **`step(edge, x)`**: Returns `0.0` if `x < edge`, otherwise returns `1.0`. Useful for branchless conditionals.
+  - **Example**: `mix(sin(x), saw(x), step(PI, x))` switches to a saw wave exactly halfway through the phase cycle.
+- **`sign(x)`**: Returns `-1.0` if `x < 0`, `0.0` if `x == 0`, and `1.0` if `x > 0`. Useful for logical negation and bipolar conversions.
+  - **Example**: `sign(sin(x))` generates a simple, un-aliased square wave.
+- **`inversesqrt(x)`**: Returns the fast inverse square root of `x` (`1.0 / sqrt(x)`). Excellent for normalization or distance calculations.
+  - **Example**: `(a * a + b * b) * inversesqrt(a * a + b * b)` calculates the hypotenuse efficiently.
 
 #### 3.5.4. Probability Function (prob)
 

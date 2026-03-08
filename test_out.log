@@ -1,18 +1,14 @@
 gcc -I. -Wall -Wextra -O2 test/test_vm_taming.c -o test/test_vm_taming  -lm
-In file included from test/test_vm_taming.c:5:
-test/../polysonix.h:84:1: error: static assertion failed: "PxOscillator must be exactly 64 bytes for cache/GPU alignment"
-   84 | static_assert(sizeof(PxOscillator) == 64, "PxOscillator must be exactly 64 bytes for cache/GPU alignment");
-      | ^~~~~~~~~~~~~
-In file included from test/../polysonix.h:1049,
+In file included from test/../polysonix.h:1053,
                  from test/test_vm_taming.c:8:
 test/../px_vm.h: In function ‘patch_jump’:
-test/../px_vm.h:1917:16: warning: comparison is always false due to limited range of data type [-Wtype-limits]
- 1917 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+test/../px_vm.h:1923:16: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
       |                ^
-test/../px_vm.h:1917:38: warning: comparison is always false due to limited range of data type [-Wtype-limits]
- 1917 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+test/../px_vm.h:1923:38: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
       |                                      ^
-In file included from test/../polysonix.h:1092:
+In file included from test/../polysonix.h:1096:
 test/../px_wave_rom.h: At top level:
 test/../px_wave_rom.h:62:10: warning: missing initializer for field ‘compiled_bytecode’ of ‘WaveDefinition’ [-Wmissing-field-initializers]
    62 | /*   0*/ { "Triangle Up", "fma((1.0 * MOD_B), sin((2.0 * x)), (1.0 - (2.0 * abs(((fma(MOD_C, 0.5, x) / PI) - 1.0)))))" }, // MOD_A: Unused. MOD_B: Harmonic. MOD_C: Phase skew/bend.
@@ -1552,45 +1548,441 @@ test/../px_vm.h:459:20: note: ‘compiled_bytecode’ declared here
   459 |     BytecodeChunk* compiled_bytecode; // Pointer to the compiled version (initially NULL)
       |                    ^~~~~~~~~~~~~~~~~
 test/../polysonix.h: In function ‘PX_Process’:
-test/../polysonix.h:3255:46: warning: unused variable ‘current_step’ [-Wunused-variable]
- 3255 |                         const PxWaveSeqStep* current_step = &sq->current_sequence->steps[sq->step_idx];
+test/../polysonix.h:3259:46: warning: unused variable ‘current_step’ [-Wunused-variable]
+ 3259 |                         const PxWaveSeqStep* current_step = &sq->current_sequence->steps[sq->step_idx];
       |                                              ^~~~~~~~~~~~
-test/../polysonix.h:3151:19: warning: unused variable ‘lfo_pan_env_input’ [-Wunused-variable]
- 3151 |             float lfo_pan_env_input = v->lfo_pan_mod_val;
+test/../polysonix.h:3155:19: warning: unused variable ‘lfo_pan_env_input’ [-Wunused-variable]
+ 3155 |             float lfo_pan_env_input = v->lfo_pan_mod_val;
       |                   ^~~~~~~~~~~~~~~~~
 test/../polysonix.h: In function ‘PX_GetLFOParam’:
-test/../polysonix.h:4084:65: warning: unused parameter ‘p’ [-Wunused-parameter]
- 4084 | PX_API float PX_GetLFOParam(PxSynth* s, int idx, PxLFOParamType p) {
+test/../polysonix.h:4088:65: warning: unused parameter ‘p’ [-Wunused-parameter]
+ 4088 | PX_API float PX_GetLFOParam(PxSynth* s, int idx, PxLFOParamType p) {
       |                                                  ~~~~~~~~~~~~~~~^
 test/../px_vm.h: At top level:
-test/../px_vm.h:4350:13: warning: ‘compile_and_generate_wave’ defined but not used [-Wunused-function]
- 4350 | static bool compile_and_generate_wave( const char *expression, BytecodeChunk** chunk_ptr_location, float *output_buffer, uint16_t wave_length)
+test/../px_vm.h:4374:13: warning: ‘compile_and_generate_wave’ defined but not used [-Wunused-function]
+ 4374 | static bool compile_and_generate_wave( const char *expression, BytecodeChunk** chunk_ptr_location, float *output_buffer, uint16_t wave_length)
       |             ^~~~~~~~~~~~~~~~~~~~~~~~~
-test/../px_vm.h:2962:16: warning: ‘read_byte’ defined but not used [-Wunused-function]
- 2962 | static uint8_t read_byte(VM *vm) {
+test/../px_vm.h:2972:16: warning: ‘read_byte’ defined but not used [-Wunused-function]
+ 2972 | static uint8_t read_byte(VM *vm) {
       |                ^~~~~~~~~
-test/../px_vm.h:2956:16: warning: ‘read_jump_offset’ defined but not used [-Wunused-function]
- 2956 | static int16_t read_jump_offset(VM *vm) {
+test/../px_vm.h:2966:16: warning: ‘read_jump_offset’ defined but not used [-Wunused-function]
+ 2966 | static int16_t read_jump_offset(VM *vm) {
       |                ^~~~~~~~~~~~~~~~
-test/../px_vm.h:2950:17: warning: ‘read_short’ defined but not used [-Wunused-function]
- 2950 | static uint16_t read_short(VM *vm) {
+test/../px_vm.h:2960:17: warning: ‘read_short’ defined but not used [-Wunused-function]
+ 2960 | static uint16_t read_short(VM *vm) {
       |                 ^~~~~~~~~~
-test/../px_vm.h:2940:14: warning: ‘peek’ defined but not used [-Wunused-function]
- 2940 | static float peek(VM *vm, int distance) {
+test/../px_vm.h:2950:14: warning: ‘peek’ defined but not used [-Wunused-function]
+ 2950 | static float peek(VM *vm, int distance) {
       |              ^~~~
-test/../px_vm.h:2931:14: warning: ‘pop’ defined but not used [-Wunused-function]
- 2931 | static float pop(VM *vm) {
+test/../px_vm.h:2941:14: warning: ‘pop’ defined but not used [-Wunused-function]
+ 2941 | static float pop(VM *vm) {
       |              ^~~
-test/../px_vm.h:2922:13: warning: ‘push’ defined but not used [-Wunused-function]
- 2922 | static void push(VM *vm, float value) {
+test/../px_vm.h:2932:13: warning: ‘push’ defined but not used [-Wunused-function]
+ 2932 | static void push(VM *vm, float value) {
       |             ^~~~
-test/../px_vm.h:1845:13: warning: ‘emit_bytes’ defined but not used [-Wunused-function]
- 1845 | static void emit_bytes(BytecodeChunk *chunk, uint8_t byte1, uint8_t byte2) {
+test/../px_vm.h:1851:13: warning: ‘emit_bytes’ defined but not used [-Wunused-function]
+ 1851 | static void emit_bytes(BytecodeChunk *chunk, uint8_t byte1, uint8_t byte2) {
       |             ^~~~~~~~~~
-test/../px_vm.h:946:14: warning: ‘aligned_calloc’ defined but not used [-Wunused-function]
-  946 | static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
+test/../px_vm.h:952:14: warning: ‘aligned_calloc’ defined but not used [-Wunused-function]
+  952 | static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
       |              ^~~~~~~~~~~~~~
-test/../px_vm.h:935:13: warning: ‘aligned_free’ defined but not used [-Wunused-function]
-  935 | static void aligned_free(void* ptr) {
+test/../px_vm.h:941:13: warning: ‘aligned_free’ defined but not used [-Wunused-function]
+  941 | static void aligned_free(void* ptr) {
       |             ^~~~~~~~~~~~
-make: *** [Makefile:62: test/test_vm_taming] Error 1
+test/../px_vm.h: In function ‘tokenize’:
+test/../px_vm.h:1071:17: warning: ‘__builtin_strncpy’ output may be truncated copying 31 bytes from a string of length 31 [-Wstringop-truncation]
+ 1071 |                 strncpy(t->value, ident_buffer, 31);
+      |                 ^
+test/../polysonix.h: In function ‘PX_Process’:
+test/../polysonix.h:2442:17: warning: ‘__builtin_strncpy’ output may be truncated copying 63 bytes from a string of length 63 [-Wstringop-truncation]
+ 2442 |                 strncpy(s->patch.name, cmd.data.patch_name.name, PX_PATCH_NAME_LEN - 1);
+      |                 ^
+gcc -I. -Wall -Wextra -O2 test/test_vm_div_zero.c -o test/test_vm_div_zero -lm
+In file included from test/test_vm_div_zero.c:2:
+./px_vm.h: In function ‘patch_jump’:
+./px_vm.h:1923:16: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                ^
+./px_vm.h:1923:38: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                                      ^
+./px_vm.h: At top level:
+./px_vm.h:4374:13: warning: ‘compile_and_generate_wave’ defined but not used [-Wunused-function]
+ 4374 | static bool compile_and_generate_wave( const char *expression, BytecodeChunk** chunk_ptr_location, float *output_buffer, uint16_t wave_length)
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~
+./px_vm.h:2972:16: warning: ‘read_byte’ defined but not used [-Wunused-function]
+ 2972 | static uint8_t read_byte(VM *vm) {
+      |                ^~~~~~~~~
+./px_vm.h:2966:16: warning: ‘read_jump_offset’ defined but not used [-Wunused-function]
+ 2966 | static int16_t read_jump_offset(VM *vm) {
+      |                ^~~~~~~~~~~~~~~~
+./px_vm.h:2960:17: warning: ‘read_short’ defined but not used [-Wunused-function]
+ 2960 | static uint16_t read_short(VM *vm) {
+      |                 ^~~~~~~~~~
+./px_vm.h:2950:14: warning: ‘peek’ defined but not used [-Wunused-function]
+ 2950 | static float peek(VM *vm, int distance) {
+      |              ^~~~
+./px_vm.h:2941:14: warning: ‘pop’ defined but not used [-Wunused-function]
+ 2941 | static float pop(VM *vm) {
+      |              ^~~
+./px_vm.h:2932:13: warning: ‘push’ defined but not used [-Wunused-function]
+ 2932 | static void push(VM *vm, float value) {
+      |             ^~~~
+./px_vm.h:1851:13: warning: ‘emit_bytes’ defined but not used [-Wunused-function]
+ 1851 | static void emit_bytes(BytecodeChunk *chunk, uint8_t byte1, uint8_t byte2) {
+      |             ^~~~~~~~~~
+./px_vm.h:1794:13: warning: ‘insert_cache’ defined but not used [-Wunused-function]
+ 1794 | static bool insert_cache(const char *expression, BytecodeChunk *chunk_to_store) {
+      |             ^~~~~~~~~~~~
+./px_vm.h:952:14: warning: ‘aligned_calloc’ defined but not used [-Wunused-function]
+  952 | static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
+      |              ^~~~~~~~~~~~~~
+./px_vm.h:941:13: warning: ‘aligned_free’ defined but not used [-Wunused-function]
+  941 | static void aligned_free(void* ptr) {
+      |             ^~~~~~~~~~~~
+./px_vm.h: In function ‘tokenize’:
+./px_vm.h:1071:17: warning: ‘__builtin_strncpy’ output may be truncated copying 31 bytes from a string of length 31 [-Wstringop-truncation]
+ 1071 |                 strncpy(t->value, ident_buffer, 31);
+      |                 ^
+gcc -I. -Wall -Wextra -O2 -DPX_VM_IMPLEMENTATION test/test_vm_jump_bounds.c -o test/test_vm_jump_bounds -lm
+In file included from test/test_vm_jump_bounds.c:1:
+./px_vm.h: In function ‘patch_jump’:
+./px_vm.h:1923:16: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                ^
+./px_vm.h:1923:38: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                                      ^
+./px_vm.h: At top level:
+./px_vm.h:4374:13: warning: ‘compile_and_generate_wave’ defined but not used [-Wunused-function]
+ 4374 | static bool compile_and_generate_wave( const char *expression, BytecodeChunk** chunk_ptr_location, float *output_buffer, uint16_t wave_length)
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~
+./px_vm.h:2972:16: warning: ‘read_byte’ defined but not used [-Wunused-function]
+ 2972 | static uint8_t read_byte(VM *vm) {
+      |                ^~~~~~~~~
+./px_vm.h:2966:16: warning: ‘read_jump_offset’ defined but not used [-Wunused-function]
+ 2966 | static int16_t read_jump_offset(VM *vm) {
+      |                ^~~~~~~~~~~~~~~~
+./px_vm.h:2960:17: warning: ‘read_short’ defined but not used [-Wunused-function]
+ 2960 | static uint16_t read_short(VM *vm) {
+      |                 ^~~~~~~~~~
+./px_vm.h:2950:14: warning: ‘peek’ defined but not used [-Wunused-function]
+ 2950 | static float peek(VM *vm, int distance) {
+      |              ^~~~
+./px_vm.h:2941:14: warning: ‘pop’ defined but not used [-Wunused-function]
+ 2941 | static float pop(VM *vm) {
+      |              ^~~
+./px_vm.h:2932:13: warning: ‘push’ defined but not used [-Wunused-function]
+ 2932 | static void push(VM *vm, float value) {
+      |             ^~~~
+./px_vm.h:1851:13: warning: ‘emit_bytes’ defined but not used [-Wunused-function]
+ 1851 | static void emit_bytes(BytecodeChunk *chunk, uint8_t byte1, uint8_t byte2) {
+      |             ^~~~~~~~~~
+./px_vm.h:1794:13: warning: ‘insert_cache’ defined but not used [-Wunused-function]
+ 1794 | static bool insert_cache(const char *expression, BytecodeChunk *chunk_to_store) {
+      |             ^~~~~~~~~~~~
+./px_vm.h:952:14: warning: ‘aligned_calloc’ defined but not used [-Wunused-function]
+  952 | static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
+      |              ^~~~~~~~~~~~~~
+./px_vm.h:941:13: warning: ‘aligned_free’ defined but not used [-Wunused-function]
+  941 | static void aligned_free(void* ptr) {
+      |             ^~~~~~~~~~~~
+./px_vm.h: In function ‘tokenize’:
+./px_vm.h:1071:17: warning: ‘__builtin_strncpy’ output may be truncated copying 31 bytes from a string of length 31 [-Wstringop-truncation]
+ 1071 |                 strncpy(t->value, ident_buffer, 31);
+      |                 ^
+gcc -I. -Wall -Wextra -O2 -c test/test_px_vm_impl.c -o test/test_px_vm_impl.o
+In file included from test/test_px_vm_impl.c:2:
+test/../px_vm.h: In function ‘patch_jump’:
+test/../px_vm.h:1923:16: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                ^
+test/../px_vm.h:1923:38: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                                      ^
+test/../px_vm.h: At top level:
+test/../px_vm.h:4374:13: warning: ‘compile_and_generate_wave’ defined but not used [-Wunused-function]
+ 4374 | static bool compile_and_generate_wave( const char *expression, BytecodeChunk** chunk_ptr_location, float *output_buffer, uint16_t wave_length)
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~
+test/../px_vm.h:2972:16: warning: ‘read_byte’ defined but not used [-Wunused-function]
+ 2972 | static uint8_t read_byte(VM *vm) {
+      |                ^~~~~~~~~
+test/../px_vm.h:2966:16: warning: ‘read_jump_offset’ defined but not used [-Wunused-function]
+ 2966 | static int16_t read_jump_offset(VM *vm) {
+      |                ^~~~~~~~~~~~~~~~
+test/../px_vm.h:2960:17: warning: ‘read_short’ defined but not used [-Wunused-function]
+ 2960 | static uint16_t read_short(VM *vm) {
+      |                 ^~~~~~~~~~
+test/../px_vm.h:2950:14: warning: ‘peek’ defined but not used [-Wunused-function]
+ 2950 | static float peek(VM *vm, int distance) {
+      |              ^~~~
+test/../px_vm.h:2941:14: warning: ‘pop’ defined but not used [-Wunused-function]
+ 2941 | static float pop(VM *vm) {
+      |              ^~~
+test/../px_vm.h:2932:13: warning: ‘push’ defined but not used [-Wunused-function]
+ 2932 | static void push(VM *vm, float value) {
+      |             ^~~~
+test/../px_vm.h:1851:13: warning: ‘emit_bytes’ defined but not used [-Wunused-function]
+ 1851 | static void emit_bytes(BytecodeChunk *chunk, uint8_t byte1, uint8_t byte2) {
+      |             ^~~~~~~~~~
+test/../px_vm.h:1794:13: warning: ‘insert_cache’ defined but not used [-Wunused-function]
+ 1794 | static bool insert_cache(const char *expression, BytecodeChunk *chunk_to_store) {
+      |             ^~~~~~~~~~~~
+test/../px_vm.h:952:14: warning: ‘aligned_calloc’ defined but not used [-Wunused-function]
+  952 | static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
+      |              ^~~~~~~~~~~~~~
+test/../px_vm.h:941:13: warning: ‘aligned_free’ defined but not used [-Wunused-function]
+  941 | static void aligned_free(void* ptr) {
+      |             ^~~~~~~~~~~~
+test/../px_vm.h: In function ‘tokenize’:
+test/../px_vm.h:1071:17: warning: ‘__builtin_strncpy’ output may be truncated copying 31 bytes from a string of length 31 [-Wstringop-truncation]
+ 1071 |                 strncpy(t->value, ident_buffer, 31);
+      |                 ^
+gcc -I. -Wall -Wextra -O2 -c test/test_px_vm_client.c -o test/test_px_vm_client.o
+gcc test/test_px_vm_impl.o test/test_px_vm_client.o -o test/test_vm_compliance -lm
+gcc -I. -Wall -Wextra -O2 -DPX_VM_IMPLEMENTATION test/test_lfsr.c -o test/test_lfsr -lm
+In file included from test/test_lfsr.c:1:
+test/../px_vm.h: In function ‘patch_jump’:
+test/../px_vm.h:1923:16: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                ^
+test/../px_vm.h:1923:38: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                                      ^
+test/../px_vm.h: At top level:
+test/../px_vm.h:4374:13: warning: ‘compile_and_generate_wave’ defined but not used [-Wunused-function]
+ 4374 | static bool compile_and_generate_wave( const char *expression, BytecodeChunk** chunk_ptr_location, float *output_buffer, uint16_t wave_length)
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~
+test/../px_vm.h:2972:16: warning: ‘read_byte’ defined but not used [-Wunused-function]
+ 2972 | static uint8_t read_byte(VM *vm) {
+      |                ^~~~~~~~~
+test/../px_vm.h:2966:16: warning: ‘read_jump_offset’ defined but not used [-Wunused-function]
+ 2966 | static int16_t read_jump_offset(VM *vm) {
+      |                ^~~~~~~~~~~~~~~~
+test/../px_vm.h:2960:17: warning: ‘read_short’ defined but not used [-Wunused-function]
+ 2960 | static uint16_t read_short(VM *vm) {
+      |                 ^~~~~~~~~~
+test/../px_vm.h:2950:14: warning: ‘peek’ defined but not used [-Wunused-function]
+ 2950 | static float peek(VM *vm, int distance) {
+      |              ^~~~
+test/../px_vm.h:2941:14: warning: ‘pop’ defined but not used [-Wunused-function]
+ 2941 | static float pop(VM *vm) {
+      |              ^~~
+test/../px_vm.h:2932:13: warning: ‘push’ defined but not used [-Wunused-function]
+ 2932 | static void push(VM *vm, float value) {
+      |             ^~~~
+test/../px_vm.h:1851:13: warning: ‘emit_bytes’ defined but not used [-Wunused-function]
+ 1851 | static void emit_bytes(BytecodeChunk *chunk, uint8_t byte1, uint8_t byte2) {
+      |             ^~~~~~~~~~
+test/../px_vm.h:1794:13: warning: ‘insert_cache’ defined but not used [-Wunused-function]
+ 1794 | static bool insert_cache(const char *expression, BytecodeChunk *chunk_to_store) {
+      |             ^~~~~~~~~~~~
+test/../px_vm.h:952:14: warning: ‘aligned_calloc’ defined but not used [-Wunused-function]
+  952 | static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
+      |              ^~~~~~~~~~~~~~
+test/../px_vm.h:941:13: warning: ‘aligned_free’ defined but not used [-Wunused-function]
+  941 | static void aligned_free(void* ptr) {
+      |             ^~~~~~~~~~~~
+test/../px_vm.h: In function ‘tokenize’:
+test/../px_vm.h:1071:17: warning: ‘__builtin_strncpy’ output may be truncated copying 31 bytes from a string of length 31 [-Wstringop-truncation]
+ 1071 |                 strncpy(t->value, ident_buffer, 31);
+      |                 ^
+gcc -I. -Wall -Wextra -O2 -DPX_VM_IMPLEMENTATION test/test_vm_prob.c -o test/test_vm_prob -lm
+In file included from test/test_vm_prob.c:9:
+test/../px_vm.h: In function ‘patch_jump’:
+test/../px_vm.h:1923:16: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                ^
+test/../px_vm.h:1923:38: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                                      ^
+test/../px_vm.h: At top level:
+test/../px_vm.h:4374:13: warning: ‘compile_and_generate_wave’ defined but not used [-Wunused-function]
+ 4374 | static bool compile_and_generate_wave( const char *expression, BytecodeChunk** chunk_ptr_location, float *output_buffer, uint16_t wave_length)
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~
+test/../px_vm.h:2972:16: warning: ‘read_byte’ defined but not used [-Wunused-function]
+ 2972 | static uint8_t read_byte(VM *vm) {
+      |                ^~~~~~~~~
+test/../px_vm.h:2966:16: warning: ‘read_jump_offset’ defined but not used [-Wunused-function]
+ 2966 | static int16_t read_jump_offset(VM *vm) {
+      |                ^~~~~~~~~~~~~~~~
+test/../px_vm.h:2960:17: warning: ‘read_short’ defined but not used [-Wunused-function]
+ 2960 | static uint16_t read_short(VM *vm) {
+      |                 ^~~~~~~~~~
+test/../px_vm.h:2950:14: warning: ‘peek’ defined but not used [-Wunused-function]
+ 2950 | static float peek(VM *vm, int distance) {
+      |              ^~~~
+test/../px_vm.h:2941:14: warning: ‘pop’ defined but not used [-Wunused-function]
+ 2941 | static float pop(VM *vm) {
+      |              ^~~
+test/../px_vm.h:2932:13: warning: ‘push’ defined but not used [-Wunused-function]
+ 2932 | static void push(VM *vm, float value) {
+      |             ^~~~
+test/../px_vm.h:1851:13: warning: ‘emit_bytes’ defined but not used [-Wunused-function]
+ 1851 | static void emit_bytes(BytecodeChunk *chunk, uint8_t byte1, uint8_t byte2) {
+      |             ^~~~~~~~~~
+test/../px_vm.h:1794:13: warning: ‘insert_cache’ defined but not used [-Wunused-function]
+ 1794 | static bool insert_cache(const char *expression, BytecodeChunk *chunk_to_store) {
+      |             ^~~~~~~~~~~~
+test/../px_vm.h:952:14: warning: ‘aligned_calloc’ defined but not used [-Wunused-function]
+  952 | static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
+      |              ^~~~~~~~~~~~~~
+test/../px_vm.h:941:13: warning: ‘aligned_free’ defined but not used [-Wunused-function]
+  941 | static void aligned_free(void* ptr) {
+      |             ^~~~~~~~~~~~
+test/../px_vm.h: In function ‘tokenize’:
+test/../px_vm.h:1071:17: warning: ‘__builtin_strncpy’ output may be truncated copying 31 bytes from a string of length 31 [-Wstringop-truncation]
+ 1071 |                 strncpy(t->value, ident_buffer, 31);
+      |                 ^
+gcc -I. -Wall -Wextra -O2 -DPX_VM_IMPLEMENTATION test/test_vm_select.c -o test/test_vm_select -lm
+In file included from test/test_vm_select.c:1:
+./px_vm.h: In function ‘patch_jump’:
+./px_vm.h:1923:16: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                ^
+./px_vm.h:1923:38: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                                      ^
+./px_vm.h: At top level:
+./px_vm.h:4374:13: warning: ‘compile_and_generate_wave’ defined but not used [-Wunused-function]
+ 4374 | static bool compile_and_generate_wave( const char *expression, BytecodeChunk** chunk_ptr_location, float *output_buffer, uint16_t wave_length)
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~
+./px_vm.h:2972:16: warning: ‘read_byte’ defined but not used [-Wunused-function]
+ 2972 | static uint8_t read_byte(VM *vm) {
+      |                ^~~~~~~~~
+./px_vm.h:2966:16: warning: ‘read_jump_offset’ defined but not used [-Wunused-function]
+ 2966 | static int16_t read_jump_offset(VM *vm) {
+      |                ^~~~~~~~~~~~~~~~
+./px_vm.h:2960:17: warning: ‘read_short’ defined but not used [-Wunused-function]
+ 2960 | static uint16_t read_short(VM *vm) {
+      |                 ^~~~~~~~~~
+./px_vm.h:2950:14: warning: ‘peek’ defined but not used [-Wunused-function]
+ 2950 | static float peek(VM *vm, int distance) {
+      |              ^~~~
+./px_vm.h:2941:14: warning: ‘pop’ defined but not used [-Wunused-function]
+ 2941 | static float pop(VM *vm) {
+      |              ^~~
+./px_vm.h:2932:13: warning: ‘push’ defined but not used [-Wunused-function]
+ 2932 | static void push(VM *vm, float value) {
+      |             ^~~~
+./px_vm.h:1851:13: warning: ‘emit_bytes’ defined but not used [-Wunused-function]
+ 1851 | static void emit_bytes(BytecodeChunk *chunk, uint8_t byte1, uint8_t byte2) {
+      |             ^~~~~~~~~~
+./px_vm.h:1794:13: warning: ‘insert_cache’ defined but not used [-Wunused-function]
+ 1794 | static bool insert_cache(const char *expression, BytecodeChunk *chunk_to_store) {
+      |             ^~~~~~~~~~~~
+./px_vm.h:952:14: warning: ‘aligned_calloc’ defined but not used [-Wunused-function]
+  952 | static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
+      |              ^~~~~~~~~~~~~~
+./px_vm.h:941:13: warning: ‘aligned_free’ defined but not used [-Wunused-function]
+  941 | static void aligned_free(void* ptr) {
+      |             ^~~~~~~~~~~~
+./px_vm.h: In function ‘tokenize’:
+./px_vm.h:1071:17: warning: ‘__builtin_strncpy’ output may be truncated copying 31 bytes from a string of length 31 [-Wstringop-truncation]
+ 1071 |                 strncpy(t->value, ident_buffer, 31);
+      |                 ^
+gcc -I. -Wall -Wextra -O2 -DPX_VM_IMPLEMENTATION test/test_vm_smooth_select.c -o test/test_vm_smooth_select -lm
+In file included from test/test_vm_smooth_select.c:1:
+./px_vm.h: In function ‘patch_jump’:
+./px_vm.h:1923:16: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                ^
+./px_vm.h:1923:38: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                                      ^
+./px_vm.h: At top level:
+./px_vm.h:4374:13: warning: ‘compile_and_generate_wave’ defined but not used [-Wunused-function]
+ 4374 | static bool compile_and_generate_wave( const char *expression, BytecodeChunk** chunk_ptr_location, float *output_buffer, uint16_t wave_length)
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~
+./px_vm.h:2972:16: warning: ‘read_byte’ defined but not used [-Wunused-function]
+ 2972 | static uint8_t read_byte(VM *vm) {
+      |                ^~~~~~~~~
+./px_vm.h:2966:16: warning: ‘read_jump_offset’ defined but not used [-Wunused-function]
+ 2966 | static int16_t read_jump_offset(VM *vm) {
+      |                ^~~~~~~~~~~~~~~~
+./px_vm.h:2960:17: warning: ‘read_short’ defined but not used [-Wunused-function]
+ 2960 | static uint16_t read_short(VM *vm) {
+      |                 ^~~~~~~~~~
+./px_vm.h:2950:14: warning: ‘peek’ defined but not used [-Wunused-function]
+ 2950 | static float peek(VM *vm, int distance) {
+      |              ^~~~
+./px_vm.h:2941:14: warning: ‘pop’ defined but not used [-Wunused-function]
+ 2941 | static float pop(VM *vm) {
+      |              ^~~
+./px_vm.h:2932:13: warning: ‘push’ defined but not used [-Wunused-function]
+ 2932 | static void push(VM *vm, float value) {
+      |             ^~~~
+./px_vm.h:1851:13: warning: ‘emit_bytes’ defined but not used [-Wunused-function]
+ 1851 | static void emit_bytes(BytecodeChunk *chunk, uint8_t byte1, uint8_t byte2) {
+      |             ^~~~~~~~~~
+./px_vm.h:1794:13: warning: ‘insert_cache’ defined but not used [-Wunused-function]
+ 1794 | static bool insert_cache(const char *expression, BytecodeChunk *chunk_to_store) {
+      |             ^~~~~~~~~~~~
+./px_vm.h:952:14: warning: ‘aligned_calloc’ defined but not used [-Wunused-function]
+  952 | static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
+      |              ^~~~~~~~~~~~~~
+./px_vm.h:941:13: warning: ‘aligned_free’ defined but not used [-Wunused-function]
+  941 | static void aligned_free(void* ptr) {
+      |             ^~~~~~~~~~~~
+./px_vm.h: In function ‘tokenize’:
+./px_vm.h:1071:17: warning: ‘__builtin_strncpy’ output may be truncated copying 31 bytes from a string of length 31 [-Wstringop-truncation]
+ 1071 |                 strncpy(t->value, ident_buffer, 31);
+      |                 ^
+gcc -I. -Wall -Wextra -O2 -DPX_VM_IMPLEMENTATION test/test_vm_markov.c -o test/test_vm_markov -lm
+In file included from test/test_vm_markov.c:1:
+./px_vm.h: In function ‘patch_jump’:
+./px_vm.h:1923:16: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                ^
+./px_vm.h:1923:38: warning: comparison is always false due to limited range of data type [-Wtype-limits]
+ 1923 |     if (offset > INT16_MAX || offset < INT16_MIN) {
+      |                                      ^
+./px_vm.h: At top level:
+./px_vm.h:4374:13: warning: ‘compile_and_generate_wave’ defined but not used [-Wunused-function]
+ 4374 | static bool compile_and_generate_wave( const char *expression, BytecodeChunk** chunk_ptr_location, float *output_buffer, uint16_t wave_length)
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~
+./px_vm.h:2972:16: warning: ‘read_byte’ defined but not used [-Wunused-function]
+ 2972 | static uint8_t read_byte(VM *vm) {
+      |                ^~~~~~~~~
+./px_vm.h:2966:16: warning: ‘read_jump_offset’ defined but not used [-Wunused-function]
+ 2966 | static int16_t read_jump_offset(VM *vm) {
+      |                ^~~~~~~~~~~~~~~~
+./px_vm.h:2960:17: warning: ‘read_short’ defined but not used [-Wunused-function]
+ 2960 | static uint16_t read_short(VM *vm) {
+      |                 ^~~~~~~~~~
+./px_vm.h:2950:14: warning: ‘peek’ defined but not used [-Wunused-function]
+ 2950 | static float peek(VM *vm, int distance) {
+      |              ^~~~
+./px_vm.h:2941:14: warning: ‘pop’ defined but not used [-Wunused-function]
+ 2941 | static float pop(VM *vm) {
+      |              ^~~
+./px_vm.h:2932:13: warning: ‘push’ defined but not used [-Wunused-function]
+ 2932 | static void push(VM *vm, float value) {
+      |             ^~~~
+./px_vm.h:1851:13: warning: ‘emit_bytes’ defined but not used [-Wunused-function]
+ 1851 | static void emit_bytes(BytecodeChunk *chunk, uint8_t byte1, uint8_t byte2) {
+      |             ^~~~~~~~~~
+./px_vm.h:1794:13: warning: ‘insert_cache’ defined but not used [-Wunused-function]
+ 1794 | static bool insert_cache(const char *expression, BytecodeChunk *chunk_to_store) {
+      |             ^~~~~~~~~~~~
+./px_vm.h:952:14: warning: ‘aligned_calloc’ defined but not used [-Wunused-function]
+  952 | static void* aligned_calloc(size_t alignment, size_t num, size_t size) {
+      |              ^~~~~~~~~~~~~~
+./px_vm.h:941:13: warning: ‘aligned_free’ defined but not used [-Wunused-function]
+  941 | static void aligned_free(void* ptr) {
+      |             ^~~~~~~~~~~~
+./px_vm.h: In function ‘tokenize’:
+./px_vm.h:1071:17: warning: ‘__builtin_strncpy’ output may be truncated copying 31 bytes from a string of length 31 [-Wstringop-truncation]
+ 1071 |                 strncpy(t->value, ident_buffer, 31);
+      |                 ^
+Running test_vm_div_zero...
+Running test_vm_jump_bounds...
+VM Runtime Error: Jump target out of bounds. (Stack size: 0)
+Running test_vm_compliance...
+Running test_lfsr...
+Running test_security_wave_idx...
+Running test_vm_prob...
+Running test_vm_select...
+Running test_vm_smooth_select...
+Running test_vm_markov...
+All tests passed!
