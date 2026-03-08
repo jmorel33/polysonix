@@ -130,6 +130,9 @@ nextafter(2)                : Next representable floating-point value.
 fdim(2)                     : Positive difference.
 nan(), inf()                : Returns NaN and Infinity.
 lgamma(1), tgamma(1)        : Gamma functions.
+step(edge, x)               : Returns `0.0` if `x < edge`, otherwise returns `1.0`. Useful for branchless conditionals.
+sign(x)                     : Returns `-1.0` if `x < 0`, `0.0` if `x == 0`, and `1.0` if `x > 0`. Useful for logical negation and bipolar conversions.
+inversesqrt(x)              : Returns the fast inverse square root of `x` (`1.0 / sqrt(x)`). Excellent for normalization or distance calculations.
 sigma(5)                    : Summation (loop_var_name, start_val, end_val, step_val, expression_to_sum).
 select(param, v1...vn)      : Dynamically selects an expression based on the param value [0.0..1.0].
 smooth_select(param, v1...vn): Dynamically smoothly selects (lerps) an expression based on the param value.
