@@ -644,7 +644,7 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 
     // --- Bank 15: Digital, Utilities & Extras (240-255) ---
-/*240*/ { "Logic: PWM Hash", "sign(sin(x) * sin((x * (1.0 + MOD_A))))" }, // PWM-like effect using XOR logic.
+/*240*/ { "Logic: PWM Hash", "-sign(sin(x) * sin((x * (1.0 + MOD_A))))" }, // PWM-like effect using XOR logic.
 
 /*241*/ { "Sample & Hold Sine", "sin((floor((x / (PI / 8.0))) * (PI / 8.0)))" }, // Sampled and held sine wave.
 

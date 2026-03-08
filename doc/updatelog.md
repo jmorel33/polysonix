@@ -1,5 +1,10 @@
 # Update Log
 
+## v1.9.29 (2026/03/07)
+- **Features / Fixes**:
+  - Optimized the factory waveforms in `px_wave_rom.h` by aggressively replacing nested `min`/`max` bounds, explicit linear interpolations, and boolean branching conditions with native Polysonix VM branchless opcodes (`clamp`, `mix`, `ramp`, `step`, and `sign`).
+  - Extended the AST parsing capabilities of `tools/transpile_waves.py` to seamlessly convert these operations into high-performance `fmaf` and macro polyfills inside `px_wave_native.h`.
+
 ## v1.9.28 (2026/03/07)
 - **Features / Fixes**:
   - Introduced `step`, `sign`, and `inversesqrt` math operations to the Virtual Machine natively.

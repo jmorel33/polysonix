@@ -1244,7 +1244,7 @@ static float px_wave_native_239(VmParams* params) {
 }
 
 static float px_wave_native_240(VmParams* params) {
-    return (((sinf(params->x) * sinf((params->x * (1.0f + params->modA)))) > 0.0f) ? 1.0f : (((sinf(params->x) * sinf((params->x * (1.0f + params->modA)))) < 0.0f) ? -1.0f : 0.0f));
+    return (-(((sinf(params->x) * sinf((params->x * (1.0f + params->modA)))) > 0.0f) ? 1.0f : (((sinf(params->x) * sinf((params->x * (1.0f + params->modA)))) < 0.0f) ? -1.0f : 0.0f)));
 }
 
 static float px_wave_native_241(VmParams* params) {
