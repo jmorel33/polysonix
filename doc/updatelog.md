@@ -1,5 +1,10 @@
 # Update Log
 
+## v1.9.28 (2026/03/07)
+- **Features / Fixes**:
+  - Introduced `step`, `sign`, and `inversesqrt` math operations to the Virtual Machine natively.
+  - Re-architected execution paths for `prob`, `select`, `smooth_select`, `hypot`, conditional opcodes, and `lfsr_val` to utilize advanced branchless fast-paths (`mix`, `step`, `sign`, `inversesqrt`) in both `px_vm.h` and the GLSL shader (`px_vm.comp`).
+
 ## v1.9.27 (2026/03/07)
 - **Features / Fixes**:
   - Fixed `PxOscillator` structure padding so that it aligns cleanly to exactly 64 bytes.

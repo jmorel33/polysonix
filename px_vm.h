@@ -3024,13 +3024,13 @@ static inline float vm_lfsr_noise(VmParams* params, float type_arg, float rate_a
         if (table->period > 0) {
             if (params->lfsr_type == (LfsrType)type_id && params->lfsr_state != 0) {
                 advance_lfsr_state(params);
-                call_result = ((params->lfsr_state & 1) ? 1.0f : 0.0f) * 2.0f - 1.0f;
+                call_result = copysignf(1.0f, (float)(params->lfsr_state & 1u) - 0.5f);
             } else {
                 float normalized_lfsr_phase = fmodf((params->x / C_TWO_PI) * rate_arg, 1.0f);
                 if (normalized_lfsr_phase < 0.0f) normalized_lfsr_phase += 1.0f;
                 uint32_t table_index = (uint32_t)(normalized_lfsr_phase * table->period);
                 if (table_index >= table->period) table_index = table->period - 1;
-                call_result = (lfsr_get_bit((LfsrType)type_id, table_index) * 2.0f) - 1.0f;
+                call_result = copysignf(1.0f, lfsr_get_bit((LfsrType)type_id, table_index) - 0.5f);
             }
         }
     }
@@ -3365,7 +3365,7 @@ SUB_LABEL_OP_CMP_EQ: {
     } else {
         float b = *(--sp);
         float a = *(--sp);
-        *sp++ = fabsf(a - b) < EPSILON ? 1.0f : 0.0f;
+        *sp++ = 1.0f - (float)(fabsf(a - b) >= EPSILON);
     }
     instruction = *ip++;
     goto *sub_dispatch_table[instruction];
@@ -3380,7 +3380,7 @@ SUB_LABEL_OP_CMP_NE: {
     } else {
         float b = *(--sp);
         float a = *(--sp);
-        *sp++ = fabsf(a - b) >= EPSILON ? 1.0f : 0.0f;
+        *sp++ = (float)(fabsf(a - b) >= EPSILON);
     }
     instruction = *ip++;
     goto *sub_dispatch_table[instruction];
@@ -3395,7 +3395,7 @@ SUB_LABEL_OP_CMP_GT: {
     } else {
         float b = *(--sp);
         float a = *(--sp);
-        *sp++ = (a > b) ? 1.0f : 0.0f;
+        *sp++ = 1.0f - (float)(b >= a);
     }
     instruction = *ip++;
     goto *sub_dispatch_table[instruction];
@@ -3410,7 +3410,7 @@ SUB_LABEL_OP_CMP_GE: {
     } else {
         float b = *(--sp);
         float a = *(--sp);
-        *sp++ = (a >= b) ? 1.0f : 0.0f;
+        *sp++ = (float)(a >= b);
     }
     instruction = *ip++;
     goto *sub_dispatch_table[instruction];
@@ -3425,7 +3425,7 @@ SUB_LABEL_OP_CMP_LT: {
     } else {
         float b = *(--sp);
         float a = *(--sp);
-        *sp++ = (a < b) ? 1.0f : 0.0f;
+        *sp++ = 1.0f - (float)(a >= b);
     }
     instruction = *ip++;
     goto *sub_dispatch_table[instruction];
@@ -3440,7 +3440,7 @@ SUB_LABEL_OP_CMP_LE: {
     } else {
         float b = *(--sp);
         float a = *(--sp);
-        *sp++ = (a <= b) ? 1.0f : 0.0f;
+        *sp++ = (float)(b >= a);
     }
     instruction = *ip++;
     goto *sub_dispatch_table[instruction];
