@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 9
-#define POLYSONIX_VERSION_PATCH 29
+#define POLYSONIX_VERSION_PATCH 33
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -2920,7 +2920,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 float dest_mod[PX_MOD_DEST_COUNT] = {0.0f};
                 for (int m = 0; m < PX_MOD_MATRIX_SLOTS; m++) {
                     PxModSlot* slot = &s->patch.mod_matrix[m];
-                    if (slot->enabled) dest_mod[slot->dest] += mod_sources[slot->source] * slot->amount;
+                    if (slot->enabled) dest_mod[slot->dest] = fmaf(mod_sources[slot->source], slot->amount, dest_mod[slot->dest]);
                 }
 
                 for (int lfo_idx = 0; lfo_idx < s->config.num_lfos; ++lfo_idx) {
@@ -2984,9 +2984,9 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     if (s->patch.template_voice_adsrs[j].enabled && v->adsrs[j].level > INAUDIBLE_ADSR_LEVEL) {
                         float lvl = v->adsrs[j].level; // Snapshot of current level
                         float* mods = &s->patch.template_voice_adsr_mod_amounts[j * PX_ADSR_DEST_COUNT];
-                        if (s->config.num_lfos > 0) adsr_lfo_scale[0] += (lvl-0.5f)*2.f * mods[PX_ADSR_DEST_LFO0_OUTPUT_LEVEL];
-                        if (s->config.num_lfos > 1) adsr_lfo_scale[1] += (lvl-0.5f)*2.f * mods[PX_ADSR_DEST_LFO1_OUTPUT_LEVEL];
-                        if (s->config.num_lfos > 2) adsr_lfo_scale[2] += (lvl-0.5f)*2.f * mods[PX_ADSR_DEST_LFO2_OUTPUT_LEVEL];
+                        if (s->config.num_lfos > 0) adsr_lfo_scale[0] = fmaf((lvl-0.5f)*2.f, mods[PX_ADSR_DEST_LFO0_OUTPUT_LEVEL], adsr_lfo_scale[0]);
+                        if (s->config.num_lfos > 1) adsr_lfo_scale[1] = fmaf((lvl-0.5f)*2.f, mods[PX_ADSR_DEST_LFO1_OUTPUT_LEVEL], adsr_lfo_scale[1]);
+                        if (s->config.num_lfos > 2) adsr_lfo_scale[2] = fmaf((lvl-0.5f)*2.f, mods[PX_ADSR_DEST_LFO2_OUTPUT_LEVEL], adsr_lfo_scale[2]);
                     }
                 }
                 for(int k=0; k<s->config.num_lfos; ++k) adsr_lfo_scale[k] = fmaxf(0.f, adsr_lfo_scale[k]);
@@ -2996,13 +2996,13 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     float lfo_val = v->lfo_instances[lfo_idx].current_output_value * adsr_lfo_scale[lfo_idx];
                     float* mods = s->patch.template_lfos[lfo_idx].mod_amounts;
 
-                    target_lfo_pitch += lfo_val * mods[PX_LFO_DEST_PITCH];
-                    target_lfo_cutoff += lfo_val * mods[PX_LFO_DEST_FILTER_CUTOFF];
-                    target_lfo_amp += lfo_val * mods[PX_LFO_DEST_AMP];
-                    target_lfo_pan += lfo_val * mods[PX_LFO_DEST_PAN];
-                    target_lfo_param1 += lfo_val * mods[PX_LFO_DEST_PARAM1];
-                    target_lfo_param2 += lfo_val * mods[PX_LFO_DEST_PARAM2];
-                    target_lfo_param3 += lfo_val * mods[PX_LFO_DEST_PARAM3];
+                    target_lfo_pitch = fmaf(lfo_val, mods[PX_LFO_DEST_PITCH], target_lfo_pitch);
+                    target_lfo_cutoff = fmaf(lfo_val, mods[PX_LFO_DEST_FILTER_CUTOFF], target_lfo_cutoff);
+                    target_lfo_amp = fmaf(lfo_val, mods[PX_LFO_DEST_AMP], target_lfo_amp);
+                    target_lfo_pan = fmaf(lfo_val, mods[PX_LFO_DEST_PAN], target_lfo_pan);
+                    target_lfo_param1 = fmaf(lfo_val, mods[PX_LFO_DEST_PARAM1], target_lfo_param1);
+                    target_lfo_param2 = fmaf(lfo_val, mods[PX_LFO_DEST_PARAM2], target_lfo_param2);
+                    target_lfo_param3 = fmaf(lfo_val, mods[PX_LFO_DEST_PARAM3], target_lfo_param3);
                 }
 
                 // Calculate Steps
@@ -3036,8 +3036,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     v->frequency = v->slide_target_freq;
                 } else {
                     float t = v->slide_progress;
-                    t = t * t * (3.0f - 2.0f * t); // Cubic
-                    v->frequency = v->slide_start_freq + (v->slide_target_freq - v->slide_start_freq) * t;
+                    t = t * t * fmaf(-2.0f, t, 3.0f); // Cubic
+                    v->frequency = fmaf(t, v->slide_target_freq - v->slide_start_freq, v->slide_start_freq);
                 }
             } else if (s->patch.glide_mode == PX_GLIDE_SMOOTH_RC && v->frequency != v->original_frequency) {
                 // RC-style exponential approach
@@ -3046,7 +3046,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 float dt = s->time_per_sample;
                 float coeff = 1.0f - expf(-dt / duration);
 
-                v->frequency += (v->original_frequency - v->frequency) * coeff;
+                v->frequency = fmaf(v->original_frequency - v->frequency, coeff, v->frequency);
 
                 // Snap if close enough (avoids denormals/endless processing)
                 if (fabsf(v->frequency - v->original_frequency) < 0.01f) {
@@ -3100,7 +3100,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             float dest_mod[PX_MOD_DEST_COUNT] = {0.0f};
             for (int m = 0; m < PX_MOD_MATRIX_SLOTS; m++) {
                 PxModSlot* slot = &s->patch.mod_matrix[m];
-                if (slot->enabled) dest_mod[slot->dest] += mod_sources[slot->source] * slot->amount;
+                if (slot->enabled) dest_mod[slot->dest] = fmaf(mod_sources[slot->source], slot->amount, dest_mod[slot->dest]);
             }
 
             // --- Step 1: Update Live Parameters & State (with Matrix Mod) ---
@@ -3143,14 +3143,14 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 if (s->patch.template_voice_adsrs[j].enabled && v->adsrs[j].level > INAUDIBLE_ADSR_LEVEL) {
                     float lvl = v->adsrs[j].level;
                     float* mods = &s->patch.template_voice_adsr_mod_amounts[j * PX_ADSR_DEST_COUNT];
-                    adsr_total_param1_mod += lvl * mods[PX_ADSR_DEST_PARAM1];
-                    adsr_total_param2_mod += lvl * mods[PX_ADSR_DEST_PARAM2];
-                    adsr_total_param3_mod += lvl * mods[PX_ADSR_DEST_PARAM3];
-                    adsr_total_pitch_mod_st += lvl * mods[PX_ADSR_DEST_FREQUENCY];
+                    adsr_total_param1_mod = fmaf(lvl, mods[PX_ADSR_DEST_PARAM1], adsr_total_param1_mod);
+                    adsr_total_param2_mod = fmaf(lvl, mods[PX_ADSR_DEST_PARAM2], adsr_total_param2_mod);
+                    adsr_total_param3_mod = fmaf(lvl, mods[PX_ADSR_DEST_PARAM3], adsr_total_param3_mod);
+                    adsr_total_pitch_mod_st = fmaf(lvl, mods[PX_ADSR_DEST_FREQUENCY], adsr_total_pitch_mod_st);
                     // LFO Scaling via ADSR moved to LFO Update Block
-                    adsr_total_filter_cutoff_hz += lvl * mods[PX_ADSR_DEST_FILTER_CUTOFF];
-                    adsr_filter_env_input += lvl * mods[PX_ADSR_DEST_FILTER_ENV_INPUT];
-                    adsr_total_filter_res += lvl * mods[PX_ADSR_DEST_FILTER_RESONANCE];
+                    adsr_total_filter_cutoff_hz = fmaf(lvl, mods[PX_ADSR_DEST_FILTER_CUTOFF], adsr_total_filter_cutoff_hz);
+                    adsr_filter_env_input = fmaf(lvl, mods[PX_ADSR_DEST_FILTER_ENV_INPUT], adsr_filter_env_input);
+                    adsr_total_filter_res = fmaf(lvl, mods[PX_ADSR_DEST_FILTER_RESONANCE], adsr_total_filter_res);
                 }
             }
             adsr_filter_env_input = fmaxf(0.f, fminf(1.f, adsr_filter_env_input));
@@ -3168,7 +3168,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             for (int j = 0; j < s->config.num_voice_adsrs; ++j) {
                 if (s->patch.template_voice_adsrs[j].enabled && s->patch.template_voice_adsr_mod_amounts[j * PX_ADSR_DEST_COUNT + PX_ADSR_DEST_AMP] != 0.0f) {
                     is_amp_targeted = true;
-                    if (s->patch.template_voice_adsrs[j].enabled) summed_amp_contributions += v->adsrs[j].level * s->patch.template_voice_adsr_mod_amounts[j * PX_ADSR_DEST_COUNT + PX_ADSR_DEST_AMP];
+                    if (s->patch.template_voice_adsrs[j].enabled) summed_amp_contributions = fmaf(v->adsrs[j].level, s->patch.template_voice_adsr_mod_amounts[j * PX_ADSR_DEST_COUNT + PX_ADSR_DEST_AMP], summed_amp_contributions);
                 }
             }
             if (is_amp_targeted) {
@@ -3216,7 +3216,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             // 5.2 Filter Logic
             float key_track_factor = key_track_factors[v_idx];
             float current_filter_cutoff = (s->patch.filter_cutoff_hz * key_track_factor) + (adsr_filter_env_input + lfo_filter_env_input) * s->patch.filter_env_amount_hz + adsr_total_filter_cutoff_hz;
-            current_filter_cutoff += dest_mod[PX_MOD_DEST_FILTER_CUTOFF] * 8000.0f;
+            current_filter_cutoff = fmaf(dest_mod[PX_MOD_DEST_FILTER_CUTOFF], 8000.0f, current_filter_cutoff);
             current_filter_cutoff = fmaxf(20.f, fminf(current_filter_cutoff, s->config.sample_rate * .48f));
             float current_filter_res = s->patch.filter_resonance_q + adsr_total_filter_res; current_filter_res = fmaxf(0.5f, fminf(current_filter_res, 20.f));
 
@@ -3262,7 +3262,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     bool do_step_glide = (sq->current_sequence->glide_mode == PX_WSEQ_GLIDE_STEP) || (sq->step_flags & PX_WSEQ_GLIDE);
 
                     if (sq->current_sequence->glide_mode == PX_WSEQ_GLIDE_SMOOTH) {
-                        sq->target_pitch_ratio += (sq->step_pitch_ratio - sq->target_pitch_ratio) * s->glide_coeff;
+                        sq->target_pitch_ratio = fmaf(sq->step_pitch_ratio - sq->target_pitch_ratio, s->glide_coeff, sq->target_pitch_ratio);
                         seq_pitch_mult = sq->target_pitch_ratio;
                     } else if (do_step_glide) {
                         const PxWaveSeqStep* current_step = &sq->current_sequence->steps[sq->step_idx];
@@ -3296,7 +3296,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                             }
                             // Else: Linear (Legacy PX_WSEQ_GLIDE_STEP behavior)
 
-                            float current_ratio = sq->prev_step_pitch_ratio + (sq->step_pitch_ratio - sq->prev_step_pitch_ratio) * t;
+                            float current_ratio = fmaf(t, sq->step_pitch_ratio - sq->prev_step_pitch_ratio, sq->prev_step_pitch_ratio);
                             seq_pitch_mult = current_ratio;
                         } else {
                             seq_pitch_mult = sq->step_pitch_ratio;
@@ -3330,14 +3330,14 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
                 // Standard Pitch Calc
                 float osc_pitch_mod = dest_mod[PX_MOD_DEST_OSC1_PITCH + o * PX_OSC_MOD_PARAM_COUNT];
-                float tuning_st = v->osc[o].current_coarse_semitones + (v->osc[o].current_fine_cents / 100.0f) + osc_pitch_mod * 12.0f;
+                float tuning_st = fmaf(osc_pitch_mod, 12.0f, v->osc[o].current_coarse_semitones + (v->osc[o].current_fine_cents * 0.01f));
                 float osc_freq = effective_voice_freq * exp2f(tuning_st / 12.0f) * seq_pitch_mult;
                 v->osc[o].vm_params.frequency = osc_freq;
 
                 int base_dest = PX_MOD_DEST_OSC1_MODA + o * PX_OSC_MOD_PARAM_COUNT;
-                v->osc[o].vm_params.modA = lfo_bytecode_mod_a + adsr_total_param1_mod + dest_mod[PX_MOD_DEST_OSC_MODA] * 10.0f + dest_mod[base_dest] * 10.0f;
-                v->osc[o].vm_params.modB = lfo_bytecode_mod_b + adsr_total_param2_mod + dest_mod[PX_MOD_DEST_OSC_MODB] * 10.0f + dest_mod[base_dest + 1] * 10.0f;
-                v->osc[o].vm_params.modC = lfo_bytecode_mod_c + adsr_total_param3_mod + dest_mod[PX_MOD_DEST_OSC_MODC] * 10.0f + dest_mod[base_dest + 2] * 10.0f;
+                v->osc[o].vm_params.modA = fmaf(dest_mod[PX_MOD_DEST_OSC_MODA] + dest_mod[base_dest], 10.0f, lfo_bytecode_mod_a + adsr_total_param1_mod);
+                v->osc[o].vm_params.modB = fmaf(dest_mod[PX_MOD_DEST_OSC_MODB] + dest_mod[base_dest + 1], 10.0f, lfo_bytecode_mod_b + adsr_total_param2_mod);
+                v->osc[o].vm_params.modC = fmaf(dest_mod[PX_MOD_DEST_OSC_MODC] + dest_mod[base_dest + 2], 10.0f, lfo_bytecode_mod_c + adsr_total_param3_mod);
 
                 // v1.7: Phase Distortion
                 float pd_amount = s->patch.osc[o].phase_dist_amount;
@@ -3349,7 +3349,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 if (pd_amount > 0.001f) {
                     // Simple PD: phase + sin(phase) * amount
                     // Casio-style often uses piecewise lines, but sin is smoother and "analog".
-                    effective_phase += sinf(effective_phase * 2.0f * PI) * pd_amount * 0.5f;
+                    effective_phase = fmaf(sinf(effective_phase * 2.0f * PI), pd_amount * 0.5f, effective_phase);
                     // Wrap if needed, though sin is periodic so it might just warp safely.
                 }
                 v->osc[o].vm_params.x = effective_phase * 2.f * PI;
@@ -3415,7 +3415,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         depth = fmaxf(0.0f, fminf(1.0f, depth));
                         if (depth > 0.001f) {
                             float wet = raw_sample * ring_mod_src;
-                            raw_sample = raw_sample * (1.0f - depth) + wet * depth;
+                            raw_sample = fmaf(wet - raw_sample, depth, raw_sample);
                         }
                     }
                     if (sq->step_flags & PX_WSEQ_XMOD) {
@@ -3434,7 +3434,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     if (xm_depth > 0.001f) {
                         // Modulate previous oscillator's phase for NEXT cycle (Feedback FM)
                         // Scaling: raw_sample is +/-1.
-                        v->osc[o-1].phase += raw_sample * xm_depth * 0.5f;
+                        v->osc[o-1].phase = fmaf(raw_sample, xm_depth * 0.5f, v->osc[o-1].phase);
                         // Wrap
                         if (v->osc[o-1].phase >= 1.0f) v->osc[o-1].phase -= (float)((int)v->osc[o-1].phase);
                         else if (v->osc[o-1].phase < 0.0f) v->osc[o-1].phase += (float)((int)(-v->osc[o-1].phase) + 1);
@@ -3447,7 +3447,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                     rm_depth = fmaxf(0.0f, fminf(1.0f, rm_depth));
                     if (rm_depth > 0.001f) {
                         float wet = raw_sample * v->osc[o-1].output;
-                        raw_sample = raw_sample * (1.0f - rm_depth) + wet * rm_depth;
+                        raw_sample = fmaf(wet - raw_sample, rm_depth, raw_sample);
                     }
                 }
 
@@ -3701,8 +3701,8 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             float gain_l = v->cached_pan_l;
             float gain_r = v->cached_pan_r;
 
-            mixed_sample_l_f += final_sample_l * gain_l;
-            mixed_sample_r_f += final_sample_r * gain_r;
+            mixed_sample_l_f = fmaf(final_sample_l, gain_l, mixed_sample_l_f);
+            mixed_sample_r_f = fmaf(final_sample_r, gain_r, mixed_sample_r_f);
 
         } // End Voice Loop
 
