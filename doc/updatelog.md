@@ -1,5 +1,10 @@
 # Update Log
 
+## v1.9.33 (2026/03/08)
+- **Features / Fixes**:
+  - Optimized mathematical operations inside the `PX_Process` loop by replacing linear interpolations, ADSR scaling, glide evaluations, and modulation operations with `fmaf`.
+
+
 ## v1.9.32 (2026/03/08)
 - **Features / Fixes**:
   - Optimized velocity and aftertouch curve calculations (`PX_CURVE_EXP`, `PX_CURVE_LOG`, `PX_CURVE_S`) in `polysonix.h` by utilizing fused multiply-add (`fmaf`) and replacing expensive `powf` and `logf` calls with fast algebraic equivalents and accurate rational polynomial approximations.
