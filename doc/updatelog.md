@@ -1,5 +1,13 @@
 # Update Log
 
+## v1.9.30 (2026/03/07)
+- **Features / Fixes**:
+  - Replaced legacy ternary conditionals in `px_wave_rom.h` with branchless `mix` and `step` combined with `fma` expressions to improve wave calculation efficiency.
+  - Added new inverse math constants (`INV_PI`, `INV_TWO_PI`, `INV_PI_OVER_2`) across the VM (`px_vm.h`, `px_vm.comp`, and `tools/transpile_waves.py`) to reduce slow floating-point divisions.
+  - Optimized the `OP_HYPOT` computation in `px_vm.comp` to utilize native FMA instructions.
+  - Fixed `OP_LFSR_CLOCK` and `OP_LFSR_NOISE` table-mode phase calculations in the compute shader to use `INV_TWO_PI`.
+  - Removed dead `call_stack_top` references from the compute shader's default loop block.
+
 ## v1.9.29 (2026/03/07)
 - **Features / Fixes**:
   - Optimized the factory waveforms in `px_wave_rom.h` by aggressively replacing nested `min`/`max` bounds, explicit linear interpolations, and boolean branching conditions with native Polysonix VM branchless opcodes (`clamp`, `mix`, `ramp`, `step`, and `sign`).
