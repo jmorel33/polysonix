@@ -140,6 +140,9 @@ The following variables are available within a script:
   - `TWO_PI`: 2 * PI
   - `PI_OVER_2`: PI / 2
   - `THREE_PI_OVER_2`: 3 * PI / 2
+  - `INV_PI`: 1 / PI
+  - `INV_TWO_PI`: 1 / (2 * PI)
+  - `INV_PI_OVER_2`: 1 / (PI / 2)
   - `E`: 2.71828...
 
 - **LFSR Type Constants**
