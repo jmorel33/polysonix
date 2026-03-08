@@ -1668,6 +1668,9 @@ Node *parseFunctionArgs(Token *tokens, int *pos, const char* func_name, int expe
 #define C_TWO_PI (2.0 * C_PI)
 #define C_PI_OVER_2 (C_PI / 2.0)
 #define C_THREE_PI_OVER_2 (3.0 * C_PI / 2.0)
+#define C_INV_PI (1.0 / C_PI)
+#define C_INV_TWO_PI (1.0 / C_TWO_PI)
+#define C_INV_PI_OVER_2 (1.0 / C_PI_OVER_2)
 #define C_E 2.71828182845904523536
 #define EPSILON 1e-6f
 
@@ -2005,6 +2008,9 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
             else if (strcmp(node->data.name, "TWO_PI") == 0) const_val = C_TWO_PI;
             else if (strcmp(node->data.name, "PI_OVER_2") == 0) const_val = C_PI_OVER_2;
             else if (strcmp(node->data.name, "THREE_PI_OVER_2") == 0) const_val = C_THREE_PI_OVER_2;
+            else if (strcmp(node->data.name, "INV_PI") == 0) const_val = C_INV_PI;
+            else if (strcmp(node->data.name, "INV_TWO_PI") == 0) const_val = C_INV_TWO_PI;
+            else if (strcmp(node->data.name, "INV_PI_OVER_2") == 0) const_val = C_INV_PI_OVER_2;
             // LFSR Constants
             else if (strcmp(node->data.name, "LFSR_4BIT") == 0) const_val = (float)LFSR_4BIT;
             else if (strcmp(node->data.name, "LFSR_5BIT") == 0) const_val = (float)LFSR_5BIT;
