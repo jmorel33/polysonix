@@ -1,5 +1,12 @@
 # Update Log
 
+## v1.9.34 (2026/03/09)
+- **Performance**:
+  - Optimized jump instruction patching in the Polysonix VM compiler (`px_vm.h`).
+  - Refactored patching logic to use pointer arithmetic and branchless fast-paths for offset calculations.
+  - Implemented robust 32-bit intermediate offset validation to prevent silent 16-bit truncation errors during compilation of very large expressions.
+  - Added centralized `patch_jump_to` helper to improve maintainability and safety of the compilation backend.
+
 ## v1.9.33 (2026/03/08)
 - **Features / Fixes**:
   - Optimized mathematical operations inside the `PX_Process` loop by leveraging `fmaf` for improved performance and calculation precision. Key replacements include:

@@ -1936,19 +1936,25 @@ static int emit_jump(BytecodeChunk *chunk, OpCode jump_type) {
     return chunk->code_count - 2; // Return index of the first offset byte
 }
 
-// Patches a previously emitted jump instruction
-static void patch_jump(BytecodeChunk *chunk, int jump_instruction_index) {
-    // Calculate offset: target (current position) - jump instruction position - 2 bytes for offset itself
-    int16_t offset = (int16_t)(chunk->code_count - (jump_instruction_index + 2));
+// Patches a previously emitted jump instruction to point to a specific target
+static void patch_jump_to(BytecodeChunk *chunk, int jump_offset_index, int target_index) {
+    uint8_t *offset_ptr = &chunk->code[jump_offset_index];
+    // Offset is calculated from the byte immediately following the 2-byte offset
+    int32_t offset = (int32_t)(target_index - (jump_offset_index + 2));
 
-    if (offset > INT16_MAX || offset < INT16_MIN) {
+    if (PX_UNLIKELY(offset > 32767 || offset < -32768)) {
          fprintf(stderr, "Compile Error: Jump offset too large (%d).\n", offset);
-         // Handle error
+         chunk->has_error = true;
          return;
     }
 
-    chunk->code[jump_instruction_index] = (offset >> 8) & 0xFF; // High byte
-    chunk->code[jump_instruction_index + 1] = offset & 0xFF;    // Low byte
+    offset_ptr[0] = (uint8_t)((offset >> 8) & 0xFF);
+    offset_ptr[1] = (uint8_t)(offset & 0xFF);
+}
+
+// Patches a previously emitted jump instruction to point to the current position
+static void patch_jump(BytecodeChunk *chunk, int jump_offset_index) {
+    patch_jump_to(chunk, jump_offset_index, chunk->code_count);
 }
 
 
@@ -2264,12 +2270,7 @@ static bool compile_node(Node *node, BytecodeChunk *chunk, const char** active_l
                 // 8. Emit JUMP (Back to Start)
                 // emit_jump returns the index of the first operand byte (offset high byte).
                 int jump_back_idx = emit_jump(chunk, OP_JUMP);
-                // Patch backward jump manually.
-                // Target: loop_start_idx.
-                // Next instruction starts at: jump_back_idx + 2 (since jump_back_idx is operand[0], operand[1] is next, then next op).
-                int16_t offset_back = (int16_t)(loop_start_idx - (jump_back_idx + 2));
-                chunk->code[jump_back_idx] = (offset_back >> 8) & 0xFF;
-                chunk->code[jump_back_idx + 1] = offset_back & 0xFF;
+                patch_jump_to(chunk, jump_back_idx, loop_start_idx);
 
                 // 9. Patch CHECK Jump (Forward to current position, i.e., Loop End)
                 patch_jump(chunk, jump_check_idx);
