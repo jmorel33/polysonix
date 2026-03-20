@@ -1,5 +1,12 @@
 # Update Log
 
+## v1.9.35 (2026/03/10)
+- **Security**:
+  - Replaced unsafe `rand()` function calls with the application-specific, lock-free `px_rand()` generator in all critical paths.
+  - Modified `LFOInstance_Init` and related initialization functions to accept an explicit RNG state pointer for improved thread safety and determinism.
+  - Implemented a thread-safe atomic RNG state management in `px_vm.h` using `stdatomic.h` for compile-time wave generation.
+  - Eliminated potential priority inversion and performance jitters in the real-time audio thread caused by global `rand()` mutexes.
+
 ## v1.9.34 (2026/03/09)
 - **Performance**:
   - Optimized jump instruction patching in the Polysonix VM compiler (`px_vm.h`).
