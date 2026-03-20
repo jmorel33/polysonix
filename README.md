@@ -3,7 +3,7 @@
 </div>
 
 # Polysonix
-**Version 1.9.34 (March 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
+**Version 1.9.35 (March 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
 
 A single-header polyphonic synthesizer engine.
 
