@@ -1,5 +1,13 @@
 # Update Log
 
+## v1.9.35 (2026/03/10)
+- **Features / Fixes**:
+  - Implemented a critical fix for the Virtual Machine's sub-chunk execution (`execute_sub_chunk` in `px_vm.h`). The stack boundary is now correctly enforced using the sub-chunk's frame base pointer (`outer_stack_top`) instead of the absolute stack bottom, preventing potential stack corruption and ensuring correct result returns for nested `sigma()` loops.
+  - Refactored `OP_HALT` and sub-chunk exit logic to guarantee that exactly one result is left on the stack for the caller, with a safe fallback to `0.0f` on errors or empty stacks.
+  - Added support for inverse math constants (`INV_PI`, `INV_TWO_PI`, `INV_PI_OVER_2`) to the VM's lexer and compiler to resolve compilation errors for several default waveforms.
+  - Fixed a syntax error in the "Formant Vowel" (Wave 115) expression in `px_wave_rom.h` to restore its functionality.
+  - Verified that all 256 default waveforms now compile successfully and generate unique audio output.
+
 ## v1.9.34 (2026/03/09)
 - **Performance**:
   - Optimized jump instruction patching in the Polysonix VM compiler (`px_vm.h`).

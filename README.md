@@ -3,7 +3,7 @@
 </div>
 
 # Polysonix
-**Version 1.9.34 (March 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
+**Version 1.9.35 (March 2026) | **Author:** Jacques Morel | **Copyright (c) 2025-2026**
 
 A single-header polyphonic synthesizer engine.
 
@@ -724,7 +724,7 @@ The language supports the following operators:
 - `k`: Default loop variable name for the `sigma()` summation function.
 
 ### Constants
-- `PI`, `TWO_PI`, `PI_OVER_2`, `THREE_PI_OVER_2`, `E`
+- `PI`, `TWO_PI`, `PI_OVER_2`, `THREE_PI_OVER_2`, `INV_PI`, `INV_TWO_PI`, `INV_PI_OVER_2`, `E`
 - **LFSR Types**: `LFSR_4BIT` through `LFSR_17BIT`, `LFSR_GALOIS`, `LFSR_FIBONACCI`
 
 ### Functions

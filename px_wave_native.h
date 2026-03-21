@@ -516,7 +516,7 @@ static float px_wave_native_114(VmParams* params) {
 }
 
 static float px_wave_native_115(VmParams* params) {
-    return (fmaf(asinf(fmaxf((-0.999f), fminf(0.999f, fmaf(sinf(fmaf(params->x, fmaf(1.0f, (params->frequency * 0.001f), (params->modB * 3.14159265358979323846f))), fmaf(fabsf(params->modA), 5.0f, 1.0f), 0.0f))))), 0.63661977236758134308f, 0.0f) * 0.8f);
+    return (fmaf(asinf(fmaxf((-0.999f), fminf(0.999f, fmaf(sinf(fmaf(params->x, fmaf(1.0f, (params->frequency * 0.001f), 1.0f), (params->modB * 3.14159265358979323846f))), fmaf(fabsf(params->modA), 5.0f, 1.0f), 0.0f)))), 0.63661977236758134308f, 0.0f) * 0.8f);
 }
 
 static float px_wave_native_116(VmParams* params) {
@@ -740,7 +740,19 @@ static float px_wave_native_146(VmParams* params) {
 }
 
 static float px_wave_native_147(VmParams* params) {
-    return fmaf(0.7f, sinf(params->x), fmaf(0.5f, sinf(fmaf(params->x, 1.5f, 0.0f)), 0.0f));
+
+    float sigma_0 = 0.0f;
+    {
+        float _start = 1.0f;
+        float _end = fmaf(3.0f, fabsf(params->modB), 5.0f);
+        float _step = 1.0f;
+        float _limit = (_step > 0) ? (_end + fabsf(_step)*0.5f) : (_end - fabsf(_step)*0.5f);
+        for(float k = _start; (_step > 0) ? (k <= _limit) : (k >= _limit); k += _step) {
+            sigma_0 += (((sinf(fmaf(params->x, k, (((params->modA * 0.02f) * k) * params->rand_offset))) + sinf(fmaf((params->x * k), fmaf(params->modA, 0.005f, 1.0f), (((params->modA * 0.03f) * k) * (k * 0.1f))))) + sinf(fmaf((params->x * k), (1.0f - (params->modA * 0.005f)), (-(((params->modA * 0.025f) * k) * (k * 0.13f)))))) / powf(k, fmaf(0.3f, fabsf(params->modB), 1.1f)));
+        }
+    }
+
+    return ((sigma_0 * 0.15f) * fmaf(0.2f, sinf(fmaf(params->x, 0.5f, (3.14159265358979323846f / 2.0f))), 1.0f));
 }
 
 static float px_wave_native_148(VmParams* params) {
