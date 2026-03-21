@@ -37,8 +37,15 @@ This guide provides a comprehensive overview of the language, from its basic syn
   - [4.2. Tokenizer](#42-tokenizer)
   - [4.3. Parser (AST)](#43-parser-ast)
   - [4.4. Compiler (Bytecode)](#44-compiler-bytecode)
+    - [4.4.1. The BytecodeChunk Structure](#441-the-bytecodechunk-structure)
+    - [4.4.2. Flat Opcode Architecture](#442-flat-opcode-architecture)
   - [4.5. Virtual Machine (VM)](#45-virtual-machine-vm)
+    - [4.5.1. Sub-Chunk Execution](#451-sub-chunk-execution)
+    - [4.5.2. Security Features](#452-security-features)
+    - [4.5.3. GPU Compute Shader Path](#453-gpu-compute-shader-path)
+    - [4.5.4. Native Transpiler (Benchmark Mode)](#454-native-transpiler-benchmark-mode)
   - [4.6. The VmParams Struct](#46-the-vmparams-struct)
+  - [4.7. Constraints and Limits](#47-constraints-and-limits)
 - [5. Practical Examples and Techniques](#5-practical-examples-and-techniques)
   - [5.1. Basic Waveforms](#51-basic-waveforms)
   - [5.2. Modulation Techniques](#52-modulation-techniques)
@@ -456,11 +463,13 @@ The `sigma` function provides a powerful way to perform summations, which is fun
 
 ### 4.1. Overview
 
-To achieve real-time performance, scripts are not interpreted directly. Instead, they go through a four-stage process:
+To achieve real-time performance, scripts are not interpreted directly. Instead, they go through a four-stage pipeline:
 1.  **Tokenization**: The script string is broken into a stream of tokens.
 2.  **Parsing**: The tokens are organized into an Abstract Syntax Tree (AST).
 3.  **Compilation**: The AST is converted into low-level bytecode.
-4.  **Execution**: A Virtual Machine (VM) runs the bytecode.
+4.  **Execution**: A stack-based Virtual Machine (VM) runs the bytecode using computed-goto dispatch.
+
+An optional GPU execution path serializes the bytecode into a GLSL compute shader (`px_vm.comp`) for parallel wavetable generation.
 
 ### 4.2. Tokenizer
 
@@ -469,11 +478,13 @@ The tokenizer is the first stage of compilation. It scans the raw script string 
 For example, the expression `sin(x) * 0.5` is tokenized into:
 `sin` (Function) -> `(` (Left Paren) -> `x` (Variable) -> `)` (Right Paren) -> `*` (Operator) -> `0.5` (Number)
 
+The tokenizer recognizes all keywords, constants, and function names using longest-match-first string comparison. Unknown identifiers that start with a letter or underscore are treated as variables (e.g., sigma loop variables like `k`). The maximum token count per expression is 1024.
+
 ### 4.3. Parser (AST)
 
-The parser takes the flat list of tokens and builds an Abstract Syntax Tree (AST). The AST is a tree-like data structure that represents the grammatical structure and logical hierarchy of the expression, correctly handling operator precedence. For instance, in the expression `2 + 3 * 4`, the parser ensures that the `*` operation is a child of the `+` operation, so multiplication is performed first.
+The parser takes the flat list of tokens and builds an Abstract Syntax Tree (AST) using recursive descent. The AST is a tree-like data structure that represents the grammatical structure and logical hierarchy of the expression, correctly handling operator precedence. For instance, in the expression `2 + 3 * 4`, the parser ensures that the `*` operation is a child of the `+` operation, so multiplication is performed first.
 
-This hierarchical representation is crucial for the compiler to generate correct and efficient code.
+A recursion depth counter enforces a `MAX_PARSE_DEPTH` limit (default 200) to prevent stack overflow from malicious or excessively nested expressions. The parser safely aborts with an error if this limit is exceeded.
 
 ### 4.4. Compiler (Bytecode)
 
@@ -486,9 +497,83 @@ For example, the expression `x + 1.0` might be compiled into bytecode that means
 
 This bytecode, along with a table of constants, is stored in a `BytecodeChunk` struct, ready for execution.
 
+#### 4.4.1. The BytecodeChunk Structure
+
+A `BytecodeChunk` is the compiled representation of a single expression or sub-expression. It contains:
+
+| Field | Type | Description |
+|---|---|---|
+| `code` | `uint8_t[1024]` | Raw bytecode instructions. |
+| `code_count` | `int` | Number of bytes used in `code`. |
+| `constants` | `float[256]` | Constant pool (32-byte aligned). Literal values referenced by `OP_PUSH_CONST`. |
+| `constants_count` | `int` | Number of constants used. |
+| `strings` | `char*[32]` | String pool. Stores loop variable names for `sigma`. |
+| `strings_count` | `int` | Number of strings used. |
+| `sigma_sub_chunks` | `BytecodeChunk*[16]` | Sub-chunks for `sigma` arguments and body. |
+| `sigma_sub_chunk_count` | `int` | Number of sub-chunks used. |
+| `has_error` | `bool` | Set to `true` if a compilation error occurred. |
+
+For `sigma(k, start, end, step, body)`, the compiler generates four separate sub-chunks (for `start`, `end`, `step`, and `body`) and stores them in the parent chunk's `sigma_sub_chunks` array. The `OP_SIGMA_EXEC` instruction references these sub-chunks by index.
+
+#### 4.4.2. Flat Opcode Architecture
+
+Every math function is a first-class opcode (e.g., `OP_SIN`, `OP_RAND`, `OP_LFSR_NOISE`) rather than being dispatched through a generic `OP_CALL` instruction. This eliminates the double-dispatch overhead of decoding a secondary function ID inside a switch statement. Common operations like `sin(x)` consume only 1 byte in the bytecode stream (the opcode itself), compared to 4 bytes under the old `OP_CALL` mechanism.
+
+The full opcode map (80 opcodes, `0x00`–`0x4F`):
+
+| Range | Category | Opcodes |
+|---|---|---|
+| `0x00`–`0x07` | Stack | `PUSH_CONST`, `PUSH_VAR_X`, `PUSH_VAR_FREQ`, `PUSH_VAR_RAND`, `PUSH_VAR_MOD_A/B/C`, `POP` |
+| `0x08`–`0x0D` | Arithmetic | `ADD`, `SUB`, `MUL`, `DIV`, `MOD`, `NEGATE` |
+| `0x0E`–`0x14` | Logic/Comparison | `NOT`, `CMP_EQ/NE/GT/GE/LT/LE` |
+| `0x15`–`0x16` | Control Flow | `JUMP`, `JUMP_IF_FALSE` |
+| `0x17` | Legacy | `CALL_DEPRECATED` |
+| `0x18`–`0x1D` | Sigma | `SIGMA_SETUP`, `PUSH_LOOP_VAR`, `SIGMA_EXEC`, `SIGMA_INIT`, `SIGMA_CHECK`, `SIGMA_INC` |
+| `0x1E`–`0x2F` | Core Math | `SIN`, `COS`, `TAN`, `ASIN`, `ACOS`, `ATAN`, `ABS`, `TANH`, `EXP`, `LOG`, `LOG10`, `FLOOR`, `CEIL`, `MIN`, `MAX`, `SQRT`, `POW`, `RAND` |
+| `0x30`–`0x32` | LFSR | `LFSR_VAL`, `LFSR_NOISE`, `LFSR_CLOCK` |
+| `0x33`–`0x36` | FMA Family | `FMA`, `FMS`, `FNMADD`, `FNMSUB` |
+| `0x37`–`0x44` | Advanced Math | `EXP2`, `LOG2`, `EXPM1`, `LOG1P`, `HYPOT`, `COPYSIGN`, `SCALBN`, `REMQUO`, `NEXTAFTER`, `FDIM`, `NAN`, `INF`, `LGAMMA`, `TGAMMA` |
+| `0x45`–`0x47` | Selection | `PROB`, `SELECT`, `SMOOTH_SELECT` |
+| `0x48`–`0x4A` | Taming | `CLAMP`, `MIX`, `RAMP` |
+| `0x4B` | State | `MARKOV` |
+| `0x4C`–`0x4E` | Branchless | `STEP`, `SIGN`, `INVERSESQRT` |
+| `0x4F` | Control | `HALT` |
+
 ### 4.5. Virtual Machine (VM)
 
-The Virtual Machine (VM) is a stack-based engine that executes the bytecode. It reads the instructions one by one and manipulates a small stack of numbers. Because the VM only needs to perform very simple operations (like pushing, popping, and adding), it can run with extremely high performance, making it suitable for generating audio samples in real-time without causing audio dropouts.
+The Virtual Machine is a stack-based engine that executes bytecode. It uses GCC/Clang computed gotos (`goto *dispatch_table[instruction]`) for dispatch, which eliminates branch misprediction overhead compared to a traditional switch statement. On compilers that don't support computed gotos, it falls back to a standard switch.
+
+The VM maintains a 512-entry float stack (32-byte aligned for SIMD compatibility). Register caching is used for the instruction pointer (`ip`) and stack pointer (`sp`) to keep them in CPU registers during execution.
+
+#### 4.5.1. Sub-Chunk Execution
+
+When the VM encounters a `sigma()` loop, it calls `execute_sub_chunk()` to evaluate each sub-expression (start, end, step, body). The sub-chunk executor:
+
+- Saves the outer execution state (chunk pointer, instruction pointer, stack position).
+- Uses the caller's stack frame base pointer (`outer_stack_top`) as the boundary for all stack operations, preventing the sub-chunk from reading or corrupting the parent's stack data.
+- Guarantees exactly one result value is returned to the caller, with a safe fallback to `0.0f` on errors or empty stacks.
+- Resets the stack pointer to `outer_stack_top` on exit to prevent stack pollution.
+- Inherits the parent's sigma state and `VmParams` pointer, allowing LFSR state modification to propagate correctly.
+
+Sigma sub-chunks do not support nested `sigma()` calls (the sub-chunk dispatch table routes sigma opcodes to error handlers).
+
+#### 4.5.2. Security Features
+
+The VM includes several hardening measures:
+
+- **Jump bounds checking**: All `OP_JUMP` and `OP_JUMP_IF_FALSE` instructions validate the target instruction pointer against the bytecode length before jumping. Out-of-bounds jumps halt execution safely.
+- **Parser recursion limit**: `MAX_PARSE_DEPTH` (200) prevents stack overflow from deeply nested expressions.
+- **Thread-safe RNG**: The `px_rand()` LCG generator replaces `rand()` in all critical paths, eliminating global mutex contention in the audio thread. An atomic RNG state is used for compile-time wave generation.
+- **Division by zero**: `OP_DIV` does not throw errors. Division by zero naturally yields `INFINITY` or `NaN`, which is preferable for audio distortion artifacts.
+- **Oscillator wave index validation**: Loaded `wave_idx` values are bounds-checked and clamped to prevent out-of-bounds memory access from corrupted presets.
+
+#### 4.5.3. GPU Compute Shader Path
+
+When `POLYSONIX_USE_GPU` is defined, the VM can serialize a `BytecodeChunk` into a GPU-compatible format and dispatch execution to a GLSL compute shader (`px_vm.comp`). The GPU path executes 1 thread per wavetable (sequentially per sample) to maintain correctness for stateful operations like Markov chains and LFSR state. All opcodes are implemented with parity across the CPU and GPU paths.
+
+#### 4.5.4. Native Transpiler (Benchmark Mode)
+
+When `PX_BENCHMARK_NATIVE_WAVES` is defined, the VM bypasses the bytecode interpreter and executes pre-transpiled native C functions generated by `tools/transpile_waves.py`. This Ahead-of-Time (AOT) path provides ~61% average performance improvement over the interpreter, validating future AOT compilation strategies. In standard builds, the bytecode interpreter is always used.
 
 ### 4.6. The VmParams Struct
 
@@ -496,17 +581,46 @@ The `VmParams` struct is the critical link between the C environment of the synt
 
 ```c
 typedef struct {
-    float x;            // Current wave phase (0 to 2*PI)
-    float frequency;    // Note frequency in Hz
-    float rand_offset;  // Note-specific random value
-    float modA;         // Modulation parameter A
-    float modB;         // Modulation parameter B
-    float modC;         // Modulation parameter C
-    // ... fields for free-running LFSR state ...
+    float x;                // Current wave phase (0 to 2*PI)
+    float frequency;        // Note frequency in Hz
+    float rand_offset;      // Per-wave random value (0 to 1)
+    float modA;             // Modulation parameter A (-1 to 1)
+    float modB;             // Modulation parameter B (-1 to 1)
+    float modC;             // Modulation parameter C (-1 to 1)
+
+    // Free-running LFSR state (managed by the C caller)
+    uint32_t lfsr_state;    // Current LFSR register value
+    LfsrType lfsr_type;     // Active LFSR type
+    uint32_t lfsr_position; // Current sequence position
+    uint32_t lfsr_seed;     // Initial seed for resetting
+    float    lfsr_accum_phase; // Accumulator for fractional LFSR advances
+
+    uint32_t* rng_state_ptr; // Pointer to the voice's RNG state (for px_rand)
+
+    // Markov chain state (up to 4 independent chains per voice)
+    uint32_t markov_state[4];       // Current state index (0, 1, 2...)
+    bool     markov_prev_trigger[4]; // Previous trigger value for rising-edge detection
 } VmParams;
 ```
 
 When the VM executes instructions like `OP_PUSH_VAR_X` or `OP_PUSH_VAR_MOD_A`, it looks up the corresponding value from the `VmParams` struct that was provided for that specific execution run. This mechanism allows the same compiled script to produce different results based on the note being played and the current state of the synthesizer's modulation sources.
+
+### 4.7. Constraints and Limits
+
+| Limit | Value | Description |
+|---|---|---|
+| Max bytecode size | 1024 bytes | Per `BytecodeChunk`. |
+| Max constants | 256 floats | Per `BytecodeChunk`. |
+| Max VM stack depth | 512 floats | 32-byte aligned. |
+| Max sigma sub-chunks | 16 | Per main chunk. |
+| Max strings | 32 | Unique variable names per chunk. |
+| Max parse depth | 200 | Recursion limit for nested expressions. |
+| Max token count | 1024 | Per expression. |
+| Max Markov chains | 4 | Independent chains per voice. |
+| Max Markov matrix | 8×8 | 64 transition probabilities. |
+| Max sigma iterations | 1000 | Safety limit per loop. |
+| Max select/smooth_select items | 16 | Values in the selection list. |
+| LFSR table memory | ~520 KB | All 16 types fully initialized. |
 
 ## 5. Practical Examples and Techniques
 
