@@ -1622,7 +1622,7 @@ static void Filter_SetCoefficients(Filter* filter, float cutoff_hz, float resona
 static float Filter_Process_Internal(Filter* filter, float input_sample);
 static float Filter_Process_Oversampled(Filter* filter, float input_sample, float amp);
 static float GenerateLFOValue(LFOInstance* lfo_instance);
-static void LFOInstance_Init(LFOInstance* lfo, float sample_rate);
+static void LFOInstance_Init(LFOInstance* lfo, float sample_rate, uint32_t* rng_state);
 static float get_midi_frequency(int midi_note);
 static int find_inactive_voice(PxSynth* s);
 static int find_voice_to_steal(PxSynth* s);
@@ -2018,7 +2018,7 @@ static float GenerateLFOValue(LFOInstance* lfo_instance) {
     return execute_bytecode(chunk, &lfo_instance->lfo_vm_params);
 }
 
-static void LFOInstance_Init(LFOInstance* lfo, float sample_rate) {
+static void LFOInstance_Init(LFOInstance* lfo, float sample_rate, uint32_t* rng_state) {
     memset(lfo, 0, sizeof(LFOInstance));
 
     // Explicitly initialize the nested ADSR struct.
@@ -2027,9 +2027,9 @@ static void LFOInstance_Init(LFOInstance* lfo, float sample_rate) {
     ADSR_Init(&lfo->adsr, &default_adsr_params, sample_rate);
 
     // Initialize VmParams
-    lfo->lfo_vm_params.rand_offset = (float)rand() / RAND_MAX;
+    lfo->lfo_vm_params.rand_offset = (float)px_rand(rng_state) * (1.0f / (float)UINT32_MAX);
     lfo->lfo_vm_params.lfsr_type = LFSR_8BIT;
-    lfo->lfo_vm_params.lfsr_state = (uint32_t)rand() | 1;
+    lfo->lfo_vm_params.lfsr_state = px_rand(rng_state) | 1;
     lfo->lfo_vm_params.lfsr_seed = lfo->lfo_vm_params.lfsr_state;
 }
 
@@ -2591,14 +2591,14 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
             s->voices[i].osc[o].last_bitcrush_bits = -1.0f;
         }
         for (int j = 0; j < config->num_lfos; ++j) {
-            LFOInstance_Init(&s->voices[i].lfo_instances[j], config->sample_rate);
+            LFOInstance_Init(&s->voices[i].lfo_instances[j], config->sample_rate, &s->voices[i].rng_state);
             s->voices[i].lfo_instances[j].lfo_vm_params.rng_state_ptr = &s->voices[i].rng_state;
         }
     }
 
     // 8. Initialize the template LFO instances (for UI display).
     for (int i = 0; i < config->num_lfos; ++i) {
-        LFOInstance_Init(&s->template_lfo_instances[i], config->sample_rate);
+        LFOInstance_Init(&s->template_lfo_instances[i], config->sample_rate, &s->rng_state);
         s->template_lfo_instances[i].lfo_vm_params.rng_state_ptr = &s->rng_state;
     }
 

@@ -243,6 +243,7 @@ Example WaveDefinition (C struct storing the script string):
 #include <math.h>
 #include <ctype.h>
 #include <time.h>
+#include <stdatomic.h>
 #include <stdarg.h> // For vm_error
 
 #ifdef __cplusplus // Calling C code from C++
@@ -4459,7 +4460,20 @@ static bool compile_and_generate_wave( const char *expression, BytecodeChunk** c
     *chunk_ptr_location = new_chunk; // Store the heap pointer in the provided location
 
     // --- Execute Bytecode with Enhanced VmParams ---
-    float rand_offset_val = (float)rand() / RAND_MAX;
+    static atomic_uint compile_time_rng_state = 0;
+    uint32_t expected = 0;
+    if (atomic_compare_exchange_strong(&compile_time_rng_state, &expected, (uint32_t)time(NULL) ^ (uint32_t)(uintptr_t)&compile_time_rng_state)) {
+        // Initialized
+    }
+
+    // Using a local state for px_rand to avoid global lock/contention,
+    // though we need to advance the atomic state.
+    uint32_t current_state = atomic_load(&compile_time_rng_state);
+    uint32_t next_state = current_state * 1664525 + 1013904223;
+    while (!atomic_compare_exchange_weak(&compile_time_rng_state, &current_state, next_state)) {
+        next_state = current_state * 1664525 + 1013904223;
+    }
+    float rand_offset_val = (float)next_state * (1.0f / (float)UINT32_MAX);
 
     // Initialize VmParams with LFSR state (NOT const)
     POLYSONIX_ALIGN(32) VmParams params = {

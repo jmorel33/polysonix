@@ -7,6 +7,11 @@
   - Added support for inverse math constants (`INV_PI`, `INV_TWO_PI`, `INV_PI_OVER_2`) to the VM's lexer and compiler to resolve compilation errors for several default waveforms.
   - Fixed a syntax error in the "Formant Vowel" (Wave 115) expression in `px_wave_rom.h` to restore its functionality.
   - Verified that all 256 default waveforms now compile successfully and generate unique audio output.
+- **Security**:
+  - Replaced unsafe `rand()` function calls with the application-specific, lock-free `px_rand()` generator in all critical paths.
+  - Modified `LFOInstance_Init` and related initialization functions to accept an explicit RNG state pointer for improved thread safety and determinism.
+  - Implemented a thread-safe atomic RNG state management in `px_vm.h` using `stdatomic.h` for compile-time wave generation.
+  - Eliminated potential priority inversion and performance jitters in the real-time audio thread caused by global `rand()` mutexes.
 
 ## v1.9.34 (2026/03/09)
 - **Performance**:
