@@ -1,12 +1,23 @@
 # Update Log
 
+## v1.9.36 (2026/03/20)
+**Feature: Sample Bank ROM Format & sbgen Utility**
+
+- **New Format:** Introduced the `.sbr` (Sample Bank ROM) binary format for storing packed sample libraries. The format is flat, memory-mappable, and designed for fast lookup in synthesizers and samplers.
+  - Layout: `SBR_Header` → `SBR_Group[]` → `SBR_Entry[]` → PCM16 data blob.
+  - Groups store folder/category names (up to 39 chars). Entries store per-sample metadata: name, loop points, sample rate, MIDI base note, fine tune, and a format bitfield (depth, channels, loop mode).
+  - Format flags cover PCM8/12/16/FLOAT32 depth, mono/stereo (interleaved), and loop/pingpong/oneshot modes.
+- **New API:** Added `px_samplebank.h` / `px_samplebank.c` — a reusable C11 API for creating, reading, modifying, and writing `.sbr` banks programmatically.
+  - `sbr_bank_create/destroy`, `sbr_group_add/remove/rename/find`, `sbr_entry_add/remove/rename/set_loop`, `sbr_bank_write/read`.
+  - Dynamic in-memory `SBR_Bank` handle with auto-growing arrays for groups, entries, and sample data.
+- **New Tool:** Added `sbgen` CLI utility (`sbgen.c`) for packing WAV directory trees into `.sbr` files.
+  - `sbgen create [--oneshot] <input_dir> <output.sbr>` — builds a bank from a directory-per-group structure.
+  - `sbgen list <file.sbr>` — dumps the full TOC with all entry details.
+  - WAV reader supports 16-bit and 24-bit PCM (mono and stereo). 24-bit is converted to 16-bit on import. Unsupported formats are skipped with specific diagnostic messages.
+  - Name truncation is warned but never causes samples to be skipped.
+- **Documentation:** Added `sbgen/README.md` with full format specification, CLI usage, and API reference.
+
 ## v1.9.35 (2026/03/10)
-- **Features / Fixes**:
-  - Implemented a critical fix for the Virtual Machine's sub-chunk execution (`execute_sub_chunk` in `px_vm.h`). The stack boundary is now correctly enforced using the sub-chunk's frame base pointer (`outer_stack_top`) instead of the absolute stack bottom, preventing potential stack corruption and ensuring correct result returns for nested `sigma()` loops.
-  - Refactored `OP_HALT` and sub-chunk exit logic to guarantee that exactly one result is left on the stack for the caller, with a safe fallback to `0.0f` on errors or empty stacks.
-  - Added support for inverse math constants (`INV_PI`, `INV_TWO_PI`, `INV_PI_OVER_2`) to the VM's lexer and compiler to resolve compilation errors for several default waveforms.
-  - Fixed a syntax error in the "Formant Vowel" (Wave 115) expression in `px_wave_rom.h` to restore its functionality.
-  - Verified that all 256 default waveforms now compile successfully and generate unique audio output.
 - **Security**:
   - Replaced unsafe `rand()` function calls with the application-specific, lock-free `px_rand()` generator in all critical paths.
   - Modified `LFOInstance_Init` and related initialization functions to accept an explicit RNG state pointer for improved thread safety and determinism.
