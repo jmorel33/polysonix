@@ -320,7 +320,7 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /*114*/ { "Reso Filter Sweep (A=Reso B=Cutoff)", "(fma(0.7, sin((x * fma(abs(MOD_A), 5.0, 2.0))), ((x / PI) - 1.0)) * 0.4) * (1.0 + tanh((3.0 * (MOD_B - (cos(x) * (1.0 - (FREQUENCY / 1500.0)))))))" },
 
-/*115*/ { "Formant Vowel", "fma(asin(clamp(fma(sin(fma(x, fma(1.0, FREQUENCY * 0.001, MOD_B * PI)), fma(abs(MOD_A), 5.0, 1.0), 0.0)), -0.999, 0.999)), INV_PI_OVER_2, 0.0) * 0.8" },
+/*115*/ { "Formant Vowel", "fma(asin(clamp(fma(sin(fma(x, fma(1.0, FREQUENCY * 0.001, 1.0), MOD_B * PI)), fma(abs(MOD_A), 5.0, 1.0), 0.0), -0.999, 0.999)), INV_PI_OVER_2, 0.0) * 0.8" },
 
 /*116*/ { "Sync Sweep No Slant", "sign(sin((x * fma(5.0, abs(MOD_A), 1.0))) - (MOD_B * 0.9)) * 0.6" },
 
@@ -390,7 +390,7 @@ WaveDefinition default_waves[NUM_DEFAULT_WAVES] = {
 
 /*146*/ { "Noisy Pad (A=NoiseAmt B=Flt)", "(mix(abs(MOD_A), sigma(k, 1.0, 4.0, 1.0, (sin((x * k)) / k)), ((rand() - 0.5) * 1.5)) * fma(0.5, tanh((3.0 * (1.0 - (abs(MOD_B) * (1.0 - (FREQUENCY / 1000.0)))))), 0.5)) * 0.6" },
 
-/*147*/ { "Rich String Ensemble", "fma(0.7, sin(x), fma(0.5, sin(fma(x, 1.5, 0.0)), 0.0))" },
+/*147*/ { "Rich String Ensemble", "(sigma(k, 1.0, fma(3.0, abs(MOD_B), 5.0), 1.0, (((sin(fma(x, k, (((MOD_A * 0.02) * k) * RAND_OFFSET))) + sin(fma((x * k), fma(MOD_A, 0.005, 1.0), (((MOD_A * 0.03) * k) * (k * 0.1))))) + sin(fma((x * k), (1.0 - (MOD_A * 0.005)), -(((MOD_A * 0.025) * k) * (k * 0.13))))) / pow(k, fma(0.3, abs(MOD_B), 1.1)))) * 0.15) * fma(0.2, sin(fma(x, 0.5, PI_OVER_2)), 1.0)" },
 
 /*148*/ { "Mellow Brass Section", "tanh((sigma(k, 1.0, fma(2.0, abs(MOD_A), 4.0), 1.0, ((sin(fma(x, k, ((MOD_B * 0.02) * sin((x * 7.0))))) * fma(abs(MOD_A), fma(0.1, k, -0.05), (1.0 - (0.2 * k)))) / pow(k, fma(0.4, (1.0 - abs(MOD_A)), 0.8)))) * fma(0.3, abs(MOD_A), 0.6))) * 0.85" },
 

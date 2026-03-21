@@ -724,7 +724,7 @@ The language supports the following operators:
 - `k`: Default loop variable name for the `sigma()` summation function.
 
 ### Constants
-- `PI`, `TWO_PI`, `PI_OVER_2`, `THREE_PI_OVER_2`, `E`
+- `PI`, `TWO_PI`, `PI_OVER_2`, `THREE_PI_OVER_2`, `INV_PI`, `INV_TWO_PI`, `INV_PI_OVER_2`, `E`
 - **LFSR Types**: `LFSR_4BIT` through `LFSR_17BIT`, `LFSR_GALOIS`, `LFSR_FIBONACCI`
 
 ### Functions
