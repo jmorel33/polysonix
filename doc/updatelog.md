@@ -1,5 +1,11 @@
 # Update Log
 
+## v1.9.38 (2026/03/21)
+- **Security**:
+  - Implemented the `PX_STRNCPY_SAFE` macro in `px_vm.h` to enforce guaranteed null-termination for all string copy operations during tokenization and parsing. This addresses potential buffer overflow and out-of-bounds read vulnerabilities when processing identifiers and operators at the 31-character limit.
+  - Replaced all manual `strncpy` calls in the VM core with this unified safe alternative to improve code robustness and satisfy modern compiler security analysis.
+  - Added a dedicated unit test `test/test_token_null_termination.c` to verify correct handling and termination of maximum-length identifiers.
+
 ## v1.9.37 (2026/03/20)
 - **Features / Fixes**:
   - Implemented a critical fix for the Virtual Machine's sub-chunk execution (`execute_sub_chunk` in `px_vm.h`). The stack boundary is now correctly enforced using the sub-chunk's frame base pointer (`outer_stack_top`) instead of the absolute stack bottom, preventing potential stack corruption and ensuring correct result returns for nested `sigma()` loops.
