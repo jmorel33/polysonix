@@ -1,6 +1,6 @@
 # Update Log
 
-## v1.9.38 (2026/03/21)
+## v1.9.38 (2026/03/26)
 - **Security / Stability**:
   - Implemented comprehensive bounds checking and clamping for waveform indices (`wave_idx`) across the entire engine.
   - Hardened patch deserialization in `px_patching.h` to clamp LFO and oscillator waveform indices to valid ranges (`[0, NUM_WAVEFORMS - 1]`).
