@@ -747,7 +747,10 @@ static bool px_allocate_patch_memory(PxPatch* p, const PxConfig* config) {
     p->template_voice_adsr_mod_amounts = (float*)calloc(config->num_voice_adsrs * PX_ADSR_DEST_COUNT, sizeof(float));
     p->template_lfos = (PxLFOParams*)calloc(config->num_lfos, sizeof(PxLFOParams));
 
-    if (!p->template_voice_adsrs || !p->template_voice_adsr_mod_amounts || !p->template_lfos) {
+    bool success = p->template_voice_adsrs && p->template_voice_adsr_mod_amounts;
+    if (config->num_lfos > 0 && !p->template_lfos) success = false;
+
+    if (!success) {
         if (p->template_voice_adsrs) free(p->template_voice_adsrs);
         if (p->template_voice_adsr_mod_amounts) free(p->template_voice_adsr_mod_amounts);
         if (p->template_lfos) free(p->template_lfos);
