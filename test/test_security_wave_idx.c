@@ -7,9 +7,7 @@
 #include <string.h>
 
 /**
- * Security test for Oscillator wave_idx bounds checking.
- * This test verifies that out-of-bounds wave_idx values in a preset
- * are correctly clamped to 0 during deserialization.
+ * Security test for Oscillator and LFO wave_idx bounds checking.
  */
 
 static uint32_t adler32_test(const uint8_t* data, size_t len) {
@@ -60,38 +58,61 @@ int main() {
     PxSynth* synth = PX_Create(&config);
     if (!synth) return 1;
 
-    // 1. Prepare a valid preset with a known marker
+    // 1. Prepare a valid preset
     synth->patch.osc[0].wave_idx = 200;
     synth->patch.osc[0].enabled = true;
+    synth->patch.template_lfos[0].wave_idx = 100;
+    synth->patch.template_lfos[0].enabled = true;
 
     MemStream ms = {0};
     PX_SavePresetToBus(synth, mem_write, &ms, "SecurityTest");
 
-    // 2. Corrupt the wave_idx to be out-of-bounds (e.g., 9999)
+    // 2. Corrupt the wave_idx values
     uint32_t data_len = ((uint32_t)ms.buffer[26] << 24) | ((uint32_t)ms.buffer[27] << 16) |
                         ((uint32_t)ms.buffer[28] << 8) | ((uint32_t)ms.buffer[29]);
 
-    uint8_t marker[] = {0x01, 0x00, 0x00, 0x00, 0xC8}; // enabled=1, wave_idx=200
-    int found_pos = -1;
+    // Find Oscillator 0 wave_idx (marker: enabled=1, wave_idx=200)
+    // Oscillator serialization uses big-endian write_u32
+    uint8_t osc_marker[] = {0x01, 0x00, 0x00, 0x00, 0xC8};
+    int osc_pos = -1;
     for (int i = 40; i < (int)(40 + data_len - 5); i++) {
-        if (memcmp(ms.buffer + i, marker, 5) == 0) {
-            found_pos = i + 1;
+        if (memcmp(ms.buffer + i, osc_marker, 5) == 0) {
+            osc_pos = i + 1;
             break;
         }
     }
 
-    if (found_pos == -1) {
-        printf("FAILED: Could not locate wave_idx marker\n");
+    // Find LFO 0 wave_idx (marker: wave_idx=100)
+    // LFO serialization uses WR_BUF (native endian memcpy)
+    // PxLFOParams structure: int wave_idx, float frequency, bool enabled, bool reset_on_key_on, ...
+    int lfo_target_val = 100;
+    uint8_t lfo_marker[4];
+    memcpy(lfo_marker, &lfo_target_val, 4);
+
+    int lfo_pos = -1;
+    for (int i = 40; i < (int)(40 + data_len - 4); i++) {
+        if (memcmp(ms.buffer + i, lfo_marker, 4) == 0) {
+            lfo_pos = i;
+            break;
+        }
+    }
+
+    if (osc_pos == -1 || lfo_pos == -1) {
+        printf("FAILED: Could not locate markers (osc:%d lfo:%d)\n", osc_pos, lfo_pos);
         return 1;
     }
 
-    // Change 200 to 9999 (0x0000270F)
-    ms.buffer[found_pos] = 0x00;
-    ms.buffer[found_pos + 1] = 0x00;
-    ms.buffer[found_pos + 2] = 0x27;
-    ms.buffer[found_pos + 3] = 0x0F;
+    // Corrupt Oscillator wave_idx to 9999 (Big Endian)
+    ms.buffer[osc_pos] = 0x00;
+    ms.buffer[osc_pos + 1] = 0x00;
+    ms.buffer[osc_pos + 2] = 0x27;
+    ms.buffer[osc_pos + 3] = 0x0F;
 
-    // Recalculate checksum and update footer
+    // Corrupt LFO wave_idx to 8888 (Native Endian)
+    int lfo_bad_val = 8888;
+    memcpy(ms.buffer + lfo_pos, &lfo_bad_val, 4);
+
+    // Recalculate checksum
     uint32_t new_sum = adler32_test(ms.buffer + 40, data_len);
     ms.buffer[40 + data_len] = (new_sum >> 24) & 0xFF;
     ms.buffer[40 + data_len + 1] = (new_sum >> 16) & 0xFF;
@@ -106,19 +127,46 @@ int main() {
         return 1;
     }
 
-    // 4. Verify result
-    int loaded_idx = synth->patch.osc[0].wave_idx;
-    if (loaded_idx == 0) {
-        printf("SUCCESS: wave_idx clamped to 0\n");
-    } else if (loaded_idx == 9999) {
-        printf("FAILED: wave_idx remained at 9999 (VULNERABLE)\n");
-        return 1;
+    // 4. Verify results
+    int loaded_osc_idx = synth->patch.osc[0].wave_idx;
+    int loaded_lfo_idx = synth->patch.template_lfos[0].wave_idx;
+
+    bool success = true;
+    if (loaded_osc_idx == 0) {
+        printf("SUCCESS: osc wave_idx clamped to 0\n");
     } else {
-        printf("FAILED: unexpected wave_idx %d\n", loaded_idx);
-        return 1;
+        printf("FAILED: osc wave_idx is %d\n", loaded_osc_idx);
+        success = false;
+    }
+
+    if (loaded_lfo_idx == 0) {
+        printf("SUCCESS: lfo wave_idx clamped to 0\n");
+    } else {
+        printf("FAILED: lfo wave_idx is %d\n", loaded_lfo_idx);
+        success = false;
+    }
+
+    // 5. Test API clamping
+    float dummy_buf[1024];
+    PX_SetOscWave(synth, 0, 7777);
+    PX_Process(synth, dummy_buf, 1);
+    if (synth->patch.osc[0].wave_idx == 0) {
+        printf("SUCCESS: API PX_SetOscWave clamped to 0\n");
+    } else {
+        printf("FAILED: API PX_SetOscWave allowed %d\n", synth->patch.osc[0].wave_idx);
+        success = false;
+    }
+
+    PX_SetLFOWaveform(synth, 0, 6666);
+    PX_Process(synth, dummy_buf, 1);
+    if (synth->patch.template_lfos[0].wave_idx == 0) {
+        printf("SUCCESS: API PX_SetLFOWaveform clamped to 0\n");
+    } else {
+        printf("FAILED: API PX_SetLFOWaveform allowed %d\n", synth->patch.template_lfos[0].wave_idx);
+        success = false;
     }
 
     PX_Destroy(synth);
     free(ms.buffer);
-    return 0;
+    return success ? 0 : 1;
 }

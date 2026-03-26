@@ -1,5 +1,15 @@
 # Update Log
 
+## v1.9.38 (2026/03/21)
+- **Security / Stability**:
+  - Implemented comprehensive bounds checking and clamping for waveform indices (`wave_idx`) across the entire engine.
+  - Hardened patch deserialization in `px_patching.h` to clamp LFO and oscillator waveform indices to valid ranges (`[0, NUM_WAVEFORMS - 1]`).
+  - Added validation for oscillator sequence IDs during deserialization, clamping them to `[-1, PX_NUM_WSEQ_BANKS - 1]`.
+  - Hardened public API functions (`PX_NoteOn`, `PX_SetOscWave`, `PX_SetLFOWaveform`) and internal command processing to prevent injection of out-of-bounds waveform indices.
+  - Implemented defense-in-depth in the main audio processing loop (`PX_Process`) by validating waveform indices immediately before accessing wave ROM data.
+  - Added safety checks to wave sequencing logic, ensuring step-based and random waveform selections are always within bounds.
+  - Expanded `test/test_security_wave_idx.c` to verify LFO and API-level clamping.
+
 ## v1.9.37 (2026/03/20)
 - **Features / Fixes**:
   - Implemented a critical fix for the Virtual Machine's sub-chunk execution (`execute_sub_chunk` in `px_vm.h`). The stack boundary is now correctly enforced using the sub-chunk's frame base pointer (`outer_stack_top`) instead of the absolute stack bottom, preventing potential stack corruption and ensuring correct result returns for nested `sigma()` loops.

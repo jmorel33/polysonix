@@ -394,8 +394,15 @@ static bool px_deserialize_patch_impl(PxPatch* p, const PxConfig* c, const uint8
         RD_BUF(p->template_voice_adsrs, sizeof(PxADSRParams) * c->num_voice_adsrs);
     if (p->template_voice_adsr_mod_amounts)
         RD_BUF(p->template_voice_adsr_mod_amounts, sizeof(float) * c->num_voice_adsrs * PX_ADSR_DEST_COUNT);
-    if (p->template_lfos)
+    if (p->template_lfos) {
         RD_BUF(p->template_lfos, sizeof(PxLFOParams) * c->num_lfos);
+        // Security Fix: Clamp waveform indices in template_lfos
+        for (int i = 0; i < c->num_lfos; i++) {
+            if (p->template_lfos[i].wave_idx < 0 || p->template_lfos[i].wave_idx >= NUM_WAVEFORMS) {
+                p->template_lfos[i].wave_idx = 0;
+            }
+        }
+    }
 
     // 2. Scalars
     RD_F32(&p->filter_cutoff_hz);
@@ -441,7 +448,10 @@ static bool px_deserialize_patch_impl(PxPatch* p, const PxConfig* c, const uint8
         RD_F32(&o->fine_cents);
         RD_F32(&o->mix_level);
         RD_F32(&o->pan);
-        uint32_t u_seq; RD_U32(&u_seq); o->sequence_id = (int32_t)u_seq; // Cast back to signed int
+        uint32_t u_seq; RD_U32(&u_seq);
+        int32_t s_seq = (int32_t)u_seq;
+        if (s_seq < -1 || s_seq >= PX_NUM_WSEQ_BANKS) s_seq = -1;
+        o->sequence_id = s_seq;
 
         RD_BOOL(&o->cross_mod_enabled);
         RD_F32(&o->cross_mod_depth);
