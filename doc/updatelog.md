@@ -1,5 +1,24 @@
 # Update Log
 
+## v1.9.38 (2026/03/26)
+- **Security / Stability**:
+  - Implemented comprehensive bounds checking and clamping for waveform indices (`wave_idx`) across the entire engine.
+  - Hardened patch deserialization in `px_patching.h` to clamp LFO and oscillator waveform indices to valid ranges (`[0, NUM_WAVEFORMS - 1]`).
+  - Added validation for oscillator sequence IDs during deserialization, clamping them to `[-1, PX_NUM_WSEQ_BANKS - 1]`.
+  - Hardened public API functions (`PX_NoteOn`, `PX_SetOscWave`, `PX_SetLFOWaveform`) and internal command processing to prevent injection of out-of-bounds waveform indices.
+  - Implemented defense-in-depth in the main audio processing loop (`PX_Process`) by validating waveform indices immediately before accessing wave ROM data.
+  - Added safety checks to wave sequencing logic, ensuring step-based and random waveform selections are always within bounds.
+  - Expanded `test/test_security_wave_idx.c` to verify LFO and API-level clamping.
+- **Security**:
+  - Implemented the `PX_STRNCPY_SAFE` macro in `px_vm.h` to enforce guaranteed null-termination for all string copy operations during tokenization and parsing. This addresses potential buffer overflow and out-of-bounds read vulnerabilities when processing identifiers and operators at the 31-character limit.
+  - Replaced all manual `strncpy` calls in the VM core with this unified safe alternative to improve code robustness and satisfy modern compiler security analysis.
+  - Added a dedicated unit test `test/test_token_null_termination.c` to verify correct handling and termination of maximum-length identifiers.
+- **Maintenance / Code Health**:
+  - Improved memory allocation safety across the core library (`polysonix.h`, `px_vm.h`, and `px_patching.h`) by adding missing NULL checks for dynamic allocations.
+  - Refactored synthesizer and patch initialization logic to robustly handle configurations with zero LFOs, preventing false initialization failures on platforms where `calloc(0)` returns NULL.
+  - Added `<stdio.h>` to the implementation block in `polysonix.h` to enable standard error reporting via `fprintf` and `perror`.
+  - Cleaned up build artifacts and improved internal allocation check readability using named boolean logic.
+
 ## v1.9.37 (2026/03/20)
 - **Features / Fixes**:
   - Implemented a critical fix for the Virtual Machine's sub-chunk execution (`execute_sub_chunk` in `px_vm.h`). The stack boundary is now correctly enforced using the sub-chunk's frame base pointer (`outer_stack_top`) instead of the absolute stack bottom, preventing potential stack corruption and ensuring correct result returns for nested `sigma()` loops.

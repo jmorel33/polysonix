@@ -60,6 +60,8 @@ run_tests: $(TESTS)
 	@./test/test_vm_markov > /dev/null
 	@echo "Running test_adsr..."
 	@./test/test_adsr > /dev/null
+	@echo "Running test_token_null_termination..."
+	@./test/test_token_null_termination > /dev/null
 	@echo "All tests passed!"
 
 clean:
