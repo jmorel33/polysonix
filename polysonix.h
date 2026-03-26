@@ -17,7 +17,7 @@
 // --- Version Macros ---
 #define POLYSONIX_VERSION_MAJOR 1
 #define POLYSONIX_VERSION_MINOR 9
-#define POLYSONIX_VERSION_PATCH 37
+#define POLYSONIX_VERSION_PATCH 38
 #define POLYSONIX_VERSION_REVISION ""
 
 #ifndef POLYSONIX_H
@@ -1051,6 +1051,7 @@ PX_API const char* PX_GetADSRStateName(PxADSRState state);
 #ifdef POLYSONIX_IMPLEMENTATION
 #define PX_VM_IMPLEMENTATION
 #include "px_vm.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -2546,14 +2547,20 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     s->template_lfo_instances = (LFOInstance*)calloc(config->num_lfos, sizeof(LFOInstance));
 
     // 6. Check if any of the primary allocations failed.
-    if (!s->patch.template_voice_adsrs ||
-        !s->patch.template_voice_adsr_mod_amounts ||
-        !s->patch.template_lfos ||
-        !s->ui_snapshot.patch_copy.template_voice_adsrs ||
-        !s->ui_snapshot.patch_copy.template_voice_adsr_mod_amounts ||
-        !s->ui_snapshot.patch_copy.template_lfos ||
-        !s->voices ||
-        !s->template_lfo_instances) {
+    // Note: LFO-related pointers are allowed to be NULL if config->num_lfos is 0.
+    bool primary_allocs_ok = s->patch.template_voice_adsrs &&
+                             s->patch.template_voice_adsr_mod_amounts &&
+                             s->ui_snapshot.patch_copy.template_voice_adsrs &&
+                             s->ui_snapshot.patch_copy.template_voice_adsr_mod_amounts &&
+                             s->voices;
+
+    if (config->num_lfos > 0) {
+        if (!s->patch.template_lfos || !s->ui_snapshot.patch_copy.template_lfos || !s->template_lfo_instances) {
+            primary_allocs_ok = false;
+        }
+    }
+
+    if (!primary_allocs_ok) {
         PX_Destroy(s);
         return NULL;
     }
@@ -2576,7 +2583,15 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
         s->voices[i].lfo_instances = (LFOInstance*)calloc(config->num_lfos, sizeof(LFOInstance));
         s->voices[i].lfo_mod_amounts_snapshot = (float*)calloc(config->num_lfos * PX_LFO_DEST_COUNT, sizeof(float));
         s->voices[i].adsr_mod_amounts = (float*)calloc(config->num_voice_adsrs * PX_ADSR_DEST_COUNT, sizeof(float));
-        if (!s->voices[i].adsrs || !s->voices[i].lfo_instances || !s->voices[i].lfo_mod_amounts_snapshot || !s->voices[i].adsr_mod_amounts) {
+
+        bool voice_allocs_ok = s->voices[i].adsrs && s->voices[i].adsr_mod_amounts;
+        if (config->num_lfos > 0) {
+            if (!s->voices[i].lfo_instances || !s->voices[i].lfo_mod_amounts_snapshot) {
+                voice_allocs_ok = false;
+            }
+        }
+
+        if (!voice_allocs_ok) {
             PX_Destroy(s);
             return NULL;
         }

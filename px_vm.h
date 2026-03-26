@@ -5055,7 +5055,9 @@ void px_vm_init_gpu_resources(void) {
     }
 
     uint8_t* host_lfsr = (uint8_t*)calloc(1, total_lfsr_bytes);
-    if (host_lfsr) {
+    if (!host_lfsr) {
+        fprintf(stderr, "Failed to allocate memory for host LFSR table in px_vm_init_gpu_resources\n");
+    } else {
         size_t offset = 0;
         for (int i = 0; i < NUM_LFSR_TYPES; ++i) {
             size_t bytes = LFSR_TABLE_BYTES(precomputed_lfsrs[i].period);
@@ -5127,6 +5129,10 @@ GpuWaveBuffers upload_wave_to_gpu(BytecodeChunk* chunk) {
     meta.bytecode_length = (uint32_t)size;
 
     uint8_t* code_bytes = (uint8_t*)calloc(1, size);
+    if (!code_bytes) {
+        fprintf(stderr, "Failed to allocate memory for bytecode serialization in upload_wave_to_gpu\n");
+        return gpu_bufs;
+    }
     size_t actual_size = 0;
     serialize_chunk_recursive(chunk, code_bytes, &actual_size, &meta, true);
 
