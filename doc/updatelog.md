@@ -1,5 +1,12 @@
 # Update Log
 
+## v1.9.38 (2026/03/21)
+- **Maintenance / Code Health**:
+  - Improved memory allocation safety across the core library (`polysonix.h`, `px_vm.h`, and `px_patching.h`) by adding missing NULL checks for dynamic allocations.
+  - Refactored synthesizer and patch initialization logic to robustly handle configurations with zero LFOs, preventing false initialization failures on platforms where `calloc(0)` returns NULL.
+  - Added `<stdio.h>` to the implementation block in `polysonix.h` to enable standard error reporting via `fprintf` and `perror`.
+  - Cleaned up build artifacts and improved internal allocation check readability using named boolean logic.
+
 ## v1.9.37 (2026/03/20)
 - **Features / Fixes**:
   - Implemented a critical fix for the Virtual Machine's sub-chunk execution (`execute_sub_chunk` in `px_vm.h`). The stack boundary is now correctly enforced using the sub-chunk's frame base pointer (`outer_stack_top`) instead of the absolute stack bottom, preventing potential stack corruption and ensuring correct result returns for nested `sigma()` loops.
