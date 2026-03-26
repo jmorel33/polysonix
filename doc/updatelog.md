@@ -1,6 +1,14 @@
 # Update Log
 
 ## v1.9.38 (2026/03/21)
+- **Security / Stability**:
+  - Implemented comprehensive bounds checking and clamping for waveform indices (`wave_idx`) across the entire engine.
+  - Hardened patch deserialization in `px_patching.h` to clamp LFO and oscillator waveform indices to valid ranges (`[0, NUM_WAVEFORMS - 1]`).
+  - Added validation for oscillator sequence IDs during deserialization, clamping them to `[-1, PX_NUM_WSEQ_BANKS - 1]`.
+  - Hardened public API functions (`PX_NoteOn`, `PX_SetOscWave`, `PX_SetLFOWaveform`) and internal command processing to prevent injection of out-of-bounds waveform indices.
+  - Implemented defense-in-depth in the main audio processing loop (`PX_Process`) by validating waveform indices immediately before accessing wave ROM data.
+  - Added safety checks to wave sequencing logic, ensuring step-based and random waveform selections are always within bounds.
+  - Expanded `test/test_security_wave_idx.c` to verify LFO and API-level clamping.
 - **Security**:
   - Implemented the `PX_STRNCPY_SAFE` macro in `px_vm.h` to enforce guaranteed null-termination for all string copy operations during tokenization and parsing. This addresses potential buffer overflow and out-of-bounds read vulnerabilities when processing identifiers and operators at the 31-character limit.
   - Replaced all manual `strncpy` calls in the VM core with this unified safe alternative to improve code robustness and satisfy modern compiler security analysis.

@@ -2178,7 +2178,12 @@ static void PX_ProcessCommands(PxSynth* s) {
     PxCommand cmd;
     while (cmd_pop(&s->cmd_queue, &cmd)) {
         switch (cmd.command_type) {
-            case PX_CMD_NOTE_ON: PX_NoteOn_internal(s, cmd.data.note_on.midi_note, cmd.data.note_on.wave_idx, cmd.data.note_on.key_id, 1.0f); break;
+            case PX_CMD_NOTE_ON: {
+                int w = cmd.data.note_on.wave_idx;
+                if (w < 0 || w >= NUM_WAVEFORMS) w = 0;
+                PX_NoteOn_internal(s, cmd.data.note_on.midi_note, w, cmd.data.note_on.key_id, 1.0f);
+                break;
+            }
             case PX_CMD_NOTE_OFF: PX_NoteOff_internal(s, cmd.data.note_off.key_id); break;
             case PX_CMD_SET_VOICE_ADSR_PARAM: {
                 if (cmd.data.param_idx_enum_float.idx < s->config.num_voice_adsrs) {
@@ -2195,7 +2200,13 @@ static void PX_ProcessCommands(PxSynth* s) {
             case PX_CMD_SET_VOICE_ADSR_ENABLED: if (cmd.data.param_idx_bool.idx < s->config.num_voice_adsrs) s->patch.template_voice_adsrs[cmd.data.param_idx_bool.idx].enabled = cmd.data.param_idx_bool.bool_val; break;
             case PX_CMD_SET_VOICE_ADSR_MOD_AMOUNT: if (cmd.data.param_idx_enum_float.idx < s->config.num_voice_adsrs) s->patch.template_voice_adsr_mod_amounts[cmd.data.param_idx_enum_float.idx * PX_ADSR_DEST_COUNT + cmd.data.param_idx_enum_float.enum_val] = cmd.data.param_idx_enum_float.float_val; break;
             case PX_CMD_SET_LFO_PARAM: if (cmd.data.param_idx_enum_float.idx < s->config.num_lfos) s->patch.template_lfos[cmd.data.param_idx_enum_float.idx].frequency = fmaxf(0.01f, cmd.data.param_idx_enum_float.float_val); break;
-            case PX_CMD_SET_LFO_WAVEFORM: if (cmd.data.param_idx_enum.idx < s->config.num_lfos) s->patch.template_lfos[cmd.data.param_idx_enum.idx].wave_idx = cmd.data.param_idx_enum.enum_val; break;
+            case PX_CMD_SET_LFO_WAVEFORM:
+                if (cmd.data.param_idx_enum.idx < s->config.num_lfos) {
+                    int w = cmd.data.param_idx_enum.enum_val;
+                    if (w < 0 || w >= NUM_WAVEFORMS) w = 0;
+                    s->patch.template_lfos[cmd.data.param_idx_enum.idx].wave_idx = w;
+                }
+                break;
             case PX_CMD_SET_LFO_ENABLED: if (cmd.data.param_idx_bool.idx < s->config.num_lfos) s->patch.template_lfos[cmd.data.param_idx_bool.idx].enabled = cmd.data.param_idx_bool.bool_val; break;
             case PX_CMD_SET_LFO_RESET_ON_KEY: if (cmd.data.param_idx_bool.idx < s->config.num_lfos) s->patch.template_lfos[cmd.data.param_idx_bool.idx].reset_on_key_on = cmd.data.param_idx_bool.bool_val; break;
             case PX_CMD_SET_LFO_ADSR_PARAM: {
@@ -2250,10 +2261,13 @@ static void PX_ProcessCommands(PxSynth* s) {
             case PX_CMD_SET_LIMITER_RELEASE: s->patch.limiter_release_ms = fmaxf(1.0f, cmd.data.param_float.float_val); break;
             case PX_CMD_SET_UNILEGATO_ENABLED: s->patch.unilegato_enabled = cmd.data.param_bool.bool_val; break;
             case PX_CMD_SET_UNILEGATO_SLIDE_TIME: s->patch.unilegato_slide_duration_s = fmaxf(0.01f, cmd.data.param_float.float_val); break;
-            case PX_CMD_NOTE_ON_VEL:
-                PX_NoteOn_internal(s, cmd.data.note_on_vel.midi_note, cmd.data.note_on_vel.wave_idx,
+            case PX_CMD_NOTE_ON_VEL: {
+                int w = cmd.data.note_on_vel.wave_idx;
+                if (w < 0 || w >= NUM_WAVEFORMS) w = 0;
+                PX_NoteOn_internal(s, cmd.data.note_on_vel.midi_note, w,
                                    cmd.data.note_on_vel.key_id, cmd.data.note_on_vel.velocity);
                 break;
+            }
             case PX_CMD_CHANNEL_AFTERTOUCH:
                 s->channel_aftertouch_pressure = fmaxf(0.0f, fminf(1.0f, cmd.data.aftertouch.pressure));
                 break;
@@ -2348,9 +2362,11 @@ static void PX_ProcessCommands(PxSynth* s) {
                 break;
             case PX_CMD_SET_OSC_WAVE:
                 if (cmd.data.osc_int.osc_idx >= 0 && cmd.data.osc_int.osc_idx < PX_MAX_OSC_PER_VOICE) {
-                    s->patch.osc[cmd.data.osc_int.osc_idx].wave_idx = cmd.data.osc_int.int_val;
+                    int w = cmd.data.osc_int.int_val;
+                    if (w < 0 || w >= NUM_WAVEFORMS) w = 0;
+                    s->patch.osc[cmd.data.osc_int.osc_idx].wave_idx = w;
                     for (int i = 0; i < s->config.num_voices; i++) {
-                        if (s->voices[i].active) s->voices[i].osc[cmd.data.osc_int.osc_idx].wave_indices = cmd.data.osc_int.int_val;
+                        if (s->voices[i].active) s->voices[i].osc[cmd.data.osc_int.osc_idx].wave_indices = w;
                     }
                 }
                 break;
@@ -3176,7 +3192,6 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             float lfo_bytecode_mod_a = v->lfo_param1_mod_val;
             float lfo_bytecode_mod_b = v->lfo_param2_mod_val;
             float lfo_bytecode_mod_c = v->lfo_param3_mod_val;
-            float lfo_pan_env_input = v->lfo_pan_mod_val;
 
             // --- Step 3: Amplitude Calculation ---
             float effective_amplitude = 0.0f; bool is_amp_targeted = false; float summed_amp_contributions = 0.0f;
@@ -3280,8 +3295,6 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         sq->target_pitch_ratio = fmaf(sq->step_pitch_ratio - sq->target_pitch_ratio, s->glide_coeff, sq->target_pitch_ratio);
                         seq_pitch_mult = sq->target_pitch_ratio;
                     } else if (do_step_glide) {
-                        const PxWaveSeqStep* current_step = &sq->current_sequence->steps[sq->step_idx];
-
                         // v1.8: Use Cached Target Cycles
                         float effective_duration = (float)sq->current_step_target_cycles;
 
@@ -3369,7 +3382,9 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 }
                 v->osc[o].vm_params.x = effective_phase * 2.f * PI;
 
-                BytecodeChunk* chunk = default_waves[v->osc[o].wave_indices].compiled_bytecode;
+                int w_idx = v->osc[o].wave_indices;
+                if (w_idx < 0 || w_idx >= NUM_WAVEFORMS) w_idx = 0;
+                BytecodeChunk* chunk = default_waves[w_idx].compiled_bytecode;
                 float raw_sample = 0.0f;
 
                 // C. Generation (CPU)
@@ -3565,8 +3580,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         // Just in case it changed inside loop or something weird
                         if (target_cycles < 1) target_cycles = 1;
 
-                        const PxWaveSeqStep* current_step = &sq->current_sequence->steps[sq->step_idx];
-                        bool force_end = (current_step->flags & PX_WSEQ_END);
+                        bool force_end = (sq->current_sequence->steps[sq->step_idx].flags & PX_WSEQ_END);
                         if (force_end) {
                             switch (sq->current_sequence->end_action) {
                                 case PX_WSEQ_END_STOP:
@@ -3582,7 +3596,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                                 default: sq->finished = true; break;
                             }
                         } else {
-                            if (current_step->flags & PX_WSEQ_JUMP_RANDOM) {
+                            if (sq->current_sequence->steps[sq->step_idx].flags & PX_WSEQ_JUMP_RANDOM) {
                                 // Scan for valid length
                                 int valid_len = 0;
                                 for (int k=0; k<PX_MAX_WSEQ_STEPS; k++) {
@@ -3621,10 +3635,17 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
                             // Load Wave
                             if (next_step->flags & PX_WSEQ_USE_RND_WAVE) {
-                                uint16_t range = sq->current_sequence->rnd_wave_high - sq->current_sequence->rnd_wave_low;
-                                if (range > 0) v->osc[o].wave_indices = sq->current_sequence->rnd_wave_low + (px_rand(&v->rng_state) % (range + 1));
+                                uint16_t low = sq->current_sequence->rnd_wave_low;
+                                uint16_t high = sq->current_sequence->rnd_wave_high;
+                                if (low >= NUM_WAVEFORMS) low = 0;
+                                if (high >= NUM_WAVEFORMS) high = (uint16_t)(NUM_WAVEFORMS - 1);
+                                if (low > high) { uint16_t tmp = low; low = high; high = tmp; }
+                                uint16_t range = high - low;
+                                v->osc[o].wave_indices = low + (px_rand(&v->rng_state) % (range + 1));
                             } else {
-                                v->osc[o].wave_indices = next_step->wave_idx;
+                                int w = next_step->wave_idx;
+                                if (w < 0 || w >= NUM_WAVEFORMS) w = 0;
+                                v->osc[o].wave_indices = w;
                             }
 
                             // Load Pitch
@@ -3738,6 +3759,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 // v1.1: Primary NoteOn with velocity (0.0 to 1.0, or use 127/127.0f from MIDI)
 PX_API void PX_NoteOn(PxSynth* s, int midi_note, int wave_idx, int key_id, float velocity) {
     velocity = fmaxf(0.0f, fminf(1.0f, velocity));
+    if (wave_idx < 0 || wave_idx >= NUM_WAVEFORMS) wave_idx = 0;
     PUSH_CMD_VOID(PX_CMD_NOTE_ON_VEL, .note_on_vel = {midi_note, wave_idx, key_id, velocity});
 }
 
@@ -3780,7 +3802,10 @@ PX_API void PX_SetVoiceADSRParam(PxSynth* s, int idx, PxADSRParamType p, float v
 PX_API void PX_SetVoiceADSREnabled(PxSynth* s, int idx, bool enabled) { PUSH_CMD_VOID(PX_CMD_SET_VOICE_ADSR_ENABLED, .param_idx_bool = {idx, enabled}); }
 PX_API void PX_SetVoiceADSRModAmount(PxSynth* s, int idx, PxADSRDestination d, float v) { PUSH_CMD_VOID(PX_CMD_SET_VOICE_ADSR_MOD_AMOUNT, .param_idx_enum_float = {idx, (int)d, v}); }
 PX_API void PX_SetLFOParam(PxSynth* s, int idx, PxLFOParamType p, float v) { PUSH_CMD_VOID(PX_CMD_SET_LFO_PARAM, .param_idx_enum_float = {idx, (int)p, v}); }
-PX_API void PX_SetLFOWaveform(PxSynth* s, int idx, int wave_idx) { PUSH_CMD_VOID(PX_CMD_SET_LFO_WAVEFORM, .param_idx_enum = {idx, wave_idx}); }
+PX_API void PX_SetLFOWaveform(PxSynth* s, int idx, int wave_idx) {
+    if (wave_idx < 0 || wave_idx >= NUM_WAVEFORMS) wave_idx = 0;
+    PUSH_CMD_VOID(PX_CMD_SET_LFO_WAVEFORM, .param_idx_enum = {idx, wave_idx});
+}
 PX_API void PX_SetLFOEnabled(PxSynth* s, int idx, bool enabled) { PUSH_CMD_VOID(PX_CMD_SET_LFO_ENABLED, .param_idx_bool = {idx, enabled}); }
 PX_API void PX_SetLFOResetOnKeyOn(PxSynth* s, int idx, bool reset) { PUSH_CMD_VOID(PX_CMD_SET_LFO_RESET_ON_KEY, .param_idx_bool = {idx, reset}); }
 PX_API void PX_SetLFOADSRParam(PxSynth* s, int idx, PxADSRParamType p, float v) { PUSH_CMD_VOID(PX_CMD_SET_LFO_ADSR_PARAM, .param_idx_enum_float = {idx, (int)p, v}); }
@@ -3886,6 +3911,7 @@ PX_API bool PX_GetOscEnabled(PxSynth* s, int osc_idx) {
 
 PX_API void PX_SetOscWave(PxSynth* s, int osc_idx, int wave_idx) {
     if (!s || osc_idx < 0 || osc_idx >= PX_MAX_OSC_PER_VOICE) return;
+    if (wave_idx < 0 || wave_idx >= NUM_WAVEFORMS) wave_idx = 0;
     PUSH_CMD_VOID(PX_CMD_SET_OSC_WAVE, .osc_int = {osc_idx, wave_idx});
 }
 PX_API int PX_GetOscWave(PxSynth* s, int osc_idx) {
@@ -4326,8 +4352,11 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
 
             // Update Oscillator Configs
             for(int o=0; o<PX_MAX_OSC_PER_VOICE; ++o) {
-                 if (o == 0) v->osc[o].wave_indices = wave_idx;
-                 else v->osc[o].wave_indices = s->patch.osc[o].wave_idx;
+                 int w;
+                 if (o == 0) w = wave_idx;
+                 else w = s->patch.osc[o].wave_idx;
+                 if (w < 0 || w >= NUM_WAVEFORMS) w = 0;
+                 v->osc[o].wave_indices = w;
 
                  v->osc[o].current_coarse_semitones = s->patch.osc[o].coarse_semitones;
                  v->osc[o].current_fine_cents = s->patch.osc[o].fine_cents;
@@ -4377,8 +4406,11 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
 
     // v1.6: Initialize Oscillators
     for (int o = 0; o < PX_MAX_OSC_PER_VOICE; ++o) {
-        if (o == 0) v->osc[o].wave_indices = wave_idx; // Override Osc 1 with NoteOn wave
-        else v->osc[o].wave_indices = s->patch.osc[o].wave_idx;
+        int w;
+        if (o == 0) w = wave_idx; // Override Osc 1 with NoteOn wave
+        else w = s->patch.osc[o].wave_idx;
+        if (w < 0 || w >= NUM_WAVEFORMS) w = 0;
+        v->osc[o].wave_indices = w;
 
         v->osc[o].current_coarse_semitones = s->patch.osc[o].coarse_semitones;
         v->osc[o].current_fine_cents = s->patch.osc[o].fine_cents;
@@ -4556,7 +4588,9 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
             const PxWaveSeqStep* step = &sq->current_sequence->steps[0];
 
             // Override Static Wave with Sequence Wave
-            v->osc[o].wave_indices = step->wave_idx;
+            int w = step->wave_idx;
+            if (w < 0 || w >= NUM_WAVEFORMS) w = 0;
+            v->osc[o].wave_indices = w;
 
             sq->step_pitch_ratio = exp2f(step->pitch_offset / 1200.0f);
             sq->target_pitch_ratio = sq->step_pitch_ratio;
@@ -4581,8 +4615,13 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
             }
 
             if (sq->step_flags & PX_WSEQ_USE_RND_WAVE) {
-                 uint16_t range = sq->current_sequence->rnd_wave_high - sq->current_sequence->rnd_wave_low;
-                 if (range > 0) v->osc[o].wave_indices = sq->current_sequence->rnd_wave_low + (px_rand(&v->rng_state) % (range + 1));
+                 uint16_t low = sq->current_sequence->rnd_wave_low;
+                 uint16_t high = sq->current_sequence->rnd_wave_high;
+                 if (low >= NUM_WAVEFORMS) low = 0;
+                 if (high >= NUM_WAVEFORMS) high = (uint16_t)(NUM_WAVEFORMS - 1);
+                 if (low > high) { uint16_t tmp = low; low = high; high = tmp; }
+                 uint16_t range = high - low;
+                 v->osc[o].wave_indices = low + (px_rand(&v->rng_state) % (range + 1));
             }
 
             if (sq->step_flags & PX_WSEQ_USE_RND_OCTAVE) {
