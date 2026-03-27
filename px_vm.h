@@ -274,6 +274,12 @@ extern "C" {
     #define PX_UNLIKELY(x) (x)
 #endif
 
+// --- Security Helpers ---
+#define PX_STRNCPY_SAFE(dest, src, size) do { \
+    strncpy((dest), (src), (size) - 1); \
+    (dest)[(size) - 1] = '\0'; \
+} while (0)
+
 // Include necessary headers from polysonix.h or define M_PI if needed
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -1023,36 +1029,36 @@ int tokenize(const char *expression, Token *tokens, int maxTokens) {
 
         // 2. Identifiers/Keywords (Can start with letter or underscore)
         if (isalpha(c1) || c1 == '_') { // Could be a keyword, constant, function, or 'x'
-            if (strncmp(&expression[pos], "FREQUENCY", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') { t->type = TOKEN_FREQUENCY; strncpy(t->value, "FREQUENCY", 31); t->value[31]='\0'; pos += 9; continue; }
-            if (strncmp(&expression[pos], "THREE_PI_OVER_2", 15) == 0 && !isalnum(expression[pos+15]) && expression[pos+15] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "THREE_PI_OVER_2", 31); t->value[31]='\0'; pos += 15; continue; }
-            if (strncmp(&expression[pos], "INV_PI_OVER_2", 13) == 0 && !isalnum(expression[pos+13]) && expression[pos+13] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "INV_PI_OVER_2", 31); t->value[31]='\0'; pos += 13; continue; }
-            if (strncmp(&expression[pos], "PI_OVER_2", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "PI_OVER_2", 31); t->value[31]='\0'; pos += 9; continue; }
-            if (strncmp(&expression[pos], "INV_TWO_PI", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "INV_TWO_PI", 31); t->value[31]='\0'; pos += 10; continue; }
-            if (strncmp(&expression[pos], "TWO_PI", 6) == 0 && !isalnum(expression[pos+6]) && expression[pos+6] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "TWO_PI", 31); t->value[31]='\0'; pos += 6; continue; }
-            if (strncmp(&expression[pos], "INV_PI", 6) == 0 && !isalnum(expression[pos+6]) && expression[pos+6] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "INV_PI", 31); t->value[31]='\0'; pos += 6; continue; }
-            if (strncmp(&expression[pos], "RAND_OFFSET", 11) == 0 && !isalnum(expression[pos+11]) && expression[pos+11] != '_') { t->type = TOKEN_RAND_OFFSET; strncpy(t->value, "RAND_OFFSET", 31); t->value[31]='\0'; pos += 11; continue; }
-            if (strncmp(&expression[pos], "LFSR_FIBONACCI", 14) == 0 && !isalnum(expression[pos+14]) && expression[pos+14] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_FIBONACCI", 31); t->value[31]='\0'; pos += 14; continue; }
-            if (strncmp(&expression[pos], "LFSR_GALOIS", 11) == 0 && !isalnum(expression[pos+11]) && expression[pos+11] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_GALOIS", 31); t->value[31]='\0'; pos += 11; continue; }
-            if (strncmp(&expression[pos], "LFSR_17BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_17BIT", 31); t->value[31]='\0'; pos += 10; continue; }
-            if (strncmp(&expression[pos], "LFSR_16BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_16BIT", 31); t->value[31]='\0'; pos += 10; continue; }
-            if (strncmp(&expression[pos], "LFSR_15BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_15BIT", 31); t->value[31]='\0'; pos += 10; continue; }
-            if (strncmp(&expression[pos], "LFSR_14BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_14BIT", 31); t->value[31]='\0'; pos += 10; continue; }
-            if (strncmp(&expression[pos], "LFSR_13BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_13BIT", 31); t->value[31]='\0'; pos += 10; continue; }
-            if (strncmp(&expression[pos], "LFSR_12BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_12BIT", 31); t->value[31]='\0'; pos += 10; continue; }
-            if (strncmp(&expression[pos], "LFSR_11BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_11BIT", 31); t->value[31]='\0'; pos += 10; continue; }
-            if (strncmp(&expression[pos], "LFSR_10BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_10BIT", 31); t->value[31]='\0'; pos += 10; continue; }
-            if (strncmp(&expression[pos], "LFSR_9BIT", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_9BIT", 31); t->value[31]='\0'; pos += 9; continue; }
-            if (strncmp(&expression[pos], "LFSR_8BIT", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_8BIT", 31); t->value[31]='\0'; pos += 9; continue; }
-            if (strncmp(&expression[pos], "LFSR_7BIT", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') {  t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_7BIT", 31); t->value[31]='\0'; pos += 9; continue; }
-            if (strncmp(&expression[pos], "LFSR_6BIT", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_6BIT", 31); t->value[31]='\0'; pos += 9; continue; }
-            if (strncmp(&expression[pos], "LFSR_5BIT", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') {  t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_5BIT", 31); t->value[31]='\0'; pos += 9; continue; }
-            if (strncmp(&expression[pos], "LFSR_4BIT", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "LFSR_4BIT", 31); t->value[31]='\0'; pos += 9; continue; }
-            if (strncmp(&expression[pos], "MOD_A", 5) == 0 && !isalnum(expression[pos+5]) && expression[pos+5] != '_') { t->type = TOKEN_MOD_A; strncpy(t->value, "MOD_A", 31); t->value[31]='\0'; pos += 5; continue; }
-            if (strncmp(&expression[pos], "MOD_B", 5) == 0 && !isalnum(expression[pos+5]) && expression[pos+5] != '_') { t->type = TOKEN_MOD_B; strncpy(t->value, "MOD_B", 31); t->value[31]='\0'; pos += 5; continue; }
-            if (strncmp(&expression[pos], "MOD_C", 5) == 0 && !isalnum(expression[pos+5]) && expression[pos+5] != '_') { t->type = TOKEN_MOD_C; strncpy(t->value, "MOD_C", 31); t->value[31]='\0'; pos += 5; continue; }
-            if (strncmp(&expression[pos], "PI", 2) == 0 && !isalnum(expression[pos+2]) && expression[pos+2] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "PI", 31); t->value[31]='\0'; pos += 2; continue; }
-            if (strncmp(&expression[pos], "E", 1) == 0 && !isalnum(expression[pos+1]) && expression[pos+1] != '_') { t->type = TOKEN_CONSTANT; strncpy(t->value, "E", 31); t->value[31]='\0'; pos += 1; continue; }
-            if (c1 == 'x' && !isalnum(c2) && c2 != '_') { t->type = TOKEN_VARIABLE; strncpy(t->value, "x", 31); t->value[31]='\0'; pos++; continue; }
+            if (strncmp(&expression[pos], "FREQUENCY", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') { t->type = TOKEN_FREQUENCY; PX_STRNCPY_SAFE(t->value, "FREQUENCY", 32); pos += 9; continue; }
+            if (strncmp(&expression[pos], "THREE_PI_OVER_2", 15) == 0 && !isalnum(expression[pos+15]) && expression[pos+15] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "THREE_PI_OVER_2", 32); pos += 15; continue; }
+            if (strncmp(&expression[pos], "INV_PI_OVER_2", 13) == 0 && !isalnum(expression[pos+13]) && expression[pos+13] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "INV_PI_OVER_2", 32); pos += 13; continue; }
+            if (strncmp(&expression[pos], "PI_OVER_2", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "PI_OVER_2", 32); pos += 9; continue; }
+            if (strncmp(&expression[pos], "INV_TWO_PI", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "INV_TWO_PI", 32); pos += 10; continue; }
+            if (strncmp(&expression[pos], "TWO_PI", 6) == 0 && !isalnum(expression[pos+6]) && expression[pos+6] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "TWO_PI", 32); pos += 6; continue; }
+            if (strncmp(&expression[pos], "INV_PI", 6) == 0 && !isalnum(expression[pos+6]) && expression[pos+6] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "INV_PI", 32); pos += 6; continue; }
+            if (strncmp(&expression[pos], "RAND_OFFSET", 11) == 0 && !isalnum(expression[pos+11]) && expression[pos+11] != '_') { t->type = TOKEN_RAND_OFFSET; PX_STRNCPY_SAFE(t->value, "RAND_OFFSET", 32); pos += 11; continue; }
+            if (strncmp(&expression[pos], "LFSR_FIBONACCI", 14) == 0 && !isalnum(expression[pos+14]) && expression[pos+14] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_FIBONACCI", 32); pos += 14; continue; }
+            if (strncmp(&expression[pos], "LFSR_GALOIS", 11) == 0 && !isalnum(expression[pos+11]) && expression[pos+11] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_GALOIS", 32); pos += 11; continue; }
+            if (strncmp(&expression[pos], "LFSR_17BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_17BIT", 32); pos += 10; continue; }
+            if (strncmp(&expression[pos], "LFSR_16BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_16BIT", 32); pos += 10; continue; }
+            if (strncmp(&expression[pos], "LFSR_15BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_15BIT", 32); pos += 10; continue; }
+            if (strncmp(&expression[pos], "LFSR_14BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_14BIT", 32); pos += 10; continue; }
+            if (strncmp(&expression[pos], "LFSR_13BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_13BIT", 32); pos += 10; continue; }
+            if (strncmp(&expression[pos], "LFSR_12BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_12BIT", 32); pos += 10; continue; }
+            if (strncmp(&expression[pos], "LFSR_11BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_11BIT", 32); pos += 10; continue; }
+            if (strncmp(&expression[pos], "LFSR_10BIT", 10) == 0 && !isalnum(expression[pos+10]) && expression[pos+10] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_10BIT", 32); pos += 10; continue; }
+            if (strncmp(&expression[pos], "LFSR_9BIT", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_9BIT", 32); pos += 9; continue; }
+            if (strncmp(&expression[pos], "LFSR_8BIT", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_8BIT", 32); pos += 9; continue; }
+            if (strncmp(&expression[pos], "LFSR_7BIT", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') {  t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_7BIT", 32); pos += 9; continue; }
+            if (strncmp(&expression[pos], "LFSR_6BIT", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_6BIT", 32); pos += 9; continue; }
+            if (strncmp(&expression[pos], "LFSR_5BIT", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') {  t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_5BIT", 32); pos += 9; continue; }
+            if (strncmp(&expression[pos], "LFSR_4BIT", 9) == 0 && !isalnum(expression[pos+9]) && expression[pos+9] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "LFSR_4BIT", 32); pos += 9; continue; }
+            if (strncmp(&expression[pos], "MOD_A", 5) == 0 && !isalnum(expression[pos+5]) && expression[pos+5] != '_') { t->type = TOKEN_MOD_A; PX_STRNCPY_SAFE(t->value, "MOD_A", 32); pos += 5; continue; }
+            if (strncmp(&expression[pos], "MOD_B", 5) == 0 && !isalnum(expression[pos+5]) && expression[pos+5] != '_') { t->type = TOKEN_MOD_B; PX_STRNCPY_SAFE(t->value, "MOD_B", 32); pos += 5; continue; }
+            if (strncmp(&expression[pos], "MOD_C", 5) == 0 && !isalnum(expression[pos+5]) && expression[pos+5] != '_') { t->type = TOKEN_MOD_C; PX_STRNCPY_SAFE(t->value, "MOD_C", 32); pos += 5; continue; }
+            if (strncmp(&expression[pos], "PI", 2) == 0 && !isalnum(expression[pos+2]) && expression[pos+2] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "PI", 32); pos += 2; continue; }
+            if (strncmp(&expression[pos], "E", 1) == 0 && !isalnum(expression[pos+1]) && expression[pos+1] != '_') { t->type = TOKEN_CONSTANT; PX_STRNCPY_SAFE(t->value, "E", 32); pos += 1; continue; }
+            if (c1 == 'x' && !isalnum(c2) && c2 != '_') { t->type = TOKEN_VARIABLE; PX_STRNCPY_SAFE(t->value, "x", 32); pos++; continue; }
 
             // If it wasn't a specific keyword/constant/variable, check known functions
             bool funcFound = false;
@@ -1060,8 +1066,7 @@ int tokenize(const char *expression, Token *tokens, int maxTokens) {
                  // This part is fine - checks strncmp for known functions like sin, cos, sigma...
                 if (strncmp(&expression[pos], px_functions[i].name, px_functions[i].len) == 0 && !isalnum(expression[pos + px_functions[i].len]) && expression[pos + px_functions[i].len] != '_') {
                     t->type = TOKEN_FUNCTION;
-                    strncpy(t->value, px_functions[i].name, 31);
-                    t->value[31] = '\0';
+                    PX_STRNCPY_SAFE(t->value, px_functions[i].name, 32);
                     pos += px_functions[i].len;
                     funcFound = true;
                     break; // Exit function check loop
@@ -1084,8 +1089,7 @@ int tokenize(const char *expression, Token *tokens, int maxTokens) {
 
                 // Now assign it as a variable token
                 t->type = TOKEN_VARIABLE;
-                strncpy(t->value, ident_buffer, 31);
-                t->value[31] = '\0';
+                PX_STRNCPY_SAFE(t->value, ident_buffer, 32);
                 // pos was already advanced by the while loop above
                 continue; // Continue to the next token in the main loop
             }
@@ -1278,8 +1282,7 @@ Node *parseComparison(Token *tokens, int *pos, int depth) {
 
         Node *new_node = createNode(TOKEN_COMPARISON);
         if (!new_node) { freeAST(node); freeAST(right); return NULL; }
-        strncpy(new_node->data.op_str, op_token.value, 2); // Store "<", "==", etc.
-        new_node->data.op_str[2] = '\0';
+        PX_STRNCPY_SAFE(new_node->data.op_str, op_token.value, 3); // Store "<", "==", etc.
         new_node->child1 = node;
         new_node->child2 = right;
         node = new_node;
@@ -1415,8 +1418,7 @@ Node *parsePrimary(Token *tokens, int *pos, int depth) {
             perror("Failed to create variable node");
             return NULL;
         }
-        strncpy(node->data.name, t.value, 31); // Store "x"
-        node->data.name[31] = '\0';
+        PX_STRNCPY_SAFE(node->data.name, t.value, 32); // Store "x"
         return node;
     }
 
@@ -1425,8 +1427,7 @@ Node *parsePrimary(Token *tokens, int *pos, int depth) {
          (*pos)++; // Consume token
          Node *node = createNode(TOKEN_FREQUENCY);
          if (!node) { perror("Failed to create frequency node"); return NULL; }
-         strncpy(node->data.name, "FREQUENCY", 31); // Store "FREQUENCY"
-         node->data.name[31] = '\0';
+         PX_STRNCPY_SAFE(node->data.name, "FREQUENCY", 32); // Store "FREQUENCY"
          return node;
     }
 
@@ -1438,8 +1439,7 @@ Node *parsePrimary(Token *tokens, int *pos, int depth) {
             perror("Failed to create rand_offset node");
             return NULL;
          }
-         strncpy(node->data.name, t.value, 31); // Store "RAND_OFFSET"
-         node->data.name[31] = '\0';
+         PX_STRNCPY_SAFE(node->data.name, t.value, 32); // Store "RAND_OFFSET"
          return node;
     }
 
@@ -1451,8 +1451,7 @@ Node *parsePrimary(Token *tokens, int *pos, int depth) {
             perror("Failed to create constant node");
             return NULL;
         }
-        strncpy(node->data.name, t.value, 31); // Store constant name
-        node->data.name[31] = '\0';
+        PX_STRNCPY_SAFE(node->data.name, t.value, 32); // Store constant name
         return node;
     }
 
@@ -1464,8 +1463,7 @@ Node *parsePrimary(Token *tokens, int *pos, int depth) {
             perror("Failed to create mod_a node");
             return NULL;
         }
-        strncpy(node->data.name, t.value, 31); // Store "MOD_A"
-        node->data.name[31] = '\0';
+        PX_STRNCPY_SAFE(node->data.name, t.value, 32); // Store "MOD_A"
         return node;
     }
      if (t.type == TOKEN_MOD_B) { // Assumes TOKEN_MOD_B enum exists
@@ -1475,8 +1473,7 @@ Node *parsePrimary(Token *tokens, int *pos, int depth) {
             perror("Failed to create mod_b node");
             return NULL;
         }
-        strncpy(node->data.name, t.value, 31); // Store "MOD_B"
-        node->data.name[31] = '\0';
+        PX_STRNCPY_SAFE(node->data.name, t.value, 32); // Store "MOD_B"
         return node;
     }
      if (t.type == TOKEN_MOD_C) { // Assumes TOKEN_MOD_C enum exists
@@ -1486,8 +1483,7 @@ Node *parsePrimary(Token *tokens, int *pos, int depth) {
             perror("Failed to create mod_c node");
             return NULL;
         }
-        strncpy(node->data.name, t.value, 31); // Store "MOD_C"
-        node->data.name[31] = '\0';
+        PX_STRNCPY_SAFE(node->data.name, t.value, 32); // Store "MOD_C"
         return node;
     }
     // Handle Parenthesized Expressions
@@ -1520,8 +1516,7 @@ Node *parsePrimary(Token *tokens, int *pos, int depth) {
             perror("Failed to create function node");
             return NULL;
          }
-        strncpy(node->data.name, t.value, 31);
-        node->data.name[31] = '\0';
+        PX_STRNCPY_SAFE(node->data.name, t.value, 32);
 
         int expected_args = -1;
         for (int i = 0; px_functions[i].name; ++i) {
@@ -1634,8 +1629,7 @@ Node *parseFunctionArgs(Token *tokens, int *pos, const char* func_name, int expe
             // Create a node to *store* the variable name, not to evaluate 'k' itself here
             arg_expr = createNode(TOKEN_VARIABLE); // Use TOKEN_VARIABLE type
             if (!arg_expr) { freeAST(head); return NULL; }
-            strncpy(arg_expr->data.name, tokens[*pos].value, 31); // Store the name "k"
-            arg_expr->data.name[31] = '\0';
+            PX_STRNCPY_SAFE(arg_expr->data.name, tokens[*pos].value, 32); // Store the name "k"
             (*pos)++; // Consume the variable name token
         } else {
             // Parse start, end, step, body (or args for other functions) as regular expressions
@@ -5061,7 +5055,9 @@ void px_vm_init_gpu_resources(void) {
     }
 
     uint8_t* host_lfsr = (uint8_t*)calloc(1, total_lfsr_bytes);
-    if (host_lfsr) {
+    if (!host_lfsr) {
+        fprintf(stderr, "Failed to allocate memory for host LFSR table in px_vm_init_gpu_resources\n");
+    } else {
         size_t offset = 0;
         for (int i = 0; i < NUM_LFSR_TYPES; ++i) {
             size_t bytes = LFSR_TABLE_BYTES(precomputed_lfsrs[i].period);
@@ -5133,6 +5129,10 @@ GpuWaveBuffers upload_wave_to_gpu(BytecodeChunk* chunk) {
     meta.bytecode_length = (uint32_t)size;
 
     uint8_t* code_bytes = (uint8_t*)calloc(1, size);
+    if (!code_bytes) {
+        fprintf(stderr, "Failed to allocate memory for bytecode serialization in upload_wave_to_gpu\n");
+        return gpu_bufs;
+    }
     size_t actual_size = 0;
     serialize_chunk_recursive(chunk, code_bytes, &actual_size, &meta, true);
 
