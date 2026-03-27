@@ -1,13 +1,10 @@
 # Update Log
 
-## v1.9.38 (2026/03/21)
+## v1.9.38 (2026/03/26)
 - **Performance**:
   - Implemented a 128-entry `MIDI_NOTE_FREQUENCIES` lookup table in `polysonix.h` to replace live transcendental calculations in `get_midi_frequency`, significantly reducing overhead during note triggering and glide approach.
   - Optimized multiple mathematical hot-paths by replacing division by literal constants (e.g., `12.0f`, `60.0f`, `1000.0f`) with multiplication by their precalculated reciprocals. Affected areas include filter key tracking, pitch modulation, and LFO update intervals.
   - Refined `ADSR_SetParams` with a hardcoded rate for the minimum ADSR time.
-- **Maintenance**:
-  - Cleaned up binary artifacts and object files from the `test/` directory.
-## v1.9.38 (2026/03/26)
 - **Security / Stability**:
   - Implemented comprehensive bounds checking and clamping for waveform indices (`wave_idx`) across the entire engine.
   - Hardened patch deserialization in `px_patching.h` to clamp LFO and oscillator waveform indices to valid ranges (`[0, NUM_WAVEFORMS - 1]`).
@@ -16,7 +13,6 @@
   - Implemented defense-in-depth in the main audio processing loop (`PX_Process`) by validating waveform indices immediately before accessing wave ROM data.
   - Added safety checks to wave sequencing logic, ensuring step-based and random waveform selections are always within bounds.
   - Expanded `test/test_security_wave_idx.c` to verify LFO and API-level clamping.
-- **Security**:
   - Implemented the `PX_STRNCPY_SAFE` macro in `px_vm.h` to enforce guaranteed null-termination for all string copy operations during tokenization and parsing. This addresses potential buffer overflow and out-of-bounds read vulnerabilities when processing identifiers and operators at the 31-character limit.
   - Replaced all manual `strncpy` calls in the VM core with this unified safe alternative to improve code robustness and satisfy modern compiler security analysis.
   - Added a dedicated unit test `test/test_token_null_termination.c` to verify correct handling and termination of maximum-length identifiers.
@@ -25,6 +21,7 @@
   - Refactored synthesizer and patch initialization logic to robustly handle configurations with zero LFOs, preventing false initialization failures on platforms where `calloc(0)` returns NULL.
   - Added `<stdio.h>` to the implementation block in `polysonix.h` to enable standard error reporting via `fprintf` and `perror`.
   - Cleaned up build artifacts and improved internal allocation check readability using named boolean logic.
+  - Cleaned up binary artifacts and object files from the `test/` directory.
 
 ## v1.9.37 (2026/03/20)
 - **Features / Fixes**:
@@ -36,7 +33,6 @@
 
 ## v1.9.36 (2026/03/20)
 **Feature: Sample Bank ROM Format & sbgen Utility**
-
 - **New Format:** Introduced the `.sbr` (Sample Bank ROM) binary format for storing packed sample libraries. The format is flat, memory-mappable, and designed for fast lookup in synthesizers and samplers.
   - Layout: `SBR_Header` → `SBR_Group[]` → `SBR_Entry[]` → PCM16 data blob.
   - Groups store folder/category names (up to 39 chars). Entries store per-sample metadata: name, loop points, sample rate, MIDI base note, fine tune, and a format bitfield (depth, channels, loop mode).
