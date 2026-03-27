@@ -1,5 +1,12 @@
 # Update Log
 
+## v1.9.38 (2026/03/21)
+- **Performance**:
+  - Implemented a 128-entry `MIDI_NOTE_FREQUENCIES` lookup table in `polysonix.h` to replace live transcendental calculations in `get_midi_frequency`, significantly reducing overhead during note triggering and glide approach.
+  - Optimized multiple mathematical hot-paths by replacing division by literal constants (e.g., `12.0f`, `60.0f`, `1000.0f`) with multiplication by their precalculated reciprocals. Affected areas include filter key tracking, pitch modulation, and LFO update intervals.
+  - Refined `ADSR_SetParams` with a hardcoded rate for the minimum ADSR time.
+- **Maintenance**:
+  - Cleaned up binary artifacts and object files from the `test/` directory.
 ## v1.9.38 (2026/03/26)
 - **Security / Stability**:
   - Implemented comprehensive bounds checking and clamping for waveform indices (`wave_idx`) across the entire engine.

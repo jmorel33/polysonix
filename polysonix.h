@@ -1089,6 +1089,45 @@ static const float HB[5] = {
    -0.136728736584138680f    /* h[ 2] */
 };
 
+/**
+ * MIDI Note Frequency Lookup Table (0-127).
+ * Precalculated using the formula: 440.0 * pow(2.0, (note - 69) / 12.0).
+ */
+static const float MIDI_NOTE_FREQUENCIES[128] = {
+    8.175799f,     8.661957f,     9.177024f,     9.722718f,
+    10.300861f,     10.913382f,     11.562326f,     12.249857f,
+    12.978272f,     13.750000f,     14.567618f,     15.433853f,
+    16.351598f,     17.323914f,     18.354048f,     19.445436f,
+    20.601722f,     21.826764f,     23.124651f,     24.499715f,
+    25.956544f,     27.500000f,     29.135235f,     30.867706f,
+    32.703196f,     34.647829f,     36.708096f,     38.890873f,
+    41.203445f,     43.653529f,     46.249303f,     48.999429f,
+    51.913087f,     55.000000f,     58.270470f,     61.735413f,
+    65.406391f,     69.295658f,     73.416192f,     77.781746f,
+    82.406889f,     87.307058f,     92.498606f,     97.998859f,
+    103.826174f,     110.000000f,     116.540940f,     123.470825f,
+    130.812783f,     138.591315f,     146.832384f,     155.563492f,
+    164.813778f,     174.614116f,     184.997211f,     195.997718f,
+    207.652349f,     220.000000f,     233.081881f,     246.941651f,
+    261.625565f,     277.182631f,     293.664768f,     311.126984f,
+    329.627557f,     349.228231f,     369.994423f,     391.995436f,
+    415.304698f,     440.000000f,     466.163762f,     493.883301f,
+    523.251131f,     554.365262f,     587.329536f,     622.253967f,
+    659.255114f,     698.456463f,     739.988845f,     783.990872f,
+    830.609395f,     880.000000f,     932.327523f,     987.766603f,
+    1046.502261f,     1108.730524f,     1174.659072f,     1244.507935f,
+    1318.510228f,     1396.912926f,     1479.977691f,     1567.981744f,
+    1661.218790f,     1760.000000f,     1864.655046f,     1975.533205f,
+    2093.004522f,     2217.461048f,     2349.318143f,     2489.015870f,
+    2637.020455f,     2793.825851f,     2959.955382f,     3135.963488f,
+    3322.437581f,     3520.000000f,     3729.310092f,     3951.066410f,
+    4186.009045f,     4434.922096f,     4698.636287f,     4978.031740f,
+    5274.040911f,     5587.651703f,     5919.910763f,     6271.926976f,
+    6644.875161f,     7040.000000f,     7458.620184f,     7902.132820f,
+    8372.018090f,     8869.844191f,     9397.272573f,     9956.063479f,
+    10548.081821f,     11175.303406f,     11839.821527f,     12543.853951f,
+};
+
 // --- v1.5 ROM (Populated) ---
 #define PX_WSEQ_ROM_IMPLEMENTATION
 #include "px_wseq_rom.h"
@@ -1639,7 +1678,7 @@ static void ADSR_SetParams(ADSR* adsr, const PxADSRParams* params, float sample_
     adsr->enabled = params->enabled;
 
     if (adsr->attack_time > 0.0f) adsr->attack_rate = 1.0f / adsr->attack_time;
-    else adsr->attack_rate = 1.0f / MIN_ADSR_TIME;
+    else adsr->attack_rate = 1000.0f; // 1.0 / 0.001
 
     double log_target = log((double)EXP_DECAY_TARGET);
 
@@ -2035,7 +2074,8 @@ static void LFOInstance_Init(LFOInstance* lfo, float sample_rate, uint32_t* rng_
 }
 
 static float get_midi_frequency(int midi_note) {
-    return 440.0f * exp2f((midi_note - 69.0f) / 12.0f);
+    if (PX_UNLIKELY(midi_note < 0 || midi_note > 127)) return 0.0f;
+    return MIDI_NOTE_FREQUENCIES[midi_note];
 }
 
 static int find_inactive_voice(PxSynth* s) {
@@ -2226,7 +2266,7 @@ static void PX_ProcessCommands(PxSynth* s) {
             case PX_CMD_SET_LFO_UPDATE_INTERVAL:
                 s->config.lfo_update_interval_ms = cmd.data.param_float.float_val;
                 {
-                    float samples = s->config.sample_rate * (cmd.data.param_float.float_val / 1000.0f);
+                    float samples = s->config.sample_rate * (cmd.data.param_float.float_val * 0.001f);
                     if (samples >= (float)INT_MAX) {
                         s->config.samples_per_lfo_update = INT_MAX;
                     } else if (samples <= 1.0f || isnan(samples)) {
@@ -2830,7 +2870,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
     for (int v_idx = 0; v_idx < voices_to_calc; ++v_idx) {
         Voice *v = &s->voices[v_idx];
         if (v->active) {
-            key_track_factors[v_idx] = exp2f((v->midi_note - 60.0f) / 12.0f * s->patch.filter_key_track);
+            key_track_factors[v_idx] = exp2f((v->midi_note - 60.0f) * 0.08333333333f * s->patch.filter_key_track);
         } else {
             key_track_factors[v_idx] = 1.0f;
         }
@@ -2943,7 +2983,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 mod_sources[PX_MOD_SRC_POLY_AFTERTOUCH] = curve_poly_at;
 
                 // v1.4.5: Keyboard tracking source
-                mod_sources[PX_MOD_SRC_KEY_TRACK] = ((float)v->midi_note - 60.0f) / 60.0f; // Normalized -1.0 (C0) to +1.0 (C10)
+                mod_sources[PX_MOD_SRC_KEY_TRACK] = ((float)v->midi_note - 60.0f) * 0.01666666667f; // Normalized -1.0 (C0) to +1.0 (C10)
 
                 mod_sources[PX_MOD_SRC_MODWHEEL] = s->modwheel_value;
                 mod_sources[PX_MOD_SRC_PITCHBEND] = s->pitchbend_value;  // bipolar!
@@ -3123,7 +3163,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
             mod_sources[PX_MOD_SRC_POLY_AFTERTOUCH] = curve_poly_at;
 
             // v1.4.5: Keyboard tracking source
-            mod_sources[PX_MOD_SRC_KEY_TRACK] = ((float)v->midi_note - 60.0f) / 60.0f; // Normalized -1.0 (C0) to +1.0 (C10)
+            mod_sources[PX_MOD_SRC_KEY_TRACK] = ((float)v->midi_note - 60.0f) * 0.01666666667f; // Normalized -1.0 (C0) to +1.0 (C10)
 
             mod_sources[PX_MOD_SRC_MODWHEEL] = s->modwheel_value;
             mod_sources[PX_MOD_SRC_PITCHBEND] = s->pitchbend_value;  // bipolar!
@@ -3241,7 +3281,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
             // Calculate Effective Frequency (with Global Pitch Mod)
             float global_pitch_mod = lfo_pitch_env_input + adsr_total_pitch_mod_st;
-            float effective_voice_freq = v->frequency * exp2f(global_pitch_mod / 12.0f);
+            float effective_voice_freq = v->frequency * exp2f(global_pitch_mod * 0.08333333333f);
 
             // 5.2 Filter Logic
             float key_track_factor = key_track_factors[v_idx];
@@ -3359,7 +3399,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                 // Standard Pitch Calc
                 float osc_pitch_mod = dest_mod[PX_MOD_DEST_OSC1_PITCH + o * PX_OSC_MOD_PARAM_COUNT];
                 float tuning_st = fmaf(osc_pitch_mod, 12.0f, v->osc[o].current_coarse_semitones + (v->osc[o].current_fine_cents * 0.01f));
-                float osc_freq = effective_voice_freq * exp2f(tuning_st / 12.0f) * seq_pitch_mult;
+                float osc_freq = effective_voice_freq * exp2f(tuning_st * 0.08333333333f) * seq_pitch_mult;
                 v->osc[o].vm_params.frequency = osc_freq;
 
                 int base_dest = PX_MOD_DEST_OSC1_MODA + o * PX_OSC_MOD_PARAM_COUNT;
@@ -3651,7 +3691,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                             // Load Pitch
                             // v1.7.1: Start next glide from CURRENT ratio to avoid jumps if previous glide was clamped/interrupted
                             sq->prev_step_pitch_ratio = seq_pitch_mult;
-                            sq->step_pitch_ratio = exp2f(next_step->pitch_offset / 1200.0f);
+                            sq->step_pitch_ratio = exp2f(next_step->pitch_offset * 0.00083333333f);
 
                             // v1.8: Calculate Cycle Target for Next Step
                             float step_freq = v->original_frequency * sq->step_pitch_ratio;
@@ -4592,7 +4632,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
             if (w < 0 || w >= NUM_WAVEFORMS) w = 0;
             v->osc[o].wave_indices = w;
 
-            sq->step_pitch_ratio = exp2f(step->pitch_offset / 1200.0f);
+            sq->step_pitch_ratio = exp2f(step->pitch_offset * 0.00083333333f);
             sq->target_pitch_ratio = sq->step_pitch_ratio;
             sq->prev_step_pitch_ratio = sq->step_pitch_ratio;
             sq->step_flags = step->flags;
@@ -4640,7 +4680,7 @@ static void PX_NoteOn_internal(PxSynth* s, int midi_note, int wave_idx, int key_
                         case PX_MOD_SRC_MODWHEEL: src_val = s->modwheel_value; break;
                         case PX_MOD_SRC_AFTERTOUCH: src_val = s->channel_aftertouch_pressure; break;
                         case PX_MOD_SRC_PITCHBEND: src_val = s->pitchbend_value; break;
-                        case PX_MOD_SRC_KEY_TRACK: src_val = ((float)v->midi_note - 60.0f) / 60.0f; break;
+                        case PX_MOD_SRC_KEY_TRACK: src_val = ((float)v->midi_note - 60.0f) * 0.01666666667f; break;
                         default: src_val = 0.0f; break;
                     }
                     if (src_val <= 0.0f) do_lock = false;
