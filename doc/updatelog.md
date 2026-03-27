@@ -1,5 +1,13 @@
 # Update Log
 
+## v1.9.38 (2026/03/21)
+- **Performance**:
+  - Implemented a 128-entry `MIDI_NOTE_FREQUENCIES` lookup table in `polysonix.h` to replace live transcendental calculations in `get_midi_frequency`, significantly reducing overhead during note triggering and glide approach.
+  - Optimized multiple mathematical hot-paths by replacing division by literal constants (e.g., `12.0f`, `60.0f`, `1000.0f`) with multiplication by their precalculated reciprocals. Affected areas include filter key tracking, pitch modulation, and LFO update intervals.
+  - Refined `ADSR_SetParams` with a hardcoded rate for the minimum ADSR time.
+- **Maintenance**:
+  - Cleaned up binary artifacts and object files from the `test/` directory.
+
 ## v1.9.37 (2026/03/20)
 - **Features / Fixes**:
   - Implemented a critical fix for the Virtual Machine's sub-chunk execution (`execute_sub_chunk` in `px_vm.h`). The stack boundary is now correctly enforced using the sub-chunk's frame base pointer (`outer_stack_top`) instead of the absolute stack bottom, preventing potential stack corruption and ensuring correct result returns for nested `sigma()` loops.
