@@ -1,5 +1,11 @@
 # Update Log
 
+## v1.9.39 (2026/04/09)
+- **Security / Stability**:
+  - Centralized LFO update interval sample calculation into `px_calculate_lfo_update_samples` helper in `polysonix.h`, enforcing a safe range of `[1, INT_MAX]` samples.
+  - Hardened the engine against integer overflows for massive LFO update intervals (e.g., 100,000,000ms) during both synth initialization in `PX_Create` and real-time command processing.
+  - Updated the regression test `test/test_lfo_update_bounds.c` to strictly verify clamping behavior and integrated it into the `Makefile` test suite.
+
 ## v1.9.38 (2026/03/26)
 - **Performance**:
   - Implemented a 128-entry `MIDI_NOTE_FREQUENCIES` lookup table in `polysonix.h` to replace live transcendental calculations in `get_midi_frequency`, significantly reducing overhead during note triggering and glide approach.
