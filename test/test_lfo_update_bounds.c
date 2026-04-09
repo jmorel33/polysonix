@@ -55,15 +55,15 @@ int main() {
     // So 1 is the symptom of the bug here (incorrectly small interval for a huge request).
 
     if (synth->config.samples_per_lfo_update == 1) {
-        printf("VULNERABILITY CONFIRMED: Huge interval resulted in 1 sample update (Overflow/Wrap logic suspected).\n");
-        // We want to return 0 to allow the test to run, but print failure.
-        // Or return 1 to fail.
-        // Let's assert against the fix behavior we want.
-        // We want it to be clamped to INT_MAX.
+        printf("FAILURE: Huge interval resulted in 1 sample update (Overflow/Wrap logic suspected).\n");
+        PX_Destroy(synth);
+        return 1;
     } else if (synth->config.samples_per_lfo_update == INT_MAX) {
         printf("SUCCESS: Value clamped to INT_MAX.\n");
     } else {
-         printf("Value: %d\n", synth->config.samples_per_lfo_update);
+         printf("FAILURE: Unexpected value: %d\n", synth->config.samples_per_lfo_update);
+         PX_Destroy(synth);
+         return 1;
     }
 
     PX_Destroy(synth);

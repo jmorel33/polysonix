@@ -1934,6 +1934,17 @@ static void Filter_SetCoefficients(Filter* filter, float cutoff_hz, float resona
 // Fast polynomial approximation for tanh(x) for small values (Padé [2/2])
 // Note: This approximation diverges linearly (asymptotically x/9) for large inputs.
 // Clamping is mandatory to enforce the [-1.0, 1.0] saturation range of real tanh.
+static inline int px_calculate_lfo_update_samples(float sample_rate, float interval_ms) {
+    float samples = sample_rate * (interval_ms * 0.001f);
+    if (samples >= (float)INT_MAX) {
+        return INT_MAX;
+    } else if (samples <= 1.0f || isnan(samples)) {
+        return 1;
+    } else {
+        return (int)samples;
+    }
+}
+
 static inline float fast_tanh(float x) {
     float x2 = x * x;
     float y = x * (27.0f + x2) / fmaf(9.0f, x2, 27.0f);
@@ -2265,17 +2276,7 @@ static void PX_ProcessCommands(PxSynth* s) {
             case PX_CMD_SET_LFO_MOD_AMOUNT: if (cmd.data.param_idx_enum_float.idx < s->config.num_lfos) s->patch.template_lfos[cmd.data.param_idx_enum_float.idx].mod_amounts[cmd.data.param_idx_enum_float.enum_val] = cmd.data.param_idx_enum_float.float_val; break;
             case PX_CMD_SET_LFO_UPDATE_INTERVAL:
                 s->config.lfo_update_interval_ms = cmd.data.param_float.float_val;
-                {
-                    float samples = s->config.sample_rate * (cmd.data.param_float.float_val * 0.001f);
-                    if (samples >= (float)INT_MAX) {
-                        s->config.samples_per_lfo_update = INT_MAX;
-                    } else if (samples <= 1.0f || isnan(samples)) {
-                        s->config.samples_per_lfo_update = 1;
-                    } else {
-                        s->config.samples_per_lfo_update = (int)samples;
-                    }
-                }
-                if (s->config.samples_per_lfo_update < 1) s->config.samples_per_lfo_update = 1;
+                s->config.samples_per_lfo_update = px_calculate_lfo_update_samples(s->config.sample_rate, s->config.lfo_update_interval_ms);
                 break;
             case PX_CMD_SET_FILTER_PARAM:
                 switch ((PxFilterParamType)cmd.data.param_enum_float.enum_val) {
@@ -2579,6 +2580,7 @@ PX_API PxSynth* PX_Create(const PxConfig* config) {
     s->global_trigger_counter = (uint64_t)time(NULL);
     s->rng_state = (uint32_t)s->global_trigger_counter; // Seed global RNG
     s->time_per_sample = 1.0f / config->sample_rate;
+    s->config.samples_per_lfo_update = px_calculate_lfo_update_samples(s->config.sample_rate, s->config.lfo_update_interval_ms);
     s->glide_coeff = 1.0f - expf(-1.0f / (0.05f * s->config.sample_rate));
     s->lfo_update_countdown = 1;
 

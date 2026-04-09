@@ -2,11 +2,14 @@ CC = gcc
 CFLAGS = -I. -Wall -Wextra -O2
 LIBS = -lm
 
-TESTS = test/test_vm_taming test/test_vm_div_zero test/test_vm_jump_bounds test/test_vm_compliance test/test_lfsr test/test_security_wave_idx test/test_vm_prob test/test_vm_select test/test_vm_smooth_select test/test_vm_markov test/test_adsr test/test_vm_fast_tanh
+TESTS = test/test_vm_taming test/test_vm_div_zero test/test_vm_jump_bounds test/test_vm_compliance test/test_lfsr test/test_security_wave_idx test/test_vm_prob test/test_vm_select test/test_vm_smooth_select test/test_vm_markov test/test_adsr test/test_vm_fast_tanh test/test_lfo_update_bounds
 
 .PHONY: all clean run_tests
 
 all: $(TESTS)
+
+test/test_lfo_update_bounds: test/test_lfo_update_bounds.c polysonix.h
+	$(CC) $(CFLAGS) $< -o $@ $(LIBS)
 
 test/test_security_wave_idx: test/test_security_wave_idx.c polysonix.h px_patching.h
 	$(CC) $(CFLAGS) $< -o $@ $(LIBS)
@@ -60,8 +63,8 @@ run_tests: $(TESTS)
 	@./test/test_vm_markov > /dev/null
 	@echo "Running test_adsr..."
 	@./test/test_adsr > /dev/null
-	@echo "Running test_token_null_termination..."
-	@./test/test_token_null_termination > /dev/null
+	@echo "Running test_lfo_update_bounds..."
+	@./test/test_lfo_update_bounds > /dev/null
 	@echo "All tests passed!"
 
 clean:
