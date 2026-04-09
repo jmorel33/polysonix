@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -I. -Wall -Wextra -O2
 LIBS = -lm
 
-TESTS = test/test_vm_taming test/test_vm_div_zero test/test_vm_jump_bounds test/test_vm_compliance test/test_lfsr test/test_security_wave_idx test/test_vm_prob test/test_vm_select test/test_vm_smooth_select test/test_vm_markov test/test_adsr test/test_vm_fast_tanh
+TESTS = test/test_vm_taming test/test_vm_div_zero test/test_vm_jump_bounds test/test_vm_compliance test/test_lfsr test/test_security_wave_idx test/test_vm_prob test/test_vm_select test/test_vm_smooth_select test/test_vm_markov test/test_adsr test/test_vm_fast_tanh test/test_patch_bank test/test_token_null_termination
 
 .PHONY: all clean run_tests
 
@@ -60,6 +60,8 @@ run_tests: $(TESTS)
 	@./test/test_vm_markov > /dev/null
 	@echo "Running test_adsr..."
 	@./test/test_adsr > /dev/null
+	@echo "Running test_patch_bank..."
+	@./test/test_patch_bank > /dev/null
 	@echo "Running test_token_null_termination..."
 	@./test/test_token_null_termination > /dev/null
 	@echo "All tests passed!"
@@ -75,3 +77,9 @@ test/test_vm_markov: test/test_vm_markov.c px_vm.h
 
 test/test_adsr: test/test_adsr.c polysonix.h
 	$(CC) $(CFLAGS) test/test_adsr.c -o test/test_adsr -lm
+
+test/test_patch_bank: test/test_patch_bank.c polysonix.h px_patching.h
+	$(CC) $(CFLAGS) test/test_patch_bank.c -o test/test_patch_bank -lm
+
+test/test_token_null_termination: test/test_token_null_termination.c px_vm.h
+	$(CC) $(CFLAGS) -DPX_VM_IMPLEMENTATION test/test_token_null_termination.c -o test/test_token_null_termination -lm
