@@ -2863,14 +2863,21 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
 
     memset(stereo_buffer, 0, num_frames * 2 * sizeof(float));
 
-    // Pre-calculate filter key tracking factors
+    // Pre-calculate filter key tracking factors and key hold status
     float key_track_factors[MAX_VOICES];
+    bool voice_is_held[MAX_VOICES] = {false};
     int voices_to_calc = (s->config.num_voices < MAX_VOICES) ? s->config.num_voices : MAX_VOICES;
 
     for (int v_idx = 0; v_idx < voices_to_calc; ++v_idx) {
         Voice *v = &s->voices[v_idx];
         if (v->active) {
             key_track_factors[v_idx] = exp2f((v->midi_note - 60.0f) * 0.08333333333f * s->patch.filter_key_track);
+            for (int j = 0; j < s->num_keys_held; j++) {
+                if (v->key_id == s->held_notes[j]) {
+                    voice_is_held[v_idx] = true;
+                    break;
+                }
+            }
         } else {
             key_track_factors[v_idx] = 1.0f;
         }
@@ -3261,8 +3268,7 @@ PX_API void PX_Process(PxSynth* s, float* stereo_buffer, int num_frames) {
                         }
                     }
                 }
-                bool is_held = false;
-                for (int j = 0; j < s->num_keys_held; j++) if (v->key_id == s->held_notes[j]) { is_held = true; break; }
+                bool is_held = voice_is_held[v_idx];
                 if (all_relevant_adsrs_idle && !is_held) {
                     v->active = false;
                     v->is_sliding = false;
