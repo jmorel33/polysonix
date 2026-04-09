@@ -49,7 +49,7 @@ int main() {
     init_bytecode_chunk(&chunk);
     for (int i = 0; i < MAX_STRINGS; i++) {
         char name[16];
-        sprintf(name, "s%d", i);
+        snprintf(name, sizeof(name), "s%d", i);
         add_string(&chunk, name);
     }
     if (chunk.has_error) {
@@ -65,9 +65,9 @@ int main() {
 
     // 4. Test compiler failure on token overflow (pre-existing but good to verify it handles failure)
     char* long_expr = malloc(10000);
-    strcpy(long_expr, "1.0");
+    snprintf(long_expr, 10000, "1.0");
     for (int i = 0; i < 1000; i++) {
-        strcat(long_expr, "+1.0");
+        strncat(long_expr, "+1.0", 10000 - strlen(long_expr) - 1);
     }
 
     printf("Attempting to compile a very long expression (hits token limit)...\n");
