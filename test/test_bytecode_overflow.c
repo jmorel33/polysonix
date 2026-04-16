@@ -65,9 +65,14 @@ int main() {
 
     // 4. Test compiler failure on token overflow (pre-existing but good to verify it handles failure)
     char* long_expr = malloc(10000);
-    snprintf(long_expr, 10000, "1.0");
+    int long_expr_pos = snprintf(long_expr, 10000, "1.0");
     for (int i = 0; i < 1000; i++) {
-        strncat(long_expr, "+1.0", 10000 - strlen(long_expr) - 1);
+        int n = snprintf(long_expr + long_expr_pos, 10000 - long_expr_pos, "+1.0");
+        if (n > 0 && n < 10000 - long_expr_pos) {
+            long_expr_pos += n;
+        } else {
+            break;
+        }
     }
 
     printf("Attempting to compile a very long expression (hits token limit)...\n");
