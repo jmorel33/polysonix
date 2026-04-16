@@ -8,6 +8,9 @@ TESTS = test/test_vm_taming test/test_vm_div_zero test/test_vm_jump_bounds test/
 
 all: $(TESTS)
 
+test/test_lfo_update_bounds: test/test_lfo_update_bounds.c polysonix.h
+	$(CC) $(CFLAGS) $< -o $@ $(LIBS)
+
 test/test_security_wave_idx: test/test_security_wave_idx.c polysonix.h px_patching.h
 	$(CC) $(CFLAGS) $< -o $@ $(LIBS)
 

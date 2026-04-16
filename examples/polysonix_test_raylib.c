@@ -589,18 +589,30 @@ static void DrawFrame() {
 
         PxVoiceInfo v_info = PX_GetVoiceInfo(synth, i);
         char voice_status_text[256];
-        char adsr_summary[NUM_VOICE_ADSRS * 20 + 5] = "";
+        char adsr_summary[NUM_VOICE_ADSRS * 20 + 5];
+        int adsr_pos = 0;
+        int adsr_size = sizeof(adsr_summary);
+        adsr_summary[0] = '\0';
         for (int k = 0; k < NUM_VOICE_ADSRS; ++k) {
-            char temp_summary[32];
-            snprintf(temp_summary, sizeof(temp_summary), " A%d(%s:%.1f)", k, PX_GetADSRStateName(v_info.adsr_states[k]), v_info.adsr_levels[k]);
-            strncat(adsr_summary, temp_summary, sizeof(adsr_summary) - strlen(adsr_summary) - 1);
+            int n = snprintf(adsr_summary + adsr_pos, adsr_size - adsr_pos, " A%d(%s:%.1f)", k, PX_GetADSRStateName(v_info.adsr_states[k]), v_info.adsr_levels[k]);
+            if (n > 0 && n < adsr_size - adsr_pos) {
+                adsr_pos += n;
+            } else {
+                break;
+            }
         }
 
-        char lfo_outputs_str[NUM_LFOS * 10 + 5] = "";
+        char lfo_outputs_str[NUM_LFOS * 10 + 5];
+        int lfo_pos = 0;
+        int lfo_size = sizeof(lfo_outputs_str);
+        lfo_outputs_str[0] = '\0';
         for (int k = 0; k < NUM_LFOS; ++k) {
-            char temp_lfo_out[15];
-            snprintf(temp_lfo_out, sizeof(temp_lfo_out), " L%d:%.1f", k, v_info.lfo_outputs[k]);
-            strncat(lfo_outputs_str, temp_lfo_out, sizeof(lfo_outputs_str) - strlen(lfo_outputs_str) - 1);
+            int n = snprintf(lfo_outputs_str + lfo_pos, lfo_size - lfo_pos, " L%d:%.1f", k, v_info.lfo_outputs[k]);
+            if (n > 0 && n < lfo_size - lfo_pos) {
+                lfo_pos += n;
+            } else {
+                break;
+            }
         }
 
         snprintf(voice_status_text, sizeof(voice_status_text), "V%d:%s N:%02d F:%.0f EAmp:%.1f P:%.1f %s%s",
